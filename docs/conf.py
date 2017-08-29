@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # geospatial-learn documentation build configuration file, created by
-# sphinx-quickstart on Tue Aug 29 14:14:19 2017.
+# sphinx-quickstart on Tue Aug 29 18:44:31 2017.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -34,7 +34,6 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.mathjax',
-    'sphinx.ext.githubpages',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -55,8 +54,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'geospatial-learn'
-copyright = '2017, Dr Ciaran Robb'
-author = 'Dr Ciaran Robb'
+copyright = '2017, Ciaran Robb'
+author = 'Ciaran Robb'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -266,7 +265,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'geospatial-learn.tex', 'geospatial-learn Documentation',
-     'Dr Ciaran Robb', 'manual'),
+     'Ciaran Robb', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
