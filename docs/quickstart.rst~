@@ -13,7 +13,7 @@ Bear in mind a large amount of training data and a lot of paramter combinations 
 .. code-block:: python
    
    # Import the module required
-   from c_utils import learning
+   from geospatial_learn import learning
    
    # collect some training data
    trainShape = 'path/to/my/trainingShp.shp'
@@ -38,6 +38,8 @@ The following code uses the learning module to classify an image based on the mo
 
 .. code-block:: python
 
+   from geospatial_learn import learning
+
    # no of bands in raster
    bands = 8
 
@@ -54,9 +56,9 @@ Add attributes to a shapefile - perhaps with a view to classifying them later
 
 .. code-block:: python
 
-   segShape = 'path/to/my/segmentShp.shp'
+   from geospatial_learn import shape
 
-   
+   segShape = 'path/to/my/segmentShp.shp'
 
    
 
