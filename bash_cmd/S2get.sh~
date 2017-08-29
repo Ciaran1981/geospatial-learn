@@ -1,0 +1,23 @@
+#!/bin/bash
+
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B01.jp2 
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B02.jp2 
+
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B03.jp2  
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B03.jp2 
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B04.jp2  
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B05.jp2 
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B06.jp2  
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B07.jp2  
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B08.jp2 
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B09.jp2 
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B10.jp2 
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B11.jp2  
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B12.jp2  
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B8A.jp2  
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/metadata.xml 
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/B02.jp2  
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/productinfo.json  
+wget http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/$1/tileInfo.json
+
+
