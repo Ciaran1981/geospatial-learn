@@ -55,7 +55,7 @@ available soon
 Project History
 ---------------
 
-It is currently maintained voluntaliry by Dr Ciaran Robb, University of Leicester. The functionality was originally written as part of various research projects involving Earth observation & geo-spatial data. The module is at a very early stage at present and there is more material wrtten that has yet to be added.    
+It is currently maintained voluntaliry by Dr Ciaran Robb, University of Leicester. The functionality was originally written as part of various research projects involving Earth observation & geo-spatial data. The module is at a very early stage at present and there is more material wrtten that has yet to be added (including docs!).     
 
 Help and Support
 ----------------
