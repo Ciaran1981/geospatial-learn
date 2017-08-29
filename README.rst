@@ -9,7 +9,7 @@ geospatial-learn is a Python module for using scikit-learn and xgb models with g
 
 The module also contains various fuctionality for manipulating raster and vector data as well as some utilities aimed at processing Sentinel 2 data.
 
-The aim is to produce a convenient, minimal commands for putting together processing chains. Development will aim to expand the variety of libs/algorithms available for machine learning beyond the current complement.  
+The aim is to produce convenient, minimal commands for putting together geo-spatial processing chains using machine learning libs. Development will aim to expand the variety of libs/algorithms available for machine learning beyond the current complement.  
 
 
 Dependencies
