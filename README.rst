@@ -1,5 +1,8 @@
 .. -*- mode: rst -*-
 
+|Travis|_ |AppVeyor|_ |Codecov|_ |CircleCI|_ |Python27|_ |Python35|_ |PyPi|_ |DOI|_
+
+
 .. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
 
 geospatial-learn
