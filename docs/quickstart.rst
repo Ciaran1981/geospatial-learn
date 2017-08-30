@@ -69,6 +69,8 @@ Sentinel 2 data
 The following code will stack a set of Sentinel 2 (S2) bands into a single raster. The code uses the module 'geodata', which has a range of functions for manipulating raster data.
 I have used a genuine S2 path here hence the extreme length of the string!
 
+The function automatically names the stacked raster and saves it in the granule folder. 
+
 
 .. code-block:: python
 
