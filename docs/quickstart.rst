@@ -6,9 +6,9 @@ Quickstart
 Training and model creation
 ---------------------------
 
-The following code uses the learning module to read in training from a shapefile and associated raster, then exhaustively grid search the model based on a default range of parameters. It is also possible to pass sklearn parameteter dicts to the create_model function. 
+The following simple example uses the learning module to read in training from a shapefile and associated raster, then exhaustively grid search the model based on a default range of parameters. It is also possible to pass sklearn parameteter dicts to the create_model function. 
 
-Bear in mind a large amount of training data and a lot of paramter combinations results in many model fits! 
+Bear in mind a large amount of training data and a lot of paramter combinations results in many model fits and lengthy grid search time! 
 
 .. code-block:: python
    
@@ -19,9 +19,9 @@ Bear in mind a large amount of training data and a lot of paramter combinations 
    trainShape = 'path/to/my/trainingShp.shp'
    inRas = 'path/to/my/rasterFile.shp'	
 
-   # training specifyreturning any rejects (invalid geometry)
+   # training collection, returning any rejects (invalid geometry - rej)
    # the 'Class' string is the title of the training label field attribute
-   training, rej = learning.get_training(trainShape, inRas, 8,'Class')
+   training, rej = learning.get_training(trainShape, inRas, 8, 'Class')
    
    # path to my model	
    model = 'path/to/my/model.gz'
@@ -66,12 +66,13 @@ Add attributes to a shapefile - perhaps with a view to classifying them later
 Sentinel 2 data
 ---------------
 
-The following code will stack a set of Sentinel 2 bands into a single raster. The code uses the module 'geodata', which has a range of function for manipulating raster data.
+The following code will stack a set of Sentinel 2 (S2) bands into a single raster. The code uses the module 'geodata', which has a range of functions for manipulating raster data.
+I have used a genuine S2 path here hence the extreme length of the string!
 
 
 .. code-block:: python
 
-   path = /path/to/S2A_MSIL1C_20161223T075332_N0204_R135_T36MYE_20161223T080853/S2A_MSIL2A_20161223T075332_N0204_R135_T36MYE_20161223T080853.SAFE/GRANULE/L2A_T36MYE_A007854_20161223T080853/	
+   path = '/path/to/S2A_MSIL1C_20161223T075332_N0204_R135_T36MYE_20161223T080853/S2A_MSIL2A_20161223T075332_N0204_R135_T36MYE_20161223T080853.SAFE/GRANULE/L2A_T36MYE_A007854_20161223T080853/'	
 
    outputPth = geodata.stack_S2(path)
 
