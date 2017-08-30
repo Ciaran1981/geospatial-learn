@@ -3,6 +3,13 @@
 Quickstart
 ==========
 
+
+Notes
+---------
+
+Be sure to replace the paths with paths to your own imagery/polygons!
+
+
 Training and model creation
 ---------------------------
 
@@ -36,6 +43,7 @@ Classification
 
 The following code uses the learning module to classify an image based on the model made in the code above. 
 
+
 .. code-block:: python
 
    from geospatial_learn import learning
@@ -52,15 +60,33 @@ The following code uses the learning module to classify an image based on the mo
 Polygon processing
 ------------------
 
-Add attributes to a shapefile - perhaps with a view to classifying them later
+Add attributes to a shapefile - perhaps with a view to classifying them later. 
+
+The following calculates some geometric properties and pixel based statistics using functions form the shape module. 
 
 .. code-block:: python
 
-   from geospatial_learn import shape
-
-   segShape = 'path/to/my/segmentShp.shp'
-
+   from geospatial_learn.shape import shape_props, zonal_stats
    
+   # path to polygon
+   segShape = 'path/to/my/segmentShp.shp'
+   
+   # function to write 
+   
+   # Property of interest	
+   prop = 'Eccentricity'
+
+   # function
+   shape_props(inShape, prop, inRas=None,  label_field='ID')
+
+   # variables for function
+   band = 1
+   inRas = 'pth/to/myraster.tif'
+   bandname = 'Blue'
+
+   # function
+   zonal_stats(segShape, inRas, band, bandname, stat = 'mean',
+                write_stat=None, nodata_value=None)
 
 
 Sentinel 2 data
