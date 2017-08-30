@@ -66,7 +66,7 @@ Add attributes to a shapefile - perhaps with a view to classifying them later
 Sentinel 2 data
 ---------------
 
-The following 
+The following code will stack a set of Sentinel 2 bands into a single raster
 
 
 .. code-block:: python
