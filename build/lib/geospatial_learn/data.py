@@ -537,7 +537,7 @@ def merge_images(folder, wildcard, mosaic):
 
     fileList = glob2.glob(folder+'**/**/*'+wildcard)
     filenames = ' '.join(fileList)
-    subprocess.call(['gdal_merge.py', '-of', 'Gtiff', '-o', mosaic, filenames)
+    subprocess.call(['gdal_merge.py', '-of', 'Gtiff', '-o', mosaic, filenames])
     print('mosaic done')
 
 def get_S2_geoinfo(xmlFile, mode = 'L2A'):
