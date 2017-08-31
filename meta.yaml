@@ -22,6 +22,7 @@ requirements:
     - scikit-image
     - scikit-learn
     - scipy
+    - gdal
     - sentinelhub
     - sentinelsat
     - Shapely
