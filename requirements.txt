@@ -1,24 +1,15 @@
-glob2>=0.6
 Glymur>=0.8.11
 matplotlib>=2.0.2
 more-itertools>=3.2.0
-numpy>=1.12.1
-numpydoc>=0.7.0
-pandas>=0.20.3
 psutil>=4.3.1
 PySAL>=1.13.0
 pyshp>=1.2.12
-scikit-image>=0.13.0
-scikit-learn>=0.19.0
-scipy>=0.19.1
-sentinelhub>=0.1.6
 sentinelsat>=0.12
 Shapely>=1.5.16
 simpledbf>=0.2.6
 Sphinx>=1.4.6
-tornado>=4.4.1
-tqdm>=4.15.0
 XML2Dict>=0.2.2
 xmltodict>=0.11.0
+
 
 
