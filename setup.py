@@ -13,16 +13,15 @@ with open('README.rst', encoding='utf-8') as f:
 setup(
     name="geospatial-learn",
     version="0.1",
-    #packages=find_packages(),
+    packages=find_packages(),
     install_requires=open('requirements.txt').read().splitlines(),
     # Project uses reStructuredText, so ensure that the docutils get
     # installed or upgraded on the target machine
-
-    package_data={
+    include_package_data= True,#{
         # If any package contains *.txt or *.rst files, include them:
-        '': ['*.txt', '*.rst'],
+        #'': ['*.txt', '*.rst'],
         # And include any *.msg files found in the 'hello' package, too:
-    },
+    #},
     classifiers=[
           'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
           'Programming Language :: Python :: 3.4',
@@ -31,6 +30,7 @@ setup(
           'Topic :: Scientific/Engineering :: GIS',
 	      'Topic :: Utilities'],
     # metadata for upload to PyPI
+    #zip_safe = True,
     author="Ciaran Robb",
     description=descript,
     long_description=long_description,
