@@ -35,6 +35,28 @@ requirements:
     
   run:
     - python
+    - glob2
+    - Glymur
+    - matplotlib
+    - more-itertools
+    - numpy
+    - pandas
+    - psutil
+    - PySAL
+    - pyshp
+    - scikit-image
+    - scikit-learn
+    - scipy
+    - gdal
+    - sentinelhub
+    - sentinelsat
+    - Shapely
+    - simpledbf
+    - Sphinx
+    - tornado
+    - tqdm
+    - XML2Dict
+    - xmltodict
 
 test:
   imports:
