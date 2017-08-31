@@ -13,7 +13,7 @@ setup(
     name="geospatial-learn",
     version="0.1",
     #packages=find_packages(),
-    install_requires=open('requirements.txt').read().splitlines(),
+    #install_requires=open('requirements.txt').read().splitlines(),
     # Project uses reStructuredText, so ensure that the docutils get
     # installed or upgraded on the target machine
 
