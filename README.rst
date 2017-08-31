@@ -26,6 +26,9 @@ At present the setup.py only installs some of the dependencies. An anaconda pack
 
 Linux - based
 ~~~~~~~~~~~~~~~~~
+
+Library & pypi install
+
 Step 1.
 
 - download the zip from here (see clone or download)
@@ -42,7 +45,7 @@ This will install the library and packages unavailable on anaconda.
 
 Step 2.
 
-Conda is very handy at managing packages, hence this stage, as some of these are external to python or themselves have multiple depends.
+Conda is very handy at managing packages, hence the 2 stage install, as some of these are external to python or themselves have multiple depends.
 
 Next, type the following (in the same terminal).
 
@@ -57,7 +60,9 @@ All the appropriate anaconda packages will then install
 Windows - based
 ~~~~~~~~~~~~~~~~~   
 
-Commiserations, you are using Windows. This MAY work, though I have not tested it. 
+Commiserations, you are using Windows (hehe). This seems to work, though I have only tested on 1 machine. 
+
+Library & pypi install
 
 Step 1.
 
@@ -75,13 +80,15 @@ This will install the library and packages unavailable on anaconda.
 
 Step 2.
 
-Conda is very handy at managing packages, hence this stage, as some of these are external to python or themselves have multiple depends.
+Conda is very handy at managing packages, hence the 2 stage install, as some of these are external to python or themselves have multiple depends.
 
 Next, type the following (in the same terminal).
 
 .. code-block:: bash
 
-   install_conda_packages.bat
+   .\install_conda_packages.bat
+
+If you run into problems here, such as certain packages unavailable with Python 3.5/6, I suggest creating a conda environment with python 3.4, then following the above procedure. At the time of writing for example (31/08/17), gdal is not available in py3.5+ on windows anaconda and py3.6 on linux platforms.
 
 Development
 -----------
