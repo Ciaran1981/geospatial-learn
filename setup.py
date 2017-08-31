@@ -13,7 +13,7 @@ with open('README.rst', encoding='utf-8') as f:
 setup(
     name="geospatial-learn",
     version="0.1",
-    packages=find_packages(),
+    packages=['geospatial_learn'],
     install_requires=open('requirements.txt').read().splitlines(),
     # Project uses reStructuredText, so ensure that the docutils get
     # installed or upgraded on the target machine
