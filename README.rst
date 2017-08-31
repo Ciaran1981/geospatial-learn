@@ -31,9 +31,7 @@ Library & pypi install
 
 Step 1.
 
-Step 1.
-
-- open a powershell and type:
+- open a terminal and type:
 
 .. code-block:: bash
    
@@ -79,7 +77,7 @@ Library & pypi install
 
 Step 1.
 
-- open a powershell and type:
+- open a powershell/anaconda prompt and type:
 
 .. code-block:: bash
    
