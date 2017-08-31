@@ -1,5 +1,5 @@
-package: geospatial-learn
-  name: 
+package: 
+  name: geospatial-learn
   version: 0.1
 
 source:
@@ -10,6 +10,28 @@ requirements:
   build:
     - python
     - setuptools
+    - glob2
+    - Glymur
+    - matplotlib
+    - more-itertools
+    - numpy
+    - pandas
+    - psutil
+    - PySAL
+    - pyshp
+    - scikit-image
+    - scikit-learn
+    - scipy
+    - sentinelhub
+    - sentinelsat
+    - Shapely
+    - simpledbf
+    - Sphinx
+    - tornado
+    - tqdm
+    - XML2Dict
+    - xmltodict
+    
   run:
     - python
 
