@@ -20,9 +20,9 @@ import gdal, ogr,  osr
 import os
 import numpy as np
 import glob2
-from geospatial_learn.data import get_S2_geoinfo
-from geospatial_learn.handyplots import plot_save_2_images
-from geospatial_learn.shape import bbox_to_pixel_offsets
+from c_utils.data import get_S2_geoinfo
+from c_utils.handyplots import plot_save_2_images
+from c_utils.shape import bbox_to_pixel_offsets
 import tempfile
 #from pyrate.shared import DEM
 import glymur
