@@ -31,7 +31,10 @@ Library & pypi install
 
 Step 1.
 
-- download the zip from here (see clone or download)
+- download the zip from here: 
+
+  https://github.com/Ciaran1981/geospatial-learn/blob/master/archive/geospatial-learn-0.1.tar.gz
+
 
 - cd into the folder
 
@@ -66,7 +69,9 @@ Library & pypi install
 
 Step 1.
 
-- download the zip from here (see clone or download)
+- download the zip from here: 
+
+  https://github.com/Ciaran1981/geospatial-learn/blob/master/archive/geospatial-learn-0.1.tar.gz
 
 - cd into the folder
 
