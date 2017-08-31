@@ -22,8 +22,9 @@ geospatial-learn requires:
 User installation
 ~~~~~~~~~~~~~~~~~
 
-available soon  
+At present the setup.py and dependencies stuff is not finished, but soon will be and an associated pip based installation will be available
 
+Until then, paste the interior geospatial_learn folder into your site packages, then install any missing depends manually. I'd recommend using anaconda....
 
 Development
 -----------
