@@ -24,7 +24,8 @@ User installation
 
 At present the setup.py only installs some of the dependencies. An anaconda package is in the works, but until that is done please do the following. This assumes you have an anaconda installation with a python 3  root OR env.
 
-
+Linux - based
+~~~~~~~~~~~~~~~~~
 Step 1.
 
 - download the zip from here (see clone or download)
@@ -52,7 +53,35 @@ Next, type the following (in the same terminal).
    bash ./install_conda_packages.sh
 
 All the appropriate anaconda packages will then install
-   
+
+Windows - based
+~~~~~~~~~~~~~~~~~   
+
+Commiserations, you are using Windows. This MAY work, though I have not tested it. 
+
+Step 1.
+
+- download the zip from here (see clone or download)
+
+- cd into the folder
+
+- open a powershell and type:
+
+.. code-block:: bash
+    
+   python setup.py install
+
+This will install the library and packages unavailable on anaconda.
+
+Step 2.
+
+Conda is very handy at managing packages, hence this stage, as some of these are external to python or themselves have multiple depends.
+
+Next, type the following (in the same terminal).
+
+.. code-block:: bash
+
+   install_conda_packages.bat
 
 Development
 -----------
