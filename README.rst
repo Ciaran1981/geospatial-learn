@@ -31,6 +31,16 @@ Library & pypi install
 
 Step 1.
 
+Step 1.
+
+- open a powershell and type:
+
+.. code-block:: bash
+   
+   pip install geospatial-learn
+
+OR
+
 - download the zip from here: 
 
   https://github.com/Ciaran1981/geospatial-learn/raw/master/archive/geospatial-learn-0.1.tar.gz
@@ -68,6 +78,14 @@ Commiserations, you are using Windows (hehe). This seems to work, though I have 
 Library & pypi install
 
 Step 1.
+
+- open a powershell and type:
+
+.. code-block:: bash
+   
+   pip install geospatial-learn
+
+OR
 
 - download the zip from here: 
 
