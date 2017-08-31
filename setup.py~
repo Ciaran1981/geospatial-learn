@@ -6,14 +6,14 @@ from io import open
 descript = "geospatial-learn is a Python module for using scikit-learn and xgb models with geo-spatial data, chiefly raster and vector formats."
 
 
-with open('README.rst', encoding='utf-8') as f:
-    long_description = f.read()
+#with open('README.rst', encoding='utf-8') as f:
+#    long_description = f.read()
 
 setup(
     name="geospatial-learn",
     version="0.1",
     #packages=find_packages(),
-    install_requires=open('requirements.txt').read().splitlines(),
+    #install_requires=open('requirements.txt').read().splitlines(),
     # Project uses reStructuredText, so ensure that the docutils get
     # installed or upgraded on the target machine
 
