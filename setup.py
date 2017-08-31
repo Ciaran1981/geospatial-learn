@@ -3,6 +3,7 @@
 from setuptools import setup, find_packages
 from io import open
 
+
 descript = "geospatial-learn is a Python module for using scikit-learn and xgb models with geo-spatial data, chiefly raster and vector formats."
 
 
@@ -38,3 +39,5 @@ setup(
 
     # could also include long_description, download_url, classifiers, etc.
 )
+
+
