@@ -46,8 +46,11 @@ Conda is very handy at managing packages, hence this stage, as some of these are
 Next, type the following (in the same terminal).
 
 .. code-block:: bash
-   
-   install_conda_packages.sh
+   # make executable
+   chmod +x install_conda_packages.sh
+
+   # install   
+   bash ./install_conda_packages.sh
 
 All the appropriate anaconda packages will then install
    
