@@ -37,11 +37,13 @@ Step 1.
     
    python setup.py install
 
-This will install packages unavailable on anaconda.
+This will install the library and packages unavailable on anaconda.
 
 Step 2.
 
-Next, do the following (in the same terminal).
+Conda is very handy at managing packages, hence this stage, as some of these are external to python or themselves have multiple depends.
+
+Next, type the following (in the same terminal).
 
 .. code-block:: bash
    
