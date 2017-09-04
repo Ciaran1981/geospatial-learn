@@ -52,7 +52,6 @@ from sentinelhub import download_safe_format
 #from shapely.geometry import Polygon
 
 
- 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 output_folder=None, api = True):
     """
@@ -99,10 +98,10 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
         footprint = get_coordinates(geojsonfile)
     else:
         footprint = geojson_to_wkt(read_geojson(geojsonfile))
-    api.query(footprint,
-              ((start_date, end_date)), platformname="Sentinel-2",
-              cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
-    products = api.get_products()
+    products = api.query(footprint,
+                         ((start_date, end_date)), platformname="Sentinel-2",
+                         cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
+    
     if  api is True and output_folder != None:
 
         api.download_all(directory_path=output_folder)
@@ -167,11 +166,11 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
         footprint = get_coordinates(geojsonfile)
     else:
         footprint = geojson_to_wkt(read_geojson(geojsonfile))
-    api.query(footprint,
-              ((start_date, end_date)),
-              platformname="Sentinel-1",
-              producttype="GRD" ,polarisationmode="VV, VH")
-    products = api.get_products()
+    products = api.query(footprint,
+                         ((start_date, end_date)),
+                         platformname="Sentinel-1",
+                         producttype="GRD" ,polarisationmode="VV, VH")
+
     if  api is True and output_folder != None:
 
         api.download_all(directory_path=output_folder)
@@ -390,11 +389,10 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
     api = SentinelAPI(user, passwd)
 
  
-    api.query(get_coordinates(geojsonfile),
-              ((start_date, end_date)), platformname="Sentinel-2",
-              cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
-    products = api.get_products()
-    #prodList = [prod['title'] for prod in products]
+    products = api.query(get_coordinates(geojsonfile),
+                         ((start_date, end_date)), platformname="Sentinel-2",
+                         cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
+
     
     # If using an aoi shape this is the option to follow at present until I
     # write a native function
