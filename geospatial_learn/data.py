@@ -118,7 +118,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 #os.chdir(output_folder)
                 sceneID = products[prod]['id']
                 cmd = ['sentinel', 'download','-p', output_folder,
-                       'crobb81', 'puddle81', sceneID]
+                       user, passwd, sceneID]
                 print(sceneID+' downloading')
                 subprocess.call(cmd)
                 
@@ -187,7 +187,7 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
                 #os.chdir(output_folder)
                 sceneID = products[prod]['id']
                 cmd = ['sentinel', 'download','-p', output_folder,
-                       'crobb81', 'puddle81', sceneID]
+                       user, passwd, sceneID]
                 print(sceneID+' downloading')
                 subprocess.call(cmd)
         return products
