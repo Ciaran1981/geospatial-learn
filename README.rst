@@ -111,6 +111,8 @@ Next, type the following (in the same terminal).
 
 If you run into problems here, such as certain packages unavailable with Python 3.5/6, I suggest creating a conda environment with python 3.4, then following the above procedure. At the time of writing for example (31/08/17), gdal is not available in py3.5+ on windows anaconda and py3.6 on linux platforms.
 
+I have not provided xgboost instructions here, there are some on the native website along with ensuring the lib points to your python environment of choice. 
+
 Development
 -----------
 
