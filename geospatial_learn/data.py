@@ -25,6 +25,7 @@ import glob2
 import os
 from tqdm import tqdm
 #from sentinelsat import sentinel
+# TODO maybe improve this so it doesn't use a global
 try:
     from sentinelsat import SentinelAPI, read_geojson, geojson_to_wkt
 except:
@@ -94,7 +95,8 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
 ##set up your copernicus username and password details, and copernicus download site... BE CAREFUL if you share this script with others though!
     api = SentinelAPI(user, passwd)
 
-# NOWT WRONG WITH API - 
+# NOWT WRONG WITH API -
+# TODO Maybe improve check of library so it doesn't use a global
     if oldsat is True:
         footprint = get_coordinates(geojsonfile)
     else:
@@ -160,6 +162,7 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
     so I have written some code to avoid this - choose api = False for this
     """
 
+    #TODO: Check if SentinelAPI will use TokenAuth instead of hard-coded cred strings
     api = SentinelAPI(user, passwd)
 
  
@@ -178,7 +181,8 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
         
         return products
     else:        
-        prods = np.arange(len(products))        
+        prods = np.arange(len(products))
+        #TODO: investigate flaky sentinelAPI
         # the api was proving flaky whereas the cmd line always works hence this
         # is alternate the download option
         if output_folder != None:
@@ -192,6 +196,7 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
                 subprocess.call(cmd)
         return products
 
+#TODO: maybe clean up these nested functions. Or it might be alright.
 def sent2_google(scene, start_date, end_date,  outputcatalogs, 
                  cloudcover='100',):
     
@@ -221,7 +226,7 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
         a list of the image urls
         """
 
-    
+#TODO: put metadata urls in a config file    
 #    SENTINEL2_METADATA_URL = ('http://storage.googleapis.com/gcp-public'                     
 #                                    '-data-sentinel-2/index.csv.gz')
     def downloadMetadataFile(outputdir):
@@ -301,6 +306,7 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
 #            l1cList.pop(gran)
         
 def downloadS2FromGoogleCloud(url, outputdir):
+    #TODO: docstring
         # this function collects the entire dir structure of the image files from
         # the manifest.safe file and builds the same structure in the output
         # location
