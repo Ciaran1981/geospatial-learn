@@ -100,7 +100,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
     else:
         footprint = geojson_to_wkt(read_geojson(geojsonfile))
     api.query(footprint,
-              start_date, end_date, platformname="Sentinel-2",
+              ((start_date, end_date)), platformname="Sentinel-2",
               cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
     products = api.get_products()
     if  api is True and output_folder != None:
@@ -168,7 +168,7 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
     else:
         footprint = geojson_to_wkt(read_geojson(geojsonfile))
     api.query(footprint,
-              start_date, end_date,
+              ((start_date, end_date)),
               platformname="Sentinel-1",
               producttype="GRD" ,polarisationmode="VV, VH")
     products = api.get_products()
@@ -391,7 +391,7 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
 
  
     api.query(get_coordinates(geojsonfile),
-              start_date, end_date, platformname="Sentinel-2",
+              ((start_date, end_date)), platformname="Sentinel-2",
               cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
     products = api.get_products()
     #prodList = [prod['title'] for prod in products]
