@@ -402,8 +402,9 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
     # write a native function
     if tile is None:
         Parallel(n_jobs=-1,
-                 verbose=2)(delayed(download_safe_format)(i['identifier'],
-                           folder = output_folder)for i in products_df)
+                 verbose=2)(delayed(download_safe_format)(i,
+                           folder = output_folder) for i in
+                           products_df.identifier)
     # If the tile id is known then use this - likely handy for oldfmt
     else:
 
