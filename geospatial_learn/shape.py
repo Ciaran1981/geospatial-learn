@@ -177,6 +177,7 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
         elif prop is 'MajorAxisLength':
 
             # this is a bit hacky at present but works!!
+            #TODO: Make less hacky
             x,y=poly1.exterior.coords.xy
             xy = np.vstack((x,y))
             rec = min_bound_rectangle(xy.transpose())

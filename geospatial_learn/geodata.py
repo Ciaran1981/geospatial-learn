@@ -84,10 +84,10 @@ def array2raster(array, bands, inRaster, outRas, dtype, FMT=None):
     -----------
         array2raster(myArray, myRaster,'outRaster.img', gdal.GDT_Int32,'HFA')
     """
-    
+
     if FMT == None:
         FMT = 'Gtiff'
-        fmt = '.tif'
+        
     if FMT == 'HFA':
         fmt = '.img'
     if FMT == 'KEA':
@@ -1016,7 +1016,7 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
     nowt
     """    
     
-        
+    #TODO investigate ways of speeding this up   
     # My goodness this is SO SLOW - it's just the gdal function that's slow
     # nowt else
     options = []
