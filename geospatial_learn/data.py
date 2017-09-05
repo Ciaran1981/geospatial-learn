@@ -52,8 +52,6 @@ from sentinelhub import download_safe_format
 #from shapely.geometry import  mapping
 #from shapely.geometry import Polygon
 
-
- 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 output_folder=None, api = True):
     """
@@ -101,15 +99,15 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
         footprint = get_coordinates(geojsonfile)
     else:
         footprint = geojson_to_wkt(read_geojson(geojsonfile))
-    api.query(footprint,
-              start_date, end_date, platformname="Sentinel-2",
-              cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
-    products = api.get_products()
+    products = api.query(footprint,
+                         ((start_date, end_date)), platformname="Sentinel-2",
+                         cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
+    products_df = api.to_dataframe(products)
     if  api is True and output_folder != None:
 
         api.download_all(directory_path=output_folder)
         
-        return products
+
     else:        
         prods = np.arange(len(products))        
         # the api was proving flaky whereas the cmd line always works hence this
@@ -120,13 +118,13 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 #os.chdir(output_folder)
                 sceneID = products[prod]['id']
                 cmd = ['sentinel', 'download','-p', output_folder,
-                       'crobb81', 'puddle81', sceneID]
+                       user, passwd, sceneID]
                 print(sceneID+' downloading')
                 subprocess.call(cmd)
                 
     
             #[p.wait() for p in procList]              
-    return products
+    return products_df, products
 
         
 def sent1_query(user, passwd, geojsonfile, start_date, end_date,
@@ -170,16 +168,17 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
         footprint = get_coordinates(geojsonfile)
     else:
         footprint = geojson_to_wkt(read_geojson(geojsonfile))
-    api.query(footprint,
-              start_date, end_date,
-              platformname="Sentinel-1",
-              producttype="GRD" ,polarisationmode="VV, VH")
-    products = api.get_products()
+    products = api.query(footprint,
+                         ((start_date, end_date)),
+                         platformname="Sentinel-1",
+                         producttype="GRD" ,polarisationmode="VV, VH")
+    products_df = api.to_dataframe(products)
+    
     if  api is True and output_folder != None:
 
         api.download_all(directory_path=output_folder)
         
-        return products
+
     else:        
         prods = np.arange(len(products))
         #TODO: investigate flaky sentinelAPI
@@ -191,10 +190,10 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
                 #os.chdir(output_folder)
                 sceneID = products[prod]['id']
                 cmd = ['sentinel', 'download','-p', output_folder,
-                       'crobb81', 'puddle81', sceneID]
+                       user, passwd, sceneID]
                 print(sceneID+' downloading')
                 subprocess.call(cmd)
-        return products
+    return products_df, products
 
 #TODO: maybe clean up these nested functions. Or it might be alright.
 def sent2_google(scene, start_date, end_date,  outputcatalogs, 
@@ -395,32 +394,34 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
     # Use sentinel sat to query  
     api = SentinelAPI(user, passwd)
 
- 
-    api.query(get_coordinates(geojsonfile),
-              start_date, end_date, platformname="Sentinel-2",
-              cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
-    products = api.get_products()
-    #prodList = [prod['title'] for prod in products]
-    
+    if oldsat is True:
+        footprint = get_coordinates(geojsonfile)
+    else:
+        footprint = geojson_to_wkt(read_geojson(geojsonfile))
+    products = api.query(footprint,
+                         ((start_date, end_date)), platformname="Sentinel-2",
+                         cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
+
+    products_df = api.to_dataframe(products)
+
     # If using an aoi shape this is the option to follow at present until I
     # write a native function
     if tile is None:
         Parallel(n_jobs=-1,
-                 verbose=2)(delayed(download_safe_format)(i['title'],
-                           folder = output_folder)for i in products)
+                 verbose=2)(delayed(download_safe_format)(i,
+                           folder = output_folder) for i in
+                           products_df.identifier)
     # If the tile id is known then use this - likely handy for oldfmt
     else:
 
-#        ## eugh messy business - remember strings are imutable...
-#        date = '{}-{}-{}'.format(start_date[0:4], start_date[4:6],
-#                start_date[6:])
 
         # A kludge for now until I spend more than two mins writing this func
         dateList =[]
-        for prod in products:
-            date1 = prod['date'][0]['content'][0:10]
+        for prod in products_df['ingestiondate']:
+            date1 = prod.strftime('%Y-%m-%d')
             dateList.append(date1)
-        
+
+
         Parallel(n_jobs=-1,
                  verbose=2)(delayed(download_safe_format)(tile=(tile,i),
                            folder = output_folder)
