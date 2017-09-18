@@ -163,13 +163,13 @@
 <p>&#64;author: Ciaran Robb
 Research Associate in Earth Observation
 Centre for Landscape and Climate Research (CLCR)
-Department of Geography, University of Leicester, University Road, Leicester,
+Department of Geography, University of Leicester, University Road, Leicester, 
 LE1 7RH, UK</p>
-<p>If you use code to publish work cite/acknowledge me and other lib authors as
+<p>If you use code to publish work cite/acknowledge me and other lib authors as 
 appropriate</p>
 <p>Description:
 A series of tools for the download and preprocessing of data (mainly sentinel)</p>
-<p>A couple of functions just wrap pre existing Sentinel libs for my own
+<p>A couple of functions just wrap pre existing Sentinel libs for my own 
 convenience or where, some issues with them have been mitigated for</p>
 <dl class="function">
 <dt id="geospatial_learn.data.downloadS2FromGoogleCloud">
@@ -185,7 +185,7 @@ convenience or where, some issues with them have been mitigated for</p>
 <dl class="function">
 <dt id="geospatial_learn.data.get_S2_geoinfo">
 <code class="descclassname">geospatial_learn.data.</code><code class="descname">get_S2_geoinfo</code><span class="sig-paren">(</span><em>xmlFile</em>, <em>mode='L2A'</em><span class="sig-paren">)</span><a class="headerlink" href="#geospatial_learn.data.get_S2_geoinfo" title="Permalink to this definition">¶</a></dt>
-<dd><p>reads xml file associated with S2 data and pulls the relevant
+<dd><p>reads xml file associated with S2 data and pulls the relevant 
 geoinformation - internal fucntion</p>
 </dd></dl>
 
@@ -199,9 +199,8 @@ geoinformation - internal fucntion</p>
 <dt>polygon <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
 <dd>the AOI polygon (must be same crs as rasters)</dd>
 </dl>
-<p class="rubric">Notes</p>
 <p>gdal tile index is used as occasionally using raster info directly
-to compare geometry with polygons produced incorrect results, thus
+to compare geometry with polygons produced incorrect results, thus 
 there is longer processing time, but less likelyhood of errors</p>
 </dd></dl>
 
@@ -209,7 +208,7 @@ there is longer processing time, but less likelyhood of errors</p>
 <dt id="geospatial_learn.data.get_intersect_S2">
 <code class="descclassname">geospatial_learn.data.</code><code class="descname">get_intersect_S2</code><span class="sig-paren">(</span><em>folder</em>, <em>polygon</em>, <em>pixelSize=20</em><span class="sig-paren">)</span><a class="headerlink" href="#geospatial_learn.data.get_intersect_S2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the S2 granules that intersect an area of interest, uses S2xml file
-to get granule coords - this function is quicker than get_intersect, but
+to get granule coords - this function is quicker than get_intersect, but 
 more prone to errors</p>
 <p>folder : string</p>
 <p>polygon : string</p>
@@ -243,7 +242,6 @@ the S2 file structure that uses the gdal_merge script</p>
 <dt>output_folder <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
 <dd>where you intend to download the imagery</dd>
 </dl>
-<p class="rubric">Notes</p>
 <p>I have found the sentinesat sometimes fails to download the second image,
 so I have written some code to avoid this - choose api = False for this</p>
 </dd></dl>
@@ -272,21 +270,21 @@ Uses joblib to parallelise multiple files from aws</p>
 <dt>cloud <span class="classifier-delimiter">:</span> <span class="classifier">string (optional)</span></dt>
 <dd>include a cloud filter in the search</dd>
 </dl>
-<p>Credit to sentinelsat for the query aspect of this function, and
+<p>Credit to sentinelsat for the query aspect of this function, and 
 sentinelhub for the AWS aspect.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="geospatial_learn.data.sent2_google">
 <code class="descclassname">geospatial_learn.data.</code><code class="descname">sent2_google</code><span class="sig-paren">(</span><em>scene</em>, <em>start_date</em>, <em>end_date</em>, <em>outputcatalogs</em>, <em>cloudcover='100'</em><span class="sig-paren">)</span><a class="headerlink" href="#geospatial_learn.data.sent2_google" title="Permalink to this definition">¶</a></dt>
-<dd><p>Download S2 data from google. Adapted from a guys script into functional
+<dd><p>Download S2 data from google. Adapted from a guys script into functional 
 form with some modifications</p>
 <dl class="docutils">
 <dt>scene <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
 <dd>tileID (eg ‘36MYE’)</dd>
-<dt>start_date <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dt>start_date <span class="classifier-delimiter">:</span> <span class="classifier">string </span></dt>
 <dd>eg. ‘2016-12-23’</dd>
-<dt>end_date <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dt>end_date <span class="classifier-delimiter">:</span> <span class="classifier">string </span></dt>
 <dd>eg. ‘2016-12-23’</dd>
 <dt>outputcatalogs <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
 <dd><p class="first">destination folder for catalog that is searched for image</p>
@@ -302,7 +300,7 @@ form with some modifications</p>
 <dl class="function">
 <dt id="geospatial_learn.data.sent2_query">
 <code class="descclassname">geospatial_learn.data.</code><code class="descname">sent2_query</code><span class="sig-paren">(</span><em>user</em>, <em>passwd</em>, <em>geojsonfile</em>, <em>start_date</em>, <em>end_date</em>, <em>cloud='100'</em>, <em>output_folder=None</em>, <em>api=True</em><span class="sig-paren">)</span><a class="headerlink" href="#geospatial_learn.data.sent2_query" title="Permalink to this definition">¶</a></dt>
-<dd><p>A convenience function that wraps sentinelsat query &amp; download although
+<dd><p>A convenience function that wraps sentinelsat query &amp; download although 
 this is hardly necessary but I am lazy</p>
 <dl class="docutils">
 <dt>user <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
@@ -320,7 +318,6 @@ this is hardly necessary but I am lazy</p>
 <dt>cloud <span class="classifier-delimiter">:</span> <span class="classifier">string (optional)</span></dt>
 <dd>include a cloud filter in the search</dd>
 </dl>
-<p class="rubric">Notes</p>
 <p>I have found the sentinesat sometimes fails to download the second image,
 so I have written some code to avoid this - choose api = False for this</p>
 </dd></dl>
@@ -340,7 +337,7 @@ a footprints geojsom produced by sentinelsat/sent1/2query</p>
 <dl class="function">
 <dt id="geospatial_learn.data.sent_latest">
 <code class="descclassname">geospatial_learn.data.</code><code class="descname">sent_latest</code><span class="sig-paren">(</span><em>user</em>, <em>passwd</em>, <em>inShape</em>, <em>footprints</em>, <em>output_folder</em><span class="sig-paren">)</span><a class="headerlink" href="#geospatial_learn.data.sent_latest" title="Permalink to this definition">¶</a></dt>
-<dd><p>Download the latest scene defined by the downloaded geojson that intersects
+<dd><p>Download the latest scene defined by the downloaded geojson that intersects 
 the largest area of the AOI inShape
 The records are in order of date decending which helps here</p>
 <dl class="docutils">
@@ -360,19 +357,19 @@ The records are in order of date decending which helps here</p>
 <dl class="function">
 <dt id="geospatial_learn.data.unzip_S2_granules">
 <code class="descclassname">geospatial_learn.data.</code><code class="descname">unzip_S2_granules</code><span class="sig-paren">(</span><em>folder</em>, <em>granules=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geospatial_learn.data.unzip_S2_granules" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unzip the S2 granules dependent on a specific area in utm
+<dd><p>Unzip the S2 granules dependent on a specific area in utm 
 granule - for the old cumbersome tile format</p>
 <p>The function unzips only the tiles of interest to this area in this project</p>
 <dl class="docutils">
 <dt>folder <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
 <dd>a folder contain S2 tiles</dd>
-<dt>area <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dt>area <span class="classifier-delimiter">:</span> <span class="classifier">string </span></dt>
 <dd>area of interest (optional)</dd>
 <dt>granules <span class="classifier-delimiter">:</span> <span class="classifier">string (optional) - recommended</span></dt>
 <dd>a list of granule UTM codes e.g [‘36MYE’, ‘36MZE’]</dd>
 </dl>
-<p>This was written for the file format S2 imagery initally
-came in from the ESA hub, which was enormous and impractical.
+<p>This was written for the file format S2 imagery initally 
+came in from the ESA hub, which was enormous and impractical. 
 Fortunately this changed near end of 2016, in which case you can simply
 unzip with bash or whatever!</p>
 </dd></dl>
@@ -387,14 +384,14 @@ unzip with bash or whatever!</p>
 <div class="section" id="module-geospatial_learn.shape">
 <span id="geospatial-learn-shape-module"></span><h2>geospatial_learn.shape module<a class="headerlink" href="#module-geospatial_learn.shape" title="Permalink to this headline">¶</a></h2>
 <p>Created on Wed Jun 24 10:30:59 2015
-This module contains various functions for manipulation data in OGR vector
+This module contains various functions for manipulation data in OGR vector 
 formats</p>
 <p>&#64;author: author: Ciaran Robb
 Research Associate in Earth Observation
 Centre for Landscape and Climate Research (CLCR)
-Department of Geography, University of Leicester, University Road, Leicester,
+Department of Geography, University of Leicester, University Road, Leicester, 
 LE1 7RH, UK</p>
-<p>If you use code to publish work cite/acknowledge me and authors of libs as
+<p>If you use code to publish work cite/acknowledge me and authors of libs as 
 appropriate</p>
 <dl class="function">
 <dt id="geospatial_learn.shape.bbox_to_pixel_offsets">
@@ -420,7 +417,7 @@ where not (eg Eccentricity)</p>
 <dd>a raster to get the correct dimensions from (optional), required for
 scikit-image props</dd>
 <dt>prop <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd><p class="first">Scikit image regionprops prop
+<dd><p class="first">Scikit image regionprops prop 
 (see <a class="reference external" href="http://scikit-image.org/docs/dev/api/skimage.measure.html">http://scikit-image.org/docs/dev/api/skimage.measure.html</a>)</p>
 <p class="last">OGR is used to generate most of these as it is faster but the string
 keys are same as scikit-image see notes for which require raster</p>
@@ -449,9 +446,9 @@ keys are same as scikit-image see notes for which require raster</p>
 <dd>output geojson</dd>
 </dl>
 </dd>
+<dt>Notes:</dt>
+<dd>Credit to person who posted this on the pyshp site</dd>
 </dl>
-<p class="rubric">Notes</p>
-<p>Credit to person who posted this on the pyshp site</p>
 </dd></dl>
 
 <dl class="function">
@@ -462,10 +459,10 @@ based on underlying raster values</p>
 <dl class="docutils">
 <dt>vector_path <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
 <dd>input shapefile</dd>
-<dt>raster_path <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dt>raster_path <span class="classifier-delimiter">:</span> <span class="classifier">string </span></dt>
 <dd>input raster path</dd>
 <dt>gprop <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd>a skimage gclm property
+<dd>a skimage gclm property 
 entropy, contrast, dissimilarity, homogeneity, ASM, energy,
 correlation</dd>
 <dt>offset <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
@@ -481,14 +478,14 @@ if True, use only the masked pixels to calculate, otherwise</p>
 <dt>mean <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
 <dd>take the mean of all offsets</dd>
 </dl>
-<p>Important to note that the results will be unreliable for glcm
+<p>Important to note that the results will be unreliable for glcm 
 texture features if seg is true as non-masked values will be zero or
 some weird no data and will affect results</p>
 <p>Important</p>
 <p>The texture of the bounding box is at present the relible measure</p>
-<p>Using the segment only results in potentially spurious results due to the
+<p>Using the segment only results in potentially spurious results due to the 
 scikit-image algorithm measuring texture over zero/nodata to number pixels
-(e.g 0&gt;54). The segment part will be developed in due course to overcome
+(e.g 0&gt;54). The segment part will be developed in due course to overcome 
 this issue</p>
 </dd></dl>
 
@@ -539,9 +536,9 @@ only returned (bool)</dd>
 &#64;author: Ciaran Robb
 Research Associate in Earth Observation
 Centre for Landscape and Climate Research (CLCR)
-Department of Geography, University of Leicester, University Road, Leicester,
+Department of Geography, University of Leicester, University Road, Leicester, 
 LE1 7RH, UK</p>
-<p>If you use code to publish work cite/acknowledge me and authors of libs etc as
+<p>If you use code to publish work cite/acknowledge me and authors of libs etc as 
 appropriate</p>
 <dl class="function">
 <dt id="geospatial_learn.utilities.min_bound_rectangle">
