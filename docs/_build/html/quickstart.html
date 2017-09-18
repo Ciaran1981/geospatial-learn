@@ -1,0 +1,326 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Quickstart &mdash; geospatial-learn 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="geospatial-learn 0.1 documentation" href="index.html"/>
+        <link rel="next" title="geospatial_learn package" href="geospatial_learn.html"/>
+        <link rel="prev" title="Welcome to geospatial-learn’s documentation!" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> geospatial-learn
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#notes">Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#training-and-model-creation">Training and model creation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#classification">Classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#polygon-processing">Polygon processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sentinel-2-data">Sentinel 2 data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="geospatial_learn.html">geospatial_learn package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">geospatial-learn</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Quickstart</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/quickstart.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="quickstart">
+<span id="id1"></span><h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Permalink to this headline">¶</a></h2>
+<p>Be sure to replace the paths with paths to your own imagery/polygons!</p>
+</div>
+<div class="section" id="training-and-model-creation">
+<h2>Training and model creation<a class="headerlink" href="#training-and-model-creation" title="Permalink to this headline">¶</a></h2>
+<p>The following simple example uses the learning module to read in training from a shapefile and associated raster, then exhaustively grid search the model based on a default range of parameters. It is also possible to pass sklearn parameteter dicts to the create_model function.</p>
+<p>Bear in mind a large amount of training data and a lot of paramter combinations results in many model fits and lengthy grid search time!</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Import the module required</span>
+<span class="kn">from</span> <span class="nn">geospatial_learn</span> <span class="kn">import</span> <span class="n">learning</span>
+
+<span class="c1"># collect some training data</span>
+<span class="n">trainShape</span> <span class="o">=</span> <span class="s1">&#39;path/to/my/trainingShp.shp&#39;</span>
+<span class="n">inRas</span> <span class="o">=</span> <span class="s1">&#39;path/to/my/rasterFile.shp&#39;</span>
+
+<span class="c1"># training collection, returning any rejects (invalid geometry - rej)</span>
+<span class="c1"># the &#39;Class&#39; string is the title of the training label field attribute</span>
+<span class="n">training</span><span class="p">,</span> <span class="n">rej</span> <span class="o">=</span> <span class="n">learning</span><span class="o">.</span><span class="n">get_training</span><span class="p">(</span><span class="n">trainShape</span><span class="p">,</span> <span class="n">inRas</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;Class&#39;</span><span class="p">)</span>
+
+<span class="c1"># path to my model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="s1">&#39;path/to/my/model.gz&#39;</span>
+
+
+<span class="c1">#</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">learning</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="n">training</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">clf</span><span class="o">=</span><span class="s1">&#39;rf&#39;</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                             <span class="n">cores</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="n">strat</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="classification">
+<h2>Classification<a class="headerlink" href="#classification" title="Permalink to this headline">¶</a></h2>
+<p>The following code uses the learning module to classify an image based on the model made in the code above.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">geospatial_learn</span> <span class="kn">import</span> <span class="n">learning</span>
+
+<span class="c1"># no of bands in raster</span>
+<span class="n">bands</span> <span class="o">=</span> <span class="mi">8</span>
+
+<span class="c1"># path to output map</span>
+<span class="n">outMap</span> <span class="o">=</span> <span class="s1">&#39;path/to/my/rasterFile&#39;</span>
+
+<span class="n">learning</span><span class="o">.</span><span class="n">classify_pixel_bloc</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">inRas</span><span class="p">,</span> <span class="n">bands</span><span class="p">,</span> <span class="n">outMap</span><span class="p">,</span>  <span class="n">blocksize</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="polygon-processing">
+<h2>Polygon processing<a class="headerlink" href="#polygon-processing" title="Permalink to this headline">¶</a></h2>
+<p>Add attributes to a shapefile - perhaps with a view to classifying them later.</p>
+<p>The following calculates some geometric properties and pixel based statistics using functions form the shape module.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">geospatial_learn.shape</span> <span class="kn">import</span> <span class="n">shape_props</span><span class="p">,</span> <span class="n">zonal_stats</span>
+
+<span class="c1"># path to polygon</span>
+<span class="n">segShape</span> <span class="o">=</span> <span class="s1">&#39;path/to/my/segmentShp.shp&#39;</span>
+
+<span class="c1"># function to write</span>
+
+<span class="c1"># Property of interest</span>
+<span class="n">prop</span> <span class="o">=</span> <span class="s1">&#39;Eccentricity&#39;</span>
+
+<span class="c1"># function</span>
+<span class="n">shape_props</span><span class="p">(</span><span class="n">inShape</span><span class="p">,</span> <span class="n">prop</span><span class="p">,</span> <span class="n">inRas</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>  <span class="n">label_field</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">)</span>
+
+<span class="c1"># variables for function</span>
+<span class="n">band</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">inRas</span> <span class="o">=</span> <span class="s1">&#39;pth/to/myraster.tif&#39;</span>
+<span class="n">bandname</span> <span class="o">=</span> <span class="s1">&#39;Blue&#39;</span>
+
+<span class="c1"># function</span>
+<span class="n">zonal_stats</span><span class="p">(</span><span class="n">segShape</span><span class="p">,</span> <span class="n">inRas</span><span class="p">,</span> <span class="n">band</span><span class="p">,</span> <span class="n">bandname</span><span class="p">,</span> <span class="n">stat</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
+             <span class="n">write_stat</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="sentinel-2-data">
+<h2>Sentinel 2 data<a class="headerlink" href="#sentinel-2-data" title="Permalink to this headline">¶</a></h2>
+<p>The following code will stack a set of Sentinel 2 (S2) bands into a single raster. The code uses the module ‘geodata’, which has a range of functions for manipulating raster data.
+I have used a genuine S2 path here hence the extreme length of the string!</p>
+<p>The function automatically names the stacked raster and saves it in the granule folder.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;/path/to/S2A_MSIL1C_20161223T075332_N0204_R135_T36MYE_20161223T080853/S2A_MSIL2A_20161223T075332_N0204_R135_T36MYE_20161223T080853.SAFE/GRANULE/L2A_T36MYE_A007854_20161223T080853/&#39;</span>
+
+<span class="n">outputPth</span> <span class="o">=</span> <span class="n">geodata</span><span class="o">.</span><span class="n">stack_S2</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="geospatial_learn.html" class="btn btn-neutral float-right" title="geospatial_learn package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Welcome to geospatial-learn’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Ciaran Robb.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
