@@ -4,7 +4,9 @@ from setuptools import setup, find_packages
 from io import open
 
 
-descript = "geospatial-learn is a Python module for using scikit-learn and xgb models with geo-spatial data, chiefly raster and vector formats."
+descript = ('geospatial-learn is a Python module for using scikit-learn and'
+            'xgb models with geo-spatial data, chiefly raster and vector'
+            'formats.')
 
 
 with open('README.rst', encoding='utf-8') as f:
@@ -19,7 +21,6 @@ setup(
     # installed or upgraded on the target machine
     include_package_data= True,#{
         # If any package contains *.txt or *.rst files, include them:
-        #'': ['*.txt', '*.rst'],
         # And include any *.msg files found in the 'hello' package, too:
     #},
     classifiers=[
