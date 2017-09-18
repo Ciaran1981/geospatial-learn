@@ -12,6 +12,9 @@ LE1 7RH, UK
 If you use code to publish work cite/acknowledge me and authors of libs etc as 
 appropriate 
 
+Description
+-----------
+A series of tools for the manipulation of geospatial imagery/rasters
 
 """
 import gdal, ogr,  osr

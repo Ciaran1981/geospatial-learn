@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jun 24 10:30:59 2015
-This module contains various functions for manipulation data in OGR vector 
-formats
-
 author: Ciaran Robb
 Research Associate in Earth Observation
 Centre for Landscape and Climate Research (CLCR)
@@ -12,6 +8,13 @@ LE1 7RH, UK
 
 If you use code to publish work cite/acknowledge me and authors of libs as 
 appropriate 
+
+Description
+-----------
+
+This module contains various functions for manipulation data in OGR vector 
+formats
+
 """
 #from time import time
 from skimage.measure import regionprops

@@ -11,12 +11,14 @@ LE1 7RH, UK
 upport
 If you use code to publish work cite/acknowledge me, Sciki-learn 
 
-Description:
+Description
+-----------
 The learning module set of functions provide a framework to optimise and classify
 EO data for both per pixel or object properties
 
 
-Performance notes:
+Performance notes
+
 This was tested on an i7 intel with 16gb of ram, so with large images/arrays 
 of stats this will inevitably be slower - especially with a more standard machine.
 """

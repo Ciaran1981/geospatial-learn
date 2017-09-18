@@ -97,9 +97,18 @@
 <li class="toctree-l3"><a class="reference internal" href="#description">Description</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-geospatial_learn.geodata">geospatial_learn.geodata module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-geospatial_learn.learning">geospatial_learn.learning module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-geospatial_learn.shape">geospatial_learn.shape module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-geospatial_learn.geodata">geospatial_learn.geodata module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Description</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-geospatial_learn.learning">geospatial_learn.learning module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Description</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-geospatial_learn.shape">geospatial_learn.shape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Description</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-geospatial_learn.utilities">geospatial_learn.utilities module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-geospatial_learn">Module contents</a></li>
 </ul>
@@ -419,6 +428,9 @@ Department of Geography, University of Leicester, University Road, Leicester,
 LE1 7RH, UK</p>
 <p>If you use code to publish work cite/acknowledge me and authors of libs etc as
 appropriate</p>
+<div class="section" id="id1">
+<h3>Description<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>A series of tools for the manipulation of geospatial imagery/rasters</p>
 <dl class="function">
 <dt id="geospatial_learn.geodata.array2raster">
 <code class="descclassname">geospatial_learn.geodata.</code><code class="descname">array2raster</code><span class="sig-paren">(</span><em>array</em>, <em>bands</em>, <em>inRaster</em>, <em>outRas</em>, <em>dtype</em>, <em>FMT=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geospatial_learn.geodata.array2raster" title="Permalink to this definition">¶</a></dt>
@@ -817,6 +829,7 @@ gdal_translate</p>
 </dd></dl>
 
 </div>
+</div>
 <div class="section" id="module-geospatial_learn.learning">
 <span id="geospatial-learn-learning-module"></span><h2>geospatial_learn.learning module<a class="headerlink" href="#module-geospatial_learn.learning" title="Permalink to this headline">¶</a></h2>
 <p>Created on Thu May  5 12:28:13 2016</p>
@@ -827,11 +840,12 @@ Department of Geography, University of Leicester, University Road, Leicester,
 LE1 7RH, UK
 upport
 If you use code to publish work cite/acknowledge me, Sciki-learn</p>
-<p>Description:
-The learning module set of functions provide a framework to optimise and classify
+<div class="section" id="id2">
+<h3>Description<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>The learning module set of functions provide a framework to optimise and classify
 EO data for both per pixel or object properties</p>
-<p>Performance notes:
-This was tested on an i7 intel with 16gb of ram, so with large images/arrays
+<p>Performance notes</p>
+<p>This was tested on an i7 intel with 16gb of ram, so with large images/arrays
 of stats this will inevitably be slower - especially with a more standard machine.</p>
 <dl class="function">
 <dt id="geospatial_learn.learning.RF_oob_opt">
@@ -1097,11 +1111,9 @@ so that has been prioritised rather than raster IO</p>
 </dd></dl>
 
 </div>
+</div>
 <div class="section" id="module-geospatial_learn.shape">
 <span id="geospatial-learn-shape-module"></span><h2>geospatial_learn.shape module<a class="headerlink" href="#module-geospatial_learn.shape" title="Permalink to this headline">¶</a></h2>
-<p>Created on Wed Jun 24 10:30:59 2015
-This module contains various functions for manipulation data in OGR vector
-formats</p>
 <p>author: Ciaran Robb
 Research Associate in Earth Observation
 Centre for Landscape and Climate Research (CLCR)
@@ -1109,6 +1121,10 @@ Department of Geography, University of Leicester, University Road, Leicester,
 LE1 7RH, UK</p>
 <p>If you use code to publish work cite/acknowledge me and authors of libs as
 appropriate</p>
+<div class="section" id="id3">
+<h3>Description<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>This module contains various functions for manipulation data in OGR vector
+formats</p>
 <dl class="function">
 <dt id="geospatial_learn.shape.shape_props">
 <code class="descclassname">geospatial_learn.shape.</code><code class="descname">shape_props</code><span class="sig-paren">(</span><em>inShape</em>, <em>prop</em>, <em>inRas=None</em>, <em>label_field='ID'</em><span class="sig-paren">)</span><a class="headerlink" href="#geospatial_learn.shape.shape_props" title="Permalink to this definition">¶</a></dt>
@@ -1256,6 +1272,7 @@ only returned (bool)</p>
 </table>
 </dd></dl>
 
+</div>
 </div>
 <div class="section" id="module-geospatial_learn.utilities">
 <span id="geospatial-learn-utilities-module"></span><h2>geospatial_learn.utilities module<a class="headerlink" href="#module-geospatial_learn.utilities" title="Permalink to this headline">¶</a></h2>

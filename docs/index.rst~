@@ -16,11 +16,16 @@ Contents
 ^^^^^^^^
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    
    quickstart
-   geo_spatial_learn
 
+   geospatial_learn
+   	data
+	learning
+	shape
+	geodata
+	utilities
    
    
 .. toctree::
