@@ -17,10 +17,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
+import os
+import sys
+sys.path.insert(0, os.path.abspath('. geospatial_learn'))
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -35,10 +34,11 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.mathjax',
-    'sphinxcontrib.napoleon'
+    'sphinx.ext.napoleon'
 ]
 
 napoleon_google_docstring = False
+napoleon_numpy_docstring = True
 napoleon_use_param = False
 napoleon_use_ivar = True
 # Add any paths that contain templates here, relative to this directory.

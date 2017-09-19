@@ -51,8 +51,6 @@ from sentinelhub import download_safe_format
 #from shapely.geometry import  mapping
 #from shapely.geometry import Polygon
 
-
- 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 output_folder=None, api = True):
     """
@@ -60,7 +58,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
     A convenience function that wraps sentinelsat query & download although 
     this is hardly necessary but I am lazy 
     
-    Where:
+    Parameters
     -----------
     user : string
         username for esa hub
@@ -99,15 +97,15 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
         footprint = get_coordinates(geojsonfile)
     else:
         footprint = geojson_to_wkt(read_geojson(geojsonfile))
-    api.query(footprint,
-              start_date, end_date, platformname="Sentinel-2",
-              cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
-    products = api.get_products()
+    products = api.query(footprint,
+                         ((start_date, end_date)), platformname="Sentinel-2",
+                         cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
+    products_df = api.to_dataframe(products)
     if  api is True and output_folder != None:
 
         api.download_all(directory_path=output_folder)
         
-        return products
+
     else:        
         prods = np.arange(len(products))        
         # the api was proving flaky whereas the cmd line always works hence this
@@ -118,13 +116,13 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 #os.chdir(output_folder)
                 sceneID = products[prod]['id']
                 cmd = ['sentinel', 'download','-p', output_folder,
-                       'crobb81', 'puddle81', sceneID]
+                       user, passwd, sceneID]
                 print(sceneID+' downloading')
                 subprocess.call(cmd)
                 
     
             #[p.wait() for p in procList]              
-    return products
+    return products_df, products
 
         
 def sent1_query(user, passwd, geojsonfile, start_date, end_date,
@@ -133,7 +131,7 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
      A convenience function that wraps sentinelsat query & download although 
     this is hardly necessary but I am lazy 
     
-    Where:
+    Parameters
     -----------
     user : string
         username for esa hub
@@ -167,16 +165,17 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
         footprint = get_coordinates(geojsonfile)
     else:
         footprint = geojson_to_wkt(read_geojson(geojsonfile))
-    api.query(footprint,
-              start_date, end_date,
-              platformname="Sentinel-1",
-              producttype="GRD" ,polarisationmode="VV, VH")
-    products = api.get_products()
+    products = api.query(footprint,
+                         ((start_date, end_date)),
+                         platformname="Sentinel-1",
+                         producttype="GRD" ,polarisationmode="VV, VH")
+    products_df = api.to_dataframe(products)
+    
     if  api is True and output_folder != None:
 
         api.download_all(directory_path=output_folder)
         
-        return products
+
     else:        
         prods = np.arange(len(products))        
         # the api was proving flaky whereas the cmd line always works hence this
@@ -187,10 +186,10 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
                 #os.chdir(output_folder)
                 sceneID = products[prod]['id']
                 cmd = ['sentinel', 'download','-p', output_folder,
-                       'crobb81', 'puddle81', sceneID]
+                       user, passwd, sceneID]
                 print(sceneID+' downloading')
                 subprocess.call(cmd)
-        return products
+    return products_df, products
 
 def sent2_google(scene, start_date, end_date,  outputcatalogs, 
                  cloudcover='100',):
@@ -199,7 +198,7 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
     Download S2 data from google. Adapted from a guys script into functional 
     form with some modifications
     
-    Where:
+    Parameters
     -----------
     scene : string
         tileID (eg '36MYE')
@@ -344,7 +343,7 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
     Way quicker than ESA
     
     
-    Where:
+    Parameters
     ----------
     user : string
         username for esa hub
@@ -389,32 +388,34 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
     # Use sentinel sat to query  
     api = SentinelAPI(user, passwd)
 
- 
-    api.query(get_coordinates(geojsonfile),
-              start_date, end_date, platformname="Sentinel-2",
-              cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
-    products = api.get_products()
-    #prodList = [prod['title'] for prod in products]
-    
+    if oldsat is True:
+        footprint = get_coordinates(geojsonfile)
+    else:
+        footprint = geojson_to_wkt(read_geojson(geojsonfile))
+    products = api.query(footprint,
+                         ((start_date, end_date)), platformname="Sentinel-2",
+                         cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
+
+    products_df = api.to_dataframe(products)
+
     # If using an aoi shape this is the option to follow at present until I
     # write a native function
     if tile is None:
         Parallel(n_jobs=-1,
-                 verbose=2)(delayed(download_safe_format)(i['title'],
-                           folder = output_folder)for i in products)
+                 verbose=2)(delayed(download_safe_format)(i,
+                           folder = output_folder) for i in
+                           products_df.identifier)
     # If the tile id is known then use this - likely handy for oldfmt
     else:
 
-#        ## eugh messy business - remember strings are imutable...
-#        date = '{}-{}-{}'.format(start_date[0:4], start_date[4:6],
-#                start_date[6:])
 
         # A kludge for now until I spend more than two mins writing this func
         dateList =[]
-        for prod in products:
-            date1 = prod['date'][0]['content'][0:10]
+        for prod in products_df['ingestiondate']:
+            date1 = prod.strftime('%Y-%m-%d')
             dateList.append(date1)
-        
+
+
         Parallel(n_jobs=-1,
                  verbose=2)(delayed(download_safe_format)(tile=(tile,i),
                            folder = output_folder)
@@ -426,7 +427,7 @@ def sent_attributes(footprints):
     get a sorted list of tuples each containing the date and sceneID of S2 from
     a footprints geojsom produced by sentinelsat/sent1/2query
     
-    Where:
+    Parameters
     ----------
         
     footprints : string
@@ -458,7 +459,7 @@ def sent_latest(user, passwd, inShape, footprints, output_folder):
     the largest area of the AOI inShape
     The records are in order of date decending which helps here
     
-    Where:
+    Parameters
     -------------- 
     user : string
         username for esa hub
@@ -537,7 +538,7 @@ def merge_images(folder, wildcard, mosaic):
 
     fileList = glob2.glob(folder+'**/**/*'+wildcard)
     filenames = ' '.join(fileList)
-    subprocess.call(['gdal_merge.py', '-of', 'Gtiff', '-o', mosaic, filenames)
+    subprocess.call(['gdal_merge.py', '-of', 'Gtiff', '-o', mosaic, filenames])
     print('mosaic done')
 
 def get_S2_geoinfo(xmlFile, mode = 'L2A'):
@@ -587,7 +588,7 @@ def get_S2_geoinfo(xmlFile, mode = 'L2A'):
 def get_intersect(folder, polygon, resolution=None):
     """get intersect between rasters and AOI polygon
     
-    Where:
+    Parameters
     ---------------    
     folder : string
         the S2 tile folder containing the granules ending .SAFE
@@ -682,7 +683,7 @@ def get_intersect_S2(folder, polygon, pixelSize=20):
     to get granule coords - this function is quicker than get_intersect, but 
     more prone to errors
     
-    Where:
+    Parameters
     --------------
     folder : string
         
@@ -774,7 +775,7 @@ def unzip_S2_granules(folder, granules=None):
     
     The function unzips only the tiles of interest to this area in this project
     
-    Where:
+    Parameters
     ------------    
     folder : string
         a folder contain S2 tiles

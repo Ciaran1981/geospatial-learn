@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-author: Ciaran Robb
+Created on Wed Jun 24 10:30:59 2015
+This module contains various functions for manipulation data in OGR vector 
+formats
+
+@author: author: Ciaran Robb
 Research Associate in Earth Observation
 Centre for Landscape and Climate Research (CLCR)
 Department of Geography, University of Leicester, University Road, Leicester, 
@@ -8,13 +12,6 @@ LE1 7RH, UK
 
 If you use code to publish work cite/acknowledge me and authors of libs as 
 appropriate 
-
-Description
------------
-
-This module contains various functions for manipulation data in OGR vector 
-formats
-
 """
 #from time import time
 from skimage.measure import regionprops
@@ -52,14 +49,14 @@ def shp2gj(inShape, outJson):
     
     Parameters
     ----------
-    inShape : string
-        input shapefile
-    
-    outJson : string
-        output geojson
+        inShape : string
+            input shapefile
+        
+        outJson : string
+            output geojson
     
     Notes:
-    Credit to person who posted this on the pyshp site
+        Credit to person who posted this on the pyshp site
     """    
     
     fname = outJson
@@ -93,7 +90,7 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
     where not (eg Eccentricity)
     
     Parameters 
-    ----------
+    ---------------------------
     
     inShape : string
         input shape file path
@@ -111,14 +108,14 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
         OGR is used to generate most of these as it is faster but the string
         keys are same as scikit-image see notes for which require raster
     
-    Notes
-    -----
-    Only shape file needed (OGR / shapely / numpy based)
+    Notes:
+    ------------------------------
+    Only shape file needed (OGR / shapely / numpy based) :
         
     'MajorAxisLength', 'MinorAxisLength', Area', 'Eccentricity', 'Solidity',
     'Extent': 'Extent', 'Perimeter': 'Perim'
     
-    Raster required
+    Raster required :
         
     'Orientation' and the remainder of props calcualble with scikit-image. These
      process a bit slower than the above ones
@@ -181,7 +178,6 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
         elif prop is 'MajorAxisLength':
 
             # this is a bit hacky at present but works!!
-            #TODO: Make less hacky
             x,y=poly1.exterior.coords.xy
             xy = np.vstack((x,y))
             rec = min_bound_rectangle(xy.transpose())
@@ -315,7 +311,7 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
     shp.FlushCache()
     shp = None
         
-def _bbox_to_pixel_offsets(rgt, geom):
+def bbox_to_pixel_offsets(rgt, geom):
     
     """ internal function to get pixel geo-locations of bbox of a polygon
     
@@ -383,7 +379,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     Calculate zonal stats for an OGR polygon file
     
     Parameters
-    ----------
+    -------------------
     
     vector_path : string
         input shapefile
@@ -445,7 +441,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
                 continue
             geom = feat.geometry()
             
-            src_offset = _bbox_to_pixel_offsets(rgt, geom)
+            src_offset = bbox_to_pixel_offsets(rgt, geom)
             src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                    src_offset[3])
             if src_array is None:
@@ -532,7 +528,7 @@ def write_text_field(inShape, fieldName, attribute):
     """ Write a string to a ogr vector file
     
     Parameters
-    ----------
+    ---------------
     inShape : string
         input OGR vecotr file
         
@@ -571,7 +567,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
     
     
     Parameters
-    ----------
+    ------------------
     vector_path : string
         input shapefile 
         
@@ -600,11 +596,11 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
     texture features if seg is true as non-masked values will be zero or
     some weird no data and will affect results
     
-    Notes
-    -----
+    Notes:
+    ------------------------
     Important
     
-    The texture of the bounding box is at present the "relible" measure
+    The texture of the bounding box is at present the relible measure
     
     Using the segment only results in potentially spurious results due to the 
     scikit-image algorithm measuring texture over zero/nodata to number pixels
@@ -652,7 +648,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
                 continue
             geom = feat.geometry()
             
-            src_offset = _bbox_to_pixel_offsets(rgt, geom)
+            src_offset = bbox_to_pixel_offsets(rgt, geom)
             src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                    src_offset[3])
             if src_array is None:
@@ -720,7 +716,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
     
 
 
-def _dbf2DF(dbfile, upper=True): #Reads in DBF files and returns Pandas DF
+def dbf2DF(dbfile, upper=True): #Reads in DBF files and returns Pandas DF
     db = ps.open(dbfile) #Pysal to open DBF
     d = {col: db.by_col(col) for col in db.header} #Convert dbf to dictionary
     #pandasDF = pd.DataFrame(db[:]) #Convert to Pandas DF

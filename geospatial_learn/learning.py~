@@ -2,8 +2,7 @@
 """
 Created on Thu May  5 12:28:13 2016
 
-author: Ciaran Robb
-
+@author: Ciaran Robb
 Research Associate in Earth Observation
 Centre for Landscape and Climate Research (CLCR)
 Department of Geography, University of Leicester, University Road, Leicester, 
@@ -11,14 +10,12 @@ LE1 7RH, UK
 upport
 If you use code to publish work cite/acknowledge me, Sciki-learn 
 
-Description
------------
+Description:
 The learning module set of functions provide a framework to optimise and classify
 EO data for both per pixel or object properties
 
 
-Performance notes
-
+Performance notes:
 This was tested on an i7 intel with 16gb of ram, so with large images/arrays 
 of stats this will inevitably be slower - especially with a more standard machine.
 """
@@ -57,7 +54,7 @@ from sklearn.externals import joblib
 import joblib as jb
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from geospatial_learn.geodata import array2raster
-from geospatial_learn.shape import _bbox_to_pixel_offsets#, zonal_stats
+from geospatial_learn.shape import bbox_to_pixel_offsets#, zonal_stats
 from scipy.stats import randint as sp_randint
 from scipy.stats import expon
 #from scipy.sparse import csr_matrix
@@ -77,75 +74,75 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
     Brute force or random model creating using scikit learn. Either use the
     default params in this function or enter your own (recommended - see sklearn)
     
-    Parameters
-    ----------  
-    X_train : np array
-        numpy array of training data where the 1st column is labels
-    
-    outModel : string
-        the output model path which is a gz file
-    
-    clf : string
-        an sklearn or xgb classifier/regressor 
-        logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb
-    
-    random : bool
-        if True, a random param search
-    
-    cv : int
-        no of folds
-    
-    cores : int or -1 (default)
-        the no of parallel jobs
-    
-    strat : bool
-        a stratified grid search
-    
-    regress : bool
-        a regression model if True, a classifier if False
-    
-    params : a dict of model params (see scikit learn)
-        enter your own params dict rather than the range provided
-    
-    scoring : string
-        a suitable sklearn scoring type (see notes)
+    Where:
+    ---------------    
+        X_train : np array
+            numpy array of training data where the 1st column is labels
+        
+        outModel : string
+            the output model path which is a gz file
+        
+        clf : string
+            an sklearn or xgb classifier/regressor 
+            logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb
+        
+        random : bool
+            if True, a random param search
+        
+        cv : int
+            no of folds
+        
+        cores : int or -1 (default)
+            the no of parallel jobs
+        
+        strat : bool
+            a stratified grid search
+        
+        regress : bool
+            a regression model if True, a classifier if False
+        
+        params : a dict of model params (see scikit learn)
+            enter your own params dict rather than the range provided
+        
+        scoring : string
+            a suitable sklearn scoring type (see notes)
             
     
-    General Note
-    ------------
-    There are more sophisticated ways to tune a model, this greedily 
-    searches everything but can be computationally costly. Fine tuning 
-    in a more measured way is likely better. There are numerous books,
-    guides etc...
-    E.g. with gb- first tune no of trees for gb, then learning rate, then
-    tree specific
+    General Note:
+    --------------------    
+        There are more sophisticated ways to tune a model, this greedily 
+        searches everything but can be computationally costly. Fine tuning 
+        in a more measured way is likely better. There are numerous books,
+        guides etc...
+        E.g. with gb- first tune no of trees for gb, then learning rate, then
+        tree specific
         
-    Notes on algorithms
-    -------------------   
-    From my own experience and reading around
+    Notes on algorithms:
+    ----------------------    
+        From my own experience and reading around
+        
     
-
-    sklearn svms tend to be not great on large training sets and are
-    slower with these (i have tried on HPCs and they time out on multi fits)
-   
-    sklearn 'gb' is very slow to train, though quick to predict 
+        sklearn svms tend to be not great on large training sets and are
+        slower with these (i have tried on HPCs and they time out on multi fits)
+       
+        sklearn 'gb' is very slow to train, though quick to predict 
+        
+        xgb is much faster, but rather different in algorithmic detail -
+        ie won't produce same results as sklearn...
+        
+        xgb also uses the sklearn wrapper params which differ from those in
+        xgb docs, hence they are commented next to the area of code
     
-    xgb is much faster, but rather different in algorithmic detail -
-    ie won't produce same results as sklearn...
-    
-    xgb also uses the sklearn wrapper params which differ from those in
-    xgb docs, hence they are commented next to the area of code
-
-    Scoring types - there are a lot - some of which won't work for 
-    multi-class, regression etc - see the sklearn docs!
-    
-    'accuracy', 'adjusted_rand_score', 'average_precision', 'f1',
-    'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss',
-    'neg_mean_absolute_error', 'neg_mean_squared_error',
-    'neg_median_absolute_error', 'precision', 'precision_macro',
-    'precision_micro', 'precision_samples', 'precision_weighted',
-    'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples',
-    'recall_weighted', 'roc_auc'
+        Scoring types - there are a lot - some of which won't work for 
+        multi-class, regression etc - see the sklearn docs!
+        
+        'accuracy', 'adjusted_rand_score', 'average_precision', 'f1',
+        'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss',
+        'neg_mean_absolute_error', 'neg_mean_squared_error',
+        'neg_median_absolute_error', 'precision', 'precision_macro',
+        'precision_micro', 'precision_samples', 'precision_weighted',
+        'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples',
+        'recall_weighted', 'roc_auc'
                     
     """
     #t0 = time()
@@ -527,7 +524,7 @@ def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
         
         This function plots a graph diplaying the oob rate
         
-        Parameters
+        Where:
         ---------------------
         
         model : string (.gz)
@@ -548,8 +545,8 @@ def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
         regress : bool
             boolean where if True it is a regressor
         
-        Returns
-        -------
+        Returns:
+        -----------------------
             
         error rate, best estimator
         
@@ -676,16 +673,16 @@ def plot_feature_importances(modelPth, featureNames):
     Plot the 
     feature importances of an ensemble classifier
     
-    Parameters
-    ----------
+    Where:
+    --------------------------
     modelPth : string
         A sklearn model path 
     
     featureNames : list of strings
         a list of feature names
 
-    Notes
-    -----
+    Notes:
+    -----------------
     Adapted from the excellent ML with py book credit to the author
     
     """
@@ -706,8 +703,9 @@ def classify_pixel(model, inputDir, bands, outMap, probMap):
     a folder of tiled rasters for memory management - classify_pixel_block is
     recommended instead of this function
     
-    Parameters
-    ----------
+    Where:
+    
+    ---------------
         
     model : sklearn model
         a path to a scikit learn model that has been saved 
@@ -787,8 +785,8 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     A block processing classifier for large rasters, supports KEA, HFA, & Gtiff
     formats. KEA is recommended, Gtiff is the default
     
-    Parameters
-    ----------
+    Where:
+    ------------------
         
     model : sklearn model
         a path to a scikit learn model that has been saved 
@@ -812,9 +810,13 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     dtype : int (optional - gdal syntax gdal.GDT_Int32) 
         o gdal dataype - default is int32
 
-      
+    Usage exampel:
+    ---------------------    
+    classify_pixel_block(model, inputImage, 8, outMap)
+    
+    
     Notes
-    -----
+    -------------------------------------------------
     
     Block processing is sequential, but quite a few sklearn models are parallel
     so that has been prioritised rather than raster IO
@@ -954,8 +956,7 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
     output.
     Supports KEA, HFA, & Gtiff formats -KEA is recommended, Gtiff is the default
     
-    Parameters
-    ----------
+    Where:
         model : string
             a path to a scikit learn model that has been saved 
             
@@ -981,8 +982,15 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
         one_class : int
             choose a single class to produce output prob raster
 
+        
+        
+    Usage: 
+    ---------------------------
+    (typical - leaving defaults)
+    prob_pixel_block(model, inputImage, 8, 8, outMap)
+    
     Notes
-    -----
+    -------------------------------------------------
     
     Block processing is sequential, but quite a few sklearn models are parallel
     so that has been prioritised rather than raster IO
@@ -1125,8 +1133,8 @@ def classify_object(model, inShape, attributes, field_name=None):
     Classify a polygon/point file attributes ('object based') using an sklearn
     model
     
-    Parameters
-    ----------
+    Where:
+    ------------------
         model : string
             path to input model
         
@@ -1228,8 +1236,8 @@ def get_training_shp(inShape, train_col_number, outFile = None):
     Collect training from a shapefile attribute table. Used for object-based 
     classification. 
     
-    Parameters
-    ----------   
+    Where:
+    --------------------    
     inShape : string
         the input shapefile - must be esri .shp at present
     
@@ -1239,8 +1247,8 @@ def get_training_shp(inShape, train_col_number, outFile = None):
     outFile : string
         path to training data to be saved (.gz)
     
-    Returns
-    -------
+    Returns:
+    ---------------------
     training data as a numpy array, first column is labels, rest are features
     
     """
@@ -1270,9 +1278,8 @@ def get_training_shp(inShape, train_col_number, outFile = None):
 def get_training(inShape, inRas, bands, field, outFile = None):
     """
     Collect training as an np array for use with create model function
-    
-    Parameters
-    ----------
+    Where:
+    --------------
         
     inShape : string
         the input shapefile - must be esri .shp at present
@@ -1289,8 +1296,8 @@ def get_training(inShape, inRas, bands, field, outFile = None):
     outFile : string (optional)
         path to the training file saved as joblib format (eg - 'training.gz')
     
-    Returns
-    -------
+    Returns:
+    ---------------------
         A tuple containing:
         -np array of training data
         -list of polygons with invalid geometry that were not collected 
