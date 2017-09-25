@@ -43,7 +43,7 @@ from skimage.exposure import rescale_intensity
 import warnings
 from os import sys
 import re
-import simplekml
+
 
 #from pathlib import Path
 
