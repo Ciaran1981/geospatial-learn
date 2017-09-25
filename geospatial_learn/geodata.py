@@ -285,21 +285,21 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
         fileList = list(unique_everseen(fileList))
         fileList.append(str(SCL[0]))
         pixelDict = {'60' : 60, '20': 20, '10': 10}
-        geoinfo= get_S2_geoinfo(xml, mode = 'L2A')
+        geoinfo= _get_S2_geoinfo(xml, mode = 'L2A')
     elif mode=='20':
         fileList = glob2.glob(folder+'/IMG_DATA/**/**/*MSI*20*.jp2')
         SCL = glob2.glob(folder+'/IMG_DATA/**/**/*SCL*20m.jp2')
         fileList = list(unique_everseen(fileList))
         fileList.append(str(SCL[0]))
-        geoinfo= get_S2_geoinfo(xml)
+        geoinfo= _get_S2_geoinfo(xml)
     elif mode=='10':
         fileList = glob2.glob(folder+'/IMG_DATA/**/**/*MSI*10*.jp2')
         SCL = glob2.glob(folder+'/IMG_DATA/**/**/*SCL*20m.jp2')
         fileList = list(unique_everseen(fileList))
         fileList.append(str(SCL[0]))
-        geoinfo= get_S2_geoinfo(xml)
+        geoinfo= _get_S2_geoinfo(xml)
     elif mode == 'scene':
-        geoinfo= get_S2_geoinfo(xml, mode = 'L2A')
+        geoinfo= _get_S2_geoinfo(xml, mode = 'L2A')
         fileList = glob2.glob(folder+'IMG_DATA/**/**/*SCL*20m.jp2')
     
     outList = list()
@@ -476,7 +476,7 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
     xml = xml[0]
     #pixelDict = {'60' : 60, '20': 20, '10': 10}
     dtype = gdal.GDT_Int32
-    geoinfo= get_S2_geoinfo(xml)   
+    geoinfo= _get_S2_geoinfo(xml)   
     kwargs = {"tilesize": (blocksize, blocksize), "prog": "RPCL"}
     
     if mode == None:
