@@ -187,8 +187,8 @@ def batch_translate(folder, wildcard, FMT=None):
     """ Using the gdal python API, this function translates the format of files
     to commonly used formats
     
-    Parameters
-    ----------        
+    Where:
+    -----------         
     folder : string
         the folder containing the rasters to be translated
     
@@ -211,7 +211,7 @@ def batch_translate(folder, wildcard, FMT=None):
     if FMT == 'Gtiff':
         fmt = '.tif'    
         
-    fileList = glob2.glob(folder+'**/**/*'+wildcard)
+    fileList = glob2.glob(path.join(folder,'**', '**','*', wildcard))
     outList = list()
     files = np.arange(len(fileList))
     
@@ -242,8 +242,8 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
         
         If you posses a gdal compiled with the corrext openjpg support use that
         
-        Parameters
-        ---------- 
+        Where:
+        ----------- 
         folder : string
             S2 granule dir
     
@@ -253,8 +253,8 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
         FMT : string (optional)
              a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA
                     
-        Notes
-        -----
+        Notes:
+        ----------- 
         This function might be useful if you wish to retain seperate rasters,
         but the use of stack_S2 is recommended
             
@@ -272,35 +272,43 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
     xml = xml[0]
     if mode == 'L1C':
         # this is used for the 1C data 
-        fileList = glob2.glob(folder+'/IMG_DATA/**/**/*MSI*_B*.jp2')
+        fileList = glob2.glob(path.join(folder,'IMG_DATA','**', '**', 
+                                        '*MSI*_B*.jp2'))
         fileList = list(unique_everseen(fileList))
         pixelDict = {'01' : 60, '02': 10, '03': 10, '04': 10, '05': 20,
                '06': 20, '07': 20, '8A': 20, '08': 10, '09': 60, '10': 60,
                '11': 20, '12': 20}
-        geoinfo= _get_S2_geoinfo(xml, mode = None)
+        geoinfo= get_S2_geoinfo(xml, mode = None)
     elif mode == 'L2A':
         # this is a level 2A product
-        fileList = glob2.glob(folder+'/IMG_DATA/**/**/*MSI*_B*.jp2')
-        SCL = glob2.glob(folder+'/IMG_DATA/**/**/*SCL*.jp2')    
+        fileList = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
+                                        '*MSI*_B*.jp2'))
+        SCL = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**', 
+                                   '*SCL*.jp2'))    
         fileList = list(unique_everseen(fileList))
         fileList.append(str(SCL[0]))
         pixelDict = {'60' : 60, '20': 20, '10': 10}
         geoinfo= get_S2_geoinfo(xml, mode = 'L2A')
     elif mode=='20':
-        fileList = glob2.glob(folder+'/IMG_DATA/**/**/*MSI*20*.jp2')
-        SCL = glob2.glob(folder+'/IMG_DATA/**/**/*SCL*20m.jp2')
+        fileList = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
+                                        '*MSI*20*.jp2'))
+        SCL = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
+                                   '*SCL*20m.jp2'))
         fileList = list(unique_everseen(fileList))
         fileList.append(str(SCL[0]))
         geoinfo= get_S2_geoinfo(xml)
     elif mode=='10':
-        fileList = glob2.glob(folder+'/IMG_DATA/**/**/*MSI*10*.jp2')
-        SCL = glob2.glob(folder+'/IMG_DATA/**/**/*SCL*20m.jp2')
+        fileList = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
+                                        '*MSI*10*.jp2'))
+        SCL = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
+                                   '*SCL*20m.jp2'))
         fileList = list(unique_everseen(fileList))
         fileList.append(str(SCL[0]))
         geoinfo= get_S2_geoinfo(xml)
     elif mode == 'scene':
         geoinfo= get_S2_geoinfo(xml, mode = 'L2A')
-        fileList = glob2.glob(folder+'IMG_DATA/**/**/*SCL*20m.jp2')
+        fileList = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
+                                        '*SCL*20m.jp2'))
     
     outList = list()
     #files = np.arange(len(fileList))
@@ -387,8 +395,8 @@ def jp2_translate_batch(mainFolder, FMT=None, mode=None):
     
     Perhaps only useful for the old tile format
     
-    Parameters
-    ----------        
+    Where:
+    -----------         
     mainFolder : string
         the path to S2 tile folder to process
     
@@ -407,12 +415,12 @@ def jp2_translate_batch(mainFolder, FMT=None, mode=None):
     if mode == None:
         mode = None
         
-    paths =  glob2.glob(mainFolder+'/GRANULE/*/')
+    paths =  glob2.glob(path.join(mainFolder, 'GRANULE'))
     paths = list(unique_everseen(paths))
     #noDirs = np.arange(len(paths))
     
-    for path in paths:
-        jp2_translate(path, FMT=FMT, mode=mode)
+    for pth in paths:
+        jp2_translate(pth, FMT=FMT, mode=mode)
 
 def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
              overwrite=True):
@@ -423,8 +431,8 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
         If you possess gdal 2.1 with jp2k support then alternatively use 
         gdal_translate
                     
-        Parameters
-        ----------
+        Where:
+        ----------- 
         granule : string
             the granule folder 
         
@@ -440,12 +448,12 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
         blocksize : int (optional)
             the chunk of jp2 to read in - glymur seems to work fastest with 2048
         
-        Returns
-        -------
+        Returns:
+        ----------- 
         A string of the output file path
             
-        Notes
-        -----             
+        Notes:
+        -----------             
         Uses glymur to read in raster chuncks (until I write something better).
     """
     
@@ -466,7 +474,7 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
     
 #    for file in noDirs:
     
-    xml = glob2.glob(granule+'/*MTI*.xml')
+    xml = glob2.glob(path.join(granule,'*MTI*.xml'))
     if len(xml) is 0:
         xml = glob2.glob(granule+'/*MTD*.xml')
         if len(xml) is 0:
@@ -481,7 +489,7 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
     
     if mode == None:
         bands = 4
-        fileList = glob2.glob(granule+'IMG_DATA/R10m/*MSI*.jp2')
+        fileList = glob2.glob(path.join(granule,'IMG_DATA', 'R10m','*MSI*.jp2'))
         if len(fileList) is 0:
         # the following if is for S2 since format change
             fileList = glob2.glob(granule+'IMG_DATA/R10m/*B0*.jp2')
@@ -500,10 +508,10 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
         
 
     if mode == '20':
-        fileList = glob2.glob(granule+'IMG_DATA/R20m/*MSI*.jp2')
+        fileList = glob2.glob(path.join(granule,'IMG_DATA','R20m','*MSI*.jp2'))
         # the following if is for S2 since format change
         if len(fileList) is 0:
-            fileList = glob2.glob(granule+'IMG_DATA/R20m/*B*.jp2')
+            fileList = glob2.glob(path.join(granule,'IMG_DATA','R20m','*B*.jp2'))
         bands = len(fileList)
         #        x_min = int(geoinfo['ulx20'])
 #        y_max = int(geoinfo['uly20'])
@@ -628,8 +636,8 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
     corresponding to  mask value are retained - does this in blocks for
     efficiency on larger rasters
     
-    Parameters 
-    ---------- 
+    Where: 
+    ----------- 
     inputIm : string
         the input raster
         
@@ -646,8 +654,8 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
     blocksize : int
         the chunk of raster to read in
         
-    Returns
-    -------
+    Returns:
+    ----------- 
     A string of the output file path
         
     """
@@ -743,12 +751,12 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
      
 def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
                     blocksize = 256, FMT = None, dtype=None):
-    """ Perform a numpy masking operation on a raster where all values
+    """ perform a numpy masking operation on a raster where all values
     corresponding to  mask value are retained - does this in blocks for
     efficiency on larger rasters
     
-    Parameters 
-    ----------
+    Where: 
+    ----------- 
     inputIm : string
         the granule folder 
         
@@ -756,7 +764,8 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
          the masking value that delineates pixels to be kept
         
      outval : numerical dtype eg int, float
-         the areas removed will be written to this value default is 0
+         the areas removed will be written to this value
+     default is 0
         
      mask : string
          the mask raster to be used (optional)
@@ -770,6 +779,10 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
      blocksize : int
          the chunk of raster read in & write out
     
+    Returns:
+    ----------- 
+
+    nowt
 
     """
 
@@ -862,7 +875,122 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
         inDataset.FlushCache()
         inDataset = None
 
+def calc_ndvi(inputIm, outputIm, bandsList, blocksize = 256, FMT = None, dtype=None):
+    """ Create a copy of an image with an ndvi band added
+    
+    Where: 
+    ----------- 
+    inputIm : string
+        the granule folder 
+        
+     bands : list
+         a list of band indicies to be used, eg - [3,4] for Sent2 data
 
+     FMT : string
+         the output gdal format eg 'Gtiff', 'KEA', 'HFA'
+        
+     blocksize : int
+         the chunk of raster read in & write out
+    
+    Returns:
+    ----------- 
+
+    nowt
+
+    """
+
+    if FMT == None:
+        FMT = 'Gtiff'
+        fmt = '.tif'
+    if FMT == 'HFA':
+        fmt = '.img'
+    if FMT == 'KEA':
+        fmt = '.kea'
+    if FMT == 'Gtiff':
+        fmt = '.tif'
+    
+    if dtype is None:
+        dtype = gdal.GDT_Int32
+        
+    inDataset = gdal.Open(inputIm, gdal.GA_Update)
+    
+    bands = inDataset.RasterCount+1
+    
+    bnnd = inDataset.GetRasterBand(1)
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
+
+    x_pixels = inDataset.RasterXSize  # number of pixels in x
+    y_pixels = inDataset.RasterYSize  # number of pixels in y
+    geotransform = inDataset.GetGeoTransform()
+    PIXEL_SIZE = geotransform[1]  # size of the pixel...they are square so thats ok.
+    #if not would need w x h
+    x_min = geotransform[0]
+    y_max = geotransform[3]
+    # x_min & y_max are like the "top left" corner.
+    projection = inDataset.GetProjection()
+    geotransform = inDataset.GetGeoTransform()   
+
+    driver = gdal.GetDriverByName(FMT)
+    
+    outDataset = driver.Create(
+            outputIm+fmt, 
+            x_pixels,
+            y_pixels,
+            bands,
+            dtype)
+    
+    outDataset.SetGeoTransform((
+            x_min,    # 0
+            PIXEL_SIZE,  # 1
+            0,                      # 2
+            y_max,    # 3
+            0,                      # 4
+            -PIXEL_SIZE))
+            
+    outDataset.SetProjection(projection)    
+    
+    # So with most datasets blocksize is a row scanline
+    if blocksize == None:
+        blocksize = bnnd.GetBlockSize()
+        blocksizeX = blocksize[0]
+        blocksizeY = blocksize[1]
+    else:
+        blocksizeX = blocksize
+        blocksizeY = blocksize
+         
+    bR = inDataset.GetRasterBand(bandsList[0])
+    bNIR = inDataset.GetRasterBand(bandsList[1])
+    
+                
+    for i in tqdm(range(0, rows, blocksizeY)):
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
+            else:
+                numRows = rows -i
+        
+            for j in range(0, cols, blocksizeX):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+                for band in range(1, bands):
+                    inbnd = inDataset.GetRasterBand(band)
+                    array = inbnd.ReadAsArray(j, i, numCols, numRows)
+                    outbnd = outDataset.GetRasterBand(band)
+                    outbnd.WriteArray(array, j , i)
+        
+                del inbnd, array, outbnd 
+                
+                aR = bR.ReadAsArray(j, i, numCols, numRows)
+                aNIR = bNIR.ReadAsArray(j, i, numCols, numRows)
+                ndvi = (aNIR - aR) / (aNIR + aR) 
+                
+                bnd = outDataset.GetRasterBand(bands)
+                bnd.WriteArray(ndvi, j, i)
+           
+    outDataset.FlushCache()
+    outDataset = None
 
 def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
               blocksize=None):

@@ -2,7 +2,7 @@
 
 
 """
-@author: Ciaran Robb
+Author: Ciaran Robb
 Research Associate in Earth Observation
 Centre for Landscape and Climate Research (CLCR)
 Department of Geography, University of Leicester, University Road, Leicester, 
@@ -11,11 +11,11 @@ LE1 7RH, UK
 If you use code to publish work cite/acknowledge me and other lib authors as 
 appropriate
 
-Description:
+Description
+-----------
 A series of tools for the download and preprocessing of data (mainly sentinel)
 
-A couple of functions just wrap pre existing Sentinel libs for my own 
-convenience or where, some issues with them have been mitigated for
+
 
 
 """
@@ -58,7 +58,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
     A convenience function that wraps sentinelsat query & download although 
     this is hardly necessary but I am lazy 
     
-    Parameters
+    Where:
     -----------
     user : string
         username for esa hub
@@ -131,7 +131,7 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
      A convenience function that wraps sentinelsat query & download although 
     this is hardly necessary but I am lazy 
     
-    Parameters
+    Where:
     -----------
     user : string
         username for esa hub
@@ -198,7 +198,7 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
     Download S2 data from google. Adapted from a guys script into functional 
     form with some modifications
     
-    Parameters
+    Where:
     -----------
     scene : string
         tileID (eg '36MYE')
@@ -235,7 +235,7 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
             print("Downloading Metadata file...")
             # download the file
             try:
-                subprocess.call('curl ' + url + ' -o ' + theZippedFile, shell=True)
+                subprocess.call(['curl', url, '-o', theZippedFile])
             except:
                 print("Some error occurred when trying to download the Metadata file!")
         if not os.path.isfile(theFile):
@@ -243,7 +243,8 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
             # unzip the file
             try:
                 if sys.platform.startswith('win'):  # W32
-                    subprocess.call('7z e -so ' + theZippedFile + ' > ' + theFile, shell=True)  # W32
+                    subprocess.call(['7z', 'e', '-so', theZippedFile, '>',
+                                     theFile])  # W32
                 elif sys.platform.startswith('linux'):  # UNIX
                     subprocess.call(['gunzip', theZippedFile])
             except:
@@ -343,7 +344,7 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
     Way quicker than ESA
     
     
-    Parameters
+    Where:
     ----------
     user : string
         username for esa hub
@@ -420,11 +421,10 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
                  verbose=2)(delayed(download_safe_format)(tile=(tile,i),
                            folder = output_folder)
                            for i in dateList)
-        
-    
+    return products_df, products   
 def sent_attributes(footprints):
     """
-    get a sorted list of tuples each containing the date and sceneID of S2 from
+    Get a sorted list of tuples each containing the date and sceneID of S2 from
     a footprints geojsom produced by sentinelsat/sent1/2query
     
     Parameters
@@ -433,8 +433,8 @@ def sent_attributes(footprints):
     footprints : string
         path to geojson file
     
-    Returns:
-    -----------
+    Returns
+    -------
     
     a list of attribute pairs 
         
@@ -460,7 +460,7 @@ def sent_latest(user, passwd, inShape, footprints, output_folder):
     The records are in order of date decending which helps here
     
     Parameters
-    -------------- 
+    ----------
     user : string
         username for esa hub
         
@@ -532,7 +532,7 @@ def sent_latest(user, passwd, inShape, footprints, output_folder):
     api.download_all(output_folder, show_progress=True,
                  max_rst_retries=10)
     
-def merge_images(folder, wildcard, mosaic):
+def _merge_images(folder, wildcard, mosaic):
     """ A function to merge rasters in a folder and subfolders such as those in
     the S2 file structure that uses the gdal_merge script"""
 
@@ -541,7 +541,7 @@ def merge_images(folder, wildcard, mosaic):
     subprocess.call(['gdal_merge.py', '-of', 'Gtiff', '-o', mosaic, filenames])
     print('mosaic done')
 
-def get_S2_geoinfo(xmlFile, mode = 'L2A'):
+def _get_S2_geoinfo(xmlFile, mode = 'L2A'):
     
     """ reads xml file associated with S2 data and pulls the relevant 
     geoinformation - internal fucntion  """
@@ -586,10 +586,10 @@ def get_S2_geoinfo(xmlFile, mode = 'L2A'):
     return geoinfo
 
 def get_intersect(folder, polygon, resolution=None):
-    """get intersect between rasters and AOI polygon
+    """Get intersect between rasters and AOI polygon
     
     Parameters
-    ---------------    
+    ----------   
     folder : string
         the S2 tile folder containing the granules ending .SAFE
     polygon : string
@@ -597,7 +597,7 @@ def get_intersect(folder, polygon, resolution=None):
         
     
     Notes
-    -----------    
+    -----
     gdal tile index is used as occasionally using raster info directly
     to compare geometry with polygons produced incorrect results, thus 
     there is longer processing time, but less likelyhood of errors
@@ -670,7 +670,7 @@ def get_intersect(folder, polygon, resolution=None):
     
     
 
-def find_all(name, path):
+def _find_all(name, path):
     """ find all dirs with a specific name wildcard - internal fuction"""
     result = []
     for root, dirs, files in os.walk(path):
@@ -703,7 +703,7 @@ def get_intersect_S2(folder, polygon, pixelSize=20):
     #areaList = list()
     #polyList=list()
     for im in tqdm(xmls):
-        geoinfo = get_S2_geoinfo(fileList[im])
+        geoinfo = _get_S2_geoinfo(fileList[im])
         cols = int(geoinfo['cols20'])
         rows = int(geoinfo['rows20'])
         
@@ -776,7 +776,7 @@ def unzip_S2_granules(folder, granules=None):
     The function unzips only the tiles of interest to this area in this project
     
     Parameters
-    ------------    
+    ----------   
     folder : string
         a folder contain S2 tiles
     
@@ -786,8 +786,8 @@ def unzip_S2_granules(folder, granules=None):
     granules : string (optional) - recommended
         a list of granule UTM codes e.g ['36MYE', '36MZE']
     
-    Notes:
-    --------------
+    Notes
+    -----
     This was written for the file format S2 imagery initally 
     came in from the ESA hub, which was enormous and impractical. 
     Fortunately this changed near end of 2016, in which case you can simply

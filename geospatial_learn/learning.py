@@ -63,12 +63,91 @@ from scipy.stats import expon
 #from scipy.sparse import csr_matrix
 import pandas as pd
 import simpledbf
+from tpot import TPOTClassifier, TPOTRegressor
 
 
 
 gdal.UseExceptions()
 ogr.UseExceptions()
 
+def create_model_tpot(X_train, outModel, cv=6, cores=-1,
+                      regress=False, params = None, scoring=None):
+    
+    """
+    Create a model using the tpot library where genetic algorithms
+    are used to optimise pipline and params. 
+    
+    Parameters
+    ----------  
+    X_train : np array
+        numpy array of training data where the 1st column is labels
+    
+    outModel : string
+        the output model path which is a .py file
+    
+    cv : int
+        no of folds
+    
+    cores : int or -1 (default)
+        the no of parallel jobs
+    
+    strat : bool
+        a stratified grid search
+    
+    regress : bool
+        a regression model if True, a classifier if False
+    
+    params : a dict of model params (see tpot)
+        enter your own params dict rather than the range provided
+    
+    scoring : string
+        a suitable sklearn scoring type (see notes)
+                           
+    """
+    #t0 = time()
+    
+    print('Preparing data')   
+    
+    """
+    Prep of data for model fitting 
+    """
+
+    bands = X_train.shape[1]-1
+    
+    #X_train = X_train.transpose()
+    
+    X_train = X_train[X_train[:,0] != 0]
+    
+     
+    # Remove non-finite values
+    X_train = X_train[np.isfinite(X_train).all(axis=1)]
+    # y labels
+    y_train = X_train[:,0]
+
+    # remove labels from X_train
+    X_train = X_train[:,1:bands+1]
+    
+    if params is None and regress is False:       
+        tpot = TPOTClassifier(generations=5, population_size=50, verbosity=2,
+                              n_jobs=cores, warm_start=True)
+        tpot.fit(X_train, y_train)
+        
+    elif params != None and regress is False:
+        tpot = TPOTClassifier(config_dict=params, n_jobs=cores, warm_start=True)
+        tpot.fit(X_train, y_train)
+        
+    if params is None and regress is True:       
+        tpot = TPOTRegressor(generations=5, population_size=50, verbosity=2,
+                              n_jobs=cores, warm_start=True)
+        tpot.fit(X_train, y_train)
+        
+    elif params != None and regress is True:
+        tpot = TPOTRegressor(config_dict=params, n_jobs=cores, warm_start=True)
+        tpot.fit(X_train, y_train)
+
+    tpot.export(outModel)    
+    
+    
 
 def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
                  strat=True, regress=False, params = None, scoring=None):
