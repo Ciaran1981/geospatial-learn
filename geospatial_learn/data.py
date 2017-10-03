@@ -53,10 +53,13 @@ from sentinelhub import download_safe_format
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 output_folder=None, api = True):
-    """A convenience function that wraps sentinelsat query & download although this is hardly necessary but I am lazy 
+    """
+
+    A convenience function that wraps sentinelsat query & download although 
+    this is hardly necessary but I am lazy 
     
-    Parameters
-    ----------
+    Where:
+    -----------
     user : string
         username for esa hub
         
@@ -79,7 +82,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
         include a cloud filter in the search
     
     Notes
-    -----
+    -----------
     
     I have found the sentinesat sometimes fails to download the second image,
     so I have written some code to avoid this - choose api = False for this
@@ -125,11 +128,11 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
 def sent1_query(user, passwd, geojsonfile, start_date, end_date,
                 output_folder=None, api = True):
     """
-    A convenience function that wraps sentinelsat query & download although 
+     A convenience function that wraps sentinelsat query & download although 
     this is hardly necessary but I am lazy 
     
-    Parameters
-    ----------
+    Where:
+    -----------
     user : string
         username for esa hub
         
@@ -149,11 +152,10 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
         where you intend to download the imagery
         
     Notes
-    -----
+    -----------
     
     I have found the sentinesat sometimes fails to download the second image,
     so I have written some code to avoid this - choose api = False for this
-    
     """
 
     api = SentinelAPI(user, passwd)
@@ -196,8 +198,8 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
     Download S2 data from google. Adapted from a guys script into functional 
     form with some modifications
     
-    Parameters
-    ----------
+    Where:
+    -----------
     scene : string
         tileID (eg '36MYE')
     
@@ -211,9 +213,9 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
         destination folder for catalog that is searched for image
         
         output = destination folder
+    Returns:
+    -----------
         
-    Returns
-    ------- 
     urlList : list
         a list of the image urls
         """
@@ -221,7 +223,7 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
     
 #    SENTINEL2_METADATA_URL = ('http://storage.googleapis.com/gcp-public'                     
 #                                    '-data-sentinel-2/index.csv.gz')
-    def _downloadMetadataFile(outputdir):
+    def downloadMetadataFile(outputdir):
         url = ('http://storage.googleapis.com/gcp-public'                     
                                     '-data-sentinel-2/index.csv.gz')
         # This function downloads and unzips the catalogue files
@@ -233,7 +235,7 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
             print("Downloading Metadata file...")
             # download the file
             try:
-                subprocess.call('curl ' + url + ' -o ' + theZippedFile, shell=True)
+                subprocess.call(['curl', url, '-o', theZippedFile])
             except:
                 print("Some error occurred when trying to download the Metadata file!")
         if not os.path.isfile(theFile):
@@ -241,14 +243,15 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
             # unzip the file
             try:
                 if sys.platform.startswith('win'):  # W32
-                    subprocess.call('7z e -so ' + theZippedFile + ' > ' + theFile, shell=True)  # W32
+                    subprocess.call(['7z', 'e', '-so', theZippedFile, '>',
+                                     theFile])  # W32
                 elif sys.platform.startswith('linux'):  # UNIX
                     subprocess.call(['gunzip', theZippedFile])
             except:
                 print("Some error occurred when trying to unzip the Metadata file!")
         return theFile
         
-    def _findS2InCollectionMetadata(collection_file, cc_limit, date_start, date_end, tile):
+    def findS2InCollectionMetadata(collection_file, cc_limit, date_start, date_end, tile):
         # This function queries the sentinel2 index catalogue and retrieves an url for the best image found
         print("Searching for images in catalog...")
         cloudcoverlist = []
@@ -276,12 +279,12 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
     
     
    # Main ---------------
-    sentinel2_metadata_file = _downloadMetadataFile(outputcatalogs)
+    sentinel2_metadata_file = downloadMetadataFile(outputcatalogs)
     cloudcover = float(cloudcover)
     start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
     end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
     
-    urlList = _findS2InCollectionMetadata(sentinel2_metadata_file,
+    urlList = findS2InCollectionMetadata(sentinel2_metadata_file,
                                      cloudcover, start_date,
                                      end_date, scene)
     
@@ -297,7 +300,7 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
 #        if scene[2:6] in pth:
 #            l1cList.pop(gran)
         
-def _downloadS2FromGoogleCloud(url, outputdir):
+def downloadS2FromGoogleCloud(url, outputdir):
         # this function collects the entire dir structure of the image files from
         # the manifest.safe file and builds the same structure in the output
         # location
@@ -333,10 +336,15 @@ def _downloadS2FromGoogleCloud(url, outputdir):
 
 def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder, 
                  tile = None, cloud = '100'):
-    """Query the ESA catalogue then download S2 from AWS with correct renaming of stuff
+    """ 
     
-
-    Parameters
+    Query the ESA catalogue then download S2 from AWS with correct renaming of stuff
+    Uses joblib to parallelise multiple files from aws
+    
+    Way quicker than ESA
+    
+    
+    Where:
     ----------
     user : string
         username for esa hub
@@ -363,7 +371,7 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
         include a cloud filter in the search
     
     Notes:
-    ------
+    ------------------------
         
     Credit to sentinelsat for the query aspect of this function, and 
     sentinelhub for the AWS aspect. 
@@ -413,8 +421,7 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
                  verbose=2)(delayed(download_safe_format)(tile=(tile,i),
                            folder = output_folder)
                            for i in dateList)
-        
-    
+    return products_df, products   
 def sent_attributes(footprints):
     """
     Get a sorted list of tuples each containing the date and sceneID of S2 from
@@ -447,97 +454,19 @@ def sent_attributes(footprints):
     attributes.sort()
     return attributes
 
-def sent_latest(user, passwd, inShape, footprints, output_folder):
-    """Download the latest scene defined by the downloaded geojson that intersects 
-    the largest area of the AOI inShape
-    The records are in order of date decending which helps here
-    
-    Parameters
-    ----------
-    user : string
-        username for esa hub
-        
-    passwd : string
-        password for hub
-    
-    inShape : string
-        AOI polygon of interest
-    
-    footprints : string
-        S2 footprints shape (OGR compatible)
-    
-    output_folder : string
-        where you intend to download the imagery
-
-    
-    """
-    
-    #open files
-    shpAOI = ogr.Open(inShape)
-    shpFt = ogr.Open(footprints)
-    #get layers
-    lyrAOI = shpAOI.GetLayer()
-    lyrFt = shpFt.GetLayer()
-    #get AOI geometry in wkt form for shapely
-    featAOI = lyrAOI.GetFeature(0)
-    if featAOI== None:
-        featAOI = lyrAOI.GetFeature(1)
-    geomAOI = featAOI.GetGeometryRef()
-    wktAOI = geomAOI.ExportToWkt()
-    # shapely poly
-    polyAOI = loads(wktAOI)
-    
-    #loop prep
-    #lyrFt.GetFeatureCount
-    #featFt = lyrFt.GetNextFeature()
-    areaList = list()
-    tileList = list()
-    noFeat = lyrFt.GetFeatureCount()+1
-    # loop through footprints and find the biggest and latest intersect
-    for label in tqdm(range(1, noFeat)):
-        featFt = lyrFt.GetFeature(label)
-        geomFt = featFt.GetGeometryRef()
-        ftWkt = geomFt.ExportToWkt()
-        polyFt = loads(ftWkt)
-        if polyFt.intersects(polyAOI) == True:
-            tileId = featFt.GetField('product_id')
-            interPoly = polyFt.intersection(polyAOI)
-            tileList.append(tileId)
-            areaList.append(interPoly.area)
-
-    maxArea = np.array(areaList).max()
-    marker = np.where(areaList==maxArea)[0]
-    sceneID = tileList[marker]
-    #return imageID    
-    
-    #lines below don't work
-#    bash = 'ogr2ogr -f "ESRI Shapefile" '+inShape+'.shp "'+inShape+'.geojson"'
-#    os.system(bash)
-    api = SentinelAPI(user, passwd,)
-#    shp = ogr.Open(inShape)
-#    lyr = shp.GetLayer()
-#    feat = lyr.GetFeature(1)
-#    sceneID = feat.GetField("product_id")
-    
-    #r = shapefile.Reader(inShape)
-    # Convieniently, the latest scene is always first!!!    #sceneID = r.records()[0][5]
-    
-    api.download_all(output_folder, show_progress=True,
-                 max_rst_retries=10)
-    
-def _merge_images(folder, wildcard, mosaic):
+def merge_images(folder, wildcard, mosaic):
     """ A function to merge rasters in a folder and subfolders such as those in
     the S2 file structure that uses the gdal_merge script"""
 
-    fileList = glob2.glob(folder+'**/**/*'+wildcard)
+    fileList = glob2.glob(os.path.join(folder,'**','**','*'+wildcard))
     filenames = ' '.join(fileList)
-    subprocess.call(['gdal_merge.py', '-of', 'Gtiff', '-o', mosaic, filenames])
+    os.system('gdal_merge.py -of Gtiff -o '+mosaic+' '+filenames)
     print('mosaic done')
 
-def _get_S2_geoinfo(xmlFile, mode = 'L2A'):
+def get_S2_geoinfo(xmlFile, mode = 'L2A'):
     
     """ reads xml file associated with S2 data and pulls the relevant 
-    geoinformation - internal fucntion  """
+    geoinformation  """
     
     
     # This opening method must be used to avoid errors
@@ -548,7 +477,9 @@ def _get_S2_geoinfo(xmlFile, mode = 'L2A'):
     if mode != 'L2A':
         # It is L1C
         geomInfo = xmlDict['n1:Level-1C_Tile_ID']['n1:Geometric_Info']['Tile_Geocoding']
-    else: #S2format == 'old':       
+    else: #S2format == 'old': 
+#        try:           
+        geomInfo = xmlDict['n1:Level-2A_Tile_ID']['n1:Geometric_Info']['Tile_Geocoding']
         geomInfo = xmlDict['n1:Level-2A_Tile_ID']['n1:Geometric_Info']['Tile_Geocoding']
 
         
@@ -579,10 +510,10 @@ def _get_S2_geoinfo(xmlFile, mode = 'L2A'):
     return geoinfo
 
 def get_intersect(folder, polygon, resolution=None):
-    """Get intersect between rasters and AOI polygon
+    """get intersect between rasters and AOI polygon
     
-    Parameters
-    ----------   
+    Where:
+    ---------------    
     folder : string
         the S2 tile folder containing the granules ending .SAFE
     polygon : string
@@ -590,7 +521,7 @@ def get_intersect(folder, polygon, resolution=None):
         
     
     Notes
-    -----
+    -----------    
     gdal tile index is used as occasionally using raster info directly
     to compare geometry with polygons produced incorrect results, thus 
     there is longer processing time, but less likelyhood of errors
@@ -598,12 +529,12 @@ def get_intersect(folder, polygon, resolution=None):
     #paths = glob2.glob(folder+'/GRANULE/*/')
     # choice on resolution so search terms are correct
     if resolution == None:
-        fileList = glob2.glob(folder+'/GRANULE/**/*.tif')
+        fileList = glob2.glob(os.path.join(folder,'GRANULE','**','*.tif'))
     if resolution == '20':
-        fileList = glob2.glob(folder+'/GRANULE/**/*20m.tif')
+        fileList = glob2.glob(os.path.join(folder,'GRANULE','**','*20m.tif'))
         keyword = '_20'
     if resolution == '10':
-        fileList = glob2.glob(folder+'/*/**/*10m.tif')
+        fileList = glob2.glob(os.path.join(folder,'GRANULE','**','*10m.tif'))
         keyword = '_10'
     fileList = list(unique_everseen(fileList))
     fileNames = str(fileList)
@@ -663,8 +594,8 @@ def get_intersect(folder, polygon, resolution=None):
     
     
 
-def _find_all(name, path):
-    """ find all dirs with a specific name wildcard - internal fuction"""
+def find_all(name, path):
+    """ find all dirs with a specific name wildcard"""
     result = []
     for root, dirs, files in os.walk(path):
         if name in dirs:
@@ -676,7 +607,7 @@ def get_intersect_S2(folder, polygon, pixelSize=20):
     to get granule coords - this function is quicker than get_intersect, but 
     more prone to errors
     
-    Parameters
+    Where:
     --------------
     folder : string
         
@@ -687,16 +618,17 @@ def get_intersect_S2(folder, polygon, pixelSize=20):
     """
     
     #os.chdir(folder)
-    paths = glob2.glob(folder+'/GRANULE/*/')
-    fileList = glob2.glob(folder+'/GRANULE/**/*S2A_USER_MTD*.xml')
+    paths = glob2.glob(os.path.join(folder, 'GRANULE'))
+    fileList = glob2.glob(os.path.join(folder, 'GRANULE', '**',
+                                       '*S2A_USER_MTD*.xml'))
     vector = ogr.Open(polygon)
 #    imageList = list
     xmls = np.arange(len(fileList))
     granuleList = list() 
     #areaList = list()
-    #polyList=list()
+    #polyList=list()start_date, end_date
     for im in tqdm(xmls):
-        geoinfo = _get_S2_geoinfo(fileList[im])
+        geoinfo = get_S2_geoinfo(fileList[im])
         cols = int(geoinfo['cols20'])
         rows = int(geoinfo['rows20'])
         
@@ -760,16 +692,25 @@ def get_intersect_S2(folder, polygon, pixelSize=20):
              
     return granuleList#, areaList
 
-def unzip_S2_granules(folder, granules=None):
+def unzip_S2_granules(folder, area=None, granules=None):
     
-    """ Unzip the S2 granules dependent on a specific area in utm 
-    granule - for the old cumbersome tile format 
-        
+    """ Get the S2 granules dependent on a specific area in Kenya or utm 
+    granule. 
+    
+
+    - the area parameter is specific to forests in Kenya as this was a project..
+    areas: mau, laikipia, mtkenya, aberdare, northmau
+    
+    this assumes you have the correct tile
+    
+    - if area is None, you must specify the granule IDs as a list eg ['48NTJ']
+    - this does assume the files all contain the same granules of course
+    
     
     The function unzips only the tiles of interest to this area in this project
     
-    Parameters
-    ----------   
+    Where:
+    ------------    
     folder : string
         a folder contain S2 tiles
     
@@ -779,16 +720,23 @@ def unzip_S2_granules(folder, granules=None):
     granules : string (optional) - recommended
         a list of granule UTM codes e.g ['36MYE', '36MZE']
     
-    Notes
-    -----
+    Notes:
+    --------------
     This was written for the file format S2 imagery initally 
     came in from the ESA hub, which was enormous and impractical. 
     Fortunately this changed near end of 2016, in which case you can simply
     unzip with bash or whatever!
 
     """    
-    fileList = glob2.glob(folder+'/*.zip*')
-
+    # R135 is the code for the mau area tile
+    if area is None:
+        fileList = glob2.glob(os.path.join(folder,'*.zip*'))
+    elif area == 'mau':
+        fileList = glob2.glob(os.path.join(folder,'/*R135*.zip*'))
+    elif area == 'laikipia':
+        fileList = glob2.glob(os.path.join(folder,'/*R092*.zip*'))
+    filez = np.arange(len(fileList))
+    print('extracting files')
     
     # Now to unzip depending on options above using subprocess
     # The wildcard search terms are needed to ge all the correct file
@@ -862,10 +810,3 @@ def unzip_S2_granules(folder, granules=None):
     [p.wait() for p in procList]       
         #print(str(file)+' done')
     print('files extracted')
-
-
-
-
-        
-
-
