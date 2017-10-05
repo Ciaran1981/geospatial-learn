@@ -1771,3 +1771,157 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
     #outBand.FlushCache()
     outDataset.FlushCache()
 
+def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
+                  blocksize=None,
+                  FMT=None,  dtype = gdal.GDT_Int32):
+
+"""Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)
+        
+        Parameters 
+        ---------- 
+        FileList : list of strings
+            the files to be inputed, if None a folder must be specified
+        
+        outMap : string
+            the output raster calculated
+
+	stat : string
+           the statisitc to be calculated         
+
+        blocksize : int
+            the chunck processed 
+
+        q : int
+            the  ith percentile if percentile is the stat used         
+        
+        FMT : string
+            gdal compatible (optional) defaults is tif
+
+        dtype : string
+            gdal datatype (default gdal.GDT_Int32)
+"""
+    
+    if FMT == None:
+        FMT = 'Gtiff'
+        fmt = '.tif'
+    if FMT == 'HFA':
+        fmt = '.img'
+    if FMT == 'KEA':
+        fmt = '.kea'
+    if FMT == 'Gtiff':
+        fmt = '.tif'
+    
+    # dict of stats
+
+    
+    if fileList is None:
+        rasterList = glob2.glob(path.join(folder,'*.tif'))
+    else:
+        rasterList = fileList
+    openList = [gdal.Open(i) for i in rasterList]
+    
+    inDataset = gdal.Open(rasterList[0])
+    bands = inDataset.RasterCount
+    x_pixels = inDataset.RasterXSize  # number of pixels in x
+    y_pixels = inDataset.RasterYSize  # number of pixels in y
+    geotransform = inDataset.GetGeoTransform()
+    PIXEL_SIZE = geotransform[1]  # size of the pixel...they are square so thats ok.
+    #if not would need w x h
+    x_min = geotransform[0]
+    y_max = geotransform[3]
+    # x_min & y_max are like the "top left" corner.
+    projection = inDataset.GetProjection()
+    geotransform = inDataset.GetGeoTransform()   
+    #dtype=gdal.GDT_Int32
+    driver = gdal.GetDriverByName(FMT)
+    
+    # Set params for output raster
+    outDataset = driver.Create(
+        outMap+fmt, 
+        x_pixels,
+        y_pixels,
+        bands,
+        dtype)
+
+    outDataset.SetGeoTransform((
+        x_min,    # 0
+        PIXEL_SIZE,  # 1
+        0,                      # 2
+        y_max,    # 3
+        0,                      # 4
+        -PIXEL_SIZE))
+        
+    outDataset.SetProjection(projection)    
+    band = inDataset.GetRasterBand(1)
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
+    
+    PIXEL_SIZE = geotransform[1] 
+    # So with most datasets blocksize is a row scanline
+    if blocksize == None:
+        blocksize = band.GetBlockSize()
+        blocksizeX = blocksize[0]
+        blocksizeY = blocksize[1]
+    else:
+        blocksizeX = blocksize
+        blocksizeY = blocksize
+
+    def statChoose(X, stat, q):
+        
+        statDict = {'mean' : np.nanmean(X, axis=2),
+            'std' : np.nanstd(X, axis=2),
+            'median' : np.nanmedian(X, axis=2),
+            'percentile' : np.nanpercentile(X, q, axis=2)}
+        
+        return statDict[stat]
+    
+
+    for band in range(1,bands):
+         
+
+        
+        if blocksizeY==1:
+            rows = np.arange(y_pixels, dtype=np.int)                
+            for row in tqdm(rows):
+                i = int(row)
+                j = 0
+                X = np.zeros(shape = (blocksizeY , blocksizeX, len(rasterList)))
+
+                for ind, im in enumerate(openList):
+                    array = im.GetRasterBand(band).ReadAsArray(j,i,
+                                                blocksizeX, j)
+                    X[:,:,ind] = array
+                        
+                stArray = statChoose(X, stat, q)
+
+                outDataset.GetRasterBand(band).WriteArray(stArray,j,i)
+
+    
+        # else it is a block            
+        else:
+            for i in tqdm(range(0, rows, blocksizeY)):
+                if i + blocksizeY < rows:
+                    numRows = blocksizeY
+                else:
+                    numRows = rows -i
+            
+                for j in range(0, cols, blocksizeX):
+                    if j + blocksizeX < cols:
+                        numCols = blocksizeX
+                    else:
+                        numCols = cols - j
+                    X = np.zeros(shape = (numRows, numCols, len(openList)))
+
+                    for ind, im in enumerate(openList):
+                        array = im.GetRasterBand(band).ReadAsArray(j,i,
+                                                numCols, numRows)
+                        X[:,:,ind] = array
+                        
+                    stArray = statChoose(X, stat, q)
+
+                    outDataset.GetRasterBand(band).WriteArray(stArray,j,i)
+
+                    #print(i,j)
+    outDataset.FlushCache()
+    outDataset = None
+
