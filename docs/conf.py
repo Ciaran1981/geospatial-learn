@@ -19,6 +19,16 @@
 #
 import os
 import sys
+
+from recommonmark.parser import CommonMarkParser
+
+source_parsers = {
+    '.md': CommonMarkParser,
+}
+
+source_suffix = ['.rst', '.md']
+
+
 sys.path.insert(0, os.path.abspath('. geospatial_learn'))
 # -- General configuration ------------------------------------------------
 
