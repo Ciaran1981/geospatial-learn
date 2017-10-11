@@ -139,7 +139,7 @@ The model is created in the same way as the image based method outlined earlier 
 
    attributes = ['b', 'g', 'r', 'nir','MajorAxisLength', 'Solidity']
 
-   classify_object(model, segShe, attributes, field_name='ClassRf')
+   classify_object(model, segShp, attributes, field_name='ClassRf')
  
 
 Sentinel 2 data
