@@ -103,8 +103,10 @@ To write multiple attributes a simple loop will suffice:
    # please note that by using enumerate we assume the bandnames are ordered as the are in the image!
    bandnames = ['b', 'g', 'r', 'nir']
 
+
+   # Please note we add 1 to the bnd index as python counts from zero
    for bnd,name in enumerate(bandnames):
-      zonal_stats(inShape, inRas, bnd, name, stat = 'mean', write_stat = True)      
+      zonal_stats(inShape, inRas, bnd+1, name, stat = 'mean', write_stat = True)      
 
 
 Train & then classify shapefile attributes
