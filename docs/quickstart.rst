@@ -37,6 +37,7 @@ Bear in mind a large amount of training data and a lot of paramter combinations 
    # 	
    results = learning.create_model(training, model, clf='rf', cv=3,
                                 cores = 8, strat=True)
+
    
 Classification 
 ---------------
@@ -93,7 +94,7 @@ To write multiple attributes a simple loop will suffice:
 .. code-block:: python
    
    # shape props
-   sProps = ['Area', 'MajorAxisLength', 'MinorAxisLength', 'Solidity', 'Extent']
+   sProps = ['MajorAxisLength', 'Solidity']
    
    for prop in sProps:
       shape_props(inShape, prop, inRas=None,  label_field='ID')
@@ -106,6 +107,39 @@ To write multiple attributes a simple loop will suffice:
       zonal_stats(inShape, inRas, bnd, name, stat = 'mean', write_stat = True)      
 
 
+Train & then classify shapefile attributes
+-----------------------------
+
+In the previous example several attributes were calculated and written to a shapefile. The following example outlines how to train a ML model then classify these.
+In this case the attributes are some of those calculated above
+
+Training
+--------
+
+For training a model using shape attributes, an attribute containing the Class label as well as feature attributes are required. We enter the column index of the Class label attribute. In this example it is column 1.
+
+The remaining attributes are assumed to be features (here we are using the ones calculated in the above looped examples).   
+
+.. code-block:: python
+
+   # collect some training data
+   inShape = 'path/to/my/myShp.shp
+
+   train_col_number = 1
+
+   training = path/to/my/model.gz
+
+
+   get_training_shp(inShape, train_col_number, outFile = model)
+
+The model is created in the same way as the image based method outlined earlier (see Training and model creation)
+
+.. code-block:: python
+
+   attributes = ['b', 'g', 'r', 'nir','MajorAxisLength', 'Solidity']
+
+   classify_object(model, inShape, attributes, field_name='Class')
+ 
 
 Sentinel 2 data
 ---------------
