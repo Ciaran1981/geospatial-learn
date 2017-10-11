@@ -62,7 +62,7 @@ Polygon processing
 
 Add attributes to a shapefile - perhaps with a view to classifying them later. 
 
-The following calculates some geometric properties and pixel based statistics using functions form the shape module. 
+The following calculates some geometric properties and pixel based statistics using functions from the shape module. 
 
 .. code-block:: python
 
@@ -86,7 +86,25 @@ The following calculates some geometric properties and pixel based statistics us
 
    # function
    zonal_stats(segShape, inRas, band, bandname, stat = 'mean',
-                write_stat=None, nodata_value=None)
+                write_stat=True, nodata_value=None)
+
+To write multiple attributes a simple loop will suffice:
+
+.. code-block:: python
+   
+   # shape props
+   sProps = ['Area', 'MajorAxisLength', 'MinorAxisLength', 'Solidity', 'Extent']
+   
+   for prop in sProps:
+      shape_props(inShape, prop, inRas=None,  label_field='ID')
+   
+   # zonal stats
+   # please note that by using enumerate we assume the bandnames are ordered as the are in the image!
+   bandnames = ['b', 'g', 'r', 'nir']
+
+   for bnd,name in enumerate(bandnames):
+      zonal_stats(inShape, inRas, bnd, name, stat = 'mean', write_stat = True)      
+
 
 
 Sentinel 2 data
@@ -100,8 +118,11 @@ The function automatically names the stacked raster and saves it in the granule 
 
 .. code-block:: python
 
+   from geospatial_learn import geodata
+
    path = '/path/to/S2A_MSIL1C_20161223T075332_N0204_R135_T36MYE_20161223T080853/S2A_MSIL2A_20161223T075332_N0204_R135_T36MYE_20161223T080853.SAFE/GRANULE/L2A_T36MYE_A007854_20161223T080853/'	
 
    outputPth = geodata.stack_S2(path)
 
-	
+
+

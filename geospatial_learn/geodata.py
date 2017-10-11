@@ -422,8 +422,8 @@ def jp2_translate_batch(mainFolder, FMT=None, mode=None):
     for pth in paths:
         jp2_translate(pth, FMT=FMT, mode=mode)
 
-def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
-             overwrite=True):
+def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
+             blocksize=2048, overwrite=True):
     """ Stacks S2 bands downloaded from ESA site
         Can translate directly from jp2 format (this is recommended and is 
         default). 
@@ -444,6 +444,10 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
         
         mode : string (optional)
             None, '10'  '20' 
+        
+        old_order : bool (optional)
+            this function used to order the 20m imagery 2,3,4,5,6,7,11,12,8a
+            if false ordered like this 2,3,4,5,6,7,8a,11,12
         
         blocksize : int (optional)
             the chunk of jp2 to read in - glymur seems to work fastest with 2048
@@ -503,6 +507,8 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
         #tiles = np.arange(36)
         fileList.sort()
         fileList = list(unique_everseen(fileList))
+        bandNames = ['2','3','4','8']
+
         #needed due to apparent bug in glob2 - removes duplicate entries
 
         
@@ -522,6 +528,14 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
         PIXEL_SIZE = 20
         #tiles = np.arange(6)
         fileList.sort()
+        # to cover the old order where band 8a is last
+        if old_order is False:            
+            eight = fileList[8]
+            fileList.insert(3, eight)
+            fileList.pop(9)
+            bandNames = ['2','3','4','5','6','7','8a','11','12']
+        else:
+            bandNames = ['2','3','4','5','6','7','11','12', '8a']
         fileList = list(unique_everseen(fileList))
 
         
@@ -565,8 +579,8 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
         
     datasetList = list()
 
-    for band in range(0, bands):
-        data = glymur.Jp2k(fileList[band], **kwargs)
+    for file in fileList:
+        data = glymur.Jp2k(file, **kwargs)
         datasetList.append(data)
             
     dtype=gdal.GDT_Int32
@@ -592,6 +606,9 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
         
     outDataset.SetProjection(projection)    
 
+    for b,desc in enumerate(bandNames):
+        outDataset.GetRasterBand(b+1).SetDescription(desc)
+    
     blocksizeX = blocksize
     blocksizeY = blocksize
     # This index is different as the bbox coords are required
@@ -616,11 +633,11 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
 
 #            tiles = np.arange(len(index))  
 #            for tile in tqdm(tiles):         
-            for band in range(0, bands):
+            for band, file in enumerate(dataList):
+                
                 with warnings.catch_warnings():
                             warnings.simplefilter("ignore")
-                            array1 = dataList[band].read(area=(i,j, brightY, brightX))
-
+                            array1 = file.read(area=(i,j, brightY, brightX))
                 outDataset.GetRasterBand(band+1).WriteArray(array1, j, i)
             #utDataset.GetRasterBand(band).ComputeStatistics(0)                            
         
@@ -1818,9 +1835,27 @@ def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
     outDataset.FlushCache()
     outDataset = None
     
-def average_through_pixel(inRasSet, outRas, window = None):
+def average_through_pixel(inRasSet, outRas, q=5,  window = None, blockSize = None):
     """Loads and averages through the given band in the given datasets
     inRas is a path to a stack of raster
+
+	Parameters 
+            ---------- 
+            inRasSet : list of strings
+                the files to be inputed, if None a folder must be specified
+            
+            outRas : string
+                the output raster calculated
+    
+            	stat : string
+                       the statisitc to be calculated         
+    
+            blocksize : int
+                the chunck processed 
+    
+            q : int
+                the  ith percentile if percentile is the stat used         
+            
     
     """
     #use multtemp filter block and classify_pixel_bloc as inspiration
@@ -1834,12 +1869,24 @@ def average_through_pixel(inRasSet, outRas, window = None):
     
     outDataset = copy_dataset_config(inDatasets[1], outMap = outRas, bands = bands)
     
+#    def statChoose(X, stat, q):
+#        outDataset.GetRasterBand(band).WriteArray(bandCube.mean(0))
+#        outDataset.GetRasterBand(band).WriteArray(bandCube.std(0))
+#        outDataset.GetRasterBand(band).WriteArray(np.median(bandCube, 0))
+#        outDataset.GetRasterBand(band).WriteArray(np.percentile(bandCube, q, 0))
+    
+    
     bandCube = np.empty([bands, x_pixels, y_pixels])
-    for band in range(1, bands): #gdal why
+    for band in tqdm(range(1, bands)): #gdal why
         for i,dataset in enumerate(inDatasets):
             cubeView = bandCube[i,:,:]    #Exposes a view of bandCube; any changes made are reflected in bandCube
             np.copyto(cubeView, dataset.ReadAsArray(0)[band,:,:])
         outDataset.GetRasterBand(band).WriteArray(bandCube.mean(0))
+        outDataset.GetRasterBand(band).WriteArray(bandCube.std(0))
+        outDataset.GetRasterBand(band).WriteArray(np.median(bandCube, 0))
+        outDataset.GetRasterBand(band).WriteArray(np.percentile(bandCube, q, 0))
+        
+        
         
     outDataset = None #gdal. please.
     
@@ -1889,5 +1936,4 @@ def copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy', dtype = gdal.
     outDataset.SetProjection(projection)
     
     return outDataset
-    
     
