@@ -113,6 +113,16 @@ If you run into problems here, such as certain packages unavailable with Python 
 
 I have not provided xgboost instructions here, there are some on the native website along with ensuring the lib points to your python environment of choice. 
 
+
+Quickstart
+----------
+
+A summary of some functions can be found here:
+
+https://github.com/Ciaran1981/geospatial-learn/blob/master/docs/quickstart.rst
+
+This is currently a work in progress of course! Docs to follow!
+
 Development
 -----------
 
