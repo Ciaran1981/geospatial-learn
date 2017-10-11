@@ -70,7 +70,7 @@ The following calculates some geometric properties and pixel based statistics us
    from geospatial_learn.shape import shape_props, zonal_stats
    
    # path to polygon
-   segShape = 'path/to/my/segmentShp.shp'
+   segShp = 'path/to/my/segmentShp.shp'
    
    # function to write 
    
@@ -78,7 +78,7 @@ The following calculates some geometric properties and pixel based statistics us
    prop = 'Eccentricity'
 
    # function
-   shape_props(inShape, prop, inRas=None,  label_field='ID')
+   shape_props(segShp, prop, inRas=None,  label_field='ID')
 
    # variables for function
    band = 1
@@ -86,7 +86,7 @@ The following calculates some geometric properties and pixel based statistics us
    bandname = 'Blue'
 
    # function
-   zonal_stats(segShape, inRas, band, bandname, stat = 'mean',
+   zonal_stats(segShp, inRas, band, bandname, stat = 'mean',
                 write_stat=True, nodata_value=None)
 
 To write multiple attributes a simple loop will suffice:
@@ -97,7 +97,7 @@ To write multiple attributes a simple loop will suffice:
    sProps = ['MajorAxisLength', 'Solidity']
    
    for prop in sProps:
-      shape_props(inShape, prop, inRas=None,  label_field='ID')
+      shape_props(segShp, prop, inRas=None,  label_field='ID')
    
    # zonal stats
    # please note that by using enumerate we assume the bandnames are ordered as the are in the image!
@@ -106,7 +106,7 @@ To write multiple attributes a simple loop will suffice:
 
    # Please note we add 1 to the bnd index as python counts from zero
    for bnd,name in enumerate(bandnames):
-      zonal_stats(inShape, inRas, bnd+1, name, stat = 'mean', write_stat = True)      
+      zonal_stats(segShp, inRas, bnd+1, name, stat = 'mean', write_stat = True)      
 
 
 Train & then classify shapefile attributes
@@ -118,21 +118,20 @@ In this case the attributes are some of those calculated above
 Training
 --------
 
-For training a model using shape attributes, an attribute containing the Class label as well as feature attributes are required. We enter the column index of the Class label attribute. In this example it is column 1.
+For training a model using shape attributes, an attribute containing the Class label (this can be done manually in any GIS) as well as feature attributes are required. We enter the column index of the Class label attribute. In this example it is column 1.
 
 The remaining attributes are assumed to be features (here we are using the ones calculated in the above looped examples).   
 
 .. code-block:: python
 
    # collect some training data
-   inShape = 'path/to/my/myShp.shp
 
    train_col_number = 1
 
    training = path/to/my/model.gz
 
 
-   get_training_shp(inShape, train_col_number, outFile = model)
+   get_training_shp(segShp, train_col_number, outFile = model)
 
 The model is created in the same way as the image based method outlined earlier (see Training and model creation). After this the shapefile attributes are classified with the model as shown below and the results are written as a new attribute 'ClassRf'
 
@@ -140,7 +139,7 @@ The model is created in the same way as the image based method outlined earlier 
 
    attributes = ['b', 'g', 'r', 'nir','MajorAxisLength', 'Solidity']
 
-   classify_object(model, inShape, attributes, field_name='ClassRf')
+   classify_object(model, segShe, attributes, field_name='ClassRf')
  
 
 Sentinel 2 data
