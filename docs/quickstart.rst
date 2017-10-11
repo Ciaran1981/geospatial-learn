@@ -132,13 +132,13 @@ The remaining attributes are assumed to be features (here we are using the ones 
 
    get_training_shp(inShape, train_col_number, outFile = model)
 
-The model is created in the same way as the image based method outlined earlier (see Training and model creation)
+The model is created in the same way as the image based method outlined earlier (see Training and model creation). After this the shapefile attributes are classified with the model as shown below and the results are written as a new attribute 'ClassRf'
 
 .. code-block:: python
 
    attributes = ['b', 'g', 'r', 'nir','MajorAxisLength', 'Solidity']
 
-   classify_object(model, inShape, attributes, field_name='Class')
+   classify_object(model, inShape, attributes, field_name='ClassRf')
  
 
 Sentinel 2 data
