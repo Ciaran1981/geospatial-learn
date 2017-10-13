@@ -10,6 +10,8 @@ simpledbf>=0.2.6
 Sphinx>=1.4.6
 XML2Dict>=0.2.2
 xmltodict>=0.11.0
+glob2
+gdal
 
 
 
