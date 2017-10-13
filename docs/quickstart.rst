@@ -37,6 +37,7 @@ Bear in mind a large amount of training data and a lot of paramter combinations 
    # 	
    results = learning.create_model(training, model, clf='rf', cv=3,
                                 cores = 8, strat=True)
+
    
 Classification 
 ---------------
@@ -62,14 +63,14 @@ Polygon processing
 
 Add attributes to a shapefile - perhaps with a view to classifying them later. 
 
-The following calculates some geometric properties and pixel based statistics using functions form the shape module. 
+The following calculates some geometric properties and pixel based statistics using functions from the shape module. 
 
 .. code-block:: python
 
    from geospatial_learn.shape import shape_props, zonal_stats
    
    # path to polygon
-   segShape = 'path/to/my/segmentShp.shp'
+   segShp = 'path/to/my/segmentShp.shp'
    
    # function to write 
    
@@ -77,7 +78,7 @@ The following calculates some geometric properties and pixel based statistics us
    prop = 'Eccentricity'
 
    # function
-   shape_props(inShape, prop, inRas=None,  label_field='ID')
+   shape_props(segShp, prop, inRas=None,  label_field='ID')
 
    # variables for function
    band = 1
@@ -85,9 +86,61 @@ The following calculates some geometric properties and pixel based statistics us
    bandname = 'Blue'
 
    # function
-   zonal_stats(segShape, inRas, band, bandname, stat = 'mean',
-                write_stat=None, nodata_value=None)
+   zonal_stats(segShp, inRas, band, bandname, stat = 'mean',
+                write_stat=True, nodata_value=None)
 
+To write multiple attributes a simple loop will suffice:
+
+.. code-block:: python
+   
+   # shape props
+   sProps = ['MajorAxisLength', 'Solidity']
+   
+   for prop in sProps:
+      shape_props(segShp, prop, inRas=None,  label_field='ID')
+   
+   # zonal stats
+   # please note that by using enumerate we assume the bandnames are ordered as the are in the image!
+   bandnames = ['b', 'g', 'r', 'nir']
+
+
+   # Please note we add 1 to the bnd index as python counts from zero
+   for bnd,name in enumerate(bandnames):
+      zonal_stats(segShp, inRas, bnd+1, name, stat = 'mean', write_stat = True)      
+
+
+Train & then classify shapefile attributes
+-----------------------------
+
+In the previous example several attributes were calculated and written to a shapefile. The following example outlines how to train a ML model then classify these.
+In this case the attributes are some of those calculated above
+
+Training
+--------
+
+For training a model using shape attributes, an attribute containing the Class label (this can be done manually in any GIS) as well as feature attributes are required. We enter the column index of the Class label attribute. In this example it is column 1.
+
+The remaining attributes are assumed to be features (here we are using the ones calculated in the above looped examples).   
+
+.. code-block:: python
+
+   # collect some training data
+
+   train_col_number = 1
+
+   training = path/to/my/model.gz
+
+
+   get_training_shp(segShp, train_col_number, outFile = model)
+
+The model is created in the same way as the image based method outlined earlier (see Training and model creation). After this the shapefile attributes are classified with the model as shown below and the results are written as a new attribute 'ClassRf'
+
+.. code-block:: python
+
+   attributes = ['b', 'g', 'r', 'nir','MajorAxisLength', 'Solidity']
+
+   classify_object(model, segShp, attributes, field_name='ClassRf')
+ 
 
 Sentinel 2 data
 ---------------
@@ -100,8 +153,11 @@ The function automatically names the stacked raster and saves it in the granule 
 
 .. code-block:: python
 
+   from geospatial_learn import geodata
+
    path = '/path/to/S2A_MSIL1C_20161223T075332_N0204_R135_T36MYE_20161223T080853/S2A_MSIL2A_20161223T075332_N0204_R135_T36MYE_20161223T080853.SAFE/GRANULE/L2A_T36MYE_A007854_20161223T080853/'	
 
    outputPth = geodata.stack_S2(path)
 
-	
+
+
