@@ -7,7 +7,7 @@ Submodules
 geospatial_learn.data module
 ----------------------------
 
-.. automodule:: geospatial_learn.data
+.. automodule:: data
     :members:
     :undoc-members:
     :show-inheritance:
@@ -15,7 +15,7 @@ geospatial_learn.data module
 geospatial_learn.geodata module
 -------------------------------
 
-.. automodule:: geospatial_learn.geodata
+.. automodule:: geodata
     :members:
     :undoc-members:
     :show-inheritance:
@@ -23,7 +23,7 @@ geospatial_learn.geodata module
 geospatial_learn.learning module
 --------------------------------
 
-.. automodule:: geospatial_learn.learning
+.. automodule:: learning
     :members:
     :undoc-members:
     :show-inheritance:
@@ -31,7 +31,7 @@ geospatial_learn.learning module
 geospatial_learn.shape module
 -----------------------------
 
-.. automodule:: geospatial_learn.shape
+.. automodule:: shape
     :members:
     :undoc-members:
     :show-inheritance:
@@ -39,7 +39,7 @@ geospatial_learn.shape module
 geospatial_learn.utilities module
 ---------------------------------
 
-.. automodule:: geospatial_learn.utilities
+.. automodule:: utilities
     :members:
     :undoc-members:
     :show-inheritance:
