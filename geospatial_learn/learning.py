@@ -57,8 +57,8 @@ from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.externals import joblib
 import joblib as jb
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-from geospatial_learn.geodata import array2raster
-from geospatial_learn.shape import _bbox_to_pixel_offsets#, zonal_stats
+from geodata import array2raster
+from shape import _bbox_to_pixel_offsets#, zonal_stats
 from scipy.stats import randint as sp_randint
 from scipy.stats import expon
 #from scipy.sparse import csr_matrix

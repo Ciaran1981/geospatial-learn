@@ -29,7 +29,8 @@ source_parsers = {
 source_suffix = ['.rst', '.md']
 
 
-sys.path.insert(0, os.path.abspath('. geospatial_learn'))
+sys.path.insert(0, os.path.abspath('..'))
+print(sys.path)
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.

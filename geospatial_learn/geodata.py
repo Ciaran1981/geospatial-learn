@@ -23,8 +23,8 @@ import gdal, ogr,  osr
 import os
 import numpy as np
 import glob2
-from geospatial_learn.data import _get_S2_geoinfo
-from geospatial_learn.shape import _bbox_to_pixel_offsets
+from data import get_S2_geoinfo
+from shape import _bbox_to_pixel_offsets
 import tempfile
 #from pyrate.shared import DEM
 import glymur

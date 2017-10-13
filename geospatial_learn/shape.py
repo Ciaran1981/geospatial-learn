@@ -31,7 +31,7 @@ import  ogr, osr
 from tqdm import tqdm
 import numpy as np
 from scipy.stats.mstats import mode
-from geospatial_learn.utilities import min_bound_rectangle
+from utilities import min_bound_rectangle
 from shapely.wkt import loads
 from shapely.geometry import Polygon
 
