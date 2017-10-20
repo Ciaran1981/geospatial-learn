@@ -42,7 +42,7 @@ class Mock(MagicMock):
         return MagicMock()
 
 
-MOCK_MODULES = ['gdal', 'ogr', 'osr', 'joblib', 'skimage']
+MOCK_MODULES = ['gdal', 'ogr', 'osr', 'joblib', 'skimage', 'sentinelhub']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
