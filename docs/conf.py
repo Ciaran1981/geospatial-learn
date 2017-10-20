@@ -30,7 +30,7 @@ source_parsers = {
 source_suffix = ['.rst', '.md']
 
 
-sys.path.insert(0, os.path.abspath('..//geospatial-learn'))
+sys.path.insert(0, os.path.abspath('..//geospatial_learn'))
 print(sys.path)
 
 # Mocking out gdal for the docs because it's just painful.
