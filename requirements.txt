@@ -12,6 +12,7 @@ XML2Dict>=0.2.2
 xmltodict>=0.11.0
 glob2
 recommonmark
+sklearn
 
 
 
