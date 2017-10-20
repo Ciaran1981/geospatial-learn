@@ -33,15 +33,17 @@ source_suffix = ['.rst', '.md']
 sys.path.insert(0, os.path.abspath('..'))
 print(sys.path)
 
-#Mocking out gdal for the docs because it's just painful.
+# Mocking out gdal for the docs because it's just painful.
+
 
 class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
         return MagicMock()
 
+
 MOCK_MODULES = ['gdal']
-sys.module.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
 
