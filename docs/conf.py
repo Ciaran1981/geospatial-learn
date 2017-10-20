@@ -42,7 +42,7 @@ class Mock(MagicMock):
         return MagicMock()
 
 
-MOCK_MODULES = ['gdal']
+MOCK_MODULES = ['gdal', 'ogr', 'osr']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
