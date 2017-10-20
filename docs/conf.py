@@ -19,6 +19,7 @@
 #
 import os
 import sys
+fomr unittest.mock import MagicMock
 
 from recommonmark.parser import CommonMarkParser
 
@@ -31,6 +32,17 @@ source_suffix = ['.rst', '.md']
 
 sys.path.insert(0, os.path.abspath('..'))
 print(sys.path)
+
+#Mocking out gdal for the docs because it's just painful.
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        return MagicMock()
+
+MOCK_MODULES = ['gdal']
+sys.module.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
