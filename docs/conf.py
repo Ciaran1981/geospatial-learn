@@ -30,7 +30,8 @@ source_parsers = {
 source_suffix = ['.rst', '.md']
 
 
-sys.path.insert(0, os.path.abspath('..//geospatial_learn'))
+sys.path.insert(0, os.path.abspath('..//geospatial_learn'),
+                os.path.abspath('..'))
 print(sys.path)
 
 # Mocking out gdal for the docs because it's just painful.
@@ -42,7 +43,8 @@ class Mock(MagicMock):
         return MagicMock()
 
 
-MOCK_MODULES = ['gdal', 'ogr', 'osr', 'joblib', 'skimage', 'sentinelhub']
+MOCK_MODULES = ['gdal', 'ogr', 'osr', 'joblib', 'skimage', 'sentinelhub',
+                'skimage.measure']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
