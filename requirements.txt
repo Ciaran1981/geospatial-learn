@@ -17,6 +17,5 @@ scikit-image
 joblib
 tqdm
 numpy
-
-
+tpot
 
