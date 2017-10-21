@@ -19,8 +19,15 @@ def min_bound_rectangle(points):
     """
     Find the smallest bounding rectangle for a set of points.
     Returns a set of points representing the corners of the bounding box.
-    :param points: an nx2 matrix of coordinates
-    :rval: an nx2 matrix of coordinates
+    Parameters
+    ----------
+    points : list
+        An nx2 iterable of points
+    
+    Returns
+    -------
+    list
+        an nx2 list of coordinates
     """
     points = np.asarray(points, dtype = np.float64)
     pi2 = np.pi/2.
