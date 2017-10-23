@@ -15,7 +15,7 @@ import gdal, ogr,  osr
 import os
 import numpy as np
 import glob2
-from data import get_S2_geoinfo
+from data import _get_S2_geoinfo
 from shape import _bbox_to_pixel_offsets
 import tempfile
 #from pyrate.shared import DEM
@@ -270,7 +270,7 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
         pixelDict = {'01' : 60, '02': 10, '03': 10, '04': 10, '05': 20,
                '06': 20, '07': 20, '8A': 20, '08': 10, '09': 60, '10': 60,
                '11': 20, '12': 20}
-        geoinfo= get_S2_geoinfo(xml, mode = None)
+        geoinfo= _get_S2_geoinfo(xml, mode = None)
     elif mode == 'L2A':
         # this is a level 2A product
         fileList = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
@@ -280,7 +280,7 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
         fileList = list(unique_everseen(fileList))
         fileList.append(str(SCL[0]))
         pixelDict = {'60' : 60, '20': 20, '10': 10}
-        geoinfo= get_S2_geoinfo(xml, mode = 'L2A')
+        geoinfo= _get_S2_geoinfo(xml, mode = 'L2A')
     elif mode=='20':
         fileList = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
                                         '*MSI*20*.jp2'))
@@ -288,7 +288,7 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
                                    '*SCL*20m.jp2'))
         fileList = list(unique_everseen(fileList))
         fileList.append(str(SCL[0]))
-        geoinfo= get_S2_geoinfo(xml)
+        geoinfo= _get_S2_geoinfo(xml)
     elif mode=='10':
         fileList = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
                                         '*MSI*10*.jp2'))
@@ -296,9 +296,9 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
                                    '*SCL*20m.jp2'))
         fileList = list(unique_everseen(fileList))
         fileList.append(str(SCL[0]))
-        geoinfo= get_S2_geoinfo(xml)
+        geoinfo= _get_S2_geoinfo(xml)
     elif mode == 'scene':
-        geoinfo= get_S2_geoinfo(xml, mode = 'L2A')
+        geoinfo= _get_S2_geoinfo(xml, mode = 'L2A')
         fileList = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
                                         '*SCL*20m.jp2'))
     
@@ -480,7 +480,7 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
     xml = xml[0]
     #pixelDict = {'60' : 60, '20': 20, '10': 10}
     dtype = gdal.GDT_Int32
-    geoinfo= get_S2_geoinfo(xml)   
+    geoinfo= _get_S2_geoinfo(xml)   
     kwargs = {"tilesize": (blocksize, blocksize), "prog": "RPCL"}
     
     if mode == None:
