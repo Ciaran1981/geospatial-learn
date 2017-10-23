@@ -20,12 +20,10 @@ Contents
    
    quickstart
 
-   geospatial_learn
-   	data
-	learning
-	shape
-	geodata
-	utilities
+.. automodule:: geospatial_learn
+ 
+
+
    
    
 .. toctree::

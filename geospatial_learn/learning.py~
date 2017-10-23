@@ -1,15 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu May  5 12:28:13 2016
-
-author: Ciaran Robb
-
-Research Associate in Earth Observation
-Centre for Landscape and Climate Research (CLCR)
-Department of Geography, University of Leicester, University Road, Leicester, 
-LE1 7RH, UK 
-upport
-If you use code to publish work cite/acknowledge me, Sciki-learn 
+The learning module
 
 Description
 -----------
@@ -36,6 +27,7 @@ except ImportError:
 
 
 from tqdm import tqdm
+from geospatial_learn.geodata import copy_dataset_config
 #from time import sleep
 import matplotlib
 matplotlib.use('agg')
@@ -56,8 +48,8 @@ from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.externals import joblib
 import joblib as jb
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-from geospatial_learn.geodata import array2raster
-from geospatial_learn.shape import _bbox_to_pixel_offsets#, zonal_stats
+from geodata import array2raster
+from shape import _bbox_to_pixel_offsets#, zonal_stats
 from scipy.stats import randint as sp_randint
 from scipy.stats import expon
 #from scipy.sparse import csr_matrix
@@ -108,9 +100,7 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
     
     print('Preparing data')   
     
-    """
-    Prep of data for model fitting 
-    """
+	
 
     bands = X_train.shape[1]-1
     

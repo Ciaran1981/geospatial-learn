@@ -1,15 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu May  5 12:28:13 2016
-
-author: Ciaran Robb
-
-Research Associate in Earth Observation
-Centre for Landscape and Climate Research (CLCR)
-Department of Geography, University of Leicester, University Road, Leicester, 
-LE1 7RH, UK 
-upport
-If you use code to publish work cite/acknowledge me, Sciki-learn 
+The learning module
 
 Description
 -----------
@@ -17,8 +8,10 @@ The learning module set of functions provide a framework to optimise and classif
 EO data for both per pixel or object properties
 
 
-Performance notes
 
+
+Notes
+-----
 This was tested on an i7 intel with 16gb of ram, so with large images/arrays 
 of stats this will inevitably be slower - especially with a more standard machine.
 """
@@ -784,7 +777,7 @@ def classify_pixel(model, inputDir, bands, outMap, probMap):
     a folder of tiled rasters for memory management - classify_pixel_block is
     recommended instead of this function
     
-    Where:
+    Parameters
     
     ---------------
         
@@ -866,7 +859,7 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     A block processing classifier for large rasters, supports KEA, HFA, & Gtiff
     formats. KEA is recommended, Gtiff is the default
     
-    Where:
+    Parameters
     ------------------
         
     model : sklearn model
@@ -1024,7 +1017,7 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
     output.
     Supports KEA, HFA, & Gtiff formats -KEA is recommended, Gtiff is the default
     
-    Where:
+    Parameters
         model : string
             a path to a scikit learn model that has been saved 
             
@@ -1177,7 +1170,7 @@ def classify_object(model, inShape, attributes, field_name=None):
     Classify a polygon/point file attributes ('object based') using an sklearn
     model
     
-    Where:
+    Parameters
     ------------------
         model : string
             path to input model
@@ -1280,7 +1273,7 @@ def get_training_shp(inShape, train_col_number, outFile = None):
     Collect training from a shapefile attribute table. Used for object-based 
     classification. 
     
-    Where:
+    Parameters
     --------------------    
     inShape : string
         the input shapefile - must be esri .shp at present
@@ -1322,7 +1315,7 @@ def get_training_shp(inShape, train_col_number, outFile = None):
 def get_training(inShape, inRas, bands, field, outFile = None):
     """
     Collect training as an np array for use with create model function
-    Where:
+    Parameters
     --------------
         
     inShape : string
@@ -1443,7 +1436,7 @@ def get_training(inShape, inRas, bands, field, outFile = None):
 def get_training_point(inShape, inRas, bands, field):
     """ Collect training as a np array for use with create model function using 
           point data
-    Where:
+    Parameters
     --------------
         
     inShape : string
