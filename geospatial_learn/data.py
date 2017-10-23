@@ -218,7 +218,7 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
 #TODO: put metadata urls in a config file    
 #    SENTINEL2_METADATA_URL = ('http://storage.googleapis.com/gcp-public'                     
 #                                    '-data-sentinel-2/index.csv.gz')
-    def downloadMetadataFile(outputdir):
+    def _downloadMetadataFile(outputdir):
         url = ('http://storage.googleapis.com/gcp-public'                     
                                     '-data-sentinel-2/index.csv.gz')
         # This function downloads and unzips the catalogue files
@@ -246,7 +246,7 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
                 print("Some error occurred when trying to unzip the Metadata file!")
         return theFile
         
-    def findS2InCollectionMetadata(collection_file, cc_limit, date_start, date_end, tile):
+    def _findS2InCollectionMetadata(collection_file, cc_limit, date_start, date_end, tile):
         # This function queries the sentinel2 index catalogue and retrieves an url for the best image found
         print("Searching for images in catalog...")
         cloudcoverlist = []
@@ -274,12 +274,12 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
     
     
    # Main ---------------
-    sentinel2_metadata_file = downloadMetadataFile(outputcatalogs)
+    sentinel2_metadata_file = _downloadMetadataFile(outputcatalogs)
     cloudcover = float(cloudcover)
     start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
     end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
     
-    urlList = findS2InCollectionMetadata(sentinel2_metadata_file,
+    urlList = _findS2InCollectionMetadata(sentinel2_metadata_file,
                                      cloudcover, start_date,
                                      end_date, scene)
     
@@ -590,7 +590,7 @@ def get_intersect(folder, polygon, resolution=None):
     
     
 
-def find_all(name, path):
+def _find_all(name, path):
     """ find all dirs with a specific name wildcard"""
     result = []
     for root, dirs, files in os.walk(path):
