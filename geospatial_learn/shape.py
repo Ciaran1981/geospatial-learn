@@ -31,7 +31,7 @@ import  ogr, osr
 from tqdm import tqdm
 import numpy as np
 from scipy.stats.mstats import mode
-from geospatial_learn.utilities import min_bound_rectangle
+from utilities import min_bound_rectangle
 from shapely.wkt import loads
 from shapely.geometry import Polygon
 
@@ -55,10 +55,12 @@ def shp2gj(inShape, outJson):
     inShape : string
         input shapefile
     
+
     outJson : string
         output geojson
     
-    Notes:
+    Notes
+    -----
     Credit to person who posted this on the pyshp site
     """    
     
@@ -89,8 +91,7 @@ def shp2gj(inShape, outJson):
 def shape_props(inShape, prop, inRas=None,  label_field='ID'):
     """
     Calculate various geometric properties of a set of polygons
-    Output will be relative to geographic units where relevant, but normalised
-    where not (eg Eccentricity)
+    Output will be relative to geographic units where relevant, but normalised where not (eg Eccentricity)
     
     Parameters 
     ----------
@@ -181,6 +182,7 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
         elif prop is 'MajorAxisLength':
 
             # this is a bit hacky at present but works!!
+            #TODO: Make less hacky
             x,y=poly1.exterior.coords.xy
             xy = np.vstack((x,y))
             rec = min_bound_rectangle(xy.transpose())
@@ -316,8 +318,26 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
         
 def _bbox_to_pixel_offsets(rgt, geom):
     
-    """ internal function to get pixel geo-locations of bbox of a polygon
+    """ 
+    internal function to get pixel geo-locations of bbox of a polygon
     
+    Parameters
+    ----------
+    rgt : array
+        List of points defining polygon (?)
+    geom : shapely.geometry
+        Structure defining geometry
+    
+    Returns
+    -------
+    xoff : int
+        x offset
+    yoff : int
+        y offset
+    xcount : int
+        rows of bounding box
+    ycount : int
+        columns of bounding box
     """
     
     xOrigin = rgt[0]

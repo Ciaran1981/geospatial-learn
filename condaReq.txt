@@ -1,0 +1,136 @@
+# packages in environment at C:\programs\anaconda\envs\gdal:
+#
+alabaster                 0.7.9                    py34_0  
+astroid                   1.4.9                    py34_0  
+astropy                   1.3                 np111py34_0  
+babel                     2.3.4                    py34_0  
+backports_abc             0.5                      py34_0  
+bleach                    1.5.0                    py34_0  
+bzip2                     1.0.6                    vc10_3  [vc10]
+chardet                   3.0.4                    py34_0  
+click                     6.7                       <pip>
+colorama                  0.3.9                    py34_0  
+CommonMark                0.5.4                     <pip>
+curl                      7.52.1                   vc10_0  [vc10]
+cycler                    0.10.0                   py34_0  
+deap                      1.0.2                     <pip>
+decorator                 4.1.2                    py34_0  
+docutils                  0.13.1                   py34_0  
+entrypoints               0.2.3                    py34_0  
+expat                     2.1.0                    vc10_2  [vc10]  conda-forge
+freetype                  2.5.5                    vc10_2  [vc10]
+freexl                    1.0.2                    vc10_1  [vc10]  conda-forge
+gdal                      2.1.2           np111py34_vc10_6  [vc10]  conda-forge
+geojson                   2.3.0                     <pip>
+geomet                    0.1.2                     <pip>
+geos                      3.5.0                    vc10_0  [vc10]
+glob2                     0.5                      py34_0  
+glueviz                   0.9.1                    py34_0  
+Glymur                    0.8.11                    <pip>
+hdf4                      4.2.12                   vc10_0  [vc10]  conda-forge
+hdf5                      1.8.17                   vc10_8  [vc10]  conda-forge
+html2text                 2016.9.19                 <pip>
+html5lib                  0.999                    py34_0  
+icu                       57.1                     vc10_0  [vc10]
+imagesize                 0.7.1                    py34_0  
+ipykernel                 4.6.1                    py34_0  
+ipython                   5.3.0                    py34_0  
+ipython_genutils          0.2.0                    py34_0  
+isort                     4.2.5                    py34_0  
+jedi                      0.9.0                    py34_1  
+jinja2                    2.9.6                    py34_0  
+joblib                    0.9.4                    py34_0  
+jpeg                      9b                       vc10_0  [vc10]  conda-forge
+jsonschema                2.6.0                    py34_0  
+jupyter_client            5.1.0                    py34_0  
+jupyter_core              4.3.0                    py34_0  
+kealib                    1.4.6                    vc10_3  [vc10]  conda-forge
+lazy-object-proxy         1.2.2                    py34_0  
+libgdal                   2.0.0                    vc10_1  [vc10]
+libiconv                  1.14                     vc10_4  [vc10]  conda-forge
+libnetcdf                 4.4.1.1                  vc10_2  [vc10]  conda-forge
+libpng                    1.6.30                   vc10_1  [vc10]
+libpq                     9.5.4                    vc10_3  [vc10]  conda-forge
+libspatialite             4.3.0a                  vc10_13  [vc10]  conda-forge
+libtiff                   4.0.6                    vc10_7  [vc10]  conda-forge
+libxml2                   2.9.3                    vc10_9  [vc10]  conda-forge
+markupsafe                1.0                      py34_0  
+matplotlib                2.0.0               np111py34_0  
+mistune                   0.7.4                    py34_0  
+mkl                       2017.0.3                      0  
+more-itertools            3.2.0                     <pip>
+nbconvert                 5.2.1                    py34_0  
+nbformat                  4.3.0                    py34_0  
+networkx                  1.11                     py34_0  
+numpy                     1.13.3                    <pip>
+numpy                     1.11.3                   py34_0  
+numpydoc                  0.6.0                    py34_0  
+openjpeg                  2.1.2                    vc10_2  [vc10]  conda-forge
+openssl                   1.0.2l                   vc10_0  [vc10]
+pandas                    0.19.2              np111py34_1  
+pandas                    0.20.3                    <pip>
+pandocfilters             1.4.1                    py34_0  
+path.py                   10.0                     py34_0  
+pcre                      8.39                     vc10_0  [vc10]  conda-forge
+pep8                      1.7.0                    py34_0  
+pickleshare               0.7.4                    py34_0  
+pillow                    4.0.0                    py34_0  
+pip                       9.0.1                    py34_1  
+proj4                     4.9.3                    vc10_2  [vc10]  conda-forge
+prompt_toolkit            1.0.14                   py34_0  
+psutil                    5.0.1                    py34_0  
+py                        1.4.32                   py34_0  
+pyflakes                  1.5.0                    py34_0  
+pygments                  2.2.0                    py34_0  
+pylint                    1.6.4                    py34_1  
+pyparsing                 2.2.0                    py34_0  
+pypiwin32                 219                       <pip>
+pyqt                      5.6.0                    py34_2  
+pysal                     1.12.0                   py34_0  
+pyshp                     1.2.12                    <pip>
+pytest                    3.0.5                    py34_0  
+python                    3.4.5                         0  
+python-dateutil           2.6.1                    py34_0  
+pytz                      2017.2                   py34_0  
+pyzmq                     16.0.2                   py34_0  
+qt                        5.6.2                    vc10_5  [vc10]
+qtawesome                 0.4.3                    py34_0  
+qtconsole                 4.2.1                    py34_2  
+qtpy                      1.2.1                    py34_0  
+recommonmark              0.4.0                     <pip>
+requests                  2.14.2                   py34_0  
+rope                      0.9.4                    py34_1  
+scikit-image              0.12.3              np111py34_1  
+scikit-learn              0.18.1              np111py34_1  
+scipy                     0.19.1              np111py34_0  
+sentinelhub               0.1.6                     <pip>
+sentinelsat               0.12                      <pip>
+setuptools                27.2.0                   py34_1  
+Shapely                   1.6.1                     <pip>
+simpledbf                 0.2.6                     <pip>
+simplegeneric             0.8.1                    py34_1  
+simplekml                 1.3.0                     <pip>
+sip                       4.18                     py34_0  
+six                       1.10.0                   py34_0  
+snowballstemmer           1.2.1                    py34_0  
+sphinx                    1.5.1                    py34_0  
+sphinx-rtd-theme          0.2.4                     <pip>
+spyder                    3.1.2                    py34_0  
+sqlite                    3.13.0                   vc10_0  [vc10]  conda-forge
+stopit                    1.1.1                     <pip>
+testpath                  0.3.1                    py34_0  
+tk                        8.5.18                   vc10_0  [vc10]
+tornado                   4.5.1                    py34_0  
+TPOT                      0.9.0                     <pip>
+tqdm                      4.15.0                     py_1    conda-forge
+traitlets                 4.3.2                    py34_0  
+update-checker            0.16                      <pip>
+vc                        10                            0    conda-forge
+vs2010_runtime            10.00.40219.1                 2  
+wcwidth                   0.1.7                    py34_0  
+wheel                     0.29.0                   py34_0  
+win_unicode_console       0.5                      py34_0  
+wrapt                     1.10.8                   py34_0  
+xerces-c                  3.1.4                    vc10_0  [vc10]
+xmltodict                 0.11.0                    <pip>
+zlib                      1.2.11                   vc10_0  [vc10]

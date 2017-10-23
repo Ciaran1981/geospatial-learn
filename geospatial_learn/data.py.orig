@@ -305,8 +305,12 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
 #        if scene[2:6] in pth:
 #            l1cList.pop(gran)
         
-def downloadS2FromGoogleCloud(url, outputdir):
+<<<<<<< HEAD
+def _downloadS2FromGoogleCloud(url, outputdir):
 
+=======
+def downloadS2FromGoogleCloud(url, outputdir):
+>>>>>>> 8e663322c283722e22839d6318fc7848fa2f0279
         # this function collects the entire dir structure of the image files from
         # the manifest.safe file and builds the same structure in the output
         # location
@@ -469,7 +473,7 @@ def merge_images(folder, wildcard, mosaic):
     os.system('gdal_merge.py -of Gtiff -o '+mosaic+' '+filenames)
     print('mosaic done')
 
-def _get_S2_geoinfo(xmlFile, mode = 'L2A'):
+def get_S2_geoinfo(xmlFile, mode = 'L2A'):
     
     """ reads xml file associated with S2 data and pulls the relevant 
     geoinformation  """
@@ -634,7 +638,7 @@ def get_intersect_S2(folder, polygon, pixelSize=20):
     #areaList = list()
     #polyList=list()start_date, end_date
     for im in tqdm(xmls):
-        geoinfo = _get_S2_geoinfo(fileList[im])
+        geoinfo = get_S2_geoinfo(fileList[im])
         cols = int(geoinfo['cols20'])
         rows = int(geoinfo['rows20'])
         

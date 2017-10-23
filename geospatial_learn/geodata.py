@@ -23,8 +23,8 @@ import gdal, ogr,  osr
 import os
 import numpy as np
 import glob2
-from geospatial_learn.data import _get_S2_geoinfo
-from geospatial_learn.shape import _bbox_to_pixel_offsets
+from data import get_S2_geoinfo
+from shape import _bbox_to_pixel_offsets
 import tempfile
 #from pyrate.shared import DEM
 import glymur
@@ -84,10 +84,10 @@ def array2raster(array, bands, inRaster, outRas, dtype, FMT=None):
         
     
     """
-    
+
     if FMT == None:
         FMT = 'Gtiff'
-        fmt = '.tif'
+        
     if FMT == 'HFA':
         fmt = '.img'
     if FMT == 'KEA':
@@ -1180,7 +1180,7 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
     nowt
     """    
     
-        
+    #TODO investigate ways of speeding this up   
     # My goodness this is SO SLOW - it's just the gdal function that's slow
     # nowt else
     options = []

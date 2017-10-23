@@ -10,5 +10,13 @@
 
 # files with '~'
 /*~
+
 *~
 docs/_**
+
+#docs
+docs/_build/
+
+#cache
+.cache/
+
