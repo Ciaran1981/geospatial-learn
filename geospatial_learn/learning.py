@@ -36,7 +36,7 @@ except ImportError:
 
 
 from tqdm import tqdm
-from geodata import copy_dataset_config
+from geospatial_learn.geodata import copy_dataset_config
 #from time import sleep
 import matplotlib
 matplotlib.use('agg')
@@ -109,9 +109,7 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
     
     print('Preparing data')   
     
-    """
-    Prep of data for model fitting 
-    """
+	
 
     bands = X_train.shape[1]-1
     

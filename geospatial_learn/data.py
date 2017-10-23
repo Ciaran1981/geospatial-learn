@@ -463,7 +463,7 @@ def merge_images(folder, wildcard, mosaic):
     os.system('gdal_merge.py -of Gtiff -o '+mosaic+' '+filenames)
     print('mosaic done')
 
-def get_S2_geoinfo(xmlFile, mode = 'L2A'):
+def _get_S2_geoinfo(xmlFile, mode = 'L2A'):
     
     """ reads xml file associated with S2 data and pulls the relevant 
     geoinformation  """
@@ -628,7 +628,7 @@ def get_intersect_S2(folder, polygon, pixelSize=20):
     #areaList = list()
     #polyList=list()start_date, end_date
     for im in tqdm(xmls):
-        geoinfo = get_S2_geoinfo(fileList[im])
+        geoinfo = _get_S2_geoinfo(fileList[im])
         cols = int(geoinfo['cols20'])
         rows = int(geoinfo['rows20'])
         
