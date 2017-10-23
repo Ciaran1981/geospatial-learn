@@ -36,6 +36,7 @@ except ImportError:
 
 
 from tqdm import tqdm
+from geospatial_learn.geodata import copy_dataset_config
 #from time import sleep
 import matplotlib
 matplotlib.use('agg')
@@ -63,12 +64,89 @@ from scipy.stats import expon
 #from scipy.sparse import csr_matrix
 import pandas as pd
 import simpledbf
+from tpot import TPOTClassifier, TPOTRegressor
 
 
 
 gdal.UseExceptions()
 ogr.UseExceptions()
 
+def create_model_tpot(X_train, outModel, cv=6, cores=-1,
+                      regress=False, params = None, scoring=None):
+    
+    """
+    Create a model using the tpot library where genetic algorithms
+    are used to optimise pipline and params. 
+    
+    Parameters
+    ----------  
+    X_train : np array
+        numpy array of training data where the 1st column is labels
+    
+    outModel : string
+        the output model path which is a .py file
+    
+    cv : int
+        no of folds
+    
+    cores : int or -1 (default)
+        the no of parallel jobs
+    
+    strat : bool
+        a stratified grid search
+    
+    regress : bool
+        a regression model if True, a classifier if False
+    
+    params : a dict of model params (see tpot)
+        enter your own params dict rather than the range provided
+    
+    scoring : string
+        a suitable sklearn scoring type (see notes)
+                           
+    """
+    #t0 = time()
+    
+    print('Preparing data')   
+    
+	
+
+    bands = X_train.shape[1]-1
+    
+    #X_train = X_train.transpose()
+    
+    X_train = X_train[X_train[:,0] != 0]
+    
+     
+    # Remove non-finite values
+    X_train = X_train[np.isfinite(X_train).all(axis=1)]
+    # y labels
+    y_train = X_train[:,0]
+
+    # remove labels from X_train
+    X_train = X_train[:,1:bands+1]
+    
+    if params is None and regress is False:       
+        tpot = TPOTClassifier(generations=5, population_size=50, verbosity=2,
+                              n_jobs=cores, warm_start=True)
+        tpot.fit(X_train, y_train)
+        
+    elif params != None and regress is False:
+        tpot = TPOTClassifier(config_dict=params, n_jobs=cores, warm_start=True)
+        tpot.fit(X_train, y_train)
+        
+    if params is None and regress is True:       
+        tpot = TPOTRegressor(generations=5, population_size=50, verbosity=2,
+                              n_jobs=cores, warm_start=True)
+        tpot.fit(X_train, y_train)
+        
+    elif params != None and regress is True:
+        tpot = TPOTRegressor(config_dict=params, n_jobs=cores, warm_start=True)
+        tpot.fit(X_train, y_train)
+
+    tpot.export(outModel)    
+    
+    
 
 def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
                  strat=True, regress=False, params = None, scoring=None):
@@ -706,8 +784,9 @@ def classify_pixel(model, inputDir, bands, outMap, probMap):
     a folder of tiled rasters for memory management - classify_pixel_block is
     recommended instead of this function
     
-    Parameters
-    ----------
+    Where:
+    
+    ---------------
         
     model : sklearn model
         a path to a scikit learn model that has been saved 
@@ -782,13 +861,13 @@ def classify_pixel(model, inputDir, bands, outMap, probMap):
       
         
 def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None, 
-                        FMT=None, dtype = gdal.GDT_Int32):
+                        FMT=None, ndvi = None, dtype = gdal.GDT_Int32):
     """
     A block processing classifier for large rasters, supports KEA, HFA, & Gtiff
     formats. KEA is recommended, Gtiff is the default
     
-    Parameters
-    ----------
+    Where:
+    ------------------
         
     model : sklearn model
         a path to a scikit learn model that has been saved 
@@ -812,9 +891,13 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     dtype : int (optional - gdal syntax gdal.GDT_Int32) 
         o gdal dataype - default is int32
 
-      
+    Usage exampel:
+    ---------------------    
+    classify_pixel_block(model, inputImage, 8, outMap)
+    
+    
     Notes
-    -----
+    -------------------------------------------------
     
     Block processing is sequential, but quite a few sklearn models are parallel
     so that has been prioritised rather than raster IO
@@ -830,41 +913,13 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
         fmt = '.tif'
     
     inDataset = gdal.Open(inputImage)
-    x_pixels = inDataset.RasterXSize  # number of pixels in x
-    y_pixels = inDataset.RasterYSize  # number of pixels in y
-    geotransform = inDataset.GetGeoTransform()
-    PIXEL_SIZE = geotransform[1]  # size of the pixel...they are square so thats ok.
-    #if not would need w x h
-    x_min = geotransform[0]
-    y_max = geotransform[3]
-    # x_min & y_max are like the "top left" corner.
-    projection = inDataset.GetProjection()
-    geotransform = inDataset.GetGeoTransform()   
-    #dtype=gdal.GDT_Int32
-    driver = gdal.GetDriverByName(FMT)
     
-    # Set params for output raster
-    outDataset = driver.Create(
-        outMap+fmt, 
-        x_pixels,
-        y_pixels,
-        1,
-        dtype)
-
-    outDataset.SetGeoTransform((
-        x_min,    # 0
-        PIXEL_SIZE,  # 1
-        0,                      # 2
-        y_max,    # 3
-        0,                      # 4
-        -PIXEL_SIZE))
-        
-    outDataset.SetProjection(projection)    
+    outDataset = copy_dataset_config(inputImage, outMap = outMap,
+                                     bands = bands)
     band = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
     rows = inDataset.RasterYSize
     outBand = outDataset.GetRasterBand(1)
-    PIXEL_SIZE = geotransform[1] 
     # So with most datasets blocksize is a row scanline
     if blocksize == None:
         blocksize = band.GetBlockSize()
@@ -889,15 +944,15 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     # Pressumably writing to different parts of raster should be ok....
     
     
-    
     model1 = joblib.load(model)
     if blocksizeY==1:
-        rows = np.arange(y_pixels, dtype=np.int)                
+        rows = np.arange(cols, dtype=np.int)                
         for row in tqdm(rows):
             i = int(row)
             j = 0
             #X = np.zeros(shape = (bands, blocksizeX))
             #for band in range(1,bands+1):
+            
             X = inDataset.ReadAsArray(j, i, xsize=blocksizeX, ysize=blocksizeY)
             X.shape = ((bands,blocksizeX))
             
@@ -926,6 +981,7 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
                     numCols = blocksizeX
                 else:
                     numCols = cols - j
+                
                 X = inDataset.ReadAsArray(j,i, xsize=numCols, ysize=numRows)
 #                X = np.zeros(shape = (bands, numCols*numRows))
 #                for band in range(1,bands+1):
@@ -936,8 +992,22 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
                 else:
                     X.shape = ((bands,numRows*numCols))
                     X = X.transpose() 
-                    X = np.where(np.isfinite(X),X,0) # this is a slower line   
+                    X = np.where(np.isfinite(X),X,0) 
+                    # this is a slower line   
                     #Xs= csr_matrix(X)
+                    
+                    # YUCK!!!!!! This is a repulsive solution
+                    if ndvi != None:
+                        ndvi1 = (X[:,3] - X[:,2]) / (X[:,3] + X[:,2]) 
+                        ndvi1.shape = (len(ndvi1), 1)
+                        ndvi1 = np.where(np.isfinite(ndvi1),ndvi1,0) 
+                        ndvi2 = (X[:,7] - X[:,6]) / (X[:,7] + X[:,6]) 
+                        ndvi2.shape = (len(ndvi2), 1)
+                        ndvi2 = np.where(np.isfinite(ndvi2),ndvi2,0) 
+                        
+                        X = np.hstack((X[:,0:4], ndvi1, X[:,4:8], ndvi2))
+                        
+                       
                     predictClass = model1.predict(X)
                     predictClass[X[:,0]==0]=0                    
                     predictClass = np.reshape(predictClass, (numRows, numCols))
@@ -954,8 +1024,7 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
     output.
     Supports KEA, HFA, & Gtiff formats -KEA is recommended, Gtiff is the default
     
-    Parameters
-    ----------
+    Where:
         model : string
             a path to a scikit learn model that has been saved 
             
@@ -981,8 +1050,15 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
         one_class : int
             choose a single class to produce output prob raster
 
+        
+        
+    Usage: 
+    ---------------------------
+    (typical - leaving defaults)
+    prob_pixel_block(model, inputImage, 8, 8, outMap)
+    
     Notes
-    -----
+    -------------------------------------------------
     
     Block processing is sequential, but quite a few sklearn models are parallel
     so that has been prioritised rather than raster IO
@@ -999,41 +1075,17 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
         
     # TODO - a list of classes would be better eliminating the need for the one
     # class param
-    
-    inDataset = gdal.Open(inputImage)
-    x_pixels = inDataset.RasterXSize  # number of pixels in x
-    y_pixels = inDataset.RasterYSize  # number of pixels in y
-    geotransform = inDataset.GetGeoTransform()
-    PIXEL_SIZE = geotransform[1]  # size of the pixel...they are square so thats ok.
-    #if not would need w x h
-    x_min = geotransform[0]
-    y_max = geotransform[3]
-    # x_min & y_max are like the "top left" corner.
-    projection = inDataset.GetProjection()
-    geotransform = inDataset.GetGeoTransform()   
-    dtype=gdal.GDT_Float64
-    driver = gdal.GetDriverByName(FMT)
-    
-    # Set params for output raster
     if one_class != None:
         classes = one_class
         
-    outDataset = driver.Create(outMap+fmt, x_pixels, y_pixels, classes, dtype)
-
-    outDataset.SetGeoTransform((
-        x_min,    # 0
-        PIXEL_SIZE,  # 1
-        0,                      # 2
-        y_max,    # 3
-        0,                      # 4
-        -PIXEL_SIZE))
-        
-    outDataset.SetProjection(projection)    
+    inDataset = gdal.Open(inputImage)
+    
+    outDataset = copy_dataset_config(inputImage, outMap = outMap,
+                                     bands = bands)
     band = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
     rows = inDataset.RasterYSize
     #outBand = outDataset.GetRasterBand(1)
-    PIXEL_SIZE = geotransform[1] 
     # So with most datasets blocksize is a row scanline
     if blocksize == None:
         blocksize = band.GetBlockSize()
@@ -1051,7 +1103,7 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
     # performance gain here
     model1 = joblib.load(model)
     if blocksizeY==1:
-        rows = np.arange(y_pixels, dtype=np.int)        
+        rows = np.arange(cols, dtype=np.int)        
         for row in tqdm(rows):
 
             i = int(row)
@@ -1125,8 +1177,8 @@ def classify_object(model, inShape, attributes, field_name=None):
     Classify a polygon/point file attributes ('object based') using an sklearn
     model
     
-    Parameters
-    ----------
+    Where:
+    ------------------
         model : string
             path to input model
         
@@ -1228,8 +1280,8 @@ def get_training_shp(inShape, train_col_number, outFile = None):
     Collect training from a shapefile attribute table. Used for object-based 
     classification. 
     
-    Parameters
-    ----------   
+    Where:
+    --------------------    
     inShape : string
         the input shapefile - must be esri .shp at present
     
@@ -1239,8 +1291,8 @@ def get_training_shp(inShape, train_col_number, outFile = None):
     outFile : string
         path to training data to be saved (.gz)
     
-    Returns
-    -------
+    Returns:
+    ---------------------
     training data as a numpy array, first column is labels, rest are features
     
     """
@@ -1270,9 +1322,8 @@ def get_training_shp(inShape, train_col_number, outFile = None):
 def get_training(inShape, inRas, bands, field, outFile = None):
     """
     Collect training as an np array for use with create model function
-    
-    Parameters
-    ----------
+    Where:
+    --------------
         
     inShape : string
         the input shapefile - must be esri .shp at present
@@ -1289,8 +1340,8 @@ def get_training(inShape, inRas, bands, field, outFile = None):
     outFile : string (optional)
         path to the training file saved as joblib format (eg - 'training.gz')
     
-    Returns
-    -------
+    Returns:
+    ---------------------
         A tuple containing:
         -np array of training data
         -list of polygons with invalid geometry that were not collected 
@@ -1389,4 +1440,122 @@ def get_training(inShape, inRas, bands, field, outFile = None):
     return outData, rejects
 
     
+def get_training_point(inShape, inRas, bands, field):
+    """ Collect training as a np array for use with create model function using 
+          point data
+    Where:
+    --------------
+        
+    inShape : string
+        the input shapefile - must be esri .shp at present
+        
+    inRas : string
+        the input raster from which the training is extracted
+        
+    bands : int
+        no of bands
+        
+    field : string
+        the attribute field containing the training labels
+    
+    outFile : string (optional)
+        path to the training file saved as joblib format (eg - 'training.gz')
+    
+    Returns:
+    ---------------------
+        A tuple containing:
+        -np array of training data
+        -list of polygons with invalid geometry that were not collected 
 
+    
+    UNFINISHED DO NOT USE
+    
+    
+    """
+    #t0 = time()
+    outData = list()
+    print('Loading & prepping data')    
+    raster = gdal.Open(inRas)
+    shp = ogr.Open(inShape)
+    lyr = shp.GetLayer()
+    labels = np.arange(lyr.GetFeatureCount())
+    rb = raster.GetRasterBand(1)
+    rgt = raster.GetGeoTransform()
+    mem_drv = ogr.GetDriverByName('Memory')
+    driver = gdal.GetDriverByName('MEM')  
+    rejects = []     
+    
+    print('getting points')
+    for label in tqdm(labels):
+        #print(label)
+        feat = lyr.GetFeature(label)
+        if feat == None:
+            print('no geometry for feature '+str(label))
+            continue
+        iD = feat.GetField(field)
+        geom = feat.GetGeometryRef()
+        mx,my=geom.GetX(), geom.GetY()  #coord in map units
+
+        #Convert from map to pixel coordinates.
+        #Only works for geotransforms with no rotation.
+        px = int((mx - gt[0]) / gt[1]) #x pixel
+        py = int((my - gt[3]) / gt[5]) #y pixel
+    
+        structval=rb.ReadRaster(px, py,1,1,buf_type=gdal.GDT_UInt16) #Assumes 16 bit int aka 'short'
+        intval = struct.unpack('h' , structval) #use the 'short' format code (2 bytes) not int (4 bytes)
+    
+        print(intval[0])
+
+            
+        # Create a temporary vector layer in memory
+        mem_ds = mem_drv.CreateDataSource('out')
+        mem_layer = mem_ds.CreateLayer('poly', None, ogr.wkbPolygon)
+        mem_layer.CreateFeature(feat.Clone())
+
+        # Rasterize it
+        rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
+        rvds.SetGeoTransform(new_gt)
+        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
+        rv_array = rvds.ReadAsArray()
+        
+        # Mask the source data array with our current feature
+        # we take the logical_not to flip 0<->1 to get the correct mask effect
+        # we also mask out nodata values explictly
+            
+
+        
+        
+        rb = raster.GetRasterBand(1)
+        src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                           src_offset[3])
+        if np.shape(src_array) is ():
+            rejects.append(label)
+            continue
+        # Read raster as arrays
+        for band in range(1,bands+1): 
+            
+            rb = raster.GetRasterBand(band)
+            src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                               src_offset[3])
+            if src_array is None:
+                src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
+                                           src_offset[3])
+
+            masked = np.ma.MaskedArray(src_array, 
+                                       mask=np.logical_or(src_array == 0,
+                                                          np.logical_not(rv_array)))
+            
+
+            datafinal = masked.flatten()
+
+            if band == 1:
+                X = np.zeros(shape = (datafinal.shape[0], bands+1))
+            X[:,0] = iD
+            
+            X[:,band] = datafinal
+        #print(label,fieldval,xcount, ycount)   
+        outData.append(X)
+    outData = np.asarray(outData)
+    outData = np.concatenate(outData).astype(None)
+    return outData, rejects
+ 

@@ -1,21 +1,11 @@
 #!/home/ubuntu/anaconda3/bin/python
 
-
 """
-Author: Ciaran Robb
-Research Associate in Earth Observation
-Centre for Landscape and Climate Research (CLCR)
-Department of Geography, University of Leicester, University Road, Leicester, 
-LE1 7RH, UK 
-
-If you use code to publish work cite/acknowledge me and other lib authors as 
-appropriate
+The data module
 
 Description
 -----------
-A series of tools for the download and preprocessing of data (mainly sentinel)
-
-
+A series of tools for the download and preprocessing of sentinel data (mainly S2). 
 
 
 """
@@ -59,7 +49,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
     A convenience function that wraps sentinelsat query & download although 
     this is hardly necessary but I am lazy 
     
-    Where:
+    Parameters
     -----------
     user : string
         username for esa hub
@@ -133,7 +123,7 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
      A convenience function that wraps sentinelsat query & download although 
     this is hardly necessary but I am lazy 
     
-    Where:
+    Parameters
     -----------
     user : string
         username for esa hub
@@ -203,7 +193,7 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
     Download S2 data from google. Adapted from a guys script into functional 
     form with some modifications
     
-    Where:
+    Parameters
     -----------
     scene : string
         tileID (eg '36MYE')
@@ -350,7 +340,7 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
     Way quicker than ESA
     
     
-    Where:
+    Parameters
     ----------
     user : string
         username for esa hub
@@ -518,7 +508,7 @@ def _get_S2_geoinfo(xmlFile, mode = 'L2A'):
 def get_intersect(folder, polygon, resolution=None):
     """get intersect between rasters and AOI polygon
     
-    Where:
+    Parameters
     ---------------    
     folder : string
         the S2 tile folder containing the granules ending .SAFE
@@ -613,7 +603,7 @@ def get_intersect_S2(folder, polygon, pixelSize=20):
     to get granule coords - this function is quicker than get_intersect, but 
     more prone to errors
     
-    Where:
+    Parameters
     --------------
     folder : string
         
@@ -715,7 +705,7 @@ def unzip_S2_granules(folder, area=None, granules=None):
     
     The function unzips only the tiles of interest to this area in this project
     
-    Where:
+    Parameters
     ------------    
     folder : string
         a folder contain S2 tiles

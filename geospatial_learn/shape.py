@@ -1,19 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-author: Ciaran Robb
-Research Associate in Earth Observation
-Centre for Landscape and Climate Research (CLCR)
-Department of Geography, University of Leicester, University Road, Leicester, 
-LE1 7RH, UK 
-
-If you use code to publish work cite/acknowledge me and authors of libs as 
-appropriate 
+The shape module. 
 
 Description
 -----------
 
-This module contains various functions for manipulation data in OGR vector 
-formats
+This module contains various functions for the writing of data in OGR vector 
+formats. The functions are mainly concerned with writing geometric or pixel based attributes, with the view to them being classified in the learning module
 
 """
 #from time import time

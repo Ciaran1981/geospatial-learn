@@ -187,8 +187,8 @@ def batch_translate(folder, wildcard, FMT=None):
     """ Using the gdal python API, this function translates the format of files
     to commonly used formats
     
-    Parameters
-    ----------        
+    Where:
+    -----------         
     folder : string
         the folder containing the rasters to be translated
     
@@ -211,7 +211,7 @@ def batch_translate(folder, wildcard, FMT=None):
     if FMT == 'Gtiff':
         fmt = '.tif'    
         
-    fileList = glob2.glob(folder+'**/**/*'+wildcard)
+    fileList = glob2.glob(path.join(folder,'**', '**','*', wildcard))
     outList = list()
     files = np.arange(len(fileList))
     
@@ -242,8 +242,8 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
         
         If you posses a gdal compiled with the corrext openjpg support use that
         
-        Parameters
-        ---------- 
+        Where:
+        ----------- 
         folder : string
             S2 granule dir
     
@@ -253,8 +253,8 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
         FMT : string (optional)
              a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA
                     
-        Notes
-        -----
+        Notes:
+        ----------- 
         This function might be useful if you wish to retain seperate rasters,
         but the use of stack_S2 is recommended
             
@@ -272,35 +272,43 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
     xml = xml[0]
     if mode == 'L1C':
         # this is used for the 1C data 
-        fileList = glob2.glob(folder+'/IMG_DATA/**/**/*MSI*_B*.jp2')
+        fileList = glob2.glob(path.join(folder,'IMG_DATA','**', '**', 
+                                        '*MSI*_B*.jp2'))
         fileList = list(unique_everseen(fileList))
         pixelDict = {'01' : 60, '02': 10, '03': 10, '04': 10, '05': 20,
                '06': 20, '07': 20, '8A': 20, '08': 10, '09': 60, '10': 60,
                '11': 20, '12': 20}
-        geoinfo= _get_S2_geoinfo(xml, mode = None)
+        geoinfo= get_S2_geoinfo(xml, mode = None)
     elif mode == 'L2A':
         # this is a level 2A product
-        fileList = glob2.glob(folder+'/IMG_DATA/**/**/*MSI*_B*.jp2')
-        SCL = glob2.glob(folder+'/IMG_DATA/**/**/*SCL*.jp2')    
+        fileList = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
+                                        '*MSI*_B*.jp2'))
+        SCL = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**', 
+                                   '*SCL*.jp2'))    
         fileList = list(unique_everseen(fileList))
         fileList.append(str(SCL[0]))
         pixelDict = {'60' : 60, '20': 20, '10': 10}
         geoinfo= get_S2_geoinfo(xml, mode = 'L2A')
     elif mode=='20':
-        fileList = glob2.glob(folder+'/IMG_DATA/**/**/*MSI*20*.jp2')
-        SCL = glob2.glob(folder+'/IMG_DATA/**/**/*SCL*20m.jp2')
+        fileList = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
+                                        '*MSI*20*.jp2'))
+        SCL = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
+                                   '*SCL*20m.jp2'))
         fileList = list(unique_everseen(fileList))
         fileList.append(str(SCL[0]))
         geoinfo= get_S2_geoinfo(xml)
     elif mode=='10':
-        fileList = glob2.glob(folder+'/IMG_DATA/**/**/*MSI*10*.jp2')
-        SCL = glob2.glob(folder+'/IMG_DATA/**/**/*SCL*20m.jp2')
+        fileList = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
+                                        '*MSI*10*.jp2'))
+        SCL = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
+                                   '*SCL*20m.jp2'))
         fileList = list(unique_everseen(fileList))
         fileList.append(str(SCL[0]))
         geoinfo= get_S2_geoinfo(xml)
     elif mode == 'scene':
         geoinfo= get_S2_geoinfo(xml, mode = 'L2A')
-        fileList = glob2.glob(folder+'IMG_DATA/**/**/*SCL*20m.jp2')
+        fileList = glob2.glob(path.join(folder, 'IMG_DATA', '**', '**',
+                                        '*SCL*20m.jp2'))
     
     outList = list()
     #files = np.arange(len(fileList))
@@ -387,8 +395,8 @@ def jp2_translate_batch(mainFolder, FMT=None, mode=None):
     
     Perhaps only useful for the old tile format
     
-    Parameters
-    ----------        
+    Where:
+    -----------         
     mainFolder : string
         the path to S2 tile folder to process
     
@@ -407,15 +415,15 @@ def jp2_translate_batch(mainFolder, FMT=None, mode=None):
     if mode == None:
         mode = None
         
-    paths =  glob2.glob(mainFolder+'/GRANULE/*/')
+    paths =  glob2.glob(path.join(mainFolder, 'GRANULE'))
     paths = list(unique_everseen(paths))
     #noDirs = np.arange(len(paths))
     
-    for path in paths:
-        jp2_translate(path, FMT=FMT, mode=mode)
+    for pth in paths:
+        jp2_translate(pth, FMT=FMT, mode=mode)
 
-def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
-             overwrite=True):
+def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
+             blocksize=2048, overwrite=True):
     """ Stacks S2 bands downloaded from ESA site
         Can translate directly from jp2 format (this is recommended and is 
         default). 
@@ -423,8 +431,8 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
         If you possess gdal 2.1 with jp2k support then alternatively use 
         gdal_translate
                     
-        Parameters
-        ----------
+        Where:
+        ----------- 
         granule : string
             the granule folder 
         
@@ -437,15 +445,19 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
         mode : string (optional)
             None, '10'  '20' 
         
+        old_order : bool (optional)
+            this function used to order the 20m imagery 2,3,4,5,6,7,11,12,8a
+            if false ordered like this 2,3,4,5,6,7,8a,11,12
+        
         blocksize : int (optional)
             the chunk of jp2 to read in - glymur seems to work fastest with 2048
         
-        Returns
-        -------
+        Returns:
+        ----------- 
         A string of the output file path
             
-        Notes
-        -----             
+        Notes:
+        -----------             
         Uses glymur to read in raster chuncks (until I write something better).
     """
     
@@ -466,7 +478,7 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
     
 #    for file in noDirs:
     
-    xml = glob2.glob(granule+'/*MTI*.xml')
+    xml = glob2.glob(path.join(granule,'*MTI*.xml'))
     if len(xml) is 0:
         xml = glob2.glob(granule+'/*MTD*.xml')
         if len(xml) is 0:
@@ -481,7 +493,7 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
     
     if mode == None:
         bands = 4
-        fileList = glob2.glob(granule+'IMG_DATA/R10m/*MSI*.jp2')
+        fileList = glob2.glob(path.join(granule,'IMG_DATA', 'R10m','*MSI*.jp2'))
         if len(fileList) is 0:
         # the following if is for S2 since format change
             fileList = glob2.glob(granule+'IMG_DATA/R10m/*B0*.jp2')
@@ -495,15 +507,17 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
         #tiles = np.arange(36)
         fileList.sort()
         fileList = list(unique_everseen(fileList))
+        bandNames = ['2','3','4','8']
+
         #needed due to apparent bug in glob2 - removes duplicate entries
 
         
 
     if mode == '20':
-        fileList = glob2.glob(granule+'IMG_DATA/R20m/*MSI*.jp2')
+        fileList = glob2.glob(path.join(granule,'IMG_DATA','R20m','*MSI*.jp2'))
         # the following if is for S2 since format change
         if len(fileList) is 0:
-            fileList = glob2.glob(granule+'IMG_DATA/R20m/*B*.jp2')
+            fileList = glob2.glob(path.join(granule,'IMG_DATA','R20m','*B*.jp2'))
         bands = len(fileList)
         #        x_min = int(geoinfo['ulx20'])
 #        y_max = int(geoinfo['uly20'])
@@ -514,6 +528,14 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
         PIXEL_SIZE = 20
         #tiles = np.arange(6)
         fileList.sort()
+        # to cover the old order where band 8a is last
+        if old_order is False:            
+            eight = fileList[8]
+            fileList.insert(3, eight)
+            fileList.pop(9)
+            bandNames = ['2','3','4','5','6','7','8a','11','12']
+        else:
+            bandNames = ['2','3','4','5','6','7','11','12', '8a']
         fileList = list(unique_everseen(fileList))
 
         
@@ -557,8 +579,8 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
         
     datasetList = list()
 
-    for band in range(0, bands):
-        data = glymur.Jp2k(fileList[band], **kwargs)
+    for file in fileList:
+        data = glymur.Jp2k(file, **kwargs)
         datasetList.append(data)
             
     dtype=gdal.GDT_Int32
@@ -584,6 +606,9 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
         
     outDataset.SetProjection(projection)    
 
+    for b,desc in enumerate(bandNames):
+        outDataset.GetRasterBand(b+1).SetDescription(desc)
+    
     blocksizeX = blocksize
     blocksizeY = blocksize
     # This index is different as the bbox coords are required
@@ -608,11 +633,11 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, blocksize=2048,
 
 #            tiles = np.arange(len(index))  
 #            for tile in tqdm(tiles):         
-            for band in range(0, bands):
+            for band, file in enumerate(dataList):
+                
                 with warnings.catch_warnings():
                             warnings.simplefilter("ignore")
-                            array1 = dataList[band].read(area=(i,j, brightY, brightX))
-
+                            array1 = file.read(area=(i,j, brightY, brightX))
                 outDataset.GetRasterBand(band+1).WriteArray(array1, j, i)
             #utDataset.GetRasterBand(band).ComputeStatistics(0)                            
         
@@ -628,8 +653,8 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
     corresponding to  mask value are retained - does this in blocks for
     efficiency on larger rasters
     
-    Parameters 
-    ---------- 
+    Where: 
+    ----------- 
     inputIm : string
         the input raster
         
@@ -646,8 +671,8 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
     blocksize : int
         the chunk of raster to read in
         
-    Returns
-    -------
+    Returns:
+    ----------- 
     A string of the output file path
         
     """
@@ -670,35 +695,9 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
         
         inDataset = gdal.Open(inputIm)
     
-        x_pixels = inDataset.RasterXSize  # number of pixels in x
-        y_pixels = inDataset.RasterYSize  # number of pixels in y
-        geotransform = inDataset.GetGeoTransform()
-        PIXEL_SIZE = geotransform[1]  # size of the pixel...they are square so thats ok.
-        #if not would need w x h
-        x_min = geotransform[0]
-        y_max = geotransform[3]
-        # x_min & y_max are like the "top left" corner.
-        projection = inDataset.GetProjection()  
-        dtype=gdal.GDT_Int32
-        driver = gdal.GetDriverByName(FMT)
         
-        # Set params for output raster
-        outDataset = driver.Create(
-            outputIm+fmt, 
-            x_pixels,
-            y_pixels,
-            1,
-            dtype)
-    
-        outDataset.SetGeoTransform((
-            x_min,    # 0
-            PIXEL_SIZE,  # 1
-            0,                      # 2
-            y_max,    # 3
-            0,                      # 4
-            -PIXEL_SIZE))
-            
-        outDataset.SetProjection(projection)    
+        outDataset = copy_dataset_config(inputIm, outMap = outputIm,
+                                     bands = inDataset.RasterCount)  
         bnd = inDataset.GetRasterBand(1)
         
         
@@ -743,12 +742,12 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
      
 def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
                     blocksize = 256, FMT = None, dtype=None):
-    """ Perform a numpy masking operation on a raster where all values
+    """ perform a numpy masking operation on a raster where all values
     corresponding to  mask value are retained - does this in blocks for
     efficiency on larger rasters
     
-    Parameters 
-    ----------
+    Where: 
+    ----------- 
     inputIm : string
         the granule folder 
         
@@ -756,7 +755,8 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
          the masking value that delineates pixels to be kept
         
      outval : numerical dtype eg int, float
-         the areas removed will be written to this value default is 0
+         the areas removed will be written to this value
+     default is 0
         
      mask : string
          the mask raster to be used (optional)
@@ -770,6 +770,10 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
      blocksize : int
          the chunk of raster read in & write out
     
+    Returns:
+    ----------- 
+
+    nowt
 
     """
 
@@ -862,14 +866,211 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
         inDataset.FlushCache()
         inDataset = None
 
+def calc_ndvi(inputIm, outputIm, bandsList, blocksize = 256, FMT = None, dtype=None):
+    """ Create a copy of an image with an ndvi band added
+    
+    Where: 
+    ----------- 
+    inputIm : string
+        the granule folder 
+        
+     bands : list
+         a list of band indicies to be used, eg - [3,4] for Sent2 data
+
+     FMT : string
+         the output gdal format eg 'Gtiff', 'KEA', 'HFA'
+        
+     blocksize : int
+         the chunk of raster read in & write out
+    
+    Returns:
+    ----------- 
+
+    nowt
+
+    """
+
+    if FMT == None:
+        FMT = 'Gtiff'
+        fmt = '.tif'
+    if FMT == 'HFA':
+        fmt = '.img'
+    if FMT == 'KEA':
+        fmt = '.kea'
+    if FMT == 'Gtiff':
+        fmt = '.tif'
+    
+    if dtype is None:
+        dtype = gdal.GDT_Int32
+        
+    inDataset = gdal.Open(inputIm, gdal.GA_Update)
+    
+    bands = inDataset.RasterCount+1
+    
+    bnnd = inDataset.GetRasterBand(1)
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
+
+    outDataset = copy_dataset_config(inputIm, outMap = outputIm,
+                                     bands = bands)
+    
+    # So with most datasets blocksize is a row scanline
+    if blocksize == None:
+        blocksize = bnnd.GetBlockSize()
+        blocksizeX = blocksize[0]
+        blocksizeY = blocksize[1]
+    else:
+        blocksizeX = blocksize
+        blocksizeY = blocksize
+         
+    bR = inDataset.GetRasterBand(bandsList[0])
+    bNIR = inDataset.GetRasterBand(bandsList[1])
+    
+                
+    for i in tqdm(range(0, rows, blocksizeY)):
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
+            else:
+                numRows = rows -i
+        
+            for j in range(0, cols, blocksizeX):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+                for band in range(1, bands):
+                    inbnd = inDataset.GetRasterBand(band)
+                    array = inbnd.ReadAsArray(j, i, numCols, numRows)
+                    outbnd = outDataset.GetRasterBand(band)
+                    outbnd.WriteArray(array, j , i)
+        
+                del inbnd, array, outbnd 
+                
+                aR = bR.ReadAsArray(j, i, numCols, numRows)
+                aNIR = bNIR.ReadAsArray(j, i, numCols, numRows)
+                ndvi = (aNIR - aR) / (aNIR + aR) 
+                
+                bnd = outDataset.GetRasterBand(bands)
+                bnd.WriteArray(ndvi, j, i)
+           
+    outDataset.FlushCache()
+    outDataset = None
+
+
+
+
+def remove_cloud_S2(inputIm, sceneIm,
+                    blocksize = 256, FMT = None, min_size=4, dist=1):
+    """ remove cloud using the a scene classification
+        This saves back to the input raster by default
+        
+    Where:
+    ----------- 
+    
+    inputIm :string
+        the input image 
+        
+    sceneIm : string
+        the scenemap to use as a mask for removing cloud
+        
+    FMT : string
+        the output gdal format eg 'Gtiff', 'KEA', 'HFA'
+        
+    min_size : int
+        size in pixels to retain of cloud mask
+        
+    blocksize : int
+        the square chunk processed at any one time
+        
+    Returns:
+    ----------- 
+    
+    nowt
+
+    """
+
+    if FMT == None:
+        FMT = 'Gtiff'
+        fmt = '.tif'
+    if FMT == 'HFA':
+        fmt = '.img'
+    if FMT == 'KEA':
+        fmt = '.kea'
+    if FMT == 'Gtiff':
+        fmt = '.tif'
+    
+    sceneRas = gdal.Open(sceneIm)
+    inDataset = gdal.Open(inputIm, gdal.GA_Update)
+    tempBand = inDataset.GetRasterBand(1)
+    dtypeCode = gdal.GetDataTypeName(tempBand.DataType)
+    # common gdal datatypes - when calling eg GDT_Int32 it returns an integer
+    # hence the dict with the integer codes - not really required but allows me
+    # to see the data type
+    dtypeDict = {'Byte':1, 'UInt16':2, 'Int16':3, 'UInt32':4, 'Int32':5,
+                'Float32':6, 'Float64':7}
+#    dtype = dtypeDict[dtypeCode]
+    tempBand = None
+    
+    bands = inDataset.RasterCount
+
+#        
+#    outDataset.SetProjection(projection)    
+  
+    band = inDataset.GetRasterBand(1)
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
+    if blocksize == None:
+        blocksize = band.GetBlockSize()
+        blocksizeX = blocksize[0]
+        blocksizeY = blocksize[1]
+    else:
+        blocksizeX = blocksize
+        blocksizeY = blocksize
+     # size of the pixel...they are square so thats ok.
+    #if not would need w x h
+    #If the block is a row, this simplifies things a bit
+    # Key issue now is to speed this part up 
+    # 
+    
+    for i in tqdm(range(0, rows, blocksizeY)):
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
+            else:
+                numRows = rows -i
+        
+            for j in range(0, cols, blocksizeX):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+                mask = sceneRas.ReadAsArray(j, i, numCols, numRows)
+                mask = mask>6
+                with warnings.catch_warnings():
+                            warnings.simplefilter("ignore")
+                            mask = remove_small_objects(mask, min_size=min_size)
+                mask= nd.distance_transform_edt(mask==0)<=1
+                for band in range(1, bands+1):
+                    bnd = inDataset.GetRasterBand(band)
+                    array = bnd.ReadAsArray(j, i, numCols, numRows)
+                    array[mask==1]=0
+                    inDataset.GetRasterBand(band).WriteArray(array, j, i)
+    # This is annoying but necessary as the stats need updated and cannot be 
+    # done in above band loop due as this would be very inefficient
+    for band in range(1, bands+1):
+        inDataset.GetRasterBand(band).ComputeStatistics(0)
+                        
+    inDataset.FlushCache()
+    inDataset = None     
+
+
 
 
 def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
               blocksize=None):
     """ Stack some rasters for change classification - must be same size!!!
     
-    Parameters
-    ----------         
+    Where:
+    -----------         
     inRas1 : string
         the input image 
         
@@ -888,9 +1089,9 @@ def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
     blocksize : int
         the square chunk processed at any one time
             
-    Returns
-    -------
-    String of output file path
+    Returns:
+    ----------- 
+    nowt
     """
 
     if FMT == None:
@@ -909,43 +1110,11 @@ def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
     
     bands = inras1.RasterCount + inras2.RasterCount
     
-    x_pixels = inras1.RasterXSize  # number of pixels in x
-    y_pixels = inras1.RasterYSize  # number of pixels in y
-    geotransform = inras1.GetGeoTransform()
-    PIXEL_SIZE = geotransform[1]  # size of the pixel...they are square so thats ok.
-    #if not would need w x h
-    x_min = geotransform[0]
-    y_max = geotransform[3]
-    # x_min & y_max are like the "top left" corner.
-    projection = inras1.GetProjection()
-    geotransform = inras1.GetGeoTransform()  
-    driver = gdal.GetDriverByName(FMT)
-    bnd = inras1.GetRasterBand(1)
-    dtype = bnd.DataType
-    del bnd
-
-#    if os.path.isfile(outRas+fmt):
-#            os.remove(outRas+fmt)
-    # Set params for output raster
-    outDataset = driver.Create(
-        outFile+fmt, 
-        x_pixels,
-        y_pixels,
-        bands,
-        dtype)
-
-    outDataset.SetGeoTransform((
-        x_min,    # 0
-        PIXEL_SIZE,  # 1
-        0,                      # 2
-        y_max,    # 3
-        0,                      # 4
-        -PIXEL_SIZE))
-        
-    outDataset.SetProjection(projection)    
+    outDataset = copy_dataset_config(inRas1, outMap = outFile,
+                                     bands = bands)
     
-    rows = x_pixels
-    cols = y_pixels
+    rows = outDataset.RasterXSize
+    cols = outDataset.RasterYSize
     
     if blocksize is None:
         bnd = inras1.GetRasterBand(1)
@@ -985,10 +1154,11 @@ def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
 
 def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
     
-    """ Lifted straight from the cookbook http://pcjericks.github.io/py-gdalogr-cookbook
-    and gdal func docs. Very slow......
-    Parameters
-    ----------         
+    """ Lifted straight from the cookbook 
+        http://pcjericks.github.io/py-gdalogr-cookbook
+        and gdal func docs. Very slow......
+    Where:
+    -----------         
     inRas : string
         the input image 
     
@@ -1005,6 +1175,9 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
     band : int
         the input raster band
             
+    Returns:
+    ----------- 
+    nowt
     """    
     
         
@@ -1058,7 +1231,7 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
 
     
 def otbMeanshift(inputImage, radius, rangeF, minSize, outShape):
-    """ Convenience function for OTB meanshift by calling the otb command line
+    """ OTB meanshift by calling the otb command line
         written for convenience and due to otb python api being rather verbose 
         and Py v2.7 (why do folk still use it??).
         
@@ -1066,8 +1239,8 @@ def otbMeanshift(inputImage, radius, rangeF, minSize, outShape):
         
         
         
-    Parameters
-    ----------         
+    Where:
+    -----------         
     inputImage : string
         the input image 
         
@@ -1083,9 +1256,12 @@ def otbMeanshift(inputImage, radius, rangeF, minSize, outShape):
     outShape : string
         the ouput shapefile
 
-
-    Notes
-    -----      
+    Returns:
+    ----------- 
+    nowt
+    
+    Notes:
+    -----------        
     There is a maximum size for the .shp format otb doesn't seem to
     want to move beyond (2gb), so enormous rasters may need to be sub
     divided
@@ -1126,6 +1302,8 @@ def otbMeanshift(inputImage, radius, rangeF, minSize, outShape):
 #    output = subprocess.Popen([cmd], stdout=subprocess.PIPE).communicate()[0]
 #    print(output)
 
+        
+
 
 
 def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None, 
@@ -1133,12 +1311,12 @@ def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None,
 
     """
     Clip a raster
-    
-    Parameters
-    ----------         
+    Where:
+    -----------         
     inRas : string
         the input image 
     
+        
     outPoly : string
         the input polygon file path 
         
@@ -1153,10 +1331,13 @@ def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None,
         
     blockmode : bool (optional)
         whether the raster will be clipped entirely in memory or by chunck
-
+            
+    Returns:
+    ----------- 
+    nowt
      
     Notes
-    -----
+    ---------------------------------------
     This just calls the gdal cmd line at present and was just written for 
     convenience, quicker solution is currently not finished....
    
@@ -1186,7 +1367,7 @@ def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None,
     feat = lyr.GetFeature(0)
     geom = feat.geometry()
             
-    src_offset = _bbox_to_pixel_offsets(rgt, geom)
+    src_offset = bbox_to_pixel_offsets(rgt, geom)
     # 'offset = xoff, yoff, xcount, ycount'
 
     new_gt = (
@@ -1202,93 +1383,14 @@ def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None,
            '-of', 'GTiff', inRas, outRas] 
     subprocess.call(cmd)
 
-#    TODO - sort the code below as it is very fast - just something wrong with
-#       offsets being written to outraster     
-#    bands = rds.RasterCount
-#    # Now we have the geo info necessary to write the new raster to the correct
-#    # coordinates etc, extra
-#    outDataset = driver.Create(
-#        outRas+'tif', 
-#        src_offset[2],
-#        src_offset[3],
-#        bands,
-#        dtype)
-#    
-#    outDataset.SetGeoTransform(new_gt)
-#    outDataset.SetProjection(rds.GetProjection())
-#    
-#    if blocksize == None:   
-#        blocksizeX = src_offset[3]
-#        blocksizeY = 1
-#    else:
-#        blocksizeX = blocksize
-#        blocksizeY = blocksize
-#    
-#    # Each array is read in and out in scanlines or blocks for memory and speed
-#    # with big rasters    
-#    # Scanline
-#
-#        
-#    if blocksizeY==1:
-#        rows = np.arange(src_offset[3], dtype=np.int)        
-#        for row in tqdm(rows):
-#            i = int(row)
-#            j = 0    
-#            for band in range(1,bands+1):
-#                rb = rds.GetRasterBand(band)
-#                src_array = rb.ReadAsArray(j, i, blocksizeX, 1)
-#            
-#            outDataset.GetRasterBand(band).WriteArray(src_array, j, i)
-#        outDataset.FlushCache()        
-#        
-#    else:
-#    #Block
-#        rows = src_offset[3]
-#        cols = src_offset[2]
-#        
-#        # These two vars here are for the new raster which obviously begins at 
-#        # 0,0
-#                
-#        
-#        index = []
-#        for i in tqdm(range(0, rows, blocksizeY)):
-#            if i + blocksizeY < rows:
-#                numRows = blocksizeY
-#            else:
-#                numRows = rows -i
-#        
-#                for j in range(0, cols, blocksizeX):
-#                    if j + blocksizeX < cols:
-#                        numCols = blocksizeX
-#                    else:
-#                        numCols = cols - j
-#            index.append(((j,i)))
-#                        
-#
-#                        
-#                        
-#                    
-#                    for band in range(1,bands+1):
-#                        rb = rds.GetRasterBand(band)
-#                        src_array = rb.ReadAsArray(j, i, numCols, numRows)                     
-#                        # The i & j here are not the same as the source dataset
-#                        # as they will start from zero as the are relative to
-#                        # the new raster
-#
-#                        outDataset.GetRasterBand(band).WriteArray(src_array,
-#                                                                  tgt_j, tgt_i)
-#      
-#        outDataset.FlushCache()
-#     
-#    outDataset = None
 
 
 
 def color_raster(inRas, color_file, output_file):
-    """ Generate a txt colorfile and make a RGB image from a grayscale one
+    """ generate a txt colorfile and make a RGB image from a grayscale one
     
-    Parameters
-    ----------       
+    Where:
+        
     inRas : string
         Path to input raster (single band greyscale)
         
@@ -1327,10 +1429,12 @@ def multi_temp_filter_block(inRas, outRas, bands=None, blocksize=256,
                             windowsize=7, FMT=None):
     
     """ Multi temporal filter implementation for radar data 
+    
         See Quegan et al., Uni of Sheffield for paper
+        
         Requires an installation of OTB
         
-        Parameters 
+        Where: 
         ----------- 
         inRas : string
             the input raster
@@ -1361,42 +1465,15 @@ def multi_temp_filter_block(inRas, outRas, bands=None, blocksize=256,
     inDataset = gdal.Open(inRas)
     if bands==None:
         bands = inDataset.RasterCount
-    x_pixels = inDataset.RasterXSize  # number of pixels in x
-    y_pixels = inDataset.RasterYSize  # number of pixels in y
-    geotransform = inDataset.GetGeoTransform()
-    PIXEL_SIZE = geotransform[1]  # size of the pixel...they are square so thats ok.
-    #if not would need w x h
-    x_min = geotransform[0]
-    y_max = geotransform[3]
-    # x_min & y_max are like the "top left" corner.
-    projection = inDataset.GetProjection()
-    geotransform = inDataset.GetGeoTransform()   
-    dtype=gdal.GDT_Float64
-
-    driver = gdal.GetDriverByName(FMT)
-
+        inDataset = gdal.Open(inRas)
+    if bands==None:
+        bands = inDataset.RasterCount
     
-    # Set params for output raster
-    outDataset = driver.Create(
-        outRas+fmt, 
-        x_pixels,
-        y_pixels,
-        bands,
-        dtype)
-
-    outDataset.SetGeoTransform((
-        x_min,    # 0
-        PIXEL_SIZE,  # 1
-        0,                      # 2
-        y_max,    # 3
-        0,                      # 4
-        -PIXEL_SIZE))
-        
-    outDataset.SetProjection(projection)    
+    outDataset = copy_dataset_config(inRas, outMap = outRas,
+                                     bands = bands)
     cols = inDataset.RasterXSize
     rows = inDataset.RasterYSize
     #outBand = outDataset.GetRasterBand(1)
-    PIXEL_SIZE = geotransform[1] 
     # So with most datasets blocksize is a row scanline
     if blocksize==None:
         blocksize=256
@@ -1406,9 +1483,9 @@ def multi_temp_filter_block(inRas, outRas, bands=None, blocksize=256,
     # Key issue now is to speed this part up 
     tempRas = inRas[:-4]+'av_.tif'
     print('filtering image')
-    cmd = ('otbcli_Smoothing -in '+inRas+' -out '+tempRas+' -type mean'
-           ' -type.mean.radius '+windowsize)
-    os.system(cmd) 
+    cmd = ['otbcli_Smoothing', '-in', inRas, '-out', tempRas, '-type', 'mean',
+           '-type.mean.radius', windowsize]
+    subprocess.call(cmd) 
     meanRas = gdal.Open(tempRas)       
     print('filtering done')
     for i in tqdm(range(1, rows-1, blocksizeY)):
@@ -1461,7 +1538,7 @@ def multi_temp_filter_block(inRas, outRas, bands=None, blocksize=256,
     outDataset.FlushCache()
     outDataset = None
 
-def _ecdf(x):
+def ecdf(x):
     
     """convenience function for computing the empirical CDF
     in hist_match below"""
@@ -1472,17 +1549,26 @@ def _ecdf(x):
     return vals, ecdf
 
 def hist_match(inputImage, templateImage):
+    
+    
+    
+    # TODO optimise with either cython or numba
+    
     """
     Adjust the pixel values of a grayscale image such that its histogram
     matches that of a target image. 
 
-    Parameters
-    ----------
-    inputImage : string
-        image to transform the histogram is computed over the flattened array
+    Where:
+    -----------
+    inputImage = image to transform; the histogram is computed over the flattened
+    array
             
-    templateImage : string
-        emplate image can have different dimensions to source
+    templateImage = emplate image; can have different dimensions to source
+    
+    Returns:
+    -----------
+    Writes to the inputImage dataset so that it matches
+    
     
     Notes: 
     -----------
@@ -1494,7 +1580,7 @@ def hist_match(inputImage, templateImage):
     that author
     
     """
-    #
+    # TODO - cythinis or numba this one
     sourceRas = gdal.Open(inputImage, gdal.GA_Update)
     templateRas = gdal.Open(templateImage)
     #Bands = list()
@@ -1549,8 +1635,8 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
         Quegan et al, Uni of Sheffield - this is only suitable for small images,
         as it holds intermediate data in memory
         
-        Parameters 
-        ---------- 
+         Where: 
+        ----------- 
         inRas : string
             the input raster
         
@@ -1576,48 +1662,22 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
     inDataset = gdal.Open(inRas)
     if bands==None:
         bands = inDataset.RasterCount
-    x_pixels = inDataset.RasterXSize  # number of pixels in x
-    y_pixels = inDataset.RasterYSize  # number of pixels in y
-    geotransform = inDataset.GetGeoTransform()
-    PIXEL_SIZE = geotransform[1]  # size of the pixel...they are square so thats ok.
-    #if not would need w x h
-    x_min = geotransform[0]
-    y_max = geotransform[3]
-    # x_min & y_max are like the "top left" corner.
-    projection = inDataset.GetProjection()
-    geotransform = inDataset.GetGeoTransform()   
-    dtype=gdal.GDT_Float64
-    FMT='HFA'
-    driver = gdal.GetDriverByName(FMT)
-
     
-    # Set params for output raster
-    outDataset = driver.Create(
-        outRas, 
-        x_pixels,
-        y_pixels,
-        bands,
-        dtype)
+    outDataset = copy_dataset_config(inRas, outMap = outRas,
+                                     bands = bands)
+    
 
-    outDataset.SetGeoTransform((
-        x_min,    # 0
-        PIXEL_SIZE,  # 1
-        0,                      # 2
-        y_max,    # 3
-        0,                      # 4
-        -PIXEL_SIZE))
-        
-    outDataset.SetProjection(projection)    
-    #outBand = outDataset.GetRasterBand(1)
-    PIXEL_SIZE = geotransform[1] 
+
     # So with most datasets blocksize is a row scanline
      # size of the pixel...they are square so thats ok.
     #if not would need w x h
     #If the block is a row, this simplifies things a bit
     # Key issue now is to speed this part up 
     # 
-    rStack = np.zeros(shape = (y_pixels, x_pixels, bands))
-    mStack = np.zeros(shape = (y_pixels, x_pixels, bands))
+    rStack = np.zeros(shape = (outDataset.RasterYSize, outDataset.RasterXSize,
+                               bands))
+    mStack = np.zeros(shape = (outDataset.RasterYSize, outDataset.RasterXSize,
+                               bands))
     
     for band in tqdm(range(1,bands+1)):
         band1 = inDataset.GetRasterBand(band)
@@ -1631,7 +1691,7 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
         rStack[:,:,band-1]= np.float64(data) / np.float64(mStack[:,:,band-1])
     # mean on the band axis
     ovMean = np.nanmean(rStack, axis=2)     
-    imFinal =np.empty((y_pixels, x_pixels, bands))    
+    imFinal =np.empty((outDataset.RasterYSize, outDataset.RasterXSize, bands))    
     #imFinal = np.empty((data.shape[0], data.shape[1], bands))
     for band in range(1,bands+1):
         imFinal[:,:,band-1] = mStack[:,:,band-1] * ovMean
@@ -1643,3 +1703,237 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
     #outBand.FlushCache()
     outDataset.FlushCache()
 
+def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
+                  blocksize=None,
+                  FMT=None,  dtype = gdal.GDT_Int32):
+    
+    """Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)
+            
+            Parameters 
+            ---------- 
+            FileList : list of strings
+                the files to be inputed, if None a folder must be specified
+            
+            outMap : string
+                the output raster calculated
+    
+            	stat : string
+                       the statisitc to be calculated         
+    
+            blocksize : int
+                the chunck processed 
+    
+            q : int
+                the  ith percentile if percentile is the stat used         
+            
+            FMT : string
+                gdal compatible (optional) defaults is tif
+    
+            dtype : string
+                gdal datatype (default gdal.GDT_Int32)
+    """
+    
+    if FMT == None:
+        FMT = 'Gtiff'
+        fmt = '.tif'
+    if FMT == 'HFA':
+        fmt = '.img'
+    if FMT == 'KEA':
+        fmt = '.kea'
+    if FMT == 'Gtiff':
+        fmt = '.tif'
+    
+    # dict of stats
+
+    
+    if fileList is None:
+        rasterList = glob2.glob(path.join(folder,'*.tif'))
+    else:
+        rasterList = fileList
+    openList = [gdal.Open(i) for i in rasterList]
+    
+    inDataset = gdal.Open(rasterList[0])
+    bands = inDataset.RasterCount
+    
+    outDataset = copy_dataset_config(rasterList[1], outMap = outMap,
+                                     bands = bands)
+        
+    band = inDataset.GetRasterBand(1)
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
+    
+    # So with most datasets blocksize is a row scanline
+    if blocksize == None:
+        blocksize = band.GetBlockSize()
+        blocksizeX = blocksize[0]
+        blocksizeY = blocksize[1]
+    else:
+        blocksizeX = blocksize
+        blocksizeY = blocksize
+
+    def statChoose(X, stat, q):
+        if stat is 'mean':
+            stats = np.nanmean(X, axis=2)
+        elif stat is 'std':
+            stats = np.nanstd(X, axis=2)
+        elif stat is 'percentile':
+            stats = np.nanpercentile(X, q, axis=2)    
+        elif stat is 'median':
+            stats = np.nanmedian(X, axis=2)
+            
+        
+        return stats
+    
+
+    for band in range(1,bands):
+         
+        
+        if blocksizeY==1:
+            rows = np.arange(outDataset.RasterYSize, dtype=np.int)                
+            for row in tqdm(rows):
+                i = int(row)
+                j = 0
+                X = np.zeros(shape = (blocksizeY , blocksizeX, len(rasterList)))
+
+                for ind, im in enumerate(openList):
+                    array = im.GetRasterBand(band).ReadAsArray(j,i,
+                                                blocksizeX, j)
+                    array.shape = (1, blocksizeX)
+                    X[:,:,ind] = array
+                        
+                stArray = statChoose(X, stat, q)
+
+                outDataset.GetRasterBand(band).WriteArray(stArray,j,i)
+
+    
+        # else it is a block            
+        else:
+            for i in tqdm(range(0, rows, blocksizeY)):
+                if i + blocksizeY < rows:
+                    numRows = blocksizeY
+                else:
+                    numRows = rows -i
+            
+                for j in range(0, cols, blocksizeX):
+                    if j + blocksizeX < cols:
+                        numCols = blocksizeX
+                    else:
+                        numCols = cols - j
+                    X = np.zeros(shape = (numRows, numCols, len(openList)))
+
+                    for ind, im in enumerate(openList):
+                        array = im.GetRasterBand(band).ReadAsArray(j,i,
+                                                numCols, numRows)
+                        
+                        X[:,:,ind] = array
+                        
+                    stArray = statChoose(X, stat, q)
+
+                    outDataset.GetRasterBand(band).WriteArray(stArray,j,i)
+
+                    #print(i,j)
+    outDataset.FlushCache()
+    outDataset = None
+    
+def average_through_pixel(inRasSet, outRas, q=5,  window = None, blockSize = None):
+    """Loads and averages through the given band in the given datasets
+    inRas is a path to a stack of raster
+
+	Parameters 
+            ---------- 
+            inRasSet : list of strings
+                the files to be inputed, if None a folder must be specified
+            
+            outRas : string
+                the output raster calculated
+    
+            	stat : string
+                       the statisitc to be calculated         
+    
+            blocksize : int
+                the chunck processed 
+    
+            q : int
+                the  ith percentile if percentile is the stat used         
+            
+    
+    """
+    #use multtemp filter block and classify_pixel_bloc as inspiration
+    #Watch out for block processing    
+
+    inDatasets = [gdal.Open(raster) for raster in inRasSet]
+    
+    bands = inDatasets[0].RasterCount
+    x_pixels = inDatasets[0].RasterXSize  # number of pixels in x
+    y_pixels = inDatasets[0].RasterYSize  # number of pixels in y
+    
+    outDataset = copy_dataset_config(inDatasets[1], outMap = outRas, bands = bands)
+    
+#    def statChoose(X, stat, q):
+#        outDataset.GetRasterBand(band).WriteArray(bandCube.mean(0))
+#        outDataset.GetRasterBand(band).WriteArray(bandCube.std(0))
+#        outDataset.GetRasterBand(band).WriteArray(np.median(bandCube, 0))
+#        outDataset.GetRasterBand(band).WriteArray(np.percentile(bandCube, q, 0))
+    
+    
+    bandCube = np.empty([bands, x_pixels, y_pixels])
+    for band in tqdm(range(1, bands)): #gdal why
+        for i,dataset in enumerate(inDatasets):
+            cubeView = bandCube[i,:,:]    #Exposes a view of bandCube; any changes made are reflected in bandCube
+            np.copyto(cubeView, dataset.ReadAsArray(0)[band,:,:])
+        outDataset.GetRasterBand(band).WriteArray(bandCube.mean(0))
+        outDataset.GetRasterBand(band).WriteArray(bandCube.std(0))
+        outDataset.GetRasterBand(band).WriteArray(np.median(bandCube, 0))
+        outDataset.GetRasterBand(band).WriteArray(np.percentile(bandCube, q, 0))
+        
+        
+        
+    outDataset = None #gdal. please.
+    
+    
+def copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy', dtype = gdal.GDT_Int32, bands = 1):
+    """Copies a dataset without the associated rasters.
+    Did this by grabbing the biolderplate at the start of 
+    these major functions, and adding default vaules until
+    it worked.
+    """
+    if FMT == 'HFA':
+        fmt = '.img'
+    if FMT == 'KEA':
+        fmt = '.kea'
+    if FMT == 'Gtiff':
+        fmt = '.tif'
+    
+    x_pixels = inDataset.RasterXSize  # number of pixels in x
+    y_pixels = inDataset.RasterYSize  # number of pixels in y
+    geotransform = inDataset.GetGeoTransform()
+    PIXEL_SIZE = geotransform[1]  # size of the pixel...they are square so thats ok.
+    #if not would need w x h
+    x_min = geotransform[0]
+    y_max = geotransform[3]
+    # x_min & y_max are like the "top left" corner.
+    projection = inDataset.GetProjection()
+    geotransform = inDataset.GetGeoTransform()   
+    #dtype=gdal.GDT_Int32
+    driver = gdal.GetDriverByName(FMT)
+    
+    # Set params for output raster
+    outDataset = driver.Create(
+        outMap+fmt, 
+        x_pixels,
+        y_pixels,
+        bands,
+        dtype)
+
+    outDataset.SetGeoTransform((
+        x_min,    # 0
+        PIXEL_SIZE,  # 1
+        0,                      # 2
+        y_max,    # 3
+        0,                      # 4
+        -PIXEL_SIZE))
+        
+    outDataset.SetProjection(projection)
+    
+    return outDataset
+    

@@ -450,6 +450,8 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
             if src_array is None:
                 src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
                                    src_offset[3])
+#                if src_array is None:
+#                    continue
             
             # calculate new geotransform of the feature subset
             new_gt = (
@@ -477,7 +479,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
         # we also mask out nodata values explictly
             
 
-        rejects.append(feat.GetField('DN'))
+        #rejects.append(feat.GetField('DN'))
         masked = np.ma.MaskedArray(
             src_array,
             mask=np.logical_or(
@@ -522,7 +524,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     vds = None
     rds = None
     frame = DataFrame(stats)
-    return frame, rejects
+    return frame#, rejects
 
 
     

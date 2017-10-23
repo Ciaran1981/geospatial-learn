@@ -1,20 +1,12 @@
 
 # -*- coding: utf-8 -*-
 """
-Created on Tue May  5 16:36:15 2015
-
-author: Ciaran Robb
-Research Associate in Earth Observation
-Centre for Landscape and Climate Research (CLCR)
-Department of Geography, University of Leicester, University Road, Leicester, 
-LE1 7RH, UK 
-
-If you use code to publish work cite/acknowledge me and authors of libs etc as 
-appropriate 
+The geodata module. 
 
 Description
 -----------
-A series of tools for the manipulation of geospatial imagery/rasters
+
+A series of tools for the manipulation of geospatial imagery/rasters such as masking or raster algebraic type functions and the conversion of Sentinel 2 data to gdal compatible formats.  
 
 """
 import gdal, ogr,  osr
@@ -187,7 +179,7 @@ def batch_translate(folder, wildcard, FMT=None):
     """ Using the gdal python API, this function translates the format of files
     to commonly used formats
     
-    Where:
+    Parameters
     -----------         
     folder : string
         the folder containing the rasters to be translated
@@ -242,7 +234,7 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
         
         If you posses a gdal compiled with the corrext openjpg support use that
         
-        Where:
+        Parameters
         ----------- 
         folder : string
             S2 granule dir
@@ -395,7 +387,7 @@ def jp2_translate_batch(mainFolder, FMT=None, mode=None):
     
     Perhaps only useful for the old tile format
     
-    Where:
+    Parameters
     -----------         
     mainFolder : string
         the path to S2 tile folder to process
@@ -431,7 +423,7 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
         If you possess gdal 2.1 with jp2k support then alternatively use 
         gdal_translate
                     
-        Where:
+        Parameters
         ----------- 
         granule : string
             the granule folder 
@@ -653,7 +645,7 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
     corresponding to  mask value are retained - does this in blocks for
     efficiency on larger rasters
     
-    Where: 
+    Parameters 
     ----------- 
     inputIm : string
         the input raster
@@ -746,7 +738,7 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
     corresponding to  mask value are retained - does this in blocks for
     efficiency on larger rasters
     
-    Where: 
+    Parameters 
     ----------- 
     inputIm : string
         the granule folder 
@@ -869,7 +861,7 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
 def calc_ndvi(inputIm, outputIm, bandsList, blocksize = 256, FMT = None, dtype=None):
     """ Create a copy of an image with an ndvi band added
     
-    Where: 
+    Parameters 
     ----------- 
     inputIm : string
         the granule folder 
@@ -964,7 +956,7 @@ def remove_cloud_S2(inputIm, sceneIm,
     """ remove cloud using the a scene classification
         This saves back to the input raster by default
         
-    Where:
+    Parameters
     ----------- 
     
     inputIm :string
@@ -1069,7 +1061,7 @@ def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
               blocksize=None):
     """ Stack some rasters for change classification - must be same size!!!
     
-    Where:
+    Parameters
     -----------         
     inRas1 : string
         the input image 
@@ -1157,7 +1149,7 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
     """ Lifted straight from the cookbook 
         http://pcjericks.github.io/py-gdalogr-cookbook
         and gdal func docs. Very slow......
-    Where:
+    Parameters
     -----------         
     inRas : string
         the input image 
@@ -1239,7 +1231,7 @@ def otbMeanshift(inputImage, radius, rangeF, minSize, outShape):
         
         
         
-    Where:
+    Parameters
     -----------         
     inputImage : string
         the input image 
@@ -1311,7 +1303,7 @@ def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None,
 
     """
     Clip a raster
-    Where:
+    Parameters
     -----------         
     inRas : string
         the input image 
@@ -1389,7 +1381,7 @@ def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None,
 def color_raster(inRas, color_file, output_file):
     """ generate a txt colorfile and make a RGB image from a grayscale one
     
-    Where:
+    Parameters
         
     inRas : string
         Path to input raster (single band greyscale)
@@ -1434,7 +1426,7 @@ def multi_temp_filter_block(inRas, outRas, bands=None, blocksize=256,
         
         Requires an installation of OTB
         
-        Where: 
+        Parameters 
         ----------- 
         inRas : string
             the input raster
@@ -1558,7 +1550,7 @@ def hist_match(inputImage, templateImage):
     Adjust the pixel values of a grayscale image such that its histogram
     matches that of a target image. 
 
-    Where:
+    Parameters
     -----------
     inputImage = image to transform; the histogram is computed over the flattened
     array
@@ -1635,7 +1627,7 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
         Quegan et al, Uni of Sheffield - this is only suitable for small images,
         as it holds intermediate data in memory
         
-         Where: 
+         Parameters 
         ----------- 
         inRas : string
             the input raster
