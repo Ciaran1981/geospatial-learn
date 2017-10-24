@@ -47,8 +47,13 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
     """
 
     A convenience function that wraps sentinelsat query & download 
-
+            
+    Notes
+    -----------
     
+    I have found the sentinesat sometimes fails to download the second image,
+    so I have written some code to avoid this - choose api = False for this
+        
     Parameters
     -----------
     user : string
@@ -71,13 +76,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
     
     cloud : string (optional)
             include a cloud filter in the search
-    
-    Notes
-    -----------
-    
-    I have found the sentinesat sometimes fails to download the second image,
-    so I have written some code to avoid this - choose api = False for this
-    
+
    
     """
 ##set up your copernicus username and password details, and copernicus download site... BE CAREFUL if you share this script with others though!
@@ -120,8 +119,13 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
 def sent1_query(user, passwd, geojsonfile, start_date, end_date,
                 output_folder=None, api = True):
     """
-    A convenience function that wraps sentinelsat query & download although 
-    this is hardly necessary but I am lazy 
+    A convenience function that wraps sentinelsat query and download
+    
+    Notes
+    -----------
+    
+    I have found the sentinesat sometimes fails to download the second image,
+    so I have written some code to avoid this - choose api = False for this
     
     Parameters
     -----------
@@ -142,12 +146,7 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
     
     output_folder : string
                     where you intend to download the imagery
-        
-    Notes
-    -----------
-    
-    I have found the sentinesat sometimes fails to download the second image,
-    so I have written some code to avoid this - choose api = False for this
+
     """
 
     #TODO: Check if SentinelAPI will use TokenAuth instead of hard-coded cred strings
@@ -342,6 +341,12 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
     
     Way quicker than ESA-based download
     
+    Notes:
+    ------------------------
+        
+    Credit to sentinelsat for the query aspect of this function, and 
+    sentinelhub for the AWS aspect. 
+    
     
     Parameters
     ----------
@@ -369,11 +374,7 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
     cloud : string (optional)
             include a cloud filter in the search
     
-    Notes:
-    ------------------------
-        
-    Credit to sentinelsat for the query aspect of this function, and 
-    sentinelhub for the AWS aspect. 
+
     
     """
     
@@ -685,49 +686,31 @@ def get_intersect_S2(folder, polygon, pixelSize=20):
              
     return granuleList#, areaList
 
-def unzip_S2_granules(folder, area=None, granules=None):
+def unzip_S2_granules(folder, granules=None):
     
-    """ Get the S2 granules dependent on a specific area in Kenya or utm 
+    """ Get the S2 granules dependent on a specific area in utm 
     granule. 
     
-
-    - the area parameter is specific to forests in Kenya as this was a project..
-    areas: mau, laikipia, mtkenya, aberdare, northmau
-    
-    this assumes you have the correct tile
-    
-    - if area is None, you must specify the granule IDs as a list eg ['48NTJ']
-    - this does assume the files all contain the same granules of course
-    
-    
-    The function unzips only the tiles of interest to this area in this project
+    Notes:
+    ------
+    This was written for the file format S2 imagery initally 
+    came in from the ESA hub, which was enormous and impractical. 
+    Fortunately this changed near end of 2016, in which case you can simply
+    unzip with bash or whatever!
     
     Parameters
     ------------    
     folder : string
              a folder contain S2 tiles
     
-    area : string 
-           area of interest (optional)
-    
     granules : string (optional) - recommended
                a list of granule UTM codes e.g ['36MYE', '36MZE']
     
-    Notes:
-    --------------
-    This was written for the file format S2 imagery initally 
-    came in from the ESA hub, which was enormous and impractical. 
-    Fortunately this changed near end of 2016, in which case you can simply
-    unzip with bash or whatever!
 
     """    
-    # R135 is the code for the mau area tile
-    if area is None:
-        fileList = glob2.glob(os.path.join(folder,'*.zip*'))
-    elif area == 'mau':
-        fileList = glob2.glob(os.path.join(folder,'/*R135*.zip*'))
-    elif area == 'laikipia':
-        fileList = glob2.glob(os.path.join(folder,'/*R092*.zip*'))
+
+    fileList = glob2.glob(os.path.join(folder,'*.zip*'))
+
     filez = np.arange(len(fileList))
     print('extracting files')
     
@@ -742,63 +725,16 @@ def unzip_S2_granules(folder, area=None, granules=None):
         aux = fle[:-4]+'.SAFE/AUX_DATA'
         yip = '*'+aux+'*'
         
-        if area is None:
             # TODO This is not good enough long term - a temp fix
-            for granule in granules:
-                cmd = ['unzip', '-o', fileList[file], yip,'*'+granule+'*',
-                       '*DATASTRIP*', "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
-                       "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
-                       fileList[file][:-4]]
-                p = subprocess.Popen(cmd)
-                procList.append(p)
+    for granule in granules:
+        cmd = ['unzip', '-o', fileList[file], yip,'*'+granule+'*',
+               '*DATASTRIP*', "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
+               "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
+               fileList[file][:-4]]
+        p = subprocess.Popen(cmd)
+        procList.append(p)
         
-        if area == 'mau':
-#            wildcards = '"*'+aux+'*" "*MYE*" "*MZE*" "*DATASTRIP*" "*HTML*" \
-#            "*S2A_OPER_MTD_SAFL1C_PDMC*" "*INSPIRE*" "*rep_info*" \
-#            "*manifest.safe*"'
-            cmd = ['unzip', '-o', fileList[file], yip,'*MYE*', '*MZE*',
-                   '*DATASTRIP*', "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
-                   "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
-                   fileList[file][:-4]]
-            p = subprocess.Popen(cmd)
-            procList.append(p)
-            
-        if area == 'laikipia':
-            cmd = ['unzip', '-o', fileList[file], yip, "*NBA*", "*NCA*",
-                   '*DATASTRIP*', "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
-                   "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
-                   fileList[file][:-4]]
-            p = subprocess.Popen(cmd)
-            procList.append(p)
-            
-        if area == 'mtkenya':
-            cmd = ['unzip', '-o', fileList[file], yip,  '*DATASTRIP*', 
-                   "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
-                   "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
-                   fileList[file][:-4]]
-            p = subprocess.Popen(cmd)
-            procList.append(p)
-           
-        if area == 'aberdare':
-            cmd = ['unzip', '-o', fileList[file], yip, "*MBR*", "*MCR*",
-                   '*DATASTRIP*', "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
-                   "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
-                   fileList[file][:-4]]
-            p = subprocess.Popen(cmd)
-            procList.append(p)
-        if area == 'northmau':
-            cmd = ['unzip', '-o', fileList[file], yip, "*NYF*", "*NYG*",
-                   '*DATASTRIP*', "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
-                   "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
-                   fileList[file][:-4]]
-            p = subprocess.Popen(cmd)
-        if area == 'ngong':
-            cmd = ['unzip', '-o', fileList[file], yip, "*MBQ*",  
-                   '*DATASTRIP*', "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
-                   "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
-                   fileList[file][:-4]]
-            p = subprocess.Popen(cmd)
-            procList.append(p)
+
             
     [p.wait() for p in procList]       
         #print(str(file)+' done')
