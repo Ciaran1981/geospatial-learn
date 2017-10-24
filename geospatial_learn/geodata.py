@@ -51,7 +51,8 @@ osr.UseExceptions()
 
 def array2raster(array, bands, inRaster, outRas, dtype, FMT=None):
     
-    """Save a raster from a numpy array using the geoinfo from another.
+    """
+    Save a raster from a numpy array using the geoinfo from another.
     
     Parameters
     ----------      
@@ -135,7 +136,8 @@ def array2raster(array, bands, inRaster, outRas, dtype, FMT=None):
 
 def tile_rasters(inImage, outputImage, tilesize): 
     
-    """ Split a large raster into smaller ones
+    """ 
+    Split a large raster into smaller ones
     
     Parameters
     ----------        
@@ -176,7 +178,8 @@ def tile_rasters(inImage, outputImage, tilesize):
             #print(i)
 
 def batch_translate(folder, wildcard, FMT=None):
-    """ Using the gdal python API, this function translates the format of files
+    """ 
+    Using the gdal python API, this function translates the format of files
     to commonly used formats
     
     Parameters
@@ -228,11 +231,15 @@ def batch_translate(folder, wildcard, FMT=None):
 
 def jp2_translate(folder, FMT=None, mode='L1C'):
     
-    """ translate all files from S2 download to a useable format 
+    """ 
+    Translate all files from S2 download to a useable format 
     
     Default FMT is GTiff (leave blank), for .img FMT='HFA', for .vrt FMT='VRT'
         
     If you posses a gdal compiled with the corrext openjpg support use that
+    
+    This function might be useful if you wish to retain seperate rasters,
+    but the use of stack_S2 is recommended
         
     Parameters
     ----------- 
@@ -245,10 +252,7 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
     FMT : string (optional)
          a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA
                 
-    Notes:
-    ----------- 
-    This function might be useful if you wish to retain seperate rasters,
-    but the use of stack_S2 is recommended
+
             
     """
     if FMT == None:
@@ -388,7 +392,8 @@ def jp2_translate_batch(mainFolder, FMT=None, mode=None):
     Perhaps only useful for the old tile format
     
     Parameters
-    -----------         
+    ----------- 
+        
     mainFolder : string
                  the path to S2 tile folder to process
     
@@ -416,7 +421,8 @@ def jp2_translate_batch(mainFolder, FMT=None, mode=None):
 
 def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
              blocksize=2048, overwrite=True):
-    """ Stacks S2 bands downloaded from ESA site
+    """ 
+    Stacks S2 bands downloaded from ESA site
     
     Can translate directly from jp2 format (this is recommended and is 
     default). 
@@ -426,6 +432,7 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
                 
     Parameters
     ----------- 
+    
     granule : string
               the granule folder 
     
@@ -639,12 +646,14 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
 
 def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
                     blocksize = None, FMT = None):
-    """ perform a numpy masking operation on a raster where all values
+    """ 
+    Perform a numpy masking operation on a raster where all values
     corresponding to  mask value are retained - does this in blocks for
     efficiency on larger rasters
     
     Parameters 
     ----------- 
+    
     inputIm : string
               the input raster
         
@@ -732,12 +741,14 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
      
 def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
                     blocksize = 256, FMT = None, dtype=None):
-    """ perform a numpy masking operation on a raster where all values
+    """ 
+    Perform a numpy masking operation on a raster where all values
     corresponding to  mask value are retained - does this in blocks for
     efficiency on larger rasters
     
     Parameters 
     ----------- 
+    
     inputIm : string
               the granule folder 
         
@@ -815,7 +826,8 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
                     numCols = cols - j
                 mask = maskRas.ReadAsArray(j, i, numCols, numRows)
                 if mval not in mask:
-                    array = np.zeros(shape=(numRows,numCols), dtype=np.int32)
+                    
+    mainFolder : string array = np.zeros(shape=(numRows,numCols), dtype=np.int32)
                     for band in range(1, bands+1):
                         bnd = inDataset.GetRasterBand(band)
                         bnd.WriteArray(array, j, i)
@@ -856,10 +868,12 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
         inDataset = None
 
 def calc_ndvi(inputIm, outputIm, bandsList, blocksize = 256, FMT = None, dtype=None):
-    """ Create a copy of an image with an ndvi band added
+    """ 
+    Create a copy of an image with an ndvi band added
     
     Parameters 
     ----------- 
+    
     inputIm : string
               the granule folder 
         
@@ -946,7 +960,8 @@ def calc_ndvi(inputIm, outputIm, bandsList, blocksize = 256, FMT = None, dtype=N
 
 def remove_cloud_S2(inputIm, sceneIm,
                     blocksize = 256, FMT = None, min_size=4, dist=1):
-    """ remove cloud using the a scene classification
+    """ 
+    Remove cloud using the a scene classification
     
     This saves back to the input raster by default
         
@@ -1049,10 +1064,12 @@ def remove_cloud_S2(inputIm, sceneIm,
 
 def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
               blocksize=None):
-    """ Stack some rasters for change classification - must be same size!!!
+    """ 
+    Stack some rasters for change classification - must be same size!!!
     
     Parameters
-    -----------         
+    ----------- 
+        
     inRas1 : string
              the input image 
         
@@ -1133,12 +1150,16 @@ def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
 
 def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
     
-    """ Lifted straight from the cookbook 
-    http://pcjericks.github.io/py-gdalogr-cookbook
-    and gdal func docs. Very slow......
+    """ 
+    Lifted straight from the cookbook and gdal func docs.
+    
+    http://pcjericks.github.io/py-gdalogr-cookbook 
+    
+    Very slow!
     
     Parameters
-    -----------         
+    -----------   
+      
     inRas : string
             the input image 
     
@@ -1208,39 +1229,37 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
 
     
 def otbMeanshift(inputImage, radius, rangeF, minSize, outShape):
-    """ OTB meanshift by calling the otb command line
-    written for convenience and due to otb python api being rather verbose 
-    and Py v2.7 (why do folk still use it??).
-        
-    You will need to install OTB etc seperately
-                
-        
-    Parameters
-    -----------         
-    inputImage : string
-        the input image 
-        
-    radius : int
-        the kernel radius
-        
-    rangeF : int
-        the kernel range
-        
-    minSize : int
-        minimum segment size
-        
-    outShape : string
-        the ouput shapefile
-
-    Returns:
-    ----------- 
-    nowt
+    """ 
+    OTB meanshift by calling the otb command line
+    Written for convenience and due to otb python api being rather verbose 
     
     Notes:
     -----------        
     There is a maximum size for the .shp format otb doesn't seem to
     want to move beyond (2gb), so enormous rasters may need to be sub
     divided
+        
+    You will need to install OTB etc seperately
+                
+        
+    Parameters
+    -----------    
+     
+    inputImage : string
+                 the input image 
+        
+    radius : int
+             the kernel radius
+        
+    rangeF : int
+             the kernel range
+        
+    minSize : int
+              minimum segment size
+        
+    outShape : string
+               the ouput shapefile
+
     
     """
     # Yes it is possible to do this with the otb python api, but it is way more
@@ -1285,14 +1304,15 @@ def otbMeanshift(inputImage, radius, rangeF, minSize, outShape):
 def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None, 
                 blockmode = True):
 
-    """Clip a raster
+    """
+    Clip a raster
     
     Parameters
-    -----------         
+    ----------
+        
     inRas : string
             the input image 
-    
-        
+            
     outPoly : string
               the input polygon file path 
         
@@ -1356,10 +1376,12 @@ def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None,
 
 
 def color_raster(inRas, color_file, output_file):
-    """ generate a txt colorfile and make a RGB image from a grayscale one
+    """ 
+    Generate a txt colorfile and make a RGB image from a grayscale one
     
     Parameters
-    ----------    
+    ---------- 
+    
     inRas : string
             Path to input raster (single band greyscale)
         
@@ -1397,7 +1419,8 @@ def color_raster(inRas, color_file, output_file):
 def multi_temp_filter_block(inRas, outRas, bands=None, blocksize=256, 
                             windowsize=7, FMT=None):
     
-    """ Multi temporal filter implementation for radar data 
+    """ 
+    Multi temporal filter implementation for radar data 
     
     See Quegan et al., for paper
         
@@ -1405,6 +1428,7 @@ def multi_temp_filter_block(inRas, outRas, bands=None, blocksize=256,
         
     Parameters 
     ----------- 
+    
     inRas : string
             the input raster
     
@@ -1523,7 +1547,8 @@ def hist_match(inputImage, templateImage):
     
     # TODO optimise with either cython or numba
     
-    """Adjust the pixel values of a grayscale image such that its histogram
+    """
+    Adjust the pixel values of a grayscale image such that its histogram
     matches that of a target image. 
     
     Writes to the inputImage dataset so that it matches
@@ -1539,17 +1564,11 @@ def hist_match(inputImage, templateImage):
 
     Parameters
     -----------
-    inputImage : image to transform; the histogram is computed over the flattened
-    array
+    inputImage : string
+                 image to transform; the histogram is computed over the flattened array
             
-    templateImage : emplate image; can have different dimensions to source
-    
-    Returns:
-    -----------
-
-    
-    
-    
+    templateImage : string
+                    template image can have different dimensions to source    
     
     """
     # TODO - cythinis or numba this one
@@ -1603,12 +1622,15 @@ def hist_match(inputImage, templateImage):
 
 def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
     
-    """ The multi temp filter for radar data as outlined & published by
-    Quegan et al, Uni of Sheffield - this is only suitable for small images,
-    as it holds intermediate data in memory
+    """ 
+    The multi temp filter for radar data as outlined & published by
+    Quegan et al, Uni of Sheffield
+    
+    This is only suitable for small images, as it holds intermediate data in memory
         
     Parameters 
-    ----------- 
+    ----------
+    
     inRas : string
             the input raster
     
@@ -1679,10 +1701,12 @@ def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
                   blocksize=None,
                   FMT=None,  dtype = gdal.GDT_Int32):
     
-    """Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)
+    """
+    Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)
             
     Parameters 
     ---------- 
+    
     FileList : list of strings
                the files to be inputed, if None a folder must be specified
     
@@ -1807,9 +1831,10 @@ def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
     outDataset.FlushCache()
     outDataset = None
     
-def average_through_pixel(inRasSet, outRas, q=5,  window = None, blockSize = None):
-    """Loads and averages through the given band in the given datasets
-    inRas is a path to a stack of raster
+def temporal_comp2(inRasSet, outRas, q=5,  window = None, blockSize = None):
+    """
+    
+    Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)
 
 	Parameters 
     ---------- 

@@ -56,6 +56,7 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
         
     Parameters
     -----------
+    
     user : string
            username for esa hub
         
@@ -129,6 +130,7 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
     
     Parameters
     -----------
+    
     user : string
            username for esa hub
         
@@ -194,6 +196,7 @@ def sent2_google(scene, start_date, end_date,  outfolder,
     
     Parameters
     -----------
+    
     scene : string
             tileID (eg '36MYE')
     
@@ -334,8 +337,7 @@ def sent2_google(scene, start_date, end_date,  outfolder,
 
 def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder, 
                  tile = None, cloud = '100'):
-    """ 
-    
+    """  
     Query the ESA catalogue then download S2 from AWS with correct renaming of stuff
     Uses joblib to parallelise multiple files from aws
     
@@ -350,6 +352,7 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
     
     Parameters
     ----------
+    
     user : string
            username for esa hub
         
@@ -504,12 +507,15 @@ def _get_S2_geoinfo(xmlFile, mode = 'L2A'):
     return geoinfo
 
 def get_intersect(folder, polygon, resolution=None):
-    """get intersect between rasters and AOI polygon
+    """
+    Get intersect between rasters and AOI polygon
     
     Parameters
-    ---------------    
+    --------------- 
+    
     folder : string
              the S2 tile folder containing the granules ending .SAFE
+             
     polygon : string
               the AOI polygon (must be same crs as rasters)
         
@@ -597,7 +603,8 @@ def _find_all(name, path):
     return result
 
 def get_intersect_S2(folder, polygon, pixelSize=20):
-    """ Get the S2 granules that intersect an area of interest, uses S2xml file
+    """ 
+    Get the S2 granules that intersect an area of interest, uses S2xml file
     to get granule coords - this function is quicker than get_intersect, but 
     more prone to errors
     
@@ -688,7 +695,8 @@ def get_intersect_S2(folder, polygon, pixelSize=20):
 
 def unzip_S2_granules(folder, granules=None):
     
-    """ Get the S2 granules dependent on a specific area in utm 
+    """ 
+    Get the S2 granules dependent on a specific area in utm 
     granule. 
     
     Notes:
