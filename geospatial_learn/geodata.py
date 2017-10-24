@@ -140,13 +140,13 @@ def tile_rasters(inImage, outputImage, tilesize):
     Parameters
     ----------        
     inImage : string
-        the path to input raster
+              the path to input raster
     
     outputImage : string
-        the path to the output image
+                  the path to the output image
     
     tilesize : int
-        the side of a square tile
+               the side of a square tile
         
     """
     
@@ -182,13 +182,13 @@ def batch_translate(folder, wildcard, FMT=None):
     Parameters
     -----------         
     folder : string
-        the folder containing the rasters to be translated
+             the folder containing the rasters to be translated
     
     wildcard : string
-        the format wildcard to search for e.g. '.tif'
+               the format wildcard to search for e.g. '.tif'
     
     FMT : string (optional)
-        a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA
+          a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA
         
     
     """
@@ -230,25 +230,25 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
     
     """ translate all files from S2 download to a useable format 
     
-        default FMT is GTiff (leave blank), for .img FMT='HFA', for .vrt FMT='VRT'
+    Default FMT is GTiff (leave blank), for .img FMT='HFA', for .vrt FMT='VRT'
         
-        If you posses a gdal compiled with the corrext openjpg support use that
+    If you posses a gdal compiled with the corrext openjpg support use that
         
-        Parameters
-        ----------- 
-        folder : string
-            S2 granule dir
+    Parameters
+    ----------- 
+    folder : string
+        S2 granule dir
+
+    mode : string
+        'L2A' , '20', '10', L1C (default)  
     
-        mode : string
-            'L2A' , '20', '10', L1C (default)  
-        
-        FMT : string (optional)
-             a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA
-                    
-        Notes:
-        ----------- 
-        This function might be useful if you wish to retain seperate rasters,
-        but the use of stack_S2 is recommended
+    FMT : string (optional)
+         a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA
+                
+    Notes:
+    ----------- 
+    This function might be useful if you wish to retain seperate rasters,
+    but the use of stack_S2 is recommended
             
     """
     if FMT == None:
@@ -390,13 +390,13 @@ def jp2_translate_batch(mainFolder, FMT=None, mode=None):
     Parameters
     -----------         
     mainFolder : string
-        the path to S2 tile folder to process
+                 the path to S2 tile folder to process
     
     FMT : string
-        a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA
+          a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA
     
     mode : string (optional)
-        'L2A' , '20', '10', L1C (default)  
+           'L2A' , '20', '10', L1C (default)  
         
         
     """
@@ -417,40 +417,38 @@ def jp2_translate_batch(mainFolder, FMT=None, mode=None):
 def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
              blocksize=2048, overwrite=True):
     """ Stacks S2 bands downloaded from ESA site
-        Can translate directly from jp2 format (this is recommended and is 
-        default). 
+    
+    Can translate directly from jp2 format (this is recommended and is 
+    default). 
         
-        If you possess gdal 2.1 with jp2k support then alternatively use 
-        gdal_translate
-                    
-        Parameters
-        ----------- 
-        granule : string
-            the granule folder 
-        
-        inFMT : string (optional)
+    If you possess gdal 2.1 with jp2k support then alternatively use 
+    gdal_translate
+                
+    Parameters
+    ----------- 
+    granule : string
+              the granule folder 
+    
+    inFMT : string (optional)
             the format of the bands will likely be jp2
+    
+    FMT : string (optional)
+          the output gdal format eg 'Gtiff', 'KEA', 'HFA'
+    
+    mode : string (optional)
+           None, '10'  '20' 
+    
+    old_order : bool (optional)
+                this function used to order the 20m imagery 2,3,4,5,6,7,11,12,8a
+                if false ordered like this 2,3,4,5,6,7,8a,11,12
+    
+    blocksize : int (optional)
+                the chunk of jp2 to read in - glymur seems to work fastest with 2048
+    
+    Returns:
+    ----------- 
+    A string of the output file path
         
-        FMT : string (optional)
-            the output gdal format eg 'Gtiff', 'KEA', 'HFA'
-        
-        mode : string (optional)
-            None, '10'  '20' 
-        
-        old_order : bool (optional)
-            this function used to order the 20m imagery 2,3,4,5,6,7,11,12,8a
-            if false ordered like this 2,3,4,5,6,7,8a,11,12
-        
-        blocksize : int (optional)
-            the chunk of jp2 to read in - glymur seems to work fastest with 2048
-        
-        Returns:
-        ----------- 
-        A string of the output file path
-            
-        Notes:
-        -----------             
-        Uses glymur to read in raster chuncks (until I write something better).
     """
     
     if FMT == None:
@@ -648,20 +646,20 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
     Parameters 
     ----------- 
     inputIm : string
-        the input raster
+              the input raster
         
     mval : int
-        the mask value eg 1, 2 etc
+           the mask value eg 1, 2 etc
         
     FMT : string
-        the output gdal format eg 'Gtiff', 'KEA', 'HFA'
+          the output gdal format eg 'Gtiff', 'KEA', 'HFA'
         
     outputIm : string (optional)
-        optionally write a separate output image, if None, will 
-        mask the input
+               optionally write a separate output image, if None, will 
+               mask the input
         
     blocksize : int
-        the chunk of raster to read in
+                the chunk of raster to read in
         
     Returns:
     ----------- 
@@ -741,26 +739,25 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
     Parameters 
     ----------- 
     inputIm : string
-        the granule folder 
+              the granule folder 
         
      mval : int
-         the masking value that delineates pixels to be kept
+            the masking value that delineates pixels to be kept
         
      outval : numerical dtype eg int, float
-         the areas removed will be written to this value
-     default is 0
+              the areas removed will be written to this value default is 0
         
      mask : string
-         the mask raster to be used (optional)
+            the mask raster to be used (optional)
         
      FMT : string
-         the output gdal format eg 'Gtiff', 'KEA', 'HFA'
+           the output gdal format eg 'Gtiff', 'KEA', 'HFA'
         
      mode : string
-         None > 10m data, '20' >20m
+            None > 10m data, '20' >20m
         
      blocksize : int
-         the chunk of raster read in & write out
+                 the chunk of raster read in & write out
     
     Returns:
     ----------- 
@@ -864,21 +861,17 @@ def calc_ndvi(inputIm, outputIm, bandsList, blocksize = 256, FMT = None, dtype=N
     Parameters 
     ----------- 
     inputIm : string
-        the granule folder 
+              the granule folder 
         
-     bands : list
-         a list of band indicies to be used, eg - [3,4] for Sent2 data
+    bands : list
+            a list of band indicies to be used, eg - [3,4] for Sent2 data
 
-     FMT : string
-         the output gdal format eg 'Gtiff', 'KEA', 'HFA'
+    FMT : string
+          the output gdal format eg 'Gtiff', 'KEA', 'HFA'
         
-     blocksize : int
-         the chunk of raster read in & write out
+    blocksize : int
+                the chunk of raster read in & write out
     
-    Returns:
-    ----------- 
-
-    nowt
 
     """
 
@@ -954,30 +947,27 @@ def calc_ndvi(inputIm, outputIm, bandsList, blocksize = 256, FMT = None, dtype=N
 def remove_cloud_S2(inputIm, sceneIm,
                     blocksize = 256, FMT = None, min_size=4, dist=1):
     """ remove cloud using the a scene classification
-        This saves back to the input raster by default
+    
+    This saves back to the input raster by default
         
     Parameters
     ----------- 
     
-    inputIm :string
-        the input image 
+    inputIm : string
+              the input image 
         
     sceneIm : string
-        the scenemap to use as a mask for removing cloud
+              the scenemap to use as a mask for removing cloud
         
     FMT : string
-        the output gdal format eg 'Gtiff', 'KEA', 'HFA'
+          the output gdal format eg 'Gtiff', 'KEA', 'HFA'
         
     min_size : int
-        size in pixels to retain of cloud mask
+               size in pixels to retain of cloud mask
         
     blocksize : int
-        the square chunk processed at any one time
+                the square chunk processed at any one time
         
-    Returns:
-    ----------- 
-    
-    nowt
 
     """
 
@@ -1064,26 +1054,23 @@ def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
     Parameters
     -----------         
     inRas1 : string
-        the input image 
+             the input image 
         
     inRas2 : string
-        the second image 
+             the second image 
         
     outFile : string
-        the output file path (no file extension required)
+              the output file path (no file extension required)
         
     FMT : string
-        the output gdal format eg 'Gtiff', 'KEA', 'HFA'
+          the output gdal format eg 'Gtiff', 'KEA', 'HFA'
         
     min_size : int
-        size in pixels to retain of cloud mask
+               size in pixels to retain of cloud mask
         
     blocksize : int
-        the square chunk processed at any one time
-            
-    Returns:
-    ----------- 
-    nowt
+                the square chunk processed at any one time
+
     """
 
     if FMT == None:
@@ -1147,29 +1134,27 @@ def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
 def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
     
     """ Lifted straight from the cookbook 
-        http://pcjericks.github.io/py-gdalogr-cookbook
-        and gdal func docs. Very slow......
+    http://pcjericks.github.io/py-gdalogr-cookbook
+    and gdal func docs. Very slow......
+    
     Parameters
     -----------         
     inRas : string
-        the input image 
+            the input image 
     
         
     outPoly : string
-        the output polygon file path 
+              the output polygon file path 
         
     outField : string (optional)
-        size in pixels to retain of cloud mask
+               size in pixels to retain of cloud mask
         
     blocksize : int
-        the square chunk processed at any one time
+                the square chunk processed at any one time
         
     band : int
-        the input raster band
+           the input raster band
             
-    Returns:
-    ----------- 
-    nowt
     """    
     
     #TODO investigate ways of speeding this up   
@@ -1224,12 +1209,11 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
     
 def otbMeanshift(inputImage, radius, rangeF, minSize, outShape):
     """ OTB meanshift by calling the otb command line
-        written for convenience and due to otb python api being rather verbose 
-        and Py v2.7 (why do folk still use it??).
+    written for convenience and due to otb python api being rather verbose 
+    and Py v2.7 (why do folk still use it??).
         
-        You will need to install OTB etc seperately
-        
-        
+    You will need to install OTB etc seperately
+                
         
     Parameters
     -----------         
@@ -1301,40 +1285,33 @@ def otbMeanshift(inputImage, radius, rangeF, minSize, outShape):
 def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None, 
                 blockmode = True):
 
-    """
-    Clip a raster
+    """Clip a raster
+    
     Parameters
     -----------         
     inRas : string
-        the input image 
+            the input image 
     
         
     outPoly : string
-        the input polygon file path 
+              the input polygon file path 
         
     outRas : string (optional)
-        the clipped raster
+             the clipped raster
         
     nodata_value : numerical (optional)
-        self explanatory
+                   self explanatory
         
     blocksize : int (optional)
-        the square chunk processed at any one time
+                the square chunk processed at any one time
         
     blockmode : bool (optional)
-        whether the raster will be clipped entirely in memory or by chunck
+                whether the raster will be clipped entirely in memory or by chunck
             
-    Returns:
-    ----------- 
-    nowt
-     
-    Notes
-    ---------------------------------------
-    This just calls the gdal cmd line at present and was just written for 
-    convenience, quicker solution is currently not finished....
    
     """
-    # Polygon shapefile used to clip
+    
+
     vds = ogr.Open(inShape)
     
 
@@ -1359,7 +1336,7 @@ def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None,
     feat = lyr.GetFeature(0)
     geom = feat.geometry()
             
-    src_offset = bbox_to_pixel_offsets(rgt, geom)
+    src_offset = _bbox_to_pixel_offsets(rgt, geom)
     # 'offset = xoff, yoff, xcount, ycount'
 
     new_gt = (
@@ -1382,12 +1359,12 @@ def color_raster(inRas, color_file, output_file):
     """ generate a txt colorfile and make a RGB image from a grayscale one
     
     Parameters
-        
+    ----------    
     inRas : string
-        Path to input raster (single band greyscale)
+            Path to input raster (single band greyscale)
         
     color_file : string
-        Path to output colorfile.txt
+                 Path to output colorfile.txt
         
         
     """
@@ -1422,26 +1399,26 @@ def multi_temp_filter_block(inRas, outRas, bands=None, blocksize=256,
     
     """ Multi temporal filter implementation for radar data 
     
-        See Quegan et al., Uni of Sheffield for paper
+    See Quegan et al., for paper
         
-        Requires an installation of OTB
+    Requires an installation of OTB
         
-        Parameters 
-        ----------- 
-        inRas : string
+    Parameters 
+    ----------- 
+    inRas : string
             the input raster
-        
-        outRas : string
-            the output raster
-        
-        blocksize : int
-            the chunck processed 
-        
-        windowsize : int
-            the filter window size
-        
-        FMT : string
-            gdal compatible (optional) defaults is tif
+    
+    outRas : string
+             the output raster
+    
+    blocksize : int
+                the chunck processed 
+    
+    windowsize : int
+                 the filter window size
+    
+    FMT : string
+          gdal compatible (optional) defaults is tif
     """
     #selem = square(7)
     if FMT == None:
@@ -1530,15 +1507,15 @@ def multi_temp_filter_block(inRas, outRas, bands=None, blocksize=256,
     outDataset.FlushCache()
     outDataset = None
 
-def ecdf(x):
+def _ecdf(x):
     
     """convenience function for computing the empirical CDF
     in hist_match below"""
     vals, counts = np.unique(x, return_counts=True)
-    ecdf = np.cumsum(counts).astype(np.float64)
-    ecdf /= ecdf[-1]
+    _ecdf = np.cumsum(counts).astype(np.float64)
+    _ecdf /= _ecdf[-1]
         
-    return vals, ecdf
+    return vals, _ecdf
 
 def hist_match(inputImage, templateImage):
     
@@ -1546,21 +1523,10 @@ def hist_match(inputImage, templateImage):
     
     # TODO optimise with either cython or numba
     
-    """
-    Adjust the pixel values of a grayscale image such that its histogram
+    """Adjust the pixel values of a grayscale image such that its histogram
     matches that of a target image. 
-
-    Parameters
-    -----------
-    inputImage = image to transform; the histogram is computed over the flattened
-    array
-            
-    templateImage = emplate image; can have different dimensions to source
     
-    Returns:
-    -----------
     Writes to the inputImage dataset so that it matches
-    
     
     Notes: 
     -----------
@@ -1570,6 +1536,20 @@ def hist_match(inputImage, templateImage):
     
     Inspire by/adapted from something on stack on image processing - credit to
     that author
+
+    Parameters
+    -----------
+    inputImage : image to transform; the histogram is computed over the flattened
+    array
+            
+    templateImage : emplate image; can have different dimensions to source
+    
+    Returns:
+    -----------
+
+    
+    
+    
     
     """
     # TODO - cythinis or numba this one
@@ -1624,25 +1604,25 @@ def hist_match(inputImage, templateImage):
 def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
     
     """ The multi temp filter for radar data as outlined & published by
-        Quegan et al, Uni of Sheffield - this is only suitable for small images,
-        as it holds intermediate data in memory
+    Quegan et al, Uni of Sheffield - this is only suitable for small images,
+    as it holds intermediate data in memory
         
-         Parameters 
-        ----------- 
-        inRas : string
+    Parameters 
+    ----------- 
+    inRas : string
             the input raster
-        
-        outRas : string
-            the output raster
-        
-        blocksize : int
-            the chunck processed 
-        
-        windowsize : int
-            the filter window size
-        
-        FMT : string
-            gdal compatible (optional) defaults is tif
+    
+    outRas : string
+             the output raster
+    
+    blocksize : int
+                the chunck processed 
+    
+    windowsize : int
+                 the filter window size
+    
+    FMT : string
+          gdal compatible (optional) defaults is tif
 
 
 
@@ -1701,28 +1681,28 @@ def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
     
     """Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)
             
-            Parameters 
-            ---------- 
-            FileList : list of strings
-                the files to be inputed, if None a folder must be specified
-            
-            outMap : string
-                the output raster calculated
+    Parameters 
+    ---------- 
+    FileList : list of strings
+               the files to be inputed, if None a folder must be specified
     
-            	stat : string
-                       the statisitc to be calculated         
-    
-            blocksize : int
+    outMap : string
+             the output raster calculated
+
+    	stat : string
+           the statisitc to be calculated         
+
+    blocksize : int
                 the chunck processed 
+
+    q : int
+        the ith percentile if percentile is the stat used         
     
-            q : int
-                the  ith percentile if percentile is the stat used         
-            
-            FMT : string
-                gdal compatible (optional) defaults is tif
-    
-            dtype : string
-                gdal datatype (default gdal.GDT_Int32)
+    FMT : string
+          gdal compatible (optional) defaults is tif
+
+    dtype : string
+            gdal datatype (default gdal.GDT_Int32)
     """
     
     if FMT == None:
@@ -1832,21 +1812,21 @@ def average_through_pixel(inRasSet, outRas, q=5,  window = None, blockSize = Non
     inRas is a path to a stack of raster
 
 	Parameters 
-            ---------- 
-            inRasSet : list of strings
-                the files to be inputed, if None a folder must be specified
-            
-            outRas : string
-                the output raster calculated
+    ---------- 
+    inRasSet : list of strings
+               the files to be inputed, if None a folder must be specified
     
-            	stat : string
-                       the statisitc to be calculated         
-    
-            blocksize : int
+    outRas : string
+             the output raster calculated
+
+    	stat : string
+           the statisitc to be calculated         
+
+    blocksize : int
                 the chunck processed 
-    
-            q : int
-                the  ith percentile if percentile is the stat used         
+
+    q : int
+        the  ith percentile if percentile is the stat used         
             
     
     """
@@ -1885,9 +1865,7 @@ def average_through_pixel(inRasSet, outRas, q=5,  window = None, blockSize = Non
     
 def copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy', dtype = gdal.GDT_Int32, bands = 1):
     """Copies a dataset without the associated rasters.
-    Did this by grabbing the biolderplate at the start of 
-    these major functions, and adding default vaules until
-    it worked.
+
     """
     if FMT == 'HFA':
         fmt = '.img'
