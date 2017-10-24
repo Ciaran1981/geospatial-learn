@@ -207,12 +207,11 @@ def sent2_google(scene, start_date, end_date,  outfolder,
                eg. '2016-12-23'
                 
     outfolder : string
-        destination folder for catalog that is searched for image
-        
-        output = destination folder
+                destination folder for catalog that is searched for image
+
     
-    Returns:
-    -----------
+    Returns
+    --------
         
     urlList : list
               a list of the image urls
@@ -429,7 +428,7 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
 def sent_attributes(footprints):
     """
     Get a sorted list of tuples each containing the date and sceneID of S2 from
-    a footprints geojsom produced by sentinelsat/sent1/2query
+    a footprints geojson produced by sentinelsat/sent1/2query
     
     Parameters
     ----------

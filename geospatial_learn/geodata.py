@@ -243,6 +243,7 @@ def jp2_translate(folder, FMT=None, mode='L1C'):
         
     Parameters
     ----------- 
+    
     folder : string
         S2 granule dir
 
@@ -452,7 +453,7 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
     blocksize : int (optional)
                 the chunk of jp2 to read in - glymur seems to work fastest with 2048
     
-    Returns:
+    Returns
     ----------- 
     A string of the output file path
         
@@ -670,7 +671,7 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
     blocksize : int
                 the chunk of raster to read in
         
-    Returns:
+    Returns
     ----------- 
     A string of the output file path
         
@@ -695,7 +696,7 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
         inDataset = gdal.Open(inputIm)
     
         
-        outDataset = copy_dataset_config(inputIm, outMap = outputIm,
+        outDataset = _copy_dataset_config(inputIm, outMap = outputIm,
                                      bands = inDataset.RasterCount)  
         bnd = inDataset.GetRasterBand(1)
         
@@ -752,25 +753,25 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
     inputIm : string
               the granule folder 
         
-     mval : int
-            the masking value that delineates pixels to be kept
+    mval : int
+           the masking value that delineates pixels to be kept
         
-     outval : numerical dtype eg int, float
+    outval : numerical dtype eg int, float
               the areas removed will be written to this value default is 0
         
-     mask : string
+    mask : string
             the mask raster to be used (optional)
         
-     FMT : string
-           the output gdal format eg 'Gtiff', 'KEA', 'HFA'
+    FMT : string
+          the output gdal format eg 'Gtiff', 'KEA', 'HFA'
         
-     mode : string
-            None > 10m data, '20' >20m
+    mode : string
+           None > 10m data, '20' >20m
         
-     blocksize : int
-                 the chunk of raster read in & write out
+    blocksize : int
+                the chunk of raster read in & write out
     
-    Returns:
+    Returns
     ----------- 
 
     nowt
@@ -910,7 +911,7 @@ def calc_ndvi(inputIm, outputIm, bandsList, blocksize = 256, FMT = None, dtype=N
     cols = inDataset.RasterXSize
     rows = inDataset.RasterYSize
 
-    outDataset = copy_dataset_config(inputIm, outMap = outputIm,
+    outDataset = _copy_dataset_config(inputIm, outMap = outputIm,
                                      bands = bands)
     
     # So with most datasets blocksize is a row scanline
@@ -1106,7 +1107,7 @@ def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
     
     bands = inras1.RasterCount + inras2.RasterCount
     
-    outDataset = copy_dataset_config(inRas1, outMap = outFile,
+    outDataset = _copy_dataset_config(inRas1, outMap = outFile,
                                      bands = bands)
     
     rows = outDataset.RasterXSize
@@ -1462,7 +1463,7 @@ def multi_temp_filter_block(inRas, outRas, bands=None, blocksize=256,
     if bands==None:
         bands = inDataset.RasterCount
     
-    outDataset = copy_dataset_config(inRas, outMap = outRas,
+    outDataset = _copy_dataset_config(inRas, outMap = outRas,
                                      bands = bands)
     cols = inDataset.RasterXSize
     rows = inDataset.RasterYSize
@@ -1564,6 +1565,7 @@ def hist_match(inputImage, templateImage):
 
     Parameters
     -----------
+    
     inputImage : string
                  image to transform; the histogram is computed over the flattened array
             
@@ -1657,7 +1659,7 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
     if bands==None:
         bands = inDataset.RasterCount
     
-    outDataset = copy_dataset_config(inRas, outMap = outRas,
+    outDataset = _copy_dataset_config(inRas, outMap = outRas,
                                      bands = bands)
     
 
@@ -1751,7 +1753,7 @@ def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
     inDataset = gdal.Open(rasterList[0])
     bands = inDataset.RasterCount
     
-    outDataset = copy_dataset_config(rasterList[1], outMap = outMap,
+    outDataset = _copy_dataset_config(rasterList[1], outMap = outMap,
                                      bands = bands)
         
     band = inDataset.GetRasterBand(1)
@@ -1838,6 +1840,7 @@ def temporal_comp2(inRasSet, outRas, q=5,  window = None, blockSize = None):
 
 	Parameters 
     ---------- 
+    
     inRasSet : list of strings
                the files to be inputed, if None a folder must be specified
     
@@ -1864,7 +1867,7 @@ def temporal_comp2(inRasSet, outRas, q=5,  window = None, blockSize = None):
     x_pixels = inDatasets[0].RasterXSize  # number of pixels in x
     y_pixels = inDatasets[0].RasterYSize  # number of pixels in y
     
-    outDataset = copy_dataset_config(inDatasets[1], outMap = outRas, bands = bands)
+    outDataset = _copy_dataset_config(inDatasets[1], outMap = outRas, bands = bands)
     
 #    def statChoose(X, stat, q):
 #        outDataset.GetRasterBand(band).WriteArray(bandCube.mean(0))
@@ -1888,7 +1891,7 @@ def temporal_comp2(inRasSet, outRas, q=5,  window = None, blockSize = None):
     outDataset = None #gdal. please.
     
     
-def copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy', dtype = gdal.GDT_Int32, bands = 1):
+def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy', dtype = gdal.GDT_Int32, bands = 1):
     """Copies a dataset without the associated rasters.
 
     """

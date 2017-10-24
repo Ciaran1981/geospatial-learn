@@ -45,15 +45,17 @@ def shp2gj(inShape, outJson):
     
     Parameters
     ----------
+    
     inShape : string
-        input shapefile
+              input shapefile
     
 
     outJson : string
-        output geojson
+              output geojson
     
     Notes
     -----
+    
     Credit to person who posted this on the pyshp site
     """    
     
@@ -90,20 +92,20 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
     ----------
     
     inShape : string
-        input shape file path
+              input shape file path
 
     
     inRas : string
-        a raster to get the correct dimensions from (optional), required for
-        scikit-image props
+            a raster to get the correct dimensions from (optional), required for
+            scikit-image props
         
     
     prop : string
-        Scikit image regionprops prop 
-        (see http://scikit-image.org/docs/dev/api/skimage.measure.html)
+           Scikit image regionprops prop 
+           (see http://scikit-image.org/docs/dev/api/skimage.measure.html)
         
-        OGR is used to generate most of these as it is faster but the string
-        keys are same as scikit-image see notes for which require raster
+    OGR is used to generate most of these as it is faster but the string
+    keys are same as scikit-image see notes for which require raster
     
     Notes
     -----
@@ -312,25 +314,30 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
 def _bbox_to_pixel_offsets(rgt, geom):
     
     """ 
-    internal function to get pixel geo-locations of bbox of a polygon
+    Internal function to get pixel geo-locations of bbox of a polygon
     
     Parameters
     ----------
+    
     rgt : array
-        List of points defining polygon (?)
+          List of points defining polygon (?)
+          
     geom : shapely.geometry
-        Structure defining geometry
+           Structure defining geometry
     
     Returns
     -------
     xoff : int
-        x offset
+           x offset
+           
     yoff : int
-        y offset
+           y offset
+           
     xcount : int
-        rows of bounding box
+             rows of bounding box
+             
     ycount : int
-        columns of bounding box
+             columns of bounding box
     """
     
     xOrigin = rgt[0]
@@ -398,25 +405,25 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     ----------
     
     vector_path : string
-        input shapefile
+                  input shapefile
         
     raster_path : string
-        input raster
+                  input raster
         
     bandname : int
-        an integer val eg - 2
+               an integer val eg - 2
         
     stat : string
-        string of a stat to calculate, if omitted it will be 'mean'
-         others: 'mode', 'min','mean','max', 'std',' sum', 'count','var',
-         skew', 'kurtosis'
+           string of a stat to calculate, if omitted it will be 'mean'
+           others: 'mode', 'min','mean','max', 'std',' sum', 'count','var',
+           skew', 'kurtosis'
                      
     write_stat : bool (optional)
-        If True, stat will be written to OGR file, if false, dataframe
-        only returned (bool)
+                If True, stat will be written to OGR file, if false, dataframe
+                only returned (bool)
         
     nodata_value : numerical
-        If used the no data val of the raster
+                   If used the no data val of the raster
         
     """    
     # Inspired/Adapted from Matt Perry's excellent script
@@ -548,13 +555,13 @@ def write_text_field(inShape, fieldName, attribute):
     Parameters
     ----------
     inShape : string
-        input OGR vecotr file
+              input OGR vecotr file
         
     fieldName : string
-        name of field being written
+                name of field being written
     
     attribute : string
-        'text to enter in each entry of column'
+                'text to enter in each entry of column'
         
     """
         
@@ -587,28 +594,28 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
     Parameters
     ----------
     vector_path : string
-        input shapefile 
+                  input shapefile 
         
     raster_path : string 
-        input raster path
+                  input raster path
         
     gprop : string
-        a skimage gclm property 
-        entropy, contrast, dissimilarity, homogeneity, ASM, energy,
-        correlation
+            a skimage gclm property 
+            entropy, contrast, dissimilarity, homogeneity, ASM, energy,
+            correlation
         
     offset : int
-        distance in pixels to measure 
+             distance in pixels to measure 
         
     angle : int
-        angle in degrees from pixel (int)
+            angle in degrees from pixel (int)
         
     seg : bool
-    if True, use only the masked pixels to calculate, otherwise 
-     the bounding box is used. 
+          if True, use only the masked pixels to calculate, otherwise 
+          the bounding box is used. 
      
     mean : bool
-        take the mean of all offsets
+           take the mean of all offsets
      
     Important to note that the results will be unreliable for glcm 
     texture features if seg is true as non-masked values will be zero or
