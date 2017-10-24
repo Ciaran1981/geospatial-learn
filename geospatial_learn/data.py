@@ -46,31 +46,31 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 output_folder=None, api = True):
     """
 
-    A convenience function that wraps sentinelsat query & download although 
-    this is hardly necessary but I am lazy 
+    A convenience function that wraps sentinelsat query & download 
+
     
     Parameters
     -----------
     user : string
-        username for esa hub
+           username for esa hub
         
     passwd : string
-        password for hub
+             password for hub
         
     geojsonfile : string
-        AOI polygon of interest
+                  AOI polygon of interest
     
     start_date : string
-        date of beginning of search
+                 date of beginning of search
     
     end_date : string
-        date of end of search
+               date of end of search
     
     output_folder : string
-        where you intend to download the imagery
+                    where you intend to download the imagery
     
     cloud : string (optional)
-        include a cloud filter in the search
+            include a cloud filter in the search
     
     Notes
     -----------
@@ -120,28 +120,28 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
 def sent1_query(user, passwd, geojsonfile, start_date, end_date,
                 output_folder=None, api = True):
     """
-     A convenience function that wraps sentinelsat query & download although 
+    A convenience function that wraps sentinelsat query & download although 
     this is hardly necessary but I am lazy 
     
     Parameters
     -----------
     user : string
-        username for esa hub
+           username for esa hub
         
     passwd : string
-        password for hub
+             password for hub
         
     geojsonfile : string
-        AOI polygon of interest
+                  AOI polygon of interest
     
     start_date : string
-        date of beginning of search
+                 date of beginning of search
     
     end_date : string
-        date of end of search
+               date of end of search
     
     output_folder : string
-        where you intend to download the imagery
+                    where you intend to download the imagery
         
     Notes
     -----------
@@ -186,7 +186,7 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
     return products_df, products
 
 #TODO: maybe clean up these nested functions. Or it might be alright.
-def sent2_google(scene, start_date, end_date,  outputcatalogs, 
+def sent2_google(scene, start_date, end_date,  outfolder, 
                  cloudcover='100',):
     
     """ 
@@ -196,24 +196,25 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
     Parameters
     -----------
     scene : string
-        tileID (eg '36MYE')
+            tileID (eg '36MYE')
     
     start_date : string 
-                eg. '2016-12-23'
+                 eg. '2016-12-23'
     
     end_date : string 
-                eg. '2016-12-23'
+               eg. '2016-12-23'
                 
-    outputcatalogs : string
+    outfolder : string
         destination folder for catalog that is searched for image
         
         output = destination folder
+    
     Returns:
     -----------
         
     urlList : list
-        a list of the image urls
-        """
+              a list of the image urls
+    """
 
 #TODO: put metadata urls in a config file    
 #    SENTINEL2_METADATA_URL = ('http://storage.googleapis.com/gcp-public'                     
@@ -272,30 +273,7 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
                 urlList.append(url)
         return urlList
     
-    
-   # Main ---------------
-    sentinel2_metadata_file = _downloadMetadataFile(outputcatalogs)
-    cloudcover = float(cloudcover)
-    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
-    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
-    
-    urlList = _findS2InCollectionMetadata(sentinel2_metadata_file,
-                                     cloudcover, start_date,
-                                     end_date, scene)
-    
-    return urlList
-    #downloadS2FromGoogleCloud(url, output)
-    
-    
-#    l1cList = glob2.glob(output+'/*L1C*.SAFE/GRANULE/*')
-#    grans = np.arange(len(l1cList))
-#    
-#    for gran in grans:   
-#        fld, pth = os.path.split(l1cList[gran])
-#        if scene[2:6] in pth:
-#            l1cList.pop(gran)
-        
-def downloadS2FromGoogleCloud(url, outputdir):
+    def _downloadS2FromGoogleCloud(url, outputdir):
 
         # this function collects the entire dir structure of the image files from
         # the manifest.safe file and builds the same structure in the output
@@ -328,7 +306,32 @@ def downloadS2FromGoogleCloud(url, outputdir):
                     subprocess.call('curl ' + url + completeUrl + ' -o ' + destinationFile, shell=True)
                     #print(url + completeUrl + ' -o ' + destinationFile+' downloading')
                 except:
-                    continue        
+                    continue      
+    
+    
+   # Main ---------------
+    sentinel2_metadata_file = _downloadMetadataFile(outfolder)
+    cloudcover = float(cloudcover)
+    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
+    
+    urlList = _findS2InCollectionMetadata(sentinel2_metadata_file,
+                                     cloudcover, start_date,
+                                     end_date, scene)
+    
+    return urlList
+    [_downloadS2FromGoogleCloud(url, outfolder) for url in urlList]
+    
+    
+#    l1cList = glob2.glob(output+'/*L1C*.SAFE/GRANULE/*')
+#    grans = np.arange(len(l1cList))
+#    
+#    for gran in grans:   
+#        fld, pth = os.path.split(l1cList[gran])
+#        if scene[2:6] in pth:
+#            l1cList.pop(gran)
+        
+  
 
 def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder, 
                  tile = None, cloud = '100'):
@@ -337,34 +340,34 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
     Query the ESA catalogue then download S2 from AWS with correct renaming of stuff
     Uses joblib to parallelise multiple files from aws
     
-    Way quicker than ESA
+    Way quicker than ESA-based download
     
     
     Parameters
     ----------
     user : string
-        username for esa hub
+           username for esa hub
         
     passwd : string
-        password for hub
+             password for hub
         
     geojsonfile : string
-        AOI polygon of interest
+                  AOI polygon of interest
     
     start_date : string
-        date of beginning of search
+                 date of beginning of search
     
     end_date : string
-        date of end of search
+               date of end of search
     
     output_folder : string
-        where you intend to download the imagery
+                    where you intend to download the imagery
         
     tile : string
-        S2 tile 
+           S2 tile 
     
     cloud : string (optional)
-        include a cloud filter in the search
+            include a cloud filter in the search
     
     Notes:
     ------------------------
@@ -417,7 +420,8 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
                  verbose=2)(delayed(download_safe_format)(tile=(tile,i),
                            folder = output_folder)
                            for i in dateList)
-    return products_df, products   
+    return products_df, products
+   
 def sent_attributes(footprints):
     """
     Get a sorted list of tuples each containing the date and sceneID of S2 from
@@ -427,7 +431,7 @@ def sent_attributes(footprints):
     ----------
         
     footprints : string
-        path to geojson file
+                 path to geojson file
     
     Returns
     -------
@@ -450,14 +454,7 @@ def sent_attributes(footprints):
     attributes.sort()
     return attributes
 
-def merge_images(folder, wildcard, mosaic):
-    """ A function to merge rasters in a folder and subfolders such as those in
-    the S2 file structure that uses the gdal_merge script"""
 
-    fileList = glob2.glob(os.path.join(folder,'**','**','*'+wildcard))
-    filenames = ' '.join(fileList)
-    os.system('gdal_merge.py -of Gtiff -o '+mosaic+' '+filenames)
-    print('mosaic done')
 
 def _get_S2_geoinfo(xmlFile, mode = 'L2A'):
     
@@ -511,9 +508,9 @@ def get_intersect(folder, polygon, resolution=None):
     Parameters
     ---------------    
     folder : string
-        the S2 tile folder containing the granules ending .SAFE
+             the S2 tile folder containing the granules ending .SAFE
     polygon : string
-        the AOI polygon (must be same crs as rasters)
+              the AOI polygon (must be same crs as rasters)
         
     
     Notes
@@ -708,13 +705,13 @@ def unzip_S2_granules(folder, area=None, granules=None):
     Parameters
     ------------    
     folder : string
-        a folder contain S2 tiles
+             a folder contain S2 tiles
     
     area : string 
-        area of interest (optional)
+           area of interest (optional)
     
     granules : string (optional) - recommended
-        a list of granule UTM codes e.g ['36MYE', '36MZE']
+               a list of granule UTM codes e.g ['36MYE', '36MZE']
     
     Notes:
     --------------
