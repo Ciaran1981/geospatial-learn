@@ -327,11 +327,11 @@ def _bbox_to_pixel_offsets(rgt, geom):
     
     Returns
     -------
-    xoff : int
-           x offset
+    int
+       x offset
            
-    yoff : int
-           y offset
+    int
+       y offset
            
     xcount : int
              rows of bounding box

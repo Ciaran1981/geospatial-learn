@@ -455,7 +455,8 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
     
     Returns
     ----------- 
-    A string of the output file path
+    string
+          A string of the output file path
         
     """
     
@@ -673,7 +674,8 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
         
     Returns
     ----------- 
-    A string of the output file path
+    string
+          A string of the output file path
         
     """
     
@@ -770,11 +772,6 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
         
     blocksize : int
                 the chunk of raster read in & write out
-    
-    Returns
-    ----------- 
-
-    nowt
 
     """
 

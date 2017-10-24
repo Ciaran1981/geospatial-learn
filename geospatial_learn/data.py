@@ -213,8 +213,8 @@ def sent2_google(scene, start_date, end_date,  outfolder,
     Returns
     --------
         
-    urlList : list
-              a list of the image urls
+    list
+        a list of the image urls
     """
 
 #TODO: put metadata urls in a config file    
@@ -438,8 +438,8 @@ def sent_attributes(footprints):
     
     Returns
     -------
-    
-    a list of attribute pairs 
+    list
+        a list of attribute pairs 
         
     """
     shp = ogr.Open(footprints)    
