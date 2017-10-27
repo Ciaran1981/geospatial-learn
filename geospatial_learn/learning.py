@@ -370,7 +370,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         joblib.dump(grid.best_estimator_, outModel) 
         
     #Find best params----------------------------------------------------------
-    if clf == 'rf':
+    if clf == 'rf' and regress is False:
          RF_clf = RandomForestClassifier(n_jobs=cores, random_state = 123)
          if random==True:
             param_grid = {"max_depth": [10, None],

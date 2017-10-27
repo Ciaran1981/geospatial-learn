@@ -1216,9 +1216,9 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
     else: 
         dst_field = dst_layer.GetLayerDefn().GetFieldIndex(outField)
 
-    outShape = gdal.Polygonize(srcband, maskband, dst_layer,dst_field, options,
+    gdal.Polygonize(srcband, maskband, dst_layer,dst_field, options,
                     callback=gdal.TermProgress)
-    outShape.FlushCache()
+    dst_ds.FlushCache()
     
     srcband = None
     src_ds = None
