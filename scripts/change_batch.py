@@ -203,37 +203,4 @@ for image in stackList:
                  json[:-4]+'.geojson', outDShp,
                  '-s_srs', 'EPSG:32736',  '-t_srs', 'EPSG:4326']
     
-    subprocess.call(polyJscmd) # runs parallel
-    #procList.append(p)
-#    exit_codes = [p.wait() for p in procList]
-
-    
-
-
-
-   
-
-
-
-#for item in items:
-#    shape.zonal_stats(outDShpList[item], probMapList[item], 1,
-#                      'Prob', write_stat=1)
-#==============================================================================
-#==============================================================================   
-# use ogr to convert to kml        
-#outKml = outDShp[:-4]+'.kml'
-
-# add the photos with quick look function
-
-    
-    #print('producing kmz files')
-
-
-    
-    # As simple kml is now used, it is not very fast,  eg 20 mins for 4k feat
-    # but allows for the construction of interactive kml
-    # TODO can an ogr solution be worked in, still allowing for interactive stuff??
-    
-    
-#    items = np.arange(len(keeList))
-    #geodata.get_quick_look(outDShpList[item], outKmlFList[item], keepList[item])
+    subprocess.call(polyJscmd) 
