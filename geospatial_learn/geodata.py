@@ -824,8 +824,7 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
                     numCols = cols - j
                 mask = maskRas.ReadAsArray(j, i, numCols, numRows)
                 if mval not in mask:
-                    
-    mainFolder : string array = np.zeros(shape=(numRows,numCols), dtype=np.int32)
+                    array = np.zeros(shape=(numRows,numCols), dtype=np.int32)
                     for band in range(1, bands+1):
                         bnd = inDataset.GetRasterBand(band)
                         bnd.WriteArray(array, j, i)
