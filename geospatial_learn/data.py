@@ -31,6 +31,7 @@ import gdal, ogr
 import numpy as np
 #import xml.etree.ElementTree as etree
 from more_itertools import unique_everseen
+from shapely.wkt import loads
 import xmltodict
 #import wget
 import csv
