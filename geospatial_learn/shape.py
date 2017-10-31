@@ -24,7 +24,7 @@ import  ogr, osr
 from tqdm import tqdm
 import numpy as np
 from scipy.stats.mstats import mode
-from utilities import min_bound_rectangle
+from geospatial_learn.utilities import min_bound_rectangle
 from shapely.wkt import loads
 from shapely.geometry import Polygon
 
@@ -470,8 +470,9 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
             if src_array is None:
                 src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
                                    src_offset[3])
-#                if src_array is None:
-#                    continue
+                if src_array is None:
+                    rejects.append(feat.GetFID())
+                    continue
             
             # calculate new geotransform of the feature subset
             new_gt = (
@@ -544,7 +545,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     vds = None
     rds = None
     frame = DataFrame(stats)
-    return frame#, rejects
+    return frame, rejects
 
 
     
@@ -664,30 +665,30 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
 #        field = feat.GetField('DN')
 #        print(field)
 
-        if not global_src_extent:
+#        if not global_src_extent:
             # use local source extent
             # fastest option when you have fast disks and well indexed raster (ie tiled Geotiff)
             # advantage: each feature uses the smallest raster chunk
             # disadvantage: lots of reads on the source raster
-            if feat is None:            
-                continue
-            geom = feat.geometry()
-            
-            src_offset = _bbox_to_pixel_offsets(rgt, geom)
-            src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
-                                   src_offset[3])
-            if src_array is None:
-                src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
-                                   src_offset[3])
-            
-            # calculate new geotransform of the feature subset
-            new_gt = (
-            (rgt[0] + (src_offset[0] * rgt[1])),
-            rgt[1],
-            0.0,
-            (rgt[3] + (src_offset[1] * rgt[5])),
-            0.0,
-            rgt[5])
+        if feat is None:            
+            continue
+        geom = feat.geometry()
+        
+        src_offset = _bbox_to_pixel_offsets(rgt, geom)
+        src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                               src_offset[3])
+        if src_array is None:
+            src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
+                               src_offset[3])
+        
+        # calculate new geotransform of the feature subset
+        new_gt = (
+        (rgt[0] + (src_offset[0] * rgt[1])),
+        rgt[1],
+        0.0,
+        (rgt[3] + (src_offset[1] * rgt[5])),
+        0.0,
+        rgt[5])
             
             
         # Create a temporary vector layer in memory

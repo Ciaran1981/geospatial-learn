@@ -47,8 +47,8 @@ from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.externals import joblib
 import joblib as jb
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-from c_utils.geodata import array2raster
-from c_utils.shape import bbox_to_pixel_offsets#, zonal_stats
+from geospatial_learn.geodata import array2raster
+from geospatial_learn.shape import _bbox_to_pixel_offsets#, zonal_stats
 from scipy.stats import randint as sp_randint
 from scipy.stats import expon
 #from scipy.sparse import csr_matrix
@@ -123,20 +123,25 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
     
     if params is None and regress is False:       
         tpot = TPOTClassifier(generations=5, population_size=50, verbosity=2,
-                              n_jobs=cores, warm_start=True)
+                              n_jobs=cores, scoring = scoring,
+                              warm_start=True)
         tpot.fit(X_train, y_train)
         
     elif params != None and regress is False:
-        tpot = TPOTClassifier(config_dict=params, n_jobs=cores, warm_start=True)
+        tpot = TPOTClassifier(config_dict=params, n_jobs=cores, scoring = scoring,
+                              warm_start=True)
         tpot.fit(X_train, y_train)
         
     elif params is None and regress is True:       
         tpot = TPOTRegressor(generations=5, population_size=50, verbosity=2,
-                              n_jobs=cores, warm_start=True)
+                              n_jobs=cores, scoring = scoring,
+                              warm_start=True)
         tpot.fit(X_train, y_train)
         
     elif params != None and regress is True:
-        tpot = TPOTRegressor(config_dict=params, n_jobs=cores, warm_start=True)
+        tpot = TPOTRegressor(config_dict=params, n_jobs=cores, verbosity=2,
+                             scoring = scoring,
+                              warm_start=True)
         tpot.fit(X_train, y_train)
 
     tpot.export(outModel)    
@@ -370,7 +375,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         joblib.dump(grid.best_estimator_, outModel) 
         
     #Find best params----------------------------------------------------------
-    if clf == 'rf':
+    if clf == 'rf' and regress is False:
          RF_clf = RandomForestClassifier(n_jobs=cores, random_state = 123)
          if random==True:
             param_grid = {"max_depth": [10, None],
