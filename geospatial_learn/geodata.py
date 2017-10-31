@@ -15,8 +15,8 @@ import gdal, ogr,  osr
 import os
 import numpy as np
 import glob2
-from data import _get_S2_geoinfo
-from shape import _bbox_to_pixel_offsets
+from .data import _get_S2_geoinfo
+from .shape import _bbox_to_pixel_offsets
 import tempfile
 #from pyrate.shared import DEM
 import glymur
@@ -825,7 +825,7 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
                 mask = maskRas.ReadAsArray(j, i, numCols, numRows)
                 if mval not in mask:
                     
-    mainFolder : string array = np.zeros(shape=(numRows,numCols), dtype=np.int32)
+                    mainFolder = np.zeros(shape=(numRows,numCols), dtype=np.int32)
                     for band in range(1, bands+1):
                         bnd = inDataset.GetRasterBand(band)
                         bnd.WriteArray(array, j, i)

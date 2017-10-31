@@ -1,0 +1,77 @@
+#Conda environemnt specification for geospatial_learn
+name: geospatial_learn_env
+channels:
+- sunpy
+- anaconda
+- defaults
+dependencies:
+- alabaster
+- babel
+#- colorama
+#- curl
+- cycler
+#l- decorator
+- docutils
+- gdal
+- geos
+- glob2
+- hdf4
+- hdf5
+- icu
+- imagesize
+- intel-openmp
+- jinja2
+- joblib
+- jpeg
+- kealib
+- libgdal
+- libnetcdf
+- libpng
+- libtiff
+- lxml
+- markupsafe
+- matplotlib
+- mkl
+- more-itertools
+- networkx
+- numpy
+- openssl
+- pillow
+- pip
+- proj4
+- psutil
+- py
+- pygments
+- pyparsing
+- pyqt
+- pysal
+- pytest
+- python
+- python-dateutil
+- pytz
+- qt
+- requests
+- scikit-image
+- scikit-learn
+- scipy
+- setuptools
+- sip
+- six
+- snowballstemmer
+- sphinx
+- tk
+- wheel
+- xerces-c
+- zlib
+- contextlib2
+- glymur
+- openjpeg
+- pip:
+  - click
+  - geojson
+  - geomet
+  - html2text
+  - sentinelsat
+  - tqdm
+prefix: C:\programs\anaconda\envs\gdalmin
+

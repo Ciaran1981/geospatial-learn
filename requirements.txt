@@ -1,21 +1,19 @@
-Glymur>=0.8.11
-matplotlib>=2.0.2
-more-itertools>=3.2.0
+-c sunpy/label/citesting glymur
+pytest
+more-itertools
 psutil>=4.3.1
-PySAL>=1.13.0
-pyshp>=1.2.12
-sentinelsat>=0.12
-Shapely>=1.5.16
-simpledbf>=0.2.6
+PySAL
 Sphinx>=1.4.6
-XML2Dict>=0.2.2
-xmltodict>=0.11.0
+-c conda-forge xmltodict>=0.11.0
 glob2
-recommonmark
-sklearn
+-c clinicalgraphics recommonmark
+scikit-learn
 scikit-image
 joblib
-tqdm
+-c conda-forge tqdm
 numpy
-tpot
+-c conda-forge tpot
+gdal
+-c git+https://github.com/sentinelsat/sentinelsat.git#egg=sentinelsat
+
 
