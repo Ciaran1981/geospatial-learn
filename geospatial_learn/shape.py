@@ -545,7 +545,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     vds = None
     rds = None
     frame = DataFrame(stats)
-    return frame#, rejects
+    return frame, rejects
 
 
     
