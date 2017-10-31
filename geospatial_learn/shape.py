@@ -24,7 +24,7 @@ import  ogr, osr
 from tqdm import tqdm
 import numpy as np
 from scipy.stats.mstats import mode
-from utilities import min_bound_rectangle
+from geospatial_learn.utilities import min_bound_rectangle
 from shapely.wkt import loads
 from shapely.geometry import Polygon
 
@@ -470,8 +470,9 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
             if src_array is None:
                 src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
                                    src_offset[3])
-#                if src_array is None:
-#                    continue
+                if src_array is None:
+                    rejects.append(feat.GetFID())
+                    continue
             
             # calculate new geotransform of the feature subset
             new_gt = (
