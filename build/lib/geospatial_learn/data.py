@@ -1,21 +1,11 @@
 #!/home/ubuntu/anaconda3/bin/python
 
-
 """
-Author: Ciaran Robb
-Research Associate in Earth Observation
-Centre for Landscape and Climate Research (CLCR)
-Department of Geography, University of Leicester, University Road, Leicester, 
-LE1 7RH, UK 
-
-If you use code to publish work cite/acknowledge me and other lib authors as 
-appropriate
+The data module
 
 Description
 -----------
-A series of tools for the download and preprocessing of data (mainly sentinel)
-
-
+A series of tools for the download and preprocessing of sentinel data (mainly S2). 
 
 
 """
@@ -25,6 +15,7 @@ import glob2
 import os
 from tqdm import tqdm
 #from sentinelsat import sentinel
+# TODO maybe improve this so it doesn't use a global
 try:
     from sentinelsat import SentinelAPI, read_geojson, geojson_to_wkt
 except:
@@ -55,44 +46,45 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 output_folder=None, api = True):
     """
 
-    A convenience function that wraps sentinelsat query & download although 
-    this is hardly necessary but I am lazy 
-    
-    Where:
-    -----------
-    user : string
-        username for esa hub
-        
-    passwd : string
-        password for hub
-        
-    geojsonfile : string
-        AOI polygon of interest
-    
-    start_date : string
-        date of beginning of search
-    
-    end_date : string
-        date of end of search
-    
-    output_folder : string
-        where you intend to download the imagery
-    
-    cloud : string (optional)
-        include a cloud filter in the search
-    
+    A convenience function that wraps sentinelsat query & download 
+            
     Notes
     -----------
     
     I have found the sentinesat sometimes fails to download the second image,
     so I have written some code to avoid this - choose api = False for this
+        
+    Parameters
+    -----------
     
+    user : string
+           username for esa hub
+        
+    passwd : string
+             password for hub
+        
+    geojsonfile : string
+                  AOI polygon of interest
+    
+    start_date : string
+                 date of beginning of search
+    
+    end_date : string
+               date of end of search
+    
+    output_folder : string
+                    where you intend to download the imagery
+    
+    cloud : string (optional)
+            include a cloud filter in the search
+
    
     """
 ##set up your copernicus username and password details, and copernicus download site... BE CAREFUL if you share this script with others though!
     api = SentinelAPI(user, passwd)
 
-# NOWT WRONG WITH API - 
+# NOWT WRONG WITH API -
+# TODO Maybe improve check of library so it doesn't use a global
     if oldsat is True:
         footprint = get_coordinates(geojsonfile)
     else:
@@ -128,36 +120,38 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
 def sent1_query(user, passwd, geojsonfile, start_date, end_date,
                 output_folder=None, api = True):
     """
-     A convenience function that wraps sentinelsat query & download although 
-    this is hardly necessary but I am lazy 
+    A convenience function that wraps sentinelsat query and download
     
-    Where:
-    -----------
-    user : string
-        username for esa hub
-        
-    passwd : string
-        password for hub
-        
-    geojsonfile : string
-        AOI polygon of interest
-    
-    start_date : string
-        date of beginning of search
-    
-    end_date : string
-        date of end of search
-    
-    output_folder : string
-        where you intend to download the imagery
-        
     Notes
     -----------
     
     I have found the sentinesat sometimes fails to download the second image,
     so I have written some code to avoid this - choose api = False for this
+    
+    Parameters
+    -----------
+    
+    user : string
+           username for esa hub
+        
+    passwd : string
+             password for hub
+        
+    geojsonfile : string
+                  AOI polygon of interest
+    
+    start_date : string
+                 date of beginning of search
+    
+    end_date : string
+               date of end of search
+    
+    output_folder : string
+                    where you intend to download the imagery
+
     """
 
+    #TODO: Check if SentinelAPI will use TokenAuth instead of hard-coded cred strings
     api = SentinelAPI(user, passwd)
 
  
@@ -177,7 +171,8 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
         
 
     else:        
-        prods = np.arange(len(products))        
+        prods = np.arange(len(products))
+        #TODO: investigate flaky sentinelAPI
         # the api was proving flaky whereas the cmd line always works hence this
         # is alternate the download option
         if output_folder != None:
@@ -191,39 +186,41 @@ def sent1_query(user, passwd, geojsonfile, start_date, end_date,
                 subprocess.call(cmd)
     return products_df, products
 
-def sent2_google(scene, start_date, end_date,  outputcatalogs, 
+#TODO: maybe clean up these nested functions. Or it might be alright.
+def sent2_google(scene, start_date, end_date,  outfolder, 
                  cloudcover='100',):
     
     """ 
     Download S2 data from google. Adapted from a guys script into functional 
     form with some modifications
     
-    Where:
+    Parameters
     -----------
+    
     scene : string
-        tileID (eg '36MYE')
+            tileID (eg '36MYE')
     
     start_date : string 
-                eg. '2016-12-23'
+                 eg. '2016-12-23'
     
     end_date : string 
-                eg. '2016-12-23'
+               eg. '2016-12-23'
                 
-    outputcatalogs : string
-        destination folder for catalog that is searched for image
-        
-        output = destination folder
-    Returns:
-    -----------
-        
-    urlList : list
-        a list of the image urls
-        """
+    outfolder : string
+                destination folder for catalog that is searched for image
 
     
+    Returns
+    --------
+        
+    list
+        a list of the image urls
+    """
+
+#TODO: put metadata urls in a config file    
 #    SENTINEL2_METADATA_URL = ('http://storage.googleapis.com/gcp-public'                     
 #                                    '-data-sentinel-2/index.csv.gz')
-    def downloadMetadataFile(outputdir):
+    def _downloadMetadataFile(outputdir):
         url = ('http://storage.googleapis.com/gcp-public'                     
                                     '-data-sentinel-2/index.csv.gz')
         # This function downloads and unzips the catalogue files
@@ -251,7 +248,7 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
                 print("Some error occurred when trying to unzip the Metadata file!")
         return theFile
         
-    def findS2InCollectionMetadata(collection_file, cc_limit, date_start, date_end, tile):
+    def _findS2InCollectionMetadata(collection_file, cc_limit, date_start, date_end, tile):
         # This function queries the sentinel2 index catalogue and retrieves an url for the best image found
         print("Searching for images in catalog...")
         cloudcoverlist = []
@@ -277,30 +274,8 @@ def sent2_google(scene, start_date, end_date,  outputcatalogs,
                 urlList.append(url)
         return urlList
     
-    
-   # Main ---------------
-    sentinel2_metadata_file = downloadMetadataFile(outputcatalogs)
-    cloudcover = float(cloudcover)
-    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
-    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
-    
-    urlList = findS2InCollectionMetadata(sentinel2_metadata_file,
-                                     cloudcover, start_date,
-                                     end_date, scene)
-    
-    return urlList
-    #downloadS2FromGoogleCloud(url, output)
-    
-    
-#    l1cList = glob2.glob(output+'/*L1C*.SAFE/GRANULE/*')
-#    grans = np.arange(len(l1cList))
-#    
-#    for gran in grans:   
-#        fld, pth = os.path.split(l1cList[gran])
-#        if scene[2:6] in pth:
-#            l1cList.pop(gran)
-        
-def downloadS2FromGoogleCloud(url, outputdir):
+    def _downloadS2FromGoogleCloud(url, outputdir):
+
         # this function collects the entire dir structure of the image files from
         # the manifest.safe file and builds the same structure in the output
         # location
@@ -332,49 +307,76 @@ def downloadS2FromGoogleCloud(url, outputdir):
                     subprocess.call('curl ' + url + completeUrl + ' -o ' + destinationFile, shell=True)
                     #print(url + completeUrl + ' -o ' + destinationFile+' downloading')
                 except:
-                    continue        
+                    continue      
+    
+    
+   # Main ---------------
+    sentinel2_metadata_file = _downloadMetadataFile(outfolder)
+    cloudcover = float(cloudcover)
+    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
+    
+    urlList = _findS2InCollectionMetadata(sentinel2_metadata_file,
+                                     cloudcover, start_date,
+                                     end_date, scene)
+    
+    return urlList
+    [_downloadS2FromGoogleCloud(url, outfolder) for url in urlList]
+    
+    
+#    l1cList = glob2.glob(output+'/*L1C*.SAFE/GRANULE/*')
+#    grans = np.arange(len(l1cList))
+#    
+#    for gran in grans:   
+#        fld, pth = os.path.split(l1cList[gran])
+#        if scene[2:6] in pth:
+#            l1cList.pop(gran)
+        
+  
 
 def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder, 
                  tile = None, cloud = '100'):
-    """ 
-    
+    """  
     Query the ESA catalogue then download S2 from AWS with correct renaming of stuff
     Uses joblib to parallelise multiple files from aws
     
-    Way quicker than ESA
-    
-    
-    Where:
-    ----------
-    user : string
-        username for esa hub
-        
-    passwd : string
-        password for hub
-        
-    geojsonfile : string
-        AOI polygon of interest
-    
-    start_date : string
-        date of beginning of search
-    
-    end_date : string
-        date of end of search
-    
-    output_folder : string
-        where you intend to download the imagery
-        
-    tile : string
-        S2 tile 
-    
-    cloud : string (optional)
-        include a cloud filter in the search
+    Way quicker than ESA-based download
     
     Notes:
     ------------------------
         
     Credit to sentinelsat for the query aspect of this function, and 
     sentinelhub for the AWS aspect. 
+    
+    
+    Parameters
+    ----------
+    
+    user : string
+           username for esa hub
+        
+    passwd : string
+             password for hub
+        
+    geojsonfile : string
+                  AOI polygon of interest
+    
+    start_date : string
+                 date of beginning of search
+    
+    end_date : string
+               date of end of search
+    
+    output_folder : string
+                    where you intend to download the imagery
+        
+    tile : string
+           S2 tile 
+    
+    cloud : string (optional)
+            include a cloud filter in the search
+    
+
     
     """
     
@@ -421,22 +423,23 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
                  verbose=2)(delayed(download_safe_format)(tile=(tile,i),
                            folder = output_folder)
                            for i in dateList)
-    return products_df, products   
+    return products_df, products
+   
 def sent_attributes(footprints):
     """
     Get a sorted list of tuples each containing the date and sceneID of S2 from
-    a footprints geojsom produced by sentinelsat/sent1/2query
+    a footprints geojson produced by sentinelsat/sent1/2query
     
     Parameters
     ----------
         
     footprints : string
-        path to geojson file
+                 path to geojson file
     
     Returns
     -------
-    
-    a list of attribute pairs 
+    list
+        a list of attribute pairs 
         
     """
     shp = ogr.Open(footprints)    
@@ -454,14 +457,7 @@ def sent_attributes(footprints):
     attributes.sort()
     return attributes
 
-def merge_images(folder, wildcard, mosaic):
-    """ A function to merge rasters in a folder and subfolders such as those in
-    the S2 file structure that uses the gdal_merge script"""
 
-    fileList = glob2.glob(os.path.join(folder,'**','**','*'+wildcard))
-    filenames = ' '.join(fileList)
-    os.system('gdal_merge.py -of Gtiff -o '+mosaic+' '+filenames)
-    print('mosaic done')
 
 def _get_S2_geoinfo(xmlFile, mode = 'L2A'):
     
@@ -510,14 +506,17 @@ def _get_S2_geoinfo(xmlFile, mode = 'L2A'):
     return geoinfo
 
 def get_intersect(folder, polygon, resolution=None):
-    """get intersect between rasters and AOI polygon
+    """
+    Get intersect between rasters and AOI polygon
     
-    Where:
-    ---------------    
+    Parameters
+    --------------- 
+    
     folder : string
-        the S2 tile folder containing the granules ending .SAFE
+             the S2 tile folder containing the granules ending .SAFE
+             
     polygon : string
-        the AOI polygon (must be same crs as rasters)
+              the AOI polygon (must be same crs as rasters)
         
     
     Notes
@@ -594,7 +593,7 @@ def get_intersect(folder, polygon, resolution=None):
     
     
 
-def find_all(name, path):
+def _find_all(name, path):
     """ find all dirs with a specific name wildcard"""
     result = []
     for root, dirs, files in os.walk(path):
@@ -603,11 +602,12 @@ def find_all(name, path):
     return result
 
 def get_intersect_S2(folder, polygon, pixelSize=20):
-    """ Get the S2 granules that intersect an area of interest, uses S2xml file
+    """ 
+    Get the S2 granules that intersect an area of interest, uses S2xml file
     to get granule coords - this function is quicker than get_intersect, but 
     more prone to errors
     
-    Where:
+    Parameters
     --------------
     folder : string
         
@@ -692,49 +692,32 @@ def get_intersect_S2(folder, polygon, pixelSize=20):
              
     return granuleList#, areaList
 
-def unzip_S2_granules(folder, area=None, granules=None):
+def unzip_S2_granules(folder, granules=None):
     
-    """ Get the S2 granules dependent on a specific area in Kenya or utm 
+    """ 
+    Get the S2 granules dependent on a specific area in utm 
     granule. 
     
-
-    - the area parameter is specific to forests in Kenya as this was a project..
-    areas: mau, laikipia, mtkenya, aberdare, northmau
-    
-    this assumes you have the correct tile
-    
-    - if area is None, you must specify the granule IDs as a list eg ['48NTJ']
-    - this does assume the files all contain the same granules of course
-    
-    
-    The function unzips only the tiles of interest to this area in this project
-    
-    Where:
-    ------------    
-    folder : string
-        a folder contain S2 tiles
-    
-    area : string 
-        area of interest (optional)
-    
-    granules : string (optional) - recommended
-        a list of granule UTM codes e.g ['36MYE', '36MZE']
-    
     Notes:
-    --------------
+    ------
     This was written for the file format S2 imagery initally 
     came in from the ESA hub, which was enormous and impractical. 
     Fortunately this changed near end of 2016, in which case you can simply
     unzip with bash or whatever!
+    
+    Parameters
+    ------------    
+    folder : string
+             a folder contain S2 tiles
+    
+    granules : string (optional) - recommended
+               a list of granule UTM codes e.g ['36MYE', '36MZE']
+    
 
     """    
-    # R135 is the code for the mau area tile
-    if area is None:
-        fileList = glob2.glob(os.path.join(folder,'*.zip*'))
-    elif area == 'mau':
-        fileList = glob2.glob(os.path.join(folder,'/*R135*.zip*'))
-    elif area == 'laikipia':
-        fileList = glob2.glob(os.path.join(folder,'/*R092*.zip*'))
+
+    fileList = glob2.glob(os.path.join(folder,'*.zip*'))
+
     filez = np.arange(len(fileList))
     print('extracting files')
     
@@ -749,63 +732,16 @@ def unzip_S2_granules(folder, area=None, granules=None):
         aux = fle[:-4]+'.SAFE/AUX_DATA'
         yip = '*'+aux+'*'
         
-        if area is None:
             # TODO This is not good enough long term - a temp fix
-            for granule in granules:
-                cmd = ['unzip', '-o', fileList[file], yip,'*'+granule+'*',
-                       '*DATASTRIP*', "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
-                       "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
-                       fileList[file][:-4]]
-                p = subprocess.Popen(cmd)
-                procList.append(p)
+    for granule in granules:
+        cmd = ['unzip', '-o', fileList[file], yip,'*'+granule+'*',
+               '*DATASTRIP*', "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
+               "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
+               fileList[file][:-4]]
+        p = subprocess.Popen(cmd)
+        procList.append(p)
         
-        if area == 'mau':
-#            wildcards = '"*'+aux+'*" "*MYE*" "*MZE*" "*DATASTRIP*" "*HTML*" \
-#            "*S2A_OPER_MTD_SAFL1C_PDMC*" "*INSPIRE*" "*rep_info*" \
-#            "*manifest.safe*"'
-            cmd = ['unzip', '-o', fileList[file], yip,'*MYE*', '*MZE*',
-                   '*DATASTRIP*', "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
-                   "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
-                   fileList[file][:-4]]
-            p = subprocess.Popen(cmd)
-            procList.append(p)
-            
-        if area == 'laikipia':
-            cmd = ['unzip', '-o', fileList[file], yip, "*NBA*", "*NCA*",
-                   '*DATASTRIP*', "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
-                   "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
-                   fileList[file][:-4]]
-            p = subprocess.Popen(cmd)
-            procList.append(p)
-            
-        if area == 'mtkenya':
-            cmd = ['unzip', '-o', fileList[file], yip,  '*DATASTRIP*', 
-                   "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
-                   "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
-                   fileList[file][:-4]]
-            p = subprocess.Popen(cmd)
-            procList.append(p)
-           
-        if area == 'aberdare':
-            cmd = ['unzip', '-o', fileList[file], yip, "*MBR*", "*MCR*",
-                   '*DATASTRIP*', "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
-                   "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
-                   fileList[file][:-4]]
-            p = subprocess.Popen(cmd)
-            procList.append(p)
-        if area == 'northmau':
-            cmd = ['unzip', '-o', fileList[file], yip, "*NYF*", "*NYG*",
-                   '*DATASTRIP*', "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
-                   "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
-                   fileList[file][:-4]]
-            p = subprocess.Popen(cmd)
-        if area == 'ngong':
-            cmd = ['unzip', '-o', fileList[file], yip, "*MBQ*",  
-                   '*DATASTRIP*', "*HTML*", "*S2A_OPER_MTD_SAFL1C_PDMC*",
-                   "*INSPIRE*", "*rep_info*", "*manifest.safe*",  '-d',
-                   fileList[file][:-4]]
-            p = subprocess.Popen(cmd)
-            procList.append(p)
+
             
     [p.wait() for p in procList]       
         #print(str(file)+' done')

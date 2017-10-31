@@ -54,7 +54,7 @@ from scipy.stats import expon
 #from scipy.sparse import csr_matrix
 from tpot import TPOTClassifier, TPOTRegressor
 
-from c_utils.geodata import copy_dataset_config
+from geospatial_learn.geodata import _copy_dataset_config
 
 import pandas as pd
 import simpledbf
