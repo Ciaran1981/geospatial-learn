@@ -17,7 +17,10 @@ def test_array2raster(geotiff_dir):
     assert result[0, 1, 2] == 0
 
 
-def test_multi_temp_filter(TestGeotiff):
-    result = geodata.multi_temp_filter(
-        inRas=
+def test_multi_temp_filter(managed_geotiff_dir):
+    result = os.path.join(managed_geotiff_dir.path, "result.tif")
+    geodata.multi_temp_filter(
+        inRas=managed_geotiff_dir.image,
+        outRas=result
     )
+    assert os.path.isfile(result)
