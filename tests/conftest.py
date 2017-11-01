@@ -6,7 +6,7 @@ import numpy as np
 
 
 @pytest.fixture
-def geotiff():
+def geotiff_dir():
     """
 
     Returns
