@@ -19,7 +19,7 @@ def geotiff_dir():
     fileformat = "GTiff"
     driver = gdal.GetDriverByName(fileformat)
     metadata = driver.GetMetadata()
-    tempPath = os.path.join(tempDir.name, "tempTiff.tif")
+    tempPath = os.path.join(tempDir.name)
     testDataset = driver.Create(os.path.join(tempDir.name, "tempTiff.tif"),
         xsize=3, ysize=3, bands=3, eType=gdal.GDT_CFloat32)
     for i in range(3):
