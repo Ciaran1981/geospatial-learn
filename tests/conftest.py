@@ -20,13 +20,13 @@ class TestGeotiffManager:
 
 
     """
+
     def __enter__(self):
         """Creates a randomly named temp folder
         """
         tempDir = tempfile.TemporaryDirectory()
         fileformat = "GTiff"
         driver = gdal.GetDriverByName(fileformat)
-        metadata = driver.GetMetadata()
         tempPath = os.path.join(tempDir.name)
         testDataset = driver.Create(os.path.join(tempDir.name, "tempTiff.tif"),
                                     xsize=3, ysize=3, bands=3, eType=gdal.GDT_CFloat32)
@@ -34,9 +34,11 @@ class TestGeotiffManager:
             testDataset.GetRasterBand(i + 1).WriteArray(np.ones([3, 3]))
 
         self.path = tempPath
-        self.image =[]
-        self.image.append(os.path.join(tempPath, "tempTiff.tif"))
+        self.imagePaths = [os.path.join(tempPath, "tempTiff.tif")]
+        self.images = [testDataset]
         self._tempDir = tempDir
+
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._tempDir.cleanup()
@@ -53,7 +55,7 @@ class TestGeotiffManager:
             xsize=content.shape[1],
             ysize=content.shape[2],
             bands=content.shape[0],
-            eType=gdal.GTD_CFloat32
+            eType=gdal.GDT_CFloat32
         )
         self.image.append(path)
 
@@ -87,4 +89,3 @@ def geotiff_dir():
     testDataset = None
     yield tempPath
     tempDir.cleanup()
-
