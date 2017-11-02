@@ -1655,7 +1655,7 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
     if bands==None:
         bands = inDataset.RasterCount
     
-    outDataset = _copy_dataset_config(inRas, outMap = outRas,
+    outDataset = _copy_dataset_config(inDataset, outMap = outRas,
                                      bands = bands)
     
 

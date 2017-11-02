@@ -21,11 +21,9 @@ class TestGeotiffManager:
 
     """
 
-    def create_temp_tiff(self, name, content = None):
+    def create_temp_tiff(self, name, content=np.zeros([3, 3, 3])):
         """Creates a temporary geotiff in self.path
         """
-        if not content.any():
-            content = np.zeros([3, 3, 3])
         path = os.path.join(self.path, name)
         driver = gdal.GetDriverByName('Gtiff')
         newImage = driver.Create(
