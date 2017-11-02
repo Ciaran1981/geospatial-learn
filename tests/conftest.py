@@ -21,43 +21,40 @@ class TestGeotiffManager:
 
     """
 
-    def __enter__(self):
-        """Creates a randomly named temp folder
-        """
-        tempDir = tempfile.TemporaryDirectory()
-        fileformat = "GTiff"
-        driver = gdal.GetDriverByName(fileformat)
-        tempPath = os.path.join(tempDir.name)
-        testDataset = driver.Create(os.path.join(tempDir.name, "tempTiff.tif"),
-                                    xsize=3, ysize=3, bands=3, eType=gdal.GDT_CFloat32)
-        for i in range(3):
-            testDataset.GetRasterBand(i + 1).WriteArray(np.ones([3, 3]))
-
-        self.path = tempPath
-        self.imagePaths = [os.path.join(tempPath, "tempTiff.tif")]
-        self.images = [testDataset]
-        self._tempDir = tempDir
-
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._tempDir.cleanup()
-
     def create_temp_tiff(self, name, content = None):
         """Creates a temporary geotiff in self.path
         """
-        if not content:
+        if not content.any():
             content = np.zeros([3, 3, 3])
         path = os.path.join(self.path, name)
-        driver = gdal.GetDriverByName('.tif')
-        driver.Create(
+        driver = gdal.GetDriverByName('Gtiff')
+        newImage = driver.Create(
             path,
             xsize=content.shape[1],
             ysize=content.shape[2],
             bands=content.shape[0],
             eType=gdal.GDT_CFloat32
         )
-        self.image.append(path)
+        for band in range(content.shape[0]):
+            newImage.GetRasterBand(band+1).WriteArray = content[band, ...]
+        newImage.FlushCache()
+        self.imagePaths.append(path)
+        self.images.append(newImage)
+
+    def __enter__(self):
+        """Creates a randomly named temp folder
+        """
+        tempDir = tempfile.TemporaryDirectory()
+        tempPath = os.path.join(tempDir.name)
+        self.path = tempPath
+        self._tempDir = tempDir
+        self.images = []
+        self.imagePaths = []
+        self.create_temp_tiff("tempTiff.tif", content=np.ones([3, 3, 3]))
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._tempDir.cleanup()
 
 
 @pytest.fixture

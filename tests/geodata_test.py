@@ -16,13 +16,17 @@ def test_array2raster(geotiff_dir):
     result = gdal.Open(outRaster + ".tif").ReadAsArray()
     assert result[0, 1, 2] == 0
 
+
 def test_copy_dataset_config(managed_geotiff_dir):
-    result = geodata._copy_dataset_config()
+    result = geodata._copy_dataset_config(managed_geotiff_dir.images[0])
+    assert result.ReadAsArray().shape == (3, 3)
+    result = None
+
 
 def test_multi_temp_filter(managed_geotiff_dir):
-    result = os.path.join(managed_geotiff_dir.path, "result.tif")
+    managed_geotiff_dir.create_temp_tiff("result.tif")
     geodata.multi_temp_filter(
-        inRas=managed_geotiff_dir.image[0],
-        outRas=result
+        inRas=managed_geotiff_dir.imagePaths[0],
+        outRas=managed_geotiff_dir.imagePaths[1]
     )
-    assert os.path.isfile(result)
+    assert gdal.Open(managed_geotiff_dir.imagePaths[1])
