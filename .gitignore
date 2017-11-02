@@ -20,3 +20,6 @@ docs/_build/
 #cache
 .cache/
 
+/config.ini
+.idea/
+config.ini

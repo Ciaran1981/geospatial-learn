@@ -29,4 +29,5 @@ def test_multi_temp_filter(managed_geotiff_dir):
         inRas=managed_geotiff_dir.imagePaths[0],
         outRas=managed_geotiff_dir.imagePaths[1]
     )
+    # TODO: improve this assert statement to make it more that just a check
     assert gdal.Open(managed_geotiff_dir.imagePaths[1])

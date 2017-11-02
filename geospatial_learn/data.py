@@ -746,3 +746,12 @@ def unzip_S2_granules(folder, granules=None):
     [p.wait() for p in procList]       
         #print(str(file)+' done')
     print('files extracted')
+
+
+def planet_query(target, out):
+    """
+    Queries the planet dataset
+    Returns
+    -------
+
+    """
