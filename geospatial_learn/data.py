@@ -41,6 +41,8 @@ from joblib import Parallel, delayed
 from sentinelhub import download_safe_format
 #from shapely.geometry import  mapping
 #from shapely.geometry import Polygon
+import planet
+
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 output_folder=None, api = True):
@@ -748,10 +750,43 @@ def unzip_S2_granules(folder, granules=None):
     print('files extracted')
 
 
-def planet_query(target, out):
+def planet_query(area, start_date, end_date, out_path):
     """
-    Queries the planet dataset
+    Downloads data from Planet for a given time period
+    Parameters
+    ----------
+    area : geoJSON
+        a geoJSON containing a polygon for the specific area
+
+    start_date : datetime object
+        the inclusive start of the time window
+
+    end_date : datetime object
+        the inclusive end of the time window
+
+    out_path : filepath-like object
+        A path to the output folder
+
     Returns
     -------
+    int
+        The status of the request
+
+    Notes
+    -----
+
 
     """
+    # Start client
+    client = planet.api.ClientV1()
+    search = {"this will be a dict": "With some stuff on it"}
+    date_filter = planet.api.filters.date_range("date", gte=start_date, lte=end_date)
+
+    #Build filter/query/thingy
+
+    #Download
+
+
+
+def send_planet_request(data):
+    pass
