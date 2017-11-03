@@ -41,7 +41,7 @@ from joblib import Parallel, delayed
 from sentinelhub import download_safe_format
 #from shapely.geometry import  mapping
 #from shapely.geometry import Polygon
-import planet
+from planet import api as planet_api
 
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
@@ -750,13 +750,13 @@ def unzip_S2_granules(folder, granules=None):
     print('files extracted')
 
 
-def planet_query(area, start_date, end_date, out_path):
+def planet_query(area, start_date, end_date, out_path, item_type='PSScene4Band'):
     """
     Downloads data from Planet for a given time period
     Parameters
     ----------
-    area : geoJSON
-        a geoJSON containing a polygon for the specific area
+    area : dict
+        a dict containing a polygon for the specific area
 
     start_date : datetime object
         the inclusive start of the time window
@@ -767,6 +767,9 @@ def planet_query(area, start_date, end_date, out_path):
     out_path : filepath-like object
         A path to the output folder
 
+    item_type : string
+        Image type to download (see Planet API docs)
+
     Returns
     -------
     int
@@ -774,19 +777,28 @@ def planet_query(area, start_date, end_date, out_path):
 
     Notes
     -----
-
+    This will not run without the environemnt variable
+    PL_API_KEY set
 
     """
     # Start client
-    client = planet.api.ClientV1()
-    search = {"this will be a dict": "With some stuff on it"}
-    date_filter = planet.api.filters.date_range("date", gte=start_date, lte=end_date)
-
-    #Build filter/query/thingy
-
-    #Download
+    client = planet_api.ClientV1()
 
 
+    #build filter/query/thingy
+    date_filter = planet_api.filters.date_range("date", gte=start_date, lte=end_date)
+    aoi_filter = planet_api.filters.geom_filter(area)
+    query = planet_api.filters.and_filter(date_filter, aoi_filter)
+
+    # Get URLS
+    response = client.quick_search(query)
+
+    #Download and save
+    with open(out_path, 'w') as out:
+        out.write(client.download(response))
+
+def kml_to_dict(kml):
+    pass
 
 def send_planet_request(data):
     pass
