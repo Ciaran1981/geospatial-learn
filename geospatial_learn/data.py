@@ -42,6 +42,7 @@ from sentinelhub import download_safe_format
 #from shapely.geometry import  mapping
 #from shapely.geometry import Polygon
 from planet import api as planet_api
+import planet.api.downloader
 
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
@@ -788,14 +789,16 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band"):
     date_filter = planet_api.filters.date_range("acquired", gte=start_date, lte=end_date)
     aoi_filter = planet_api.filters.geom_filter(aoi)
     query = planet_api.filters.and_filter(date_filter, aoi_filter)
-    request = planet_api.filters.build_search_request(query, [item_type])
+    search_request = planet_api.filters.build_search_request(query, [item_type])
 
     # Get URLS
-    response = client.quick_search(request)
+    search_response = client.quick_search(search_request)
 
     #Download and save
     with open(out_path, 'w') as out:
-        out.write(client.download(response))
+        downloader = planet.api.downloader.create(client)
+        downloader.download(search_response, ["visual_xml"], out)
+        # TODO: Progress bar here
 
     # TODO: Implement mass downloading with a cool-off in case of 429 response
 
