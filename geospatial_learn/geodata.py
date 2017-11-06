@@ -1454,7 +1454,7 @@ def multi_temp_filter_block(inRas, outRas, bands=None, blocksize=256,
     
     inDataset = gdal.Open(inRas)
     if bands==None:
-        bands = inDataset.RasterCount
+        bands = inDataset.RasterCountl
         inDataset = gdal.Open(inRas)
     if bands==None:
         bands = inDataset.RasterCount
@@ -1655,7 +1655,7 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
     if bands==None:
         bands = inDataset.RasterCount
     
-    outDataset = _copy_dataset_config(inRas, outMap = outRas,
+    outDataset = _copy_dataset_config(inDataset, outMap = outRas,
                                      bands = bands)
     
 
