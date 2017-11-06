@@ -795,10 +795,8 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band"):
     search_response = client.quick_search(search_request)
 
     #Download and save
-    with open(out_path, 'w') as out:
-        downloader = planet.api.downloader.create(client)
-        downloader.download(search_response, ["visual_xml"], out)
-        # TODO: Progress bar here
+    downloader = planet.api.downloader.create(client)
+    downloader.download(search_response, ["visual_xml"], out_path)
 
     # TODO: Implement mass downloading with a cool-off in case of 429 response
 
