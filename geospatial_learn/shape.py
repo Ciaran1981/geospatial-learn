@@ -697,28 +697,26 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
         gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
         rv_array = rvds.ReadAsArray()
 
-            
-        #zone= np.uint8(src_array * rv_array)
-#        if seg is False:
-#            zone = src_array
-#        else:
-            #zone = src_array * rv_array
+
+
+
         zone = np.ma.MaskedArray(src_array,
                                  mask=np.logical_or(src_array == nodata_value, 
                                                     np.logical_not(rv_array)))
         
+        
         if gprop is 'entropy':
-            _, counts = np.unique(zone, return_counts=True)
+            _, counts = np.unique(zone.non_zero(), return_counts=True)
             props = entropy(counts, base=2)
-        if mean is True and gprop != 'entropy':
+        elif mean is True and gprop != 'entropy':
             angles = np.radians([135,90,45,0])
             
-            g = feature.greycomatrix(np.uint8(zone), [1], 
+            g = feature.greycomatrix(np.uint8(zone.non_zero()), [1], 
                                      angles, symmetric=True)
             props = feature.greycoprops(g, prop=gprop)
             props = props.mean()
         elif mean is False and gprop != 'entropy': 
-            g = feature.greycomatrix(np.uint8(zone), [offset], 
+            g = feature.greycomatrix(np.uint8(zone.non_zero()), [offset], 
                                      [np.radians(angle)], symmetric=True)
             props = feature.greycoprops(g, prop=gprop)
        

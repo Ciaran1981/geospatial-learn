@@ -755,8 +755,8 @@ def planet_query(aoi, start_date, end_date, out_path, item_type='PSScene4Band'):
     Downloads data from Planet for a given time period
     Parameters
     ----------
-    aoi : dict
-        a dict containing a polygon for the specific area
+    aoi : string
+        an ogr compatible polygon
 
     start_date : datetime object
         the inclusive start of the time window
@@ -783,10 +783,23 @@ def planet_query(aoi, start_date, end_date, out_path, item_type='PSScene4Band'):
     """
     # Start client
     client = planet_api.ClientV1()
+    
+    # use OGR to extract the geometry from a feature.
+    
+    shp = ogr.Open(aoi) 
+    lyr = shp.GetLayer()
+    feat = lyr.GetFeature(0)
+    geom = feat.GetGeometryRef()
+    
+    stringJ = geom.ExportToJson()
+    
+    featDict = json.loads(stringJ)
+
+    item_type = [item_type]
 
     #build filter/query/thingy
     date_filter = planet_api.filters.date_range("date", gte=start_date, lte=end_date)
-    aoi_filter = planet_api.filters.geom_filter(aoi)
+    aoi_filter = planet_api.filters.geom_filter(featDict)
     query = planet_api.filters.and_filter(date_filter, aoi_filter)
     request = planet_api.filters.build_search_request(aoi_filter, item_type)
 
