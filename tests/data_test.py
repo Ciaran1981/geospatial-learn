@@ -2,7 +2,6 @@ import pytest
 import os
 import gdal
 import numpy as np
-from .context import geospatial_learn
 from geospatial_learn import data
 import json
 
@@ -14,7 +13,7 @@ def test_planet_query():
         area = json.load(brazil_json)
     simple_area = area["features"][0]["geometry"]
     data.planet_query(simple_area,
-                      '2017-01-01T00:00:00Z',
-                      '2017-02-01T00:00:00Z',
+                      '2017-11-01T00:00:00Z',
+                      '2017-11-02T00:00:00Z',
                       'tests/test_outputs/brazil/')
     assert gdal.Open("test_outputs/brazil/1.tif")
