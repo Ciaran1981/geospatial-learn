@@ -14,7 +14,7 @@ with open('README.rst', encoding='utf-8') as f:
 
 setup(
     name="geospatial-learn",
-    version="0.123",
+    version="0.128",
     packages=['geospatial_learn'],
     install_requires=open('requirements.txt').read().splitlines(),
     # Project uses reStructuredText, so ensure that the docutils get

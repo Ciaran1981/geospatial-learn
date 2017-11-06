@@ -1,26 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu May  5 12:28:13 2016
-
-author: Ciaran Robb
-
-Research Associate in Earth Observation
-Centre for Landscape and Climate Research (CLCR)
-Department of Geography, University of Leicester, University Road, Leicester, 
-LE1 7RH, UK 
-upport
-If you use code to publish work cite/acknowledge me, Sciki-learn 
+the learning module
 
 Description
 -----------
+
 The learning module set of functions provide a framework to optimise and classify
 EO data for both per pixel or object properties
 
 
-Performance notes
-
+Performance notes:
 This was tested on an i7 intel with 16gb of ram, so with large images/arrays 
 of stats this will inevitably be slower - especially with a more standard machine.
+
 """
 
 # This must go first or it causes the error:
@@ -36,8 +28,6 @@ except ImportError:
 
 
 from tqdm import tqdm
-from geospatial_learn.geodata import copy_dataset_config
-#from time import sleep
 import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
@@ -62,10 +52,12 @@ from geospatial_learn.shape import _bbox_to_pixel_offsets#, zonal_stats
 from scipy.stats import randint as sp_randint
 from scipy.stats import expon
 #from scipy.sparse import csr_matrix
-import pandas as pd
-import simpledbf
 from tpot import TPOTClassifier, TPOTRegressor
 
+from geospatial_learn.geodata import _copy_dataset_config
+
+import pandas as pd
+import simpledbf
 
 
 gdal.UseExceptions()
@@ -80,36 +72,39 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
     
     Parameters
     ----------  
+    
     X_train : np array
-        numpy array of training data where the 1st column is labels
+              numpy array of training data where the 1st column is labels
     
     outModel : string
-        the output model path which is a .py file
+               the output model path which is a .py file
     
     cv : int
-        no of folds
+         no of folds
     
     cores : int or -1 (default)
-        the no of parallel jobs
+            the no of parallel jobs
     
     strat : bool
-        a stratified grid search
+            a stratified grid search
     
     regress : bool
-        a regression model if True, a classifier if False
+              a regression model if True, a classifier if False
     
     params : a dict of model params (see tpot)
-        enter your own params dict rather than the range provided
+             enter your own params dict rather than the range provided
     
     scoring : string
-        a suitable sklearn scoring type (see notes)
+              a suitable sklearn scoring type (see notes)
                            
     """
     #t0 = time()
     
     print('Preparing data')   
     
-	
+    """
+    Prep of data for model fitting 
+    """
 
     bands = X_train.shape[1]-1
     
@@ -128,25 +123,29 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
     
     if params is None and regress is False:       
         tpot = TPOTClassifier(generations=5, population_size=50, verbosity=2,
-                              n_jobs=cores, warm_start=True)
+                              n_jobs=cores, scoring = scoring,
+                              warm_start=True)
         tpot.fit(X_train, y_train)
         
     elif params != None and regress is False:
-        tpot = TPOTClassifier(config_dict=params, n_jobs=cores, warm_start=True)
+        tpot = TPOTClassifier(config_dict=params, n_jobs=cores, scoring = scoring,
+                              warm_start=True)
         tpot.fit(X_train, y_train)
         
-    if params is None and regress is True:       
+    elif params is None and regress is True:       
         tpot = TPOTRegressor(generations=5, population_size=50, verbosity=2,
-                              n_jobs=cores, warm_start=True)
+                              n_jobs=cores, scoring = scoring,
+                              warm_start=True)
         tpot.fit(X_train, y_train)
         
     elif params != None and regress is True:
-        tpot = TPOTRegressor(config_dict=params, n_jobs=cores, warm_start=True)
+        tpot = TPOTRegressor(config_dict=params, n_jobs=cores, verbosity=2,
+                             scoring = scoring,
+                              warm_start=True)
         tpot.fit(X_train, y_train)
 
     tpot.export(outModel)    
-    
-    
+
 
 def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
                  strat=True, regress=False, params = None, scoring=None):
@@ -156,74 +155,75 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
     default params in this function or enter your own (recommended - see sklearn)
     
     Parameters
-    ----------  
+    ---------------   
+    
     X_train : np array
-        numpy array of training data where the 1st column is labels
+              numpy array of training data where the 1st column is labels
     
     outModel : string
-        the output model path which is a gz file
+               the output model path which is a gz file
     
     clf : string
-        an sklearn or xgb classifier/regressor 
-        logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb
+          an sklearn or xgb classifier/regressor 
+          logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb
     
     random : bool
-        if True, a random param search
+             if True, a random param search
     
     cv : int
-        no of folds
+         no of folds
     
     cores : int or -1 (default)
-        the no of parallel jobs
+            the no of parallel jobs
     
     strat : bool
-        a stratified grid search
+            a stratified grid search
     
     regress : bool
-        a regression model if True, a classifier if False
+              a regression model if True, a classifier if False
     
     params : a dict of model params (see scikit learn)
-        enter your own params dict rather than the range provided
+             enter your own params dict rather than the range provided
     
     scoring : string
-        a suitable sklearn scoring type (see notes)
+              a suitable sklearn scoring type (see notes)
             
     
-    General Note
-    ------------
-    There are more sophisticated ways to tune a model, this greedily 
-    searches everything but can be computationally costly. Fine tuning 
-    in a more measured way is likely better. There are numerous books,
-    guides etc...
-    E.g. with gb- first tune no of trees for gb, then learning rate, then
-    tree specific
+    General Note:
+    --------------------    
+        There are more sophisticated ways to tune a model, this greedily 
+        searches everything but can be computationally costly. Fine tuning 
+        in a more measured way is likely better. There are numerous books,
+        guides etc...
+        E.g. with gb- first tune no of trees for gb, then learning rate, then
+        tree specific
         
-    Notes on algorithms
-    -------------------   
-    From my own experience and reading around
+    Notes on algorithms:
+    ----------------------    
+        From my own experience and reading around
+        
     
-
-    sklearn svms tend to be not great on large training sets and are
-    slower with these (i have tried on HPCs and they time out on multi fits)
-   
-    sklearn 'gb' is very slow to train, though quick to predict 
+        sklearn svms tend to be not great on large training sets and are
+        slower with these (i have tried on HPCs and they time out on multi fits)
+       
+        sklearn 'gb' is very slow to train, though quick to predict 
+        
+        xgb is much faster, but rather different in algorithmic detail -
+        ie won't produce same results as sklearn...
+        
+        xgb also uses the sklearn wrapper params which differ from those in
+        xgb docs, hence they are commented next to the area of code
     
-    xgb is much faster, but rather different in algorithmic detail -
-    ie won't produce same results as sklearn...
-    
-    xgb also uses the sklearn wrapper params which differ from those in
-    xgb docs, hence they are commented next to the area of code
-
-    Scoring types - there are a lot - some of which won't work for 
-    multi-class, regression etc - see the sklearn docs!
-    
-    'accuracy', 'adjusted_rand_score', 'average_precision', 'f1',
-    'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss',
-    'neg_mean_absolute_error', 'neg_mean_squared_error',
-    'neg_median_absolute_error', 'precision', 'precision_macro',
-    'precision_micro', 'precision_samples', 'precision_weighted',
-    'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples',
-    'recall_weighted', 'roc_auc'
+        Scoring types - there are a lot - some of which won't work for 
+        multi-class, regression etc - see the sklearn docs!
+        
+        'accuracy', 'adjusted_rand_score', 'average_precision', 'f1',
+        'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss',
+        'neg_mean_absolute_error', 'neg_mean_squared_error',
+        'neg_median_absolute_error', 'precision', 'precision_macro',
+        'precision_micro', 'precision_samples', 'precision_weighted',
+        'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples',
+        'recall_weighted', 'roc_auc'
                     
     """
     #t0 = time()
@@ -281,7 +281,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
                              "max_features": ['sqrt', 'log2'],                                                
                              "max_depth": [10, None],
                              "min_samples_split": [2,3,5],
-                             "min_samples_leaf": [5,10,20,50,100,200,500],
+                             "min_samples_leaf": [5,10,20,50,100],
                              "bootstrap": [True, False]}
             else:
                 param_grid = params
@@ -375,7 +375,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         joblib.dump(grid.best_estimator_, outModel) 
         
     #Find best params----------------------------------------------------------
-    if clf == 'rf':
+    if clf == 'rf' and regress is False:
          RF_clf = RandomForestClassifier(n_jobs=cores, random_state = 123)
          if random==True:
             param_grid = {"max_depth": [10, None],
@@ -475,7 +475,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
              #print("done in %0.3fs" % (time() - t0))
     if clf == 'svc': # Far too bloody slow
         X_train = min_max_scaler.fit_transform(X_train)
-        svm_clf = svm.SVC(probability=True)
+        svm_clf = svm.SVC(probability=False)
         if random == True:
             if params is None:
         
@@ -511,7 +511,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
     
     if clf == 'nusvc' and regress is False:
         X_train = min_max_scaler.fit_transform(X_train)
-        svm_clf = svm.NuSVC(probability=True)
+        svm_clf = svm.NuSVC(probability=False)
         if random == True:
             if params is None:
                 param_grid = [{'nu':[0.25, 0.5, 0.75, 1], 'gamma': [expon(scale=.1).astype(float)],
@@ -597,39 +597,41 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
 
 def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
     
-    """ This function uses the oob score to find the best parameters.
-        This cannot be parallelized due to the warm start bootstrapping, so is
-        potentially slower than the other cross val in the create_model function
+    """ 
+    This function uses the oob score to find the best parameters.
+    
+    This cannot be parallelized due to the warm start bootstrapping, so is
+    potentially slower than the other cross val in the create_model function
         
-        This function is based on an example from the sklearn site
+    This function is based on an example from the sklearn site
         
-        This function plots a graph diplaying the oob rate
+    This function plots a graph diplaying the oob rate
         
-        Parameters
-        ---------------------
-        
-        model : string (.gz)
+    Parameters
+    ---------------------
+    
+    model : string (.gz)
             path to model to be saved
+    
+    X_train : np array
+              numpy array of training data where the 1st column is labels
+    
+    min_est : int
+              min no of trees
+    
+    max_est : int
+              max no of trees
+    
+    step : int
+           the step at which no of trees is increased
+    
+    regress : bool
+              boolean where if True it is a regressor
+    
+    Returns : tuple of np arrays
+    -----------------------
         
-        X_train : np array
-            numpy array of training data where the 1st column is labels
-        
-        min_est : int
-            min no of trees
-        
-        max_est : int
-            max no of trees
-        
-        step : int
-            the step at which no of trees is increased
-        
-        regress : bool
-            boolean where if True it is a regressor
-        
-        Returns
-        -------
-            
-        error rate, best estimator
+    error rate, best estimator
         
     """
     # This is a bit slow at present, needs profiled
@@ -747,24 +749,67 @@ def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
 
 
 
+def xgb_model_cv(X_train, param, cv_folds=5, n_estimators=1000,
+                 early_stopping_rounds=100):
+    """
+    Adapted from Analytics Vidhya guide of xgboost param tuning -  
+    
+    Have changed to adapt numpy structure used for sklearn and my lib
+    """
+    X_train = X_train[X_train[:,0] != 0]
+    
+     
+    # Remove non-finite values
+    X_train = X_train[np.isfinite(X_train).all(axis=1)]
+# y labels
+    y_train = X_train[:,0]
+
+# remove labels from X_train
+    X_train = X_train[:,1:11]
+
+
+    xgtrain = xgb.DMatrix(X_train, y_train)
+    
+    cvresult = xgb.cv(param, xgtrain, 
+                      num_boost_round=n_estimators,
+                      nfold=cv_folds,
+                      metrics='error', 
+                      early_stopping_rounds=early_stopping_rounds)
+    
+    #Fit the algorithm on the data
+    predicted = np.zeros(labels.shape, dtype=np.int)
+    alg.fit(vals, predicted, eval_metric='auc')
+        
+    #Predict training set:
+    dtrain_predictions = alg.predict(vals)
+    dtrain_predprob = alg.predict_proba(vals)
+        
+    #Print model report:
+    print("\nModel Report")
+    print("Accuracy : %.4g" % metrics.accuracy_score(labels,
+                                                     dtrain_predictions))
+    print("AUC Score (Train): %f" % metrics.roc_auc_score(labels,
+                                                          dtrain_predprob))
+                    
+    feat_imp = pd.Series(alg.booster().get_fscore()).sort_values(ascending=False)
+    feat_imp.plot(kind='bar', title='Feature Importances')
+    plt.ylabel('Feature Importance Score')
+
+
 
 def plot_feature_importances(modelPth, featureNames):
     
     """
-    Plot the 
-    feature importances of an ensemble classifier
+    Plot the feature importances of an ensemble classifier
     
     Parameters
-    ----------
+    --------------------------
+    
     modelPth : string
-        A sklearn model path 
+               A sklearn model path 
     
     featureNames : list of strings
-        a list of feature names
-
-    Notes
-    -----
-    Adapted from the excellent ML with py book credit to the author
+                   a list of feature names
     
     """
     
@@ -780,31 +825,32 @@ def plot_feature_importances(modelPth, featureNames):
 
        
 def classify_pixel(model, inputDir, bands, outMap, probMap):
-    """ A function to classify an image using a pre-saved model - assumes
+    """ 
+    A function to classify an image using a pre-saved model - assumes
     a folder of tiled rasters for memory management - classify_pixel_block is
     recommended instead of this function
     
-    Where:
+    Parameters
     
     ---------------
         
     model : sklearn model
-        a path to a scikit learn model that has been saved 
+            a path to a scikit learn model that has been saved 
     
     inputDir : string
-        a folder with images to be classified
+               a folder with images to be classified
     
     bands : int
-        the no of image bands eg 8
+            the no of image bands eg 8
     
     outMap : string
-        path to output image excluding the file format 'pathto/mymap'
+             path to output image excluding the file format 'pathto/mymap'
     
     probMap : string
-        path to output prob image excluding the file format 'pathto/mymap'
+              path to output prob image excluding the file format 'pathto/mymap'
     
     FMT : string 
-        optional parameter - gdal readable fmt
+          optional parameter - gdal readable fmt
            
         """ 
 
@@ -866,36 +912,32 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     A block processing classifier for large rasters, supports KEA, HFA, & Gtiff
     formats. KEA is recommended, Gtiff is the default
     
-    Where:
+    Parameters
     ------------------
         
     model : sklearn model
-        a path to a scikit learn model that has been saved 
+            a path to a scikit learn model that has been saved 
     
     inputImage : string
-        path to image including the file fmt 'Myimage.tif'
+                 path to image including the file fmt 'Myimage.tif'
     
     bands : band
-        the no of image bands eg 8
+            the no of image bands eg 8
     
     outMap : string
-        path to output image excluding the file format 'pathto/mymap'
+             path to output image excluding the file format 'pathto/mymap'
     
     FMT : string
-        optional parameter - gdal readable fmt
+          optional parameter - gdal readable fmt
     
     blocksize : int (optional) 
-        size of raster chunck in pixels 256 tends to be quickest
-        if you put None it will read size from gdal (this doesn't always pay off!)
+                size of raster chunck in pixels 256 tends to be quickest
+                if you put None it will read size from gdal (this doesn't always pay off!)
     
     dtype : int (optional - gdal syntax gdal.GDT_Int32) 
-        o gdal dataype - default is int32
+            a gdal dataype - default is int32
 
-    Usage exampel:
-    ---------------------    
-    classify_pixel_block(model, inputImage, 8, outMap)
-    
-    
+
     Notes
     -------------------------------------------------
     
@@ -1022,42 +1064,37 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
     """
     A block processing classifier for large rasters that produces a probability,
     output.
+    
     Supports KEA, HFA, & Gtiff formats -KEA is recommended, Gtiff is the default
     
-    Where:
-        model : string
+    Parameters
+    ----------
+    model : string
             a path to a scikit learn model that has been saved 
-            
-        inputImage : string
-            path to image including the file fmt 'Myimage.tif'
         
-        bands : int
-            the no of image bands eg 8
-        
-        outMap : string
-            path to output image excluding the file format 'pathto/mymap'
-        
-        classes : int
-            no of classes
-        
-        blocksize : int (optional) 
-            size of raster chunck 256 tends to be quickest if you put None it 
-            will read size from gdal (this doesn't always pay off!)
-                   
-        FMT : string
-            optional parameter - gdal readable fmt eg 'Gtiff'
-            
-        one_class : int
-            choose a single class to produce output prob raster
-
-        
-        
-    Usage: 
-    ---------------------------
-    (typical - leaving defaults)
-    prob_pixel_block(model, inputImage, 8, 8, outMap)
+    inputImage : string
+                 path to image including the file fmt 'Myimage.tif'
     
-    Notes
+    bands : int
+            the no of image bands eg 8
+    
+    outMap : string
+             path to output image excluding the file format 'pathto/mymap'
+    
+    classes : int
+              no of classes
+    
+    blocksize : int (optional) 
+                size of raster chunck 256 tends to be quickest if you put None it 
+                will read size from gdal (this doesn't always pay off!)
+               
+    FMT : string
+          optional parameter - gdal readable fmt eg 'Gtiff'
+        
+    one_class : int
+                choose a single class to produce output prob raster
+
+
     -------------------------------------------------
     
     Block processing is sequential, but quite a few sklearn models are parallel
@@ -1177,19 +1214,19 @@ def classify_object(model, inShape, attributes, field_name=None):
     Classify a polygon/point file attributes ('object based') using an sklearn
     model
     
-    Where:
+    Parameters
     ------------------
-        model : string
+    model : string
             path to input model
-        
-        inShape : string
-            input shapefile path (must be .shp for now....)
-        
-        attributes : list of stings
-            list of attributes names
-        
-        field_name : string
-            name of classified label field (optional)
+    
+    inShape : string
+              input shapefile path (must be .shp for now....)
+    
+    attributes : list of stings
+                 list of attributes names
+    
+    field_name : string
+                 name of classified label field (optional)
     """
     
     print('prepping data')
@@ -1275,46 +1312,62 @@ def classify_object(model, inShape, attributes, field_name=None):
     lyr = None
 
     
-def get_training_shp(inShape, train_col_number, outFile = None):
+def get_training_shp(inShape, label_field, feat_fields,  outFile = None):
     """
     Collect training from a shapefile attribute table. Used for object-based 
-    classification. 
+    classification (typically). 
     
-    Where:
+    Parameters
     --------------------    
+    
     inShape : string
-        the input shapefile - must be esri .shp at present
+              the input shapefile - must be esri .shp at present
     
-    train_col_number :
-        the column number in the attribute table containing the training 
-        labels 
-    outFile : string
-        path to training data to be saved (.gz)
+    label_field : string
+                  the field name for the class labels
+                  
+    feat_fields : list
+                  the field names of the feature data                
+
+    outFile : string (optional)
+              path to training data to be saved (.gz)
     
-    Returns:
+    Returns
     ---------------------
-    training data as a numpy array, first column is labels, rest are features
+    training data as a dataframe, first column is labels, rest are features
+    list of reject features
     
     """
-    
-    r = shapefile.Reader(inShape)
-    records = np.asarray(r.records(), dtype = np.float32())
-    records = np.delete(records, 0,1)
-    
-    #TODO - come up with a field based solution to this
 
-    records = records[records[:,train_col_number]>0]
+    outData = list()
     
-    y = records[:,train_col_number]
-    y.shape = (records.shape[0],1)
-    records = np.delete(records, train_col_number, 1)
-    records = np.hstack((y,records))
+    feat_fields.insert(0,label_field)
+    
+    print('Loading & prepping data')    
+    shp = ogr.Open(inShape)
+    lyr = shp.GetLayer()
+    labels = np.arange(lyr.GetFeatureCount())
+
+    rejects = []     
+  
+    print('calculating stats')
+    for label in tqdm(labels):
+        #print(label)
+        feat = lyr.GetFeature(label)
+        if feat == None:
+            print('no geometry for feature '+str(label))
+            rejects.append(label)
+            continue
+        row = [feat.GetField(entry) for entry in feat_fields]
+        outData.append(row)
+        
+    df=pd.DataFrame(outData, columns = feat_fields)    
+    outArray = df.as_matrix()
     
     if outFile != None:
-        jb.dump(records, outFile, compress=2)
+        jb.dump(outArray, outFile, compress=2)
     
-
-    return records
+    return df, rejects
              
 
     
@@ -1322,29 +1375,31 @@ def get_training_shp(inShape, train_col_number, outFile = None):
 def get_training(inShape, inRas, bands, field, outFile = None):
     """
     Collect training as an np array for use with create model function
-    Where:
+    
+    Parameters
     --------------
         
     inShape : string
-        the input shapefile - must be esri .shp at present
+              the input shapefile - must be esri .shp at present
         
     inRas : string
-        the input raster from which the training is extracted
+            the input raster from which the training is extracted
         
     bands : int
-        no of bands
+            no of bands
         
     field : string
-        the attribute field containing the training labels
+            the attribute field containing the training labels
     
     outFile : string (optional)
-        path to the training file saved as joblib format (eg - 'training.gz')
+              path to the training file saved as joblib format (eg - 'training.gz')
     
-    Returns:
+    Returns
     ---------------------
-        A tuple containing:
-        -np array of training data
-        -list of polygons with invalid geometry that were not collected 
+    
+    A tuple containing:
+    -np array of training data
+    -list of polygons with invalid geometry that were not collected 
     
     """
     #t0 = time()
@@ -1443,29 +1498,31 @@ def get_training(inShape, inRas, bands, field, outFile = None):
 def get_training_point(inShape, inRas, bands, field):
     """ Collect training as a np array for use with create model function using 
           point data
-    Where:
+          
+    Parameters
     --------------
         
     inShape : string
-        the input shapefile - must be esri .shp at present
+              the input shapefile - must be esri .shp at present
         
     inRas : string
-        the input raster from which the training is extracted
+            the input raster from which the training is extracted
         
     bands : int
-        no of bands
+            no of bands
         
     field : string
-        the attribute field containing the training labels
+            the attribute field containing the training labels
     
     outFile : string (optional)
-        path to the training file saved as joblib format (eg - 'training.gz')
+              path to the training file saved as joblib format (eg - 'training.gz')
     
-    Returns:
+    Returns
     ---------------------
-        A tuple containing:
-        -np array of training data
-        -list of polygons with invalid geometry that were not collected 
+    
+    A tuple containing:
+    -np array of training data
+    -list of polygons with invalid geometry that were not collected 
 
     
     UNFINISHED DO NOT USE
@@ -1505,7 +1562,20 @@ def get_training_point(inShape, inRas, bands, field):
         intval = struct.unpack('h' , structval) #use the 'short' format code (2 bytes) not int (4 bytes)
     
         print(intval[0])
-
+        # Get raster georeference info
+            
+#        src_offset = bbox_to_pixel_offsets(rgt, geom)
+#        
+#        
+#        # calculate new geotransform of the feature subset
+#        new_gt = (
+#        (rgt[0] + (src_offset[0] * rgt[1])),
+#        rgt[1],
+#        0.0,
+#        (rgt[3] + (src_offset[1] * rgt[5])),
+#        0.0,
+#        rgt[5])
+            
             
         # Create a temporary vector layer in memory
         mem_ds = mem_drv.CreateDataSource('out')
@@ -1558,4 +1628,6 @@ def get_training_point(inShape, inRas, bands, field):
     outData = np.asarray(outData)
     outData = np.concatenate(outData).astype(None)
     return outData, rejects
- 
+    
+    
+    
