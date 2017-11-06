@@ -750,7 +750,7 @@ def unzip_S2_granules(folder, granules=None):
     print('files extracted')
 
 
-def planet_query(aoi, start_date, end_date, out_path, item_type='PSScene4Band'):
+def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band"):
     """
     Downloads data from Planet for a given time period
     Parameters
@@ -784,11 +784,11 @@ def planet_query(aoi, start_date, end_date, out_path, item_type='PSScene4Band'):
     # Start client
     client = planet_api.ClientV1()
 
-    #build filter/query/thingy
-    date_filter = planet_api.filters.date_range("date", gte=start_date, lte=end_date)
+    # build filter/query/thingy
+    date_filter = planet_api.filters.date_range("acquired", gte=start_date, lte=end_date)
     aoi_filter = planet_api.filters.geom_filter(aoi)
     query = planet_api.filters.and_filter(date_filter, aoi_filter)
-    request = planet_api.filters.build_search_request(aoi_filter, item_type)
+    request = planet_api.filters.build_search_request(query, [item_type])
 
     # Get URLS
     response = client.quick_search(request)
@@ -797,7 +797,10 @@ def planet_query(aoi, start_date, end_date, out_path, item_type='PSScene4Band'):
     with open(out_path, 'w') as out:
         out.write(client.download(response))
 
-def kml_to_dict(kml):
+    # TODO: Implement mass downloading with a cool-off in case of 429 response
+
+
+def shp_to_geojson(shp):
     pass
 
 def send_planet_request(data):

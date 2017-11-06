@@ -4,21 +4,13 @@ import gdal
 import numpy as np
 from context import geospatial_learn
 from geospatial_learn import data
+import json
 
-#Test frame
+# Test frame
+@pytest.mark.download
 def test_planet_query(managed_geotiff_dir):
-    area = {
-        "type": "Polygon",
-        "coordinates": [
-            [
-                [-122.54, 37.81],
-                [-122.38, 37.84],
-                [-122.35, 37.71],
-                [-122.53, 37.70],
-                [-122.54, 37.81]
-            ]
-        ]
-    }
-
-    data.planet_query(area, '2017-01-01', '2017-02-01', 'test_outputs/planetImage.tif')
+    with open("/home/jfr10/maps/aois/brazil/window_areas.json") as brazil_json:
+        area = json.load(brazil_json)
+    simple_area = area["features"][0]["geometry"]
+    data.planet_query(simple_area, '2017-01-01T00:00:00Z', '2017-02-01T00:00:00Z', 'test_outputs/planetImage.tif')
     assert gdal.Open("test_outputs/planetImage.tif")
