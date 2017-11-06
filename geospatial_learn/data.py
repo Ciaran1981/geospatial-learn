@@ -750,12 +750,12 @@ def unzip_S2_granules(folder, granules=None):
     print('files extracted')
 
 
-def planet_query(area, start_date, end_date, out_path, item_type='PSScene4Band'):
+def planet_query(aoi, start_date, end_date, out_path, item_type='PSScene4Band'):
     """
     Downloads data from Planet for a given time period
     Parameters
     ----------
-    area : dict
+    aoi : dict
         a dict containing a polygon for the specific area
 
     start_date : datetime object
@@ -784,14 +784,14 @@ def planet_query(area, start_date, end_date, out_path, item_type='PSScene4Band')
     # Start client
     client = planet_api.ClientV1()
 
-
     #build filter/query/thingy
     date_filter = planet_api.filters.date_range("date", gte=start_date, lte=end_date)
-    aoi_filter = planet_api.filters.geom_filter(area)
+    aoi_filter = planet_api.filters.geom_filter(aoi)
     query = planet_api.filters.and_filter(date_filter, aoi_filter)
+    request = planet_api.filters.build_search_request(aoi_filter, item_type)
 
     # Get URLS
-    response = client.quick_search(query)
+    response = client.quick_search(request)
 
     #Download and save
     with open(out_path, 'w') as out:
