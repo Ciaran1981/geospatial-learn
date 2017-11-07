@@ -121,7 +121,17 @@ A summary of some functions can be found here:
 
 https://github.com/Ciaran1981/geospatial-learn/blob/master/docs/quickstart.rst
 
-This is currently a work in progress of course! Docs to follow!
+This is currently a work in progress of course! 
+
+Docs
+----
+
+Documentation can be found here:
+
+http://geospatial-learn.readthedocs.io/en/latest/
+
+These are a work in progress!
+
 
 Development
 -----------
@@ -155,7 +165,7 @@ Project History
 
 Geospatial-learn was originally written by Dr Ciaran Robb, University of Leicester. The functionality was written as part of various research projects involving Earth observation & geo-spatial data. 
 
-Geospatial-learn is currently written and maintained by Ciaran Robb and John Roberts. The module is at a very early stage at present and there is more material wrtten that has yet to be added (including docs!).     
+Geospatial-learn is currently written and maintained by Ciaran Robb and John Roberts. The module is at a very early stage at present and there is more material wrtten that has yet to be added.     
 
 Help and Support
 ----------------
