@@ -1312,10 +1312,10 @@ def classify_object(model, inShape, attributes, field_name=None):
     lyr = None
 
     
-def get_training_shp(inShape, train_col_number, outFile = None):
+def get_training_shp(inShape, label_field, feat_fields,  outFile = None):
     """
     Collect training from a shapefile attribute table. Used for object-based 
-    classification. 
+    classification (typically). 
     
     Parameters
     --------------------    
@@ -1323,36 +1323,51 @@ def get_training_shp(inShape, train_col_number, outFile = None):
     inShape : string
               the input shapefile - must be esri .shp at present
     
-    train_col_number : int
-                       the column number in the attribute table containing the training 
+    label_field : string
+                  the field name for the class labels
+                  
+    feat_fields : list
+                  the field names of the feature data                
 
-    outFile : string
+    outFile : string (optional)
               path to training data to be saved (.gz)
     
     Returns
     ---------------------
-    training data as a numpy array, first column is labels, rest are features
+    training data as a dataframe, first column is labels, rest are features
+    list of reject features
     
     """
-    
-    r = shapefile.Reader(inShape)
-    records = np.asarray(r.records(), dtype = np.float32())
-    records = np.delete(records, 0,1)
-    
-    #TODO - come up with a field based solution to this
 
-    records = records[records[:,train_col_number]>0]
+    outData = list()
     
-    y = records[:,train_col_number]
-    y.shape = (records.shape[0],1)
-    records = np.delete(records, train_col_number, 1)
-    records = np.hstack((y,records))
+    feat_fields.insert(0,label_field)
+    
+    print('Loading & prepping data')    
+    shp = ogr.Open(inShape)
+    lyr = shp.GetLayer()
+    labels = np.arange(lyr.GetFeatureCount())
+
+    rejects = []     
+  
+    print('calculating stats')
+    for label in tqdm(labels):
+        #print(label)
+        feat = lyr.GetFeature(label)
+        if feat == None:
+            print('no geometry for feature '+str(label))
+            rejects.append(label)
+            continue
+        row = [feat.GetField(entry) for entry in feat_fields]
+        outData.append(row)
+        
+    df=pd.DataFrame(outData, columns = feat_fields)    
+    outArray = df.as_matrix()
     
     if outFile != None:
-        jb.dump(records, outFile, compress=2)
+        jb.dump(outArray, outFile, compress=2)
     
-
-    return records
+    return df, rejects
              
 
     

@@ -126,12 +126,13 @@ The remaining attributes are assumed to be features (here we are using the ones 
 
    # collect some training data
 
-   train_col_number = 1
+   label_field = 'Class'
 
-   training = path/to/my/model.gz
+   feat_fields = ['b', 'g', 'r', 'nir','MajorAxisLength', 'Solidity']	
 
+   training = path/to/my/training.gz
 
-   get_training_shp(segShp, train_col_number, outFile = model)
+   get_training_shp(inShape, label_field, feat_fields,  outFile = training)
 
 The model is created in the same way as the image based method outlined earlier (see Training and model creation). After this the shapefile attributes are classified with the model as shown below and the results are written as a new attribute 'ClassRf'
 

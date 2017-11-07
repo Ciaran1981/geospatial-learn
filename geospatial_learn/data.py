@@ -41,6 +41,9 @@ from joblib import Parallel, delayed
 from sentinelhub import download_safe_format
 #from shapely.geometry import  mapping
 #from shapely.geometry import Polygon
+from planet import api as planet_api
+import planet.api.downloader
+
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 output_folder=None, api = True):
@@ -746,3 +749,73 @@ def unzip_S2_granules(folder, granules=None):
     [p.wait() for p in procList]       
         #print(str(file)+' done')
     print('files extracted')
+
+
+def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band"):
+    """
+    Downloads data from Planet for a given time period
+    Parameters
+    ----------
+    aoi : string
+        an ogr compatible polygon
+
+    start_date : datetime object
+        the inclusive start of the time window
+
+    end_date : datetime object
+        the inclusive end of the time window
+
+    out_path : filepath-like object
+        A path to the output folder
+
+    item_type : string
+        Image type to download (see Planet API docs)
+
+    Returns
+    -------
+    int
+        The status of the request
+
+    Notes
+    -----
+    This will not run without the environemnt variable
+    PL_API_KEY set
+
+    """
+    # Start client
+    client = planet_api.ClientV1()
+
+    # use OGR to extract the geometry from a feature.
+
+    shp = ogr.Open(aoi)
+    lyr = shp.GetLayer()
+    feat = lyr.GetFeature(0)
+    geom = feat.GetGeometryRef()
+
+    stringJ = geom.ExportToJson()
+
+    featDict = json.loads(stringJ)
+
+    item_type = [item_type]
+
+    # build filter/query/thingy
+    date_filter = planet_api.filters.date_range("acquired", gte=start_date, lte=end_date)
+    aoi_filter = planet_api.filters.geom_filter(featDict)
+    query = planet_api.filters.and_filter(date_filter, aoi_filter)
+    search_request = planet_api.filters.build_search_request(query, [item_type])
+
+    # Get URLS
+    search_response = client.quick_search(search_request)
+
+    #Download and save
+    downloader = planet.api.downloader.create(client)
+    downloader.download(search_response, ["visual_xml"], out_path)
+
+    # TODO: Implement mass downloading with a cool-off in case of 429 response
+
+
+def shp_to_geojson(shp):
+    pass
+
+def send_planet_request(data):
+    pass
