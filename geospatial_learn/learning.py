@@ -749,51 +749,7 @@ def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
 
 
 
-def xgb_model_cv(X_train, param, cv_folds=5, n_estimators=1000,
-                 early_stopping_rounds=100):
-    """
-    Adapted from Analytics Vidhya guide of xgboost param tuning -  
-    
-    Have changed to adapt numpy structure used for sklearn and my lib
-    """
-    X_train = X_train[X_train[:,0] != 0]
-    
-     
-    # Remove non-finite values
-    X_train = X_train[np.isfinite(X_train).all(axis=1)]
-# y labels
-    y_train = X_train[:,0]
 
-# remove labels from X_train
-    X_train = X_train[:,1:11]
-
-
-    xgtrain = xgb.DMatrix(X_train, y_train)
-    
-    cvresult = xgb.cv(param, xgtrain, 
-                      num_boost_round=n_estimators,
-                      nfold=cv_folds,
-                      metrics='error', 
-                      early_stopping_rounds=early_stopping_rounds)
-    
-    #Fit the algorithm on the data
-    predicted = np.zeros(labels.shape, dtype=np.int)
-    alg.fit(vals, predicted, eval_metric='auc')
-        
-    #Predict training set:
-    dtrain_predictions = alg.predict(vals)
-    dtrain_predprob = alg.predict_proba(vals)
-        
-    #Print model report:
-    print("\nModel Report")
-    print("Accuracy : %.4g" % metrics.accuracy_score(labels,
-                                                     dtrain_predictions))
-    print("AUC Score (Train): %f" % metrics.roc_auc_score(labels,
-                                                          dtrain_predprob))
-                    
-    feat_imp = pd.Series(alg.booster().get_fscore()).sort_values(ascending=False)
-    feat_imp.plot(kind='bar', title='Feature Importances')
-    plt.ylabel('Feature Importance Score')
 
 
 
