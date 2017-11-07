@@ -396,7 +396,7 @@ def _bbox_to_pixel_offsets(rgt, geom):
 
 
 def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
-                write_stat=None, nodata_value=None):
+                write_stat=None, nodata_value=0):
     
     """ 
     Calculate zonal stats for an OGR polygon file
@@ -409,9 +409,12 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
         
     raster_path : string
                   input raster
-        
-    bandname : int
-               an integer val eg - 2
+                  
+    band : int
+           an integer val eg - 2        
+               
+    bandname : string
+               eg - blue
         
     stat : string
            string of a stat to calculate, if omitted it will be 'mean'
