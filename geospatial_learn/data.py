@@ -43,7 +43,7 @@ from sentinelhub import download_safe_format
 #from shapely.geometry import Polygon
 from planet import api as planet_api
 import planet.api.downloader
-import asyncio
+import multiprocessing as mp
 
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
@@ -752,7 +752,7 @@ def unzip_S2_granules(folder, granules=None):
     print('files extracted')
 
 
-def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band"):
+def planet_query(aoi, start_date, end_date, out_path, list_path = None, item_type="PSScene4Band"):
     """
     Downloads data from Planet for a given time period
     Parameters
@@ -769,6 +769,10 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band"):
     out_path : filepath-like object
         A path to the output folder
 
+    list_path : filepath-like object
+        A path to the file used to track the progress of completed downloads
+        If 'None', defaults to out_path
+
     item_type : string
         Image type to download (see Planet API docs)
 
@@ -783,6 +787,9 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band"):
     PL_API_KEY set
 
     """
+    if not list_path:
+        list_path = out_path
+
     # Start client
     client = planet_api.ClientV1()
 
@@ -792,27 +799,21 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band"):
     query = planet_api.filters.and_filter(date_filter, aoi_filter)
     search_request = planet_api.filters.build_search_request(query, [item_type])
 
-    # Get URLS
-    search_response = client.quick_search(search_request)
+    # Get URLS and download
+    items = client.quick_search(search_request)
 
-    # Download and save with progress bar
     downloader = planet.api.downloader.create(client)
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(download_planet_data(downloader, search_response, out_path))
-    print("got past coroutine")
-    while loop.is_running():
-        print("%i mb downloaded, %i items awaiting download" % (
-            downloader.stats()["downloaded"],
-            downloader.stats()["pending"]))
+    downloader.on_complete = print_download_progress()
+    downloader.download(items, ['analytic'], out_path)
+
 
     # TODO: Implement mass downloading with a cool-off in case of 429 response
 
-def download_planet_data(downloader, search_response, out_path):
-    print("got to coroutine")
-    downloader.download(search_response, ["visual_xml"], out_path)
-
 def shp_to_geojson(shp):
     pass
+
+def print_download_progress():
+    print("Download done!")
 
 def send_planet_request(data):
     pass
