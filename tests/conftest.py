@@ -33,8 +33,6 @@ class TestGeodataManager:
         """
         path = os.path.join(self.path, name)
         driver = gdal.GetDriverByName('Gtiff')
-        if len(content.shape) < 3:
-            content = content.reshape((content.shape[0], content.shape[1], 1))
         new_image = driver.Create(
             path,
             xsize=content.shape[0],
@@ -103,7 +101,7 @@ def managed_geotiff_dir():
 def managed_geotiff_shapefile_dir():
     """Creates a temp dir with a globally contiguous shapefile and geotiff"""
     with TestGeodataManager() as tgm:
-        array = np.array([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        array = np.array([[[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                           [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1],
                           [1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1],
@@ -112,7 +110,7 @@ def managed_geotiff_shapefile_dir():
                           [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1],
                           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]])
+                          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]])
         tgm.create_temp_tiff("temp.tif", array)
         tgm.create_temp_shp("temp.shp")
         yield tgm
