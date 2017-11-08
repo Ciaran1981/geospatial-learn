@@ -28,7 +28,7 @@ class TestGeodataManager:
 
     """
 
-    def create_temp_tiff(self, name, content=np.zeros([3, 3, 3]), geotransform=(100, 1, 0, 100, 0, 1)):
+    def create_temp_tiff(self, name, content=np.ones([3, 3, 3]), geotransform=(100, 1, 0, 100, 0, 1)):
         """Creates a temporary geotiff in self.path
         """
         path = os.path.join(self.path, name)
@@ -40,12 +40,13 @@ class TestGeodataManager:
             xsize=content.shape[0],
             ysize=content.shape[1],
             bands=content.shape[2],
-            eType=gdal.GDT_CFloat32
+            eType=gdal.GDT_Byte
         )
-        new_image.SetProjection(self.srs.ExportToWkt())
         new_image.SetGeoTransform(geotransform)
         for band in range(content.shape[2]):
-            new_image.GetRasterBand(band+1).WriteArray = content[..., band]
+            raster_band = new_image.GetRasterBand(band+1)
+            raster_band.WriteArray = content[..., band]
+        new_image.SetProjection(self.srs.ExportToWkt())
         new_image.FlushCache()
         self.image_paths.append(path)
         self.images.append(new_image)
