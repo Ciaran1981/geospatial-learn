@@ -455,14 +455,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     features = np.arange(vlyr.GetFeatureCount())
     rejects = list()
     for label in tqdm(features):
-#        field = feat.GetField('DN')
-#        print(field)
 
-#        if not global_src_extent:
-#            # use local source extent
-#            # fastest option when you have fast disks and well indexed raster (ie tiled Geotiff)
-#            # advantage: each feature uses the smallest raster chunk
-#            # disadvantage: lots of reads on the source raster
         if feat is None:            
             continue
         geom = feat.geometry()
@@ -522,6 +515,8 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
             feature_stats = float(masked.mean())
         elif stat is 'max':
             feature_stats = float(masked.max())
+        elif stat is 'median':
+            feature_stats = float(masked.median())
         elif stat is 'std':
             feature_stats = float(masked.std())
         elif stat is 'sum':
