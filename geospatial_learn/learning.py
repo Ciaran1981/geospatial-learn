@@ -1191,14 +1191,11 @@ def classify_object(model, inShape, attributes, field_name=None):
 #    dbf.to_csv(inShape[:-4]+'.csv')
     
     df = dbf.to_dataframe()
-    tempList = list()
-    for name in attributes:
-        tempList.append(df[name])
-    X = pd.concat(tempList, axis=1)
-    X = X.as_matrix()
-    #X = np.delete(X, 0, axis=1)
     
-    X = np.float32(X)
+    X = df[attributes].as_matrix()
+    
+    del df
+    
     print('data ready')
     """
     Classification
@@ -1211,15 +1208,9 @@ def classify_object(model, inShape, attributes, field_name=None):
     comes into this process
     """
     #----------------------------------------------------------------------------------
-    X = X[X[:,0] != 0]
     X[np.where(np.isnan(X))]=0
     X = X[np.isfinite(X).all(axis=1)]
-    
-    # remove id/dn and labels from X_train
-
-    #X = X[:,2:arrShp[1]+1]
-
-    
+     
     
     """
     Now the classification itself - see sklearn for details on params
