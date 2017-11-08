@@ -672,9 +672,11 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
         src_offset = _bbox_to_pixel_offsets(rgt, geom)
         src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                src_offset[3])
+
         if src_array is None:
             src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
                                src_offset[3])
+
         
         # calculate new geotransform of the feature subset
         new_gt = (

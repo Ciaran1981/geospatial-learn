@@ -756,8 +756,8 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band"):
     Downloads data from Planet for a given time period
     Parameters
     ----------
-    aoi : string
-        an ogr compatible polygon
+    aoi : dict
+        a dict containing a polygon for the specific area
 
     start_date : datetime object
         the inclusive start of the time window
