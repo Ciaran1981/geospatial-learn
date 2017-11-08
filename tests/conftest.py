@@ -28,22 +28,24 @@ class TestGeodataManager:
 
     """
 
-    def create_temp_tiff(self, name, content=np.ones([3, 3, 3]), geotransform=(100, 1, 0, 100, 0, 1)):
+    def create_temp_tiff(self, name, content=np.ones([3, 3, 3]), geotransform=(100, 10, 0, 100, 0, 10)):
         """Creates a temporary geotiff in self.path
         """
+        if len(content.shape) != 3:
+            raise IndexError
         path = os.path.join(self.path, name)
-        driver = gdal.GetDriverByName('Gtiff')
+        driver = gdal.GetDriverByName('GTiff')
         new_image = driver.Create(
             path,
-            xsize=content.shape[0],
-            ysize=content.shape[1],
-            bands=content.shape[2],
+            xsize=content.shape[1],
+            ysize=content.shape[2],
+            bands=content.shape[0],
             eType=gdal.GDT_Byte
         )
         new_image.SetGeoTransform(geotransform)
-        for band in range(content.shape[2]):
+        for band in range(content.shape[0]):
             raster_band = new_image.GetRasterBand(band+1)
-            raster_band.WriteArray = content[..., band]
+            raster_band.WriteArray = content[band, ...]
         new_image.SetProjection(self.srs.ExportToWkt())
         new_image.FlushCache()
         self.image_paths.append(path)
@@ -103,14 +105,14 @@ def managed_geotiff_shapefile_dir():
     with TestGeodataManager() as tgm:
         array = np.array([[[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                          [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1],
-                          [1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1],
-                          [1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1],
-                          [1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1],
-                          [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1],
+                          [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1, 1],
+                          [1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1],
+                          [1, 2, 1, 2, 2, 1, 1, 2, 1, 2, 1, 2, 2, 2, 1, 2, 1, 1, 1],
+                          [1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1],
+                          [1, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 2, 2, 1],
                           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]])
+                          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]],)
         tgm.create_temp_tiff("temp.tif", array)
         tgm.create_temp_shp("temp.shp")
         yield tgm
