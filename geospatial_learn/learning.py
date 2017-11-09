@@ -912,7 +912,7 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     
     inDataset = gdal.Open(inputImage)
     
-    outDataset = copy_dataset_config(inputImage, outMap = outMap,
+    outDataset = _copy_dataset_config(inDataset, outMap = outMap,
                                      bands = bands)
     band = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
@@ -1374,7 +1374,7 @@ def get_training(inShape, inRas, bands, field, outFile = None):
         
         # Get raster georeference info
             
-        src_offset = bbox_to_pixel_offsets(rgt, geom)
+        src_offset = _bbox_to_pixel_offsets(rgt, geom)
         
         
         # calculate new geotransform of the feature subset
