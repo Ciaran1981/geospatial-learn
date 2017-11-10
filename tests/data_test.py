@@ -23,9 +23,9 @@ import requests
 @pytest.mark.download
 def test_activate_and_dl_planet_item():
     session = requests.Session()
-    session.auth = os.environ['PL_API_KEY']
+    session.auth = (os.environ['PL_API_KEY'], '')
     test_item = {"id": "20160707_195147_1057916_RapidEye-1",
                  "item_types": "REOrthoTile"}
-    test_fp = "tests/test_outputs/test.planet.tif"
+    test_fp = "test_outputs/tes_planet.tif"
     asset_type = "visual"
     data.activate_and_dl_planet_item(session, test_item, asset_type, test_fp)

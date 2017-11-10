@@ -789,7 +789,7 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band",
 
     # Create session
     session = requests.Session()
-    session.auth = os.environ['PLANET_API_KEY']
+    session.auth = (os.environ['PL_API_KEY'], '')
 
     # use OGR to extract the geometry from a feature.
 
@@ -817,19 +817,21 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band",
 def activate_and_dl_planet_item(session, item, asset_type, file_path):
     item_id = item["id"]
     item_type = item["item_types"]
-    item_url = """https://api.planet.com/data/v1/
-    item_types/{}/items/{}/assets/""".format(item_type, item_id)
+    item_url = "https://api.planet.com/data/v1/"+ \
+        "item-types/{}/items/{}/assets/".format(item_type, item_id)
     item_response = session.get(item_url)
     print("Activating " + item_id)
     activate_response = session.post(item_response.json()[asset_type]["_links"]["activate"])
-    status = session.get(item_url)
-    while status.json()[asset_type]["visual"]["status"] is not "active":
-        time.sleep(0.1) # TODO: implement exponential timeouts here
-        status = session.post(item.json()[asset_type]["_links"]["activate"])
-    dl_link = response.json()[asset_type]["location"]
+    while True:
+        status = session.get(item_url)
+        if status.json()[asset_type]["status"] == "active":
+            break
+        time.sleep(0.1)  # TODO: implement exponential timeouts here
+    dl_link = status.json()[asset_type]["location"]
     print("Downloading item {} from {}".format(item_id, dl_link))
     with open(file_path, 'wb') as fp:
-        fp.write(session.get(dl_link))
+        image_response = session.get(dl_link)
+        fp.write(image_response.content)    # Don't like this; it saves the image twice
 
 
 def shp_to_geojson(shp):
