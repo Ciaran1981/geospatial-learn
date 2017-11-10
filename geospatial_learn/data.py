@@ -41,9 +41,10 @@ from joblib import Parallel, delayed
 from sentinelhub import download_safe_format
 #from shapely.geometry import  mapping
 #from shapely.geometry import Polygon
-from planet import api as planet_api
-import planet.api.downloader
-
+import planet
+import requests
+from retrying import retry
+import time
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 output_folder=None, api = True):
@@ -751,7 +752,8 @@ def unzip_S2_granules(folder, granules=None):
     print('files extracted')
 
 
-def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band"):
+def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band",
+                 asset_type="analytic", threads=5):
     """
     Downloads data from Planet for a given time period
     Parameters
@@ -783,7 +785,11 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band"):
 
     """
     # Start client
-    client = planet_api.ClientV1()
+    client = planet.api.ClientV1()
+
+    # Create session
+    session = requests.Session()
+    session.auth = os.environ['PLANET_API_KEY']
 
     # use OGR to extract the geometry from a feature.
 
@@ -799,23 +805,36 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band"):
     item_type = [item_type]
 
     # build filter/query/thingy
-    date_filter = planet_api.filters.date_range("acquired", gte=start_date, lte=end_date)
-    aoi_filter = planet_api.filters.geom_filter(featDict)
-    query = planet_api.filters.and_filter(date_filter, aoi_filter)
-    search_request = planet_api.filters.build_search_request(query, [item_type])
+    date_filter = planet.api.filters.date_range("acquired", gte=start_date, lte=end_date)
+    aoi_filter = planet.api.filters.geom_filter(featDict)
+    query = planet.api.filters.and_filter(date_filter, aoi_filter)
+    search_request = planet.api.filters.build_search_request(query, [item_type])
 
     # Get URLS
     search_response = client.quick_search(search_request)
 
-    #Download and save
-    downloader = planet.api.downloader.create(client)
-    downloader.download(search_response, ["visual_xml"], out_path)
 
-    # TODO: Implement mass downloading with a cool-off in case of 429 response
+def activate_and_dl_planet_item(session, item, asset_type, file_path):
+    item_id = item["id"]
+    item_type = item["item_types"]
+    item_url = """https://api.planet.com/data/v1/
+    item_types/{}/items/{}/assets/""".format(item_type, item_id)
+    item_response = session.get(item_url)
+    print("Activating " + item_id)
+    activate_response = session.post(item_response.json()[asset_type]["_links"]["activate"])
+    status = session.get(item_url)
+    while status.json()[asset_type]["visual"]["status"] is not "active":
+        time.sleep(0.1) # TODO: implement exponential timeouts here
+        status = session.post(item.json()[asset_type]["_links"]["activate"])
+    dl_link = response.json()[asset_type]["location"]
+    print("Downloading item {} from {}".format(item_id, dl_link))
+    with open(file_path, 'wb') as fp:
+        fp.write(session.get(dl_link))
 
 
 def shp_to_geojson(shp):
     pass
+
 
 def send_planet_request(data):
     pass
