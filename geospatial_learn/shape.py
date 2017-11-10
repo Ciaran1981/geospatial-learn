@@ -38,7 +38,6 @@ gdal.UseExceptions()
 ogr.UseExceptions()
 
 
-   
 def shp2gj(inShape, outJson):
     """
     Converts a geojson/json to a shapefile

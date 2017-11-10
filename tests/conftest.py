@@ -45,11 +45,11 @@ class TestGeodataManager:
         new_image.SetGeoTransform(geotransform)
         for band in range(content.shape[0]):
             raster_band = new_image.GetRasterBand(band+1)
-            raster_band.WriteArray = content[band, ...]
+            raster_band.WriteArray(content[band, ...].T)
         new_image.SetProjection(self.srs.ExportToWkt())
         new_image.FlushCache()
-        self.image_paths.append(path)
         self.images.append(new_image)
+        self.image_paths.append(path)
 
     def create_temp_shp(self, name):
         vector_file = os.path.join(self.temp_dir.name, name)
@@ -99,23 +99,25 @@ def managed_geotiff_dir():
         tgm.create_temp_tiff("temp.tif")
         yield tgm
 
+
 @pytest.fixture
 def managed_geotiff_shapefile_dir():
     """Creates a temp dir with a globally contiguous shapefile and geotiff"""
     with TestGeodataManager() as tgm:
         array = np.array([[[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                          [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1, 1],
-                          [1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1],
-                          [1, 2, 1, 2, 2, 1, 1, 2, 1, 2, 1, 2, 2, 2, 1, 2, 1, 1, 1],
-                          [1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1],
-                          [1, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 2, 2, 1],
-                          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]],)
-        tgm.create_temp_tiff("temp.tif", array)
+                           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                           [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1, 1],
+                           [1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1],
+                           [1, 2, 1, 2, 2, 1, 1, 2, 1, 2, 1, 2, 2, 2, 1, 2, 1, 1, 1],
+                           [1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1],
+                           [1, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 2, 2, 1],
+                           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]], dtype=np.byte)
+        tgm.create_temp_tiff("temp.tif", np.transpose(array, (0, 2, 1)))
         tgm.create_temp_shp("temp.shp")
         yield tgm
+
 
 @pytest.fixture
 def geotiff_dir():
@@ -133,7 +135,7 @@ def geotiff_dir():
     metadata = driver.GetMetadata()
     tempPath = os.path.join(tempDir.name)
     testDataset = driver.Create(os.path.join(tempDir.name, "tempTiff.tif"),
-        xsize=3, ysize=3, bands=3, eType=gdal.GDT_CFloat32)
+                                xsize=3, ysize=3, bands=3, eType=gdal.GDT_CFloat32)
     for i in range(3):
         testDataset.GetRasterBand(i+1).WriteArray(np.ones([3, 3]))
     testDataset = None
