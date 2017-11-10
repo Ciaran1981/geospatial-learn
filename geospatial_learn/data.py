@@ -16,13 +16,13 @@ import os
 from tqdm import tqdm
 #from sentinelsat import sentinel
 # TODO maybe improve this so it doesn't use a global
-try:
-    from sentinelsat import SentinelAPI, read_geojson, geojson_to_wkt
-except:
-    ImportError 
-    print('using older version of sentinelsat')
-    oldsat = True
-    from sentinelsat.sentinel import SentinelAPI, get_coordinates
+#try:
+from sentinelsat import SentinelAPI, read_geojson, geojson_to_wkt
+#except:
+#    ImportError 
+#    print('using older version of sentinelsat')
+#    oldsat = True
+#    from sentinelsat.sentinel import SentinelAPI, get_coordinates
 
 #import os
 import gdal, ogr
@@ -88,10 +88,10 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
 
 # NOWT WRONG WITH API -
 # TODO Maybe improve check of library so it doesn't use a global
-    if oldsat is True:
-        footprint = get_coordinates(geojsonfile)
-    else:
-        footprint = geojson_to_wkt(read_geojson(geojsonfile))
+#    if oldsat is True:
+#        footprint = get_coordinates(geojsonfile)
+#    else:
+    footprint = geojson_to_wkt(read_geojson(geojsonfile))
     products = api.query(footprint,
                          ((start_date, end_date)), platformname="Sentinel-2",
                          cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
@@ -394,10 +394,10 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
     # Use sentinel sat to query  
     api = SentinelAPI(user, passwd)
 
-    if oldsat is True:
-        footprint = get_coordinates(geojsonfile)
-    else:
-        footprint = geojson_to_wkt(read_geojson(geojsonfile))
+#    if oldsat is True:
+#        footprint = get_coordinates(geojsonfile)
+#    else:
+    footprint = geojson_to_wkt(read_geojson(geojsonfile))
     products = api.query(footprint,
                          ((start_date, end_date)), platformname="Sentinel-2",
                          cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
