@@ -45,6 +45,7 @@ from planet import api as planet_api
 import requests
 from retrying import retry
 import time
+from multiprocessing.dummy import Pool
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 output_folder=None, api = True):
@@ -810,23 +811,33 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band", 
     query = planet_api.filters.and_filter(date_filter, aoi_filter)
     search_request = planet_api.filters.build_search_request(query, [item_type])
     search_request.update({'name': search_name})
-    # Get URLS
+    # Get items
     search_response = session.post(search_url, json=search_request)
     search_id = search_response.json()['id']
-    search_results = execute_search(session, search_id)
-    image_urls = search_results
+    if search_response.json()['_links'].get('_next_url'):
+        items = get_paginated_items(search_id)
+    else:
+        items = get_items(session, search_id)
+    # Do the downloading
+    thread_pool = Pool(threads)
+    threaded_dl = lambda item: activate_and_dl_planet_item(session, item, asset_type, out_path)
+
     pass
 
 
-def execute_search(session, search_id):
-    search_url = "https://api-planet.com/data/v1/searches/{}/results?page_".format(search_id)
-    return session.get(search_url)
+def get_items(session, search_id):
+    #This is very slow at the moment; check again tomorrow
+    search_url = "https://api-planet.com/data/v1/searches/{}/results".format(search_id)
+    response = session.get(search_url)
+    items = response.content.json()["features"]
+    return items
 
 
-def execute_paged_search(search_response):
+
+
+
+def get_paginated_items(session, search_id):
     raise Exception("pagination not handled yet")
-
-
 
 
 @retry(
@@ -849,8 +860,9 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
         if status.json()[asset_type]["status"] == "active":
             break
     dl_link = status.json()[asset_type]["location"]
-    print("Downloading item {} from {}".format(item_id, dl_link))
-    with open(file_path, 'wb') as fp:
+    item_fp = os.path.join(file_path, item_id, ".tif")
+    print("Downloading item {} from {} to {}".format(item_id, dl_link, item_fp))
+    with open(item_fp, 'wb') as fp:
         image_response = session.get(dl_link)
         if image_response.status_code == 429:
             raise Exception("rate limit error")
