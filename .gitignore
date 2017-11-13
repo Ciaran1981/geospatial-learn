@@ -23,3 +23,7 @@ docs/_build/
 /config.ini
 .idea/
 config.ini
+
+#tests
+tests/test_outputs/
+
