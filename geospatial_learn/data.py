@@ -819,7 +819,7 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band", 
 
 
 def execute_search(session, search_id):
-    search_url = "https://api-planet.com/data/v1/searches/{}/results".format(search_id)
+    search_url = "https://api-planet.com/data/v1/searches/{}/results?page_".format(search_id)
     return session.get(search_url)
 
 

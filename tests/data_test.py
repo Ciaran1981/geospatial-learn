@@ -15,9 +15,8 @@ def test_planet_query(monkeypatch):
         raise Exception("bad augments")
     monkeypatch.setattr(data, 'activate_and_dl_planet_item', mock_download)
 
-    with open("/home/jfr10/maps/aois/brazil/window_areas.json") as brazil_json:
-        area = json.load(brazil_json)
-    simple_area = area["features"][0]["geometry"]
+    with open("/home/jfr10/maps/tests/brazil_small.json") as brazil_json:
+        simple_area = json.load(brazil_json)
     data.planet_query(simple_area,
                       '2017-11-01T00:00:00Z',
                       '2017-11-02T00:00:00Z',
