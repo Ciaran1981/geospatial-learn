@@ -41,7 +41,7 @@ from joblib import Parallel, delayed
 from sentinelhub import download_safe_format
 #from shapely.geometry import  mapping
 #from shapely.geometry import Polygon
-import planet
+from planet import api as planet_api
 import requests
 from retrying import retry
 import time
@@ -752,6 +752,21 @@ def unzip_S2_granules(folder, granules=None):
     print('files extracted')
 
 
+def planet_query_from_ogr(aoi):
+    # use OGR to extract the geometry from a feature.
+
+    shp = ogr.Open(aoi)
+    lyr = shp.GetLayer()
+    feat = lyr.GetFeature(0)
+    geom = feat.GetGeometryRef()
+
+    stringJ = geom.ExportToJson()
+
+    featDict = json.loads(stringJ)
+
+    item_type = [item_type]
+
+
 def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band",
                  asset_type="analytic", threads=5):
     """
@@ -785,36 +800,28 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band",
 
     """
     # Start client
-    client = planet.api.ClientV1()
+    client = planet_api.ClientV1()
 
     # Create session
     session = requests.Session()
     session.auth = (os.environ['PL_API_KEY'], '')
 
-    # use OGR to extract the geometry from a feature.
-
-    shp = ogr.Open(aoi)
-    lyr = shp.GetLayer()
-    feat = lyr.GetFeature(0)
-    geom = feat.GetGeometryRef()
-
-    stringJ = geom.ExportToJson()
-
-    featDict = json.loads(stringJ)
-
-    item_type = [item_type]
-
     # build filter/query/thingy
-    date_filter = planet.api.filters.date_range("acquired", gte=start_date, lte=end_date)
-    aoi_filter = planet.api.filters.geom_filter(featDict)
-    query = planet.api.filters.and_filter(date_filter, aoi_filter)
-    search_request = planet.api.filters.build_search_request(query, [item_type])
+    date_filter = planet_api.filters.date_range("acquired", gte=start_date, lte=end_date)
+    aoi_filter = planet_api.filters.geom_filter(aoi)
+    query = planet_api.filters.and_filter(date_filter, aoi_filter)
+    search_request = planet_api.filters.build_search_request(query, [item_type])
 
     # Get URLS
     search_response = client.quick_search(search_request)
 
 
+@retry(
+    wait_exponential_multiplier=1000,
+    wait_exponential_max=10000
+)
 def activate_and_dl_planet_item(session, item, asset_type, file_path):
+    #  TODO: Implement more robust error handling here (not just 429)
     item_id = item["id"]
     item_type = item["item_types"]
     item_url = "https://api.planet.com/data/v1/"+ \
@@ -824,14 +831,17 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
     activate_response = session.post(item_response.json()[asset_type]["_links"]["activate"])
     while True:
         status = session.get(item_url)
+        if status.status_code == 429:
+            raise Exception("rate limit error")
         if status.json()[asset_type]["status"] == "active":
             break
-        time.sleep(0.1)  # TODO: implement exponential timeouts here
     dl_link = status.json()[asset_type]["location"]
     print("Downloading item {} from {}".format(item_id, dl_link))
     with open(file_path, 'wb') as fp:
         image_response = session.get(dl_link)
-        fp.write(image_response.content)    # Don't like this; it saves the image twice
+        if image_response.status_code == 429:
+            raise Exception("rate limit error")
+        fp.write(image_response.content)    # Don't like this; it might store the image twice. Check.
 
 
 def shp_to_geojson(shp):

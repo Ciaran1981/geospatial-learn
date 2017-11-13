@@ -7,17 +7,20 @@ import json
 import requests
 
 
-# Test frame
-# @pytest.mark.download
-# def test_planet_query():
-#     with open("/home/jfr10/maps/aois/brazil/window_areas.json") as brazil_json:
-#         area = json.load(brazil_json)
-#     simple_area = area["features"][0]["geometry"]
-#     data.planet_query(simple_area,
-#                       '2017-11-01T00:00:00Z',
-#                       '2017-11-02T00:00:00Z',
-#                       'tests/test_outputs/brazil/')
-#     assert gdal.Open("test_outputs/brazil/1.tif")
+def test_planet_query(monkeypatch):
+
+    # Actual download function monkeypatched out
+    def mock_download(session, item, asset_type, file_path):
+        return
+    monkeypatch.setattr(data, 'activate_and_dl_planet_item', mock_download)
+
+    with open("/home/jfr10/maps/aois/brazil/window_areas.json") as brazil_json:
+        area = json.load(brazil_json)
+    simple_area = area["features"][0]["geometry"]
+    data.planet_query(simple_area,
+                      '2017-11-01T00:00:00Z',
+                      '2017-11-02T00:00:00Z',
+                      'tests/test_outputs/brazil/')
 
 
 @pytest.mark.download
