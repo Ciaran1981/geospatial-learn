@@ -8,10 +8,11 @@ import requests
 
 
 def test_planet_query(monkeypatch):
-
     # Actual download function monkeypatched out
     def mock_download(session, item, asset_type, file_path):
-        return
+        if item["id"] and item["item_types"]:
+            return
+        raise Exception("bad augments")
     monkeypatch.setattr(data, 'activate_and_dl_planet_item', mock_download)
 
     with open("/home/jfr10/maps/aois/brazil/window_areas.json") as brazil_json:

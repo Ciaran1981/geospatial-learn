@@ -763,7 +763,7 @@ def planet_query_from_ogr(aoi):
     item_type = [item_type]
 
 
-def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band",
+def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band", search_name="auto",
                  asset_type="analytic", threads=5):
     """
     Downloads data from Planet for a given time period
@@ -809,10 +809,24 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band",
     aoi_filter = planet_api.filters.geom_filter(aoi)
     query = planet_api.filters.and_filter(date_filter, aoi_filter)
     search_request = planet_api.filters.build_search_request(query, [item_type])
-    search_request.update({'name': 'auto_test'})
+    search_request.update({'name': search_name})
     # Get URLS
     search_response = session.post(search_url, json=search_request)
+    search_id = search_response.json()['id']
+    search_results = execute_search(session, search_id)
+    image_urls = search_results
     pass
+
+
+def execute_search(session, search_id):
+    search_url = "https://api-planet.com/data/v1/searches/{}/results".format(search_id)
+    return session.get(search_url)
+
+
+def execute_paged_search(search_response):
+    raise Exception("pagination not handled yet")
+
+
 
 
 @retry(
