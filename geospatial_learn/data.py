@@ -754,16 +754,12 @@ def unzip_S2_granules(folder, granules=None):
 
 def planet_query_from_ogr(aoi):
     # use OGR to extract the geometry from a feature.
-
     shp = ogr.Open(aoi)
     lyr = shp.GetLayer()
     feat = lyr.GetFeature(0)
     geom = feat.GetGeometryRef()
-
     stringJ = geom.ExportToJson()
-
     featDict = json.loads(stringJ)
-
     item_type = [item_type]
 
 
@@ -799,6 +795,8 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band",
     PL_API_KEY set
 
     """
+    search_url = "https://api.planet.com/data/v1/searches/"
+
     # Start client
     client = planet_api.ClientV1()
 
@@ -811,9 +809,10 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band",
     aoi_filter = planet_api.filters.geom_filter(aoi)
     query = planet_api.filters.and_filter(date_filter, aoi_filter)
     search_request = planet_api.filters.build_search_request(query, [item_type])
-
+    search_request.update({'name': 'auto_test'})
     # Get URLS
-    search_response = client.quick_search(search_request)
+    search_response = session.post(search_url, json=search_request)
+    pass
 
 
 @retry(
