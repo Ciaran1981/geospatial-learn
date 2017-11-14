@@ -43,7 +43,7 @@ from sentinelhub import download_safe_format
 #from shapely.geometry import Polygon
 from planet import api as planet_api
 import requests
-from retrying import retry
+import tenacity
 import time
 from multiprocessing.dummy import Pool
 
@@ -826,7 +826,6 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band", 
 
 
 def get_items(session, search_id):
-    #This is very slow at the moment; check again tomorrow
     search_url = "https://api-planet.com/data/v1/searches/{}/results".format(search_id)
     response = session.get(search_url)
     items = response.content.json()["features"]
@@ -840,9 +839,12 @@ def get_paginated_items(session, search_id):
     raise Exception("pagination not handled yet")
 
 
-@retry(
-    wait_exponential_multiplier=1000,
-    wait_exponential_max=10000
+class Too_Many_Requests_Error(requests.RequestException):
+    """Too many requests; do exponential backoff"""
+
+@tenacity.retry(
+    wait=tenacity.wait_exponential(),
+    retry=tenacity.retry_if_exception_type(Too_Many_Requests_Error)
 )
 def activate_and_dl_planet_item(session, item, asset_type, file_path):
     #  TODO: Implement more robust error handling here (not just 429)
@@ -856,16 +858,16 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
     while True:
         status = session.get(item_url)
         if status.status_code == 429:
-            raise Exception("rate limit error")
+            raise Too_Many_Requests_Error
         if status.json()[asset_type]["status"] == "active":
             break
     dl_link = status.json()[asset_type]["location"]
-    item_fp = os.path.join(file_path, item_id, ".tif")
+    item_fp = os.path.join(file_path, item_id + ".tif")
     print("Downloading item {} from {} to {}".format(item_id, dl_link, item_fp))
-    with open(item_fp, 'wb') as fp:
+    with open(item_fp, 'wb+') as fp:
         image_response = session.get(dl_link)
         if image_response.status_code == 429:
-            raise Exception("rate limit error")
+            raise Too_Many_Requests_Error
         fp.write(image_response.content)    # Don't like this; it might store the image twice. Check.
 
 
