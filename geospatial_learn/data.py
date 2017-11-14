@@ -781,6 +781,7 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band", 
 
     out_path : filepath-like object
         A path to the output folder
+        Any identical imagery will be overwritten
 
     item_type : string
         Image type to download (see Planet API docs)
@@ -796,60 +797,70 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band", 
     PL_API_KEY set
 
     """
-    search_url = "https://api.planet.com/data/v1/searches/"
-
-    # Start client
-    client = planet_api.ClientV1()
-
     # Create session
     session = requests.Session()
     session.auth = (os.environ['PL_API_KEY'], '')
+    search_request = build_search_request(aoi, start_date, end_date, item_type, search_name)
+    search_result = do_quick_search(session, search_request)
 
-    # build filter/query/thingy
+    thread_pool = Pool(threads)
+    threaded_dl = lambda item: activate_and_dl_planet_item(session, item, asset_type, out_path)
+    thread_pool.map(threaded_dl, search_result)
+
+
+def build_search_request(aoi, start_date, end_date, item_type, search_name):
+    """Builds a search request for the planet API"""
     date_filter = planet_api.filters.date_range("acquired", gte=start_date, lte=end_date)
     aoi_filter = planet_api.filters.geom_filter(aoi)
     query = planet_api.filters.and_filter(date_filter, aoi_filter)
     search_request = planet_api.filters.build_search_request(query, [item_type])
     search_request.update({'name': search_name})
-    # Get items
+    return search_request
+
+
+def do_quick_search(session, search_request):
+    """Tries the quick search; returns a dict of features"""
+    search_url = "https://api.planet.com/data/v1/quick-search"
+    search_request.pop("name")
+    print("Sending quick search")
+    search_result = session.post(search_url, json=search_request)
+    if search_result.status_code >= 400:
+        raise requests.ConnectionError
+    return search_result.json()["features"]
+
+
+def do_saved_search(session, search_request):
+    """Does a saved search; this doesn't seem to work yet."""
+    search_url = "https://api.planet.com/data/v1/searches/"
     search_response = session.post(search_url, json=search_request)
     search_id = search_response.json()['id']
     if search_response.json()['_links'].get('_next_url'):
-        items = get_paginated_items(search_id)
+        return get_paginated_items(session)
     else:
-        items = get_items(session, search_id)
-    # Do the downloading
-    thread_pool = Pool(threads)
-    threaded_dl = lambda item: activate_and_dl_planet_item(session, item, asset_type, out_path)
-
-    pass
-
-
-def get_items(session, search_id):
-    search_url = "https://api-planet.com/data/v1/searches/{}/results".format(search_id)
-    response = session.get(search_url)
-    items = response.content.json()["features"]
-    return items
-
-
-
+        search_url = "https://api-planet.com/data/v1/searches/{}/results".format(search_id)
+        response = session.get(search_url)
+        items = response.content.json()["features"]
+        return items
 
 
 def get_paginated_items(session, search_id):
+    """Let's leave this out for now."""
     raise Exception("pagination not handled yet")
 
 
-class Too_Many_Requests_Error(requests.RequestException):
+class TooManyRequests(requests.RequestException):
     """Too many requests; do exponential backoff"""
+
 
 @tenacity.retry(
     wait=tenacity.wait_exponential(),
-    retry=tenacity.retry_if_exception_type(Too_Many_Requests_Error)
+    retry=tenacity.retry_if_exception_type(TooManyRequests)
 )
 def activate_and_dl_planet_item(session, item, asset_type, file_path):
+    """Activates and downloads a single planet item"""
     #  TODO: Implement more robust error handling here (not just 429)
     item_id = item["id"]
-    item_type = item["item_types"]
+    item_type = item["properties"]["item_types"]
     item_url = "https://api.planet.com/data/v1/"+ \
         "item-types/{}/items/{}/assets/".format(item_type, item_id)
     item_response = session.get(item_url)
@@ -858,7 +869,7 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
     while True:
         status = session.get(item_url)
         if status.status_code == 429:
-            raise Too_Many_Requests_Error
+            raise TooManyRequests
         if status.json()[asset_type]["status"] == "active":
             break
     dl_link = status.json()[asset_type]["location"]
@@ -867,7 +878,7 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
     with open(item_fp, 'wb+') as fp:
         image_response = session.get(dl_link)
         if image_response.status_code == 429:
-            raise Too_Many_Requests_Error
+            raise TooManyRequests
         fp.write(image_response.content)    # Don't like this; it might store the image twice. Check.
 
 
