@@ -20,5 +20,6 @@ docs/_build/
 #cache
 .cache/
 
-#pycharm environment
+/config.ini
 .idea/
+config.ini

@@ -396,7 +396,7 @@ def _bbox_to_pixel_offsets(rgt, geom):
 
 
 def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
-                write_stat=None, nodata_value=None, global_src_extent=False):
+                write_stat=None, nodata_value=0):
     
     """ 
     Calculate zonal stats for an OGR polygon file
@@ -409,9 +409,12 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
         
     raster_path : string
                   input raster
-        
-    bandname : int
-               an integer val eg - 2
+                  
+    band : int
+           an integer val eg - 2        
+               
+    bandname : string
+               eg - blue
         
     stat : string
            string of a stat to calculate, if omitted it will be 'mean'
@@ -452,37 +455,30 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     features = np.arange(vlyr.GetFeatureCount())
     rejects = list()
     for label in tqdm(features):
-#        field = feat.GetField('DN')
-#        print(field)
 
-        if not global_src_extent:
-            # use local source extent
-            # fastest option when you have fast disks and well indexed raster (ie tiled Geotiff)
-            # advantage: each feature uses the smallest raster chunk
-            # disadvantage: lots of reads on the source raster
-            if feat is None:            
-                continue
-            geom = feat.geometry()
-            
-            src_offset = _bbox_to_pixel_offsets(rgt, geom)
-            src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
-                                   src_offset[3])
+        if feat is None:            
+            continue
+        geom = feat.geometry()
+        
+        src_offset = _bbox_to_pixel_offsets(rgt, geom)
+        src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                               src_offset[3])
+        if src_array is None:
+            src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
+                               src_offset[3])
             if src_array is None:
-                src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
-                                   src_offset[3])
-                if src_array is None:
-                    rejects.append(feat.GetFID())
-                    continue
-            
-            # calculate new geotransform of the feature subset
-            new_gt = (
-            (rgt[0] + (src_offset[0] * rgt[1])),
-            rgt[1],
-            0.0,
-            (rgt[3] + (src_offset[1] * rgt[5])),
-            0.0,
-            rgt[5])
-            
+                rejects.append(feat.GetFID())
+                continue
+        
+        # calculate new geotransform of the feature subset
+        new_gt = (
+        (rgt[0] + (src_offset[0] * rgt[1])),
+        rgt[1],
+        0.0,
+        (rgt[3] + (src_offset[1] * rgt[5])),
+        0.0,
+        rgt[5])
+        
             
         # Create a temporary vector layer in memory
         mem_ds = mem_drv.CreateDataSource('out')
@@ -519,6 +515,8 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
             feature_stats = float(masked.mean())
         elif stat is 'max':
             feature_stats = float(masked.max())
+        elif stat is 'median':
+            feature_stats = float(masked.median())
         elif stat is 'std':
             feature_stats = float(masked.std())
         elif stat is 'sum':
@@ -584,8 +582,7 @@ def write_text_field(inShape, fieldName, attribute):
     
 
 def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
-                  angle=0, write_stat=None, nodata_value=None, 
-                  seg=True, mean=True):
+                  angle=0, write_stat=None, nodata_value=None, mean=True):
     
     """ 
     Calculate and optionally write texture stats for an OGR compatible polygon
@@ -610,10 +607,6 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
         
     angle : int
             angle in degrees from pixel (int)
-        
-    seg : bool
-          if True, use only the masked pixels to calculate, otherwise 
-          the bounding box is used. 
      
     mean : bool
            take the mean of all offsets
@@ -670,8 +663,10 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
             # fastest option when you have fast disks and well indexed raster (ie tiled Geotiff)
             # advantage: each feature uses the smallest raster chunk
             # disadvantage: lots of reads on the source raster
+
         if feat is None:            
-            continue
+            feat = vlyr.GetFeature(label)
+
         geom = feat.geometry()
         
         src_offset = _bbox_to_pixel_offsets(rgt, geom)
@@ -680,6 +675,9 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
         if src_array is None:
             src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
                                src_offset[3])
+            if src_array is None:
+                rejects.append(feat.GetFID())
+                continue
         
         # calculate new geotransform of the feature subset
         new_gt = (
@@ -701,23 +699,27 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
         rvds.SetGeoTransform(new_gt)
         gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
         rv_array = rvds.ReadAsArray()
+        
 
-            
-        zone= np.uint8(src_array * rv_array)
-        if seg is False:
-            zone = src_array
+
+
+        zone = np.ma.MaskedArray(src_array,
+                                 mask=np.logical_or(src_array == nodata_value, 
+                                                    np.logical_not(rv_array)))
+        
+        
         if gprop is 'entropy':
-            _, counts = np.unique(zone, return_counts=True)
+            _, counts = np.unique(zone.nonzero(), return_counts=True)
             props = entropy(counts, base=2)
-        if mean is True and gprop != 'entropy':
+        elif mean is True and gprop != 'entropy':
             angles = np.radians([135,90,45,0])
             
-            g = feature.greycomatrix(np.uint8(zone), [1], 
+            g = feature.greycomatrix(np.uint8(zone.nonzero()), [1], 
                                      angles, symmetric=True)
             props = feature.greycoprops(g, prop=gprop)
             props = props.mean()
         elif mean is False and gprop != 'entropy': 
-            g = feature.greycomatrix(np.uint8(zone), [offset], 
+            g = feature.greycomatrix(np.uint8(zone.nonzero()), [offset], 
                                      [np.radians(angle)], symmetric=True)
             props = feature.greycoprops(g, prop=gprop)
        
@@ -729,6 +731,8 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
             feat.SetField(gname, float(props))
             vlyr.SetFeature(feat)
         feat = vlyr.GetNextFeature()
+        
+        
     if write_stat != None:
         vlyr.SyncToDisk()
     #vds.FlushCache()

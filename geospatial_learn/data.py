@@ -16,13 +16,13 @@ import os
 from tqdm import tqdm
 #from sentinelsat import sentinel
 # TODO maybe improve this so it doesn't use a global
-try:
-    from sentinelsat import SentinelAPI, read_geojson, geojson_to_wkt
-except:
-    ImportError 
-    print('using older version of sentinelsat')
-    oldsat = True
-    from sentinelsat.sentinel import SentinelAPI, get_coordinates
+#try:
+from sentinelsat import SentinelAPI, read_geojson, geojson_to_wkt
+#except:
+#    ImportError 
+#    print('using older version of sentinelsat')
+#    oldsat = True
+#    from sentinelsat.sentinel import SentinelAPI, get_coordinates
 
 #import os
 import gdal, ogr
@@ -41,6 +41,8 @@ from joblib import Parallel, delayed
 from sentinelhub import download_safe_format
 #from shapely.geometry import  mapping
 #from shapely.geometry import Polygon
+from planet import api as planet_api
+
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 output_folder=None, api = True):
@@ -85,10 +87,10 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
 
 # NOWT WRONG WITH API -
 # TODO Maybe improve check of library so it doesn't use a global
-    if oldsat is True:
-        footprint = get_coordinates(geojsonfile)
-    else:
-        footprint = geojson_to_wkt(read_geojson(geojsonfile))
+#    if oldsat is True:
+#        footprint = get_coordinates(geojsonfile)
+#    else:
+    footprint = geojson_to_wkt(read_geojson(geojsonfile))
     products = api.query(footprint,
                          ((start_date, end_date)), platformname="Sentinel-2",
                          cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
@@ -391,10 +393,10 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
     # Use sentinel sat to query  
     api = SentinelAPI(user, passwd)
 
-    if oldsat is True:
-        footprint = get_coordinates(geojsonfile)
-    else:
-        footprint = geojson_to_wkt(read_geojson(geojsonfile))
+#    if oldsat is True:
+#        footprint = get_coordinates(geojsonfile)
+#    else:
+    footprint = geojson_to_wkt(read_geojson(geojsonfile))
     products = api.query(footprint,
                          ((start_date, end_date)), platformname="Sentinel-2",
                          cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
@@ -746,3 +748,70 @@ def unzip_S2_granules(folder, granules=None):
     [p.wait() for p in procList]       
         #print(str(file)+' done')
     print('files extracted')
+
+
+def planet_query(aoi, start_date, end_date, out_path, item_type='PSScene4Band'):
+    """
+    Downloads data from Planet for a given time period
+    Parameters
+    ----------
+    aoi : string
+        an ogr compatible polygon
+
+    start_date : datetime object
+        the inclusive start of the time window
+
+    end_date : datetime object
+        the inclusive end of the time window
+
+    out_path : filepath-like object
+        A path to the output folder
+
+    item_type : string
+        Image type to download (see Planet API docs)
+
+    Returns
+    -------
+    int
+        The status of the request
+
+    Notes
+    -----
+    This will not run without the environemnt variable
+    PL_API_KEY set
+
+    """
+    # Start client
+    client = planet_api.ClientV1()
+    
+    # use OGR to extract the geometry from a feature.
+    
+    shp = ogr.Open(aoi) 
+    lyr = shp.GetLayer()
+    feat = lyr.GetFeature(0)
+    geom = feat.GetGeometryRef()
+    
+    stringJ = geom.ExportToJson()
+    
+    featDict = json.loads(stringJ)
+
+    item_type = [item_type]
+
+    #build filter/query/thingy
+    date_filter = planet_api.filters.date_range("date", gte=start_date, lte=end_date)
+    aoi_filter = planet_api.filters.geom_filter(featDict)
+    query = planet_api.filters.and_filter(date_filter, aoi_filter)
+    request = planet_api.filters.build_search_request(aoi_filter, item_type)
+
+    # Get URLS
+    response = client.quick_search(request)
+
+    #Download and save
+    with open(out_path, 'w') as out:
+        out.write(client.download(response))
+
+def kml_to_dict(kml):
+    pass
+
+def send_planet_request(data):
+    pass
