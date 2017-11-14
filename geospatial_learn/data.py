@@ -767,8 +767,8 @@ def planet_query_from_ogr(aoi):
 def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band", search_name="auto",
                  asset_type="analytic", threads=5):
     """
-    Downloads data from Planet for a given time period in the given AOI
-    IMPORTANT: Will not yet work for areas that return >250 items.
+    Downloads data from Planetlabs for a given time period in the given AOI
+
     Parameters
     ----------
     aoi : dict
@@ -799,7 +799,9 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band", 
     Notes
     -----
     This will not run without the environment variable
-    PL_API_KEY set
+    PL_API_KEY set; you can find one on the planet dashboard
+
+    IMPORTANT: Will not run for searches returning greater than 250 items.
 
     """
     session = requests.Session()
