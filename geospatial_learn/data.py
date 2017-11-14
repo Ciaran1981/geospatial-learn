@@ -767,37 +767,41 @@ def planet_query_from_ogr(aoi):
 def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band", search_name="auto",
                  asset_type="analytic", threads=5):
     """
-    Downloads data from Planet for a given time period
+    Downloads data from Planet for a given time period in the given AOI
+    IMPORTANT: Will not yet work for areas that return >250 items.
     Parameters
     ----------
     aoi : dict
-        a dict containing a polygon for the specific area
+        a dict containing a JSON-like polygon for the specific area
 
-    start_date : datetime object
-        the inclusive start of the time window
+    start_date : str
+        the inclusive start of the time window in UTC format
 
-    end_date : datetime object
-        the inclusive end of the time window
+    end_date : str
+        the inclusive end of the time window in UTC format
 
     out_path : filepath-like object
         A path to the output folder
-        Any identical imagery will be overwritten
+        Any identically-named imagery will be overwritten
 
-    item_type : string
+    item_type : str
         Image type to download (see Planet API docs)
 
-    Returns
-    -------
-    int
-        The status of the request
+    search_name : str
+        A name to refer to the search (required for large searches)
+
+    asset_type : str
+        Planet asset type to download (see Planet API docs)
+
+    threads : int
+        The number of downloads to perform concurrently
 
     Notes
     -----
-    This will not run without the environemnt variable
+    This will not run without the environment variable
     PL_API_KEY set
 
     """
-    # Create session
     session = requests.Session()
     session.auth = (os.environ['PL_API_KEY'], '')
     search_request = build_search_request(aoi, start_date, end_date, item_type, search_name)
@@ -877,6 +881,7 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
     dl_link = status.json()[asset_type]["location"]
     item_fp = os.path.join(file_path, item_id + ".tif")
     print("Downloading item {} from {} to {}".format(item_id, dl_link, item_fp))
+    # TODO Do we want the metadata in a separate file as well as embedded in the geotiff?
     with open(item_fp, 'wb+') as fp:
         image_response = session.get(dl_link)
         if image_response.status_code == 429:
