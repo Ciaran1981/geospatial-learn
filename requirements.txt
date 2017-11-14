@@ -20,3 +20,5 @@ numpy
 tpot
 planet
 osgeo
+requests
+tenacity
