@@ -19,6 +19,6 @@ tqdm
 numpy
 tpot
 planet
-osgeo
+GDAL
 requests
 tenacity
