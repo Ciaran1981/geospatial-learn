@@ -242,7 +242,7 @@ def plot_classif_report(trueVals, predVals,
         fig = plt.gcf()
         #fig.set_size_inches(cm2inch(40, 20))
         #fig.set_size_inches(cm2inch(40*4, 20*4))
-        _fig.set_size_inches(cm2inch(figure_width, figure_height))
+        fig.set_size_inches(_cm2inch(figure_width, figure_height))
     
     rep = classification_report(trueVals, predVals)
     

@@ -26,8 +26,8 @@ def test_copy_dataset_config(managed_geotiff_dir):
 def test_multi_temp_filter(managed_geotiff_dir):
     managed_geotiff_dir.create_temp_tiff("result.tif")
     geodata.multi_temp_filter(
-        inRas=managed_geotiff_dir.imagePaths[0],
-        outRas=managed_geotiff_dir.imagePaths[1]
+        inRas=managed_geotiff_dir.image_paths[0],
+        outRas=managed_geotiff_dir.image_paths[1]
     )
     # TODO: improve this assert statement to make it more that just a check
-    assert gdal.Open(managed_geotiff_dir.imagePaths[1])
+    assert gdal.Open(managed_geotiff_dir.image_paths[1])
