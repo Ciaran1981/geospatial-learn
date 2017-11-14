@@ -854,13 +854,14 @@ class TooManyRequests(requests.RequestException):
 
 @tenacity.retry(
     wait=tenacity.wait_exponential(),
+    stop=tenacity.stop_after_delay(10000),
     retry=tenacity.retry_if_exception_type(TooManyRequests)
 )
 def activate_and_dl_planet_item(session, item, asset_type, file_path):
     """Activates and downloads a single planet item"""
     #  TODO: Implement more robust error handling here (not just 429)
     item_id = item["id"]
-    item_type = item["properties"]["item_types"]
+    item_type = item["properties"]["item_type"]
     item_url = "https://api.planet.com/data/v1/"+ \
         "item-types/{}/items/{}/assets/".format(item_type, item_id)
     item_response = session.get(item_url)
@@ -869,6 +870,7 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
     while True:
         status = session.get(item_url)
         if status.status_code == 429:
+            print("ID {} too fast; backing off".format(item_id))
             raise TooManyRequests
         if status.json()[asset_type]["status"] == "active":
             break
@@ -880,6 +882,7 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
         if image_response.status_code == 429:
             raise TooManyRequests
         fp.write(image_response.content)    # Don't like this; it might store the image twice. Check.
+        print("Item {} download complete".format(item_id))
 
 
 def shp_to_geojson(shp):
