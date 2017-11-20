@@ -2,7 +2,6 @@ import pytest
 import os
 import gdal
 import numpy as np
-from context import geospatial_learn
 from geospatial_learn import geodata
 
 
