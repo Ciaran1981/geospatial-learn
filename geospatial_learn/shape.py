@@ -38,7 +38,6 @@ gdal.UseExceptions()
 ogr.UseExceptions()
 
 
-   
 def shp2gj(inShape, outJson):
     """
     Converts a geojson/json to a shapefile
@@ -409,10 +408,10 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
         
     raster_path : string
                   input raster
-                  
+
     band : int
-           an integer val eg - 2        
-               
+           an integer val eg - 2
+
     bandname : string
                eg - blue
         
@@ -456,10 +455,10 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     rejects = list()
     for label in tqdm(features):
 
-        if feat is None:            
+        if feat is None:
             continue
         geom = feat.geometry()
-        
+
         src_offset = _bbox_to_pixel_offsets(rgt, geom)
         src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                src_offset[3])
@@ -469,7 +468,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
             if src_array is None:
                 rejects.append(feat.GetFID())
                 continue
-        
+
         # calculate new geotransform of the feature subset
         new_gt = (
         (rgt[0] + (src_offset[0] * rgt[1])),
@@ -478,7 +477,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
         (rgt[3] + (src_offset[1] * rgt[5])),
         0.0,
         rgt[5])
-        
+
             
         # Create a temporary vector layer in memory
         mem_ds = mem_drv.CreateDataSource('out')
@@ -664,7 +663,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
             # advantage: each feature uses the smallest raster chunk
             # disadvantage: lots of reads on the source raster
 
-        if feat is None:            
+        if feat is None:
             feat = vlyr.GetFeature(label)
 
         geom = feat.geometry()
@@ -678,7 +677,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
             if src_array is None:
                 rejects.append(feat.GetFID())
                 continue
-        
+
         # calculate new geotransform of the feature subset
         new_gt = (
         (rgt[0] + (src_offset[0] * rgt[1])),
@@ -699,7 +698,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
         rvds.SetGeoTransform(new_gt)
         gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
         rv_array = rvds.ReadAsArray()
-        
+
 
 
 
@@ -714,12 +713,12 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
         elif mean is True and gprop != 'entropy':
             angles = np.radians([135,90,45,0])
             
-            g = feature.greycomatrix(np.uint8(zone.nonzero()), [1], 
+            g = feature.greycomatrix(np.uint8(zone.nonzero()), [1],
                                      angles, symmetric=True)
             props = feature.greycoprops(g, prop=gprop)
             props = props.mean()
         elif mean is False and gprop != 'entropy': 
-            g = feature.greycomatrix(np.uint8(zone.nonzero()), [offset], 
+            g = feature.greycomatrix(np.uint8(zone.nonzero()), [offset],
                                      [np.radians(angle)], symmetric=True)
             props = feature.greycoprops(g, prop=gprop)
        
@@ -731,8 +730,8 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
             feat.SetField(gname, float(props))
             vlyr.SetFeature(feat)
         feat = vlyr.GetNextFeature()
-        
-        
+
+
     if write_stat != None:
         vlyr.SyncToDisk()
     #vds.FlushCache()
