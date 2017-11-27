@@ -17,6 +17,7 @@ import numpy as np
 import glob2
 from geospatial_learn.data import _get_S2_geoinfo
 from geospatial_learn.shape import _bbox_to_pixel_offsets
+from geospatial_learn.gdal_merge import _merge
 import tempfile
 #from pyrate.shared import DEM
 import glymur
@@ -1052,107 +1053,36 @@ def remove_cloud_S2(inputIm, sceneIm,
     # done in above band loop due as this would be very inefficient
     for band in range(1, bands+1):
         inDataset.GetRasterBand(band).ComputeStatistics(0)
-                        
+
     inDataset.FlushCache()
     inDataset = None     
 
 
 
 
-def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
-              blocksize=None):
+def stack_ras(rasterList, outFile):
     """ 
-    Stack some rasters for change classification - must be same size!!!
+    Stack some rasters for change classification
     
     Parameters
     ----------- 
         
-    inRas1 : string
+    rasterList : string
              the input image 
         
-    inRas2 : string
-             the second image 
-        
     outFile : string
-              the output file path (no file extension required)
+              the output file path including file extension
         
-    FMT : string
-          the output gdal format eg 'Gtiff', 'KEA', 'HFA'
-        
-    min_size : int
-               size in pixels to retain of cloud mask
-        
-    blocksize : int
-                the square chunk processed at any one time
 
     """
-
-    if FMT == None:
-        FMT = 'Gtiff'
-        fmt = '.tif'
-    if FMT == 'HFA':
-        fmt = '.img'
-    if FMT == 'KEA':
-        fmt = '.kea'
-    if FMT == 'Gtiff':
-        fmt = '.tif'
-    
-    inras1 = gdal.Open(inRas1, gdal.GA_ReadOnly)
-    
-    inras2 = gdal.Open(inRas2, gdal.GA_ReadOnly)
-    
-    bands = inras1.RasterCount + inras2.RasterCount
-    
-    outDataset = _copy_dataset_config(inRas1, outMap = outFile,
-                                     bands = bands)
-    
-    rows = outDataset.RasterXSize
-    cols = outDataset.RasterYSize
-    
-    if blocksize is None:
-        bnd = inras1.GetRasterBand(1)
-        blocksize = bnd.GetBlockSize()
-        blocksizeX = blocksize[0]
-        blocksizeY = blocksize[1]
-        del bnd
-    else:
-        blocksizeX = blocksize
-        blocksizeY = blocksize
-        
-            
-    for i in tqdm(range(0, rows, blocksizeY)):
-        if i + blocksizeY < rows:
-            numRows = blocksizeY
-        else:
-            numRows = rows -i
-    
-        for j in range(0, cols, blocksizeX):
-            if j + blocksizeX < cols:
-                numCols = blocksizeX
-            else:
-                numCols = cols - j
-            # This is extremely messy & inefficcient   
-            for band in range(1, bands+1):
-                    if band > inras1.RasterCount:
-                        bnd = inras2.GetRasterBand(band-inras1.RasterCount)
-                    else:
-                        bnd = inras1.GetRasterBand(band)
-                    
-                    array = bnd.ReadAsArray(j, i, numCols, numRows)
-                    outDataset.GetRasterBand(band).WriteArray(array, j, i)
-            
-    outDataset.FlushCache() 
-    outDataset = None
+    _merge(names = rasterList, out_file = outFile)
     
 
 def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
     
     """ 
     Lifted straight from the cookbook and gdal func docs.
-    
-    http://pcjericks.github.io/py-gdalogr-cookbook 
-    
-    Very slow!
+
     
     Parameters
     -----------   
@@ -1645,7 +1575,7 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
           gdal compatible (optional) defaults is tif
 
 
-
+ 
     """
     selem = np.ones(shape=((7,7)))
     

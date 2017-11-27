@@ -28,8 +28,8 @@ except ImportError:
 
 
 from tqdm import tqdm
-import matplotlib
-matplotlib.use('agg')
+#import matplotlib
+#matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from collections import OrderedDict
