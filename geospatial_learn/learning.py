@@ -913,7 +913,7 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     inDataset = gdal.Open(inputImage)
     
     outDataset = _copy_dataset_config(inDataset, outMap = outMap,
-                                     bands = bands)
+                                     bands = 1)
     band = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
     rows = inDataset.RasterYSize
