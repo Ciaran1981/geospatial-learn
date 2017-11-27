@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/home/ubuntu/anaconda3/bin/python
 # -*- coding: utf-8 -*-
 """
 @author: Ciaran Robb
