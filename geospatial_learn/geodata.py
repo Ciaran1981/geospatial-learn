@@ -34,7 +34,7 @@ from skimage.morphology import  remove_small_objects#, remove_small_holes#disk, 
 from skimage.filters import rank
 from skimage.exposure import rescale_intensity
 import warnings
-from os import sys
+from os import sys, path
 import re
 
 
@@ -496,7 +496,7 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
         fileList = glob2.glob(path.join(granule,'IMG_DATA', 'R10m','*MSI*.jp2'))
         if len(fileList) is 0:
         # the following if is for S2 since format change
-            fileList = glob2.glob(granule+'IMG_DATA/R10m/*B0*.jp2')
+            fileList = glob2.glob(path.join(granule,'IMG_DATA/R10m/*B0*.jp2'))
         #        x_min = int(geoinfo['ulx10'])
 #        y_max = int(geoinfo['uly10'])
         x_pixels =   int(geoinfo['cols10'])
@@ -1095,10 +1095,11 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
               the output polygon file path 
         
     outField : string (optional)
-               size in pixels to retain of cloud mask
+               the name of the field containing burnded values
+    
+    mask : bool (optional)
+           use the input raster as a mask
         
-    blocksize : int
-                the square chunk processed at any one time
         
     band : int
            the input raster band
@@ -1293,6 +1294,8 @@ def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None,
     (rgt[3] + (src_offset[1] * rgt[5])),
     0.0,
     rgt[5])
+    
+    #TODO drop the subprocess call
     
     cmd = ['gdalwarp', '-q', '-cutline', inShape, '-crop_to_cutline', 
            '-tr', str(new_gt[1]), str(new_gt[5]),
