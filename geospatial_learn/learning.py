@@ -1075,7 +1075,7 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
         
     inDataset = gdal.Open(inputImage)
     
-    outDataset = copy_dataset_config(inputImage, outMap = outMap,
+    outDataset = _copy_dataset_config(inputImage, outMap = outMap,
                                      bands = bands)
     band = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
