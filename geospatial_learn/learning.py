@@ -77,7 +77,7 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
               numpy array of training data where the 1st column is labels
     
     outModel : string
-               the output model path which is a .py file
+               the output model path which is a .gz file, a py file is also saved
     
     cv : int
          no of folds
@@ -144,7 +144,9 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
                               warm_start=True)
         tpot.fit(X_train, y_train)
 
-    tpot.export(outModel)    
+    tpot.export(outModel[:-4]+'.py') 
+    
+    joblib.dump(tpot.fitted_pipeline_, outModel)
 
 
 def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
