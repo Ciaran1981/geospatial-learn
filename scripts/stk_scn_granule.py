@@ -63,13 +63,11 @@ args = parser.parse_args()
 parentFolder= args.aoi
 
 aoi = args.aoinm
-scratch = parentFolder+'/scratch/'
-stacks = scratch+'/stacks'
-baseDir  = parentFolder+'/baseImage/'
-outputData  = parentFolder+'/outputData/'
-changeMaps = parentFolder+'/changeMaps/'
+scratch = path.join(parentFolder, 'scratch')
+stacks = path.join(scratch,'stacks')
+baseDir  = path.join(parentFolder,'baseImage')
 
-dirs = [scratch, stacks, baseDir, outputData, changeMaps]
+dirs = [scratch, stacks, baseDir]
 
 for fld in dirs:
     if os.path.exists(fld):

@@ -20,7 +20,7 @@ import os
 import argparse
 #import numpy as np
 #from datetime import datetime
-from os import  path
+from os import  path, mkdir
 import gdal
 from glob2 import glob
 import re
@@ -33,15 +33,16 @@ gdal.UseExceptions()
 parser = argparse.ArgumentParser()
 
 
-args = parser.parse_args() 
 
 
-parser.add_argument("-folder", "--flder", type=str, required=True, 
-
+parser.add_argument("-folder", "--flder", type=str, required=True,
                     help="folder with imagery L2A to be classified")
 
 parser.add_argument("-model", "--mdl", type=str, required=True, 
                     help="model path '.gz file'")
+
+parser.add_argument("-granule", "--granule_nm", type=str, required=False, 
+                    help="name of granule eg 36MYE")
 
 
 parser.add_argument("-polygon", "--clpPoly", type=str, required=False, 
@@ -51,43 +52,34 @@ parser.add_argument("-mask", "--mask", type=bool, required=False,
                     help="Raster forest mask (optional)")
 
 
+args = parser.parse_args() 
 
 
 modelPth = args.mdl
 
     
-
-parentFolder= args.flder
-
+scratch = args.flder
 
 
-parentFolder= args.aoi
+outputData  = path.join(scratch, 'outputData')
+changeMaps = path.join(scratch, 'changeMaps')
 
-aoi = args.aoinm
+dirs = [scratch, outputData, changeMaps]
 
-
-scratch = path.join(parentFolder,'scratch')
-stacks = path.join(scratch,'stacks')
-baseDir  = path.join(parentFolder,'baseImage')
-outputData  = path.join(parentFolder, 'outputData')
-changeMaps = path.join(parentFolder, 'changeMaps')
-
-dirs = [scratch, stacks, baseDir, outputData, changeMaps]
-
-#for fld in dirs:
-#    if os.path.exists(fld):
-#        continue
-#    mkdir(fld)
+for fld in dirs:
+    if os.path.exists(fld):
+        continue
+    mkdir(fld)
     
 tileId = args.granule_nm
-baseImage = path.join(baseDir, tileId+'.tif')
+#baseImage = path.join(baseDir, 'T'+tileId+'.tif')
 
 
 
 
 clipShape = args.clpPoly
 
-stackList = glob(stacks+'*clip*.tif')
+stackList = glob(path.join(scratch, '*.tif'))
 stackList.sort()
 
 #items = np.arange(len(stackList))
@@ -95,12 +87,12 @@ stackList.sort()
 for image in stackList:
     
     dr, name =os.path.split(image)
-    outMap = path.join(changeMaps, name,'_10m_ch')
-    probMap = path.join(changeMaps, name,'_10m_prob')
-    clipRas = path.join(changeMaps, name,'_10m_ch_clip_.tif')
+    outMap = path.join(changeMaps, name+'_10m_ch')
+    probMap = path.join(changeMaps, name+'_10m_prob')
+    clipRas = path.join(changeMaps, name+'_10m_ch_clip_.tif')
     
-    json = path.join(outputData, name,'_10m_ch_clip.geojson')
-    outKml = path.join(outputData, name,'_10m_ch_clip')
+    json = path.join(outputData, name+'_10m_ch_clip.geojson')
+    outKml = path.join(outputData, name+'_10m_ch_clip')
        
 
     print('commencing change classification')
