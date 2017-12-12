@@ -699,7 +699,7 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
         inDataset = gdal.Open(inputIm)
     
         
-        outDataset = _copy_dataset_config(inputIm, outMap = outputIm,
+        outDataset = _copy_dataset_config(inDataset, outMap = outputIm,
                                      bands = inDataset.RasterCount)  
         bnd = inDataset.GetRasterBand(1)
         
@@ -1820,7 +1820,8 @@ def temporal_comp2(inRasSet, outRas, q=5,  window = None, blockSize = None):
     outDataset = None #gdal. please.
     
     
-def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy', dtype = gdal.GDT_Int32, bands = 1):
+def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy',
+                         dtype = gdal.GDT_Int32, bands = 1):
     """Copies a dataset without the associated rasters.
 
     """
