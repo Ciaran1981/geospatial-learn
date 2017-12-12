@@ -691,7 +691,7 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
         fmt = '.tif'
     
     if overwrite is True:
-        inDataset = gdal.Open(inputIm, gdal.GA_Update)
+        inDataset = gdal.Open(inDataset, gdal.GA_Update)
         outBand = inDataset.GetRasterBand(1)
         bnd = inDataset.GetRasterBand(1)
     else:
@@ -700,7 +700,7 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
     
         
         outDataset = _copy_dataset_config(inDataset, outMap = outputIm,
-                                     bands = inDataset.RasterCount)  
+                                          bands = inDataset.RasterCount)  
         bnd = inDataset.GetRasterBand(1)
         
         
@@ -971,6 +971,7 @@ def remove_cloud_S2(inputIm, sceneIm,
         
     sceneIm : string
               the scenemap to use as a mask for removing cloud
+              It is assumed the scene map consists of 1 shadow, 2 cloud, 3 land, 4 water 
         
     FMT : string
           the output gdal format eg 'Gtiff', 'KEA', 'HFA'
@@ -1077,7 +1078,71 @@ def stack_ras(rasterList, outFile):
     """
     _merge(names = rasterList, out_file = outFile)
     
+def combine_scene(scl, c_scn, blocksize = 256):
+    """ 
+    combine another scene classification with the sen2cor one
+    
+    Where: 
+    ----------- 
+    scl : string
+        the sen2cor one
 
+    c_scn : string
+        the independently derived one - this will be modified
+    
+    blocksize : string
+        chunck to process
+        
+
+    """
+
+    
+    inDataset = gdal.Open(c_scn, gdal.GA_Update)
+    
+    sclDataset = gdal.Open(scl)
+    bnnd = inDataset.GetRasterBand(1)
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
+
+    # So with most datasets blocksize is a row scanline
+    if blocksize == None:
+        blocksize = bnnd.GetBlockSize()
+        blocksizeX = blocksize[0]
+        blocksizeY = blocksize[1]
+    else:
+        blocksizeX = blocksize
+        blocksizeY = blocksize
+    
+    for i in tqdm(range(0, rows, blocksizeY)):
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
+            else:
+                numRows = rows -i
+        
+            for j in range(0, cols, blocksizeX):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+#                for band in range(1, bands+1):
+                bnd = inDataset.GetRasterBand(1)
+                scnBnd = sclDataset.GetRasterBand(1)
+                scArray = scnBnd.ReadAsArray(j, i, numCols, numRows)
+                array = bnd.ReadAsArray(j, i, numCols, numRows)
+                # cloud
+                array[scArray > 6]=2
+                # converting water to land to avoid loss of pixels in buffer
+                # later when getting rid of cloud/shadow
+                array[np.logical_or(scArray == 6, array==4)]=3
+                bnd.WriteArray(array, j, i)
+    # This is annoying but necessary as the stats need updated and cannot be 
+    # done in above band loop due as this would be very inefficient
+    #for band in range(1, bands+1):
+    #inDataset.GetRasterBand(1).ComputeStatistics(0)
+                        
+    inDataset.FlushCache()
+    inDataset = None
+    
 def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
     
     """ 

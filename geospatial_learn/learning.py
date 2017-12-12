@@ -1070,13 +1070,18 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
         
     # TODO - a list of classes would be better eliminating the need for the one
     # class param
-    if one_class != None:
-        classes = one_class
-        
+    
     inDataset = gdal.Open(inputImage)
     
-    outDataset = _copy_dataset_config(inputImage, outMap = outMap,
-                                     bands = bands)
+    
+    if one_class != None:
+        classes = one_class
+        outDataset = _copy_dataset_config(inDataset, outMap = outMap,
+                                     dtype = gdal.GDT_Float32, bands = 1)
+    else:
+        outDataset = _copy_dataset_config(inDataset, outMap = outMap,
+                                          dtype = gdal.GDT_Float32,
+                                          bands = bands)
     band = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
     rows = inDataset.RasterYSize
