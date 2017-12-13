@@ -5,7 +5,7 @@ psutil>=4.3.1
 PySAL>=1.13.0
 pyshp>=1.2.12
 sentinelsat>=0.12
-Shapely>=1.5.16
+Shapely
 simpledbf>=0.2.6
 Sphinx>=1.4.6
 XML2Dict>=0.2.2
@@ -21,3 +21,4 @@ tpot
 planet
 requests
 tenacity
+sentinelhub
