@@ -1188,10 +1188,10 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
         print(e)
         sys.exit(1)
     if mask == True:
-        maskband = srcband
+        maskband = src_ds.GetRasterBand(band)
         options.append('-mask')
     else:
-        mask == False
+        mask = False
         maskband = None
     
     srs = osr.SpatialReference()
@@ -1209,13 +1209,14 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
     if outField is None:
         dst_fieldname = 'DN'
         fd = ogr.FieldDefn( dst_fieldname, ogr.OFTInteger )
-        dst_layer.CreateField( fd )
-        dst_field = -1
+        dst_layer.CreateField( fd ) 
+        dst_field = dst_layer.GetLayerDefn().GetFieldIndex(dst_fieldname)
+
     
     else: 
         dst_field = dst_layer.GetLayerDefn().GetFieldIndex(outField)
 
-    gdal.Polygonize(srcband, maskband, dst_layer, dst_field, options,
+    gdal.Polygonize(srcband, maskband, dst_layer, dst_field,
                     callback=gdal.TermProgress)
     dst_ds.FlushCache()
     
