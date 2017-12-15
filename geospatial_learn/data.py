@@ -16,13 +16,13 @@ import os
 from tqdm import tqdm
 #from sentinelsat import sentinel
 # TODO maybe improve this so it doesn't use a global
-try:
-    from sentinelsat import SentinelAPI, read_geojson, geojson_to_wkt
-except:
-    ImportError 
-    print('using older version of sentinelsat')
-    oldsat = True
-    from sentinelsat.sentinel import SentinelAPI, get_coordinates
+#try:
+from sentinelsat import SentinelAPI, read_geojson, geojson_to_wkt
+#except:
+#    ImportError 
+#    print('using older version of sentinelsat')
+#    oldsat = True
+#    from sentinelsat.sentinel import SentinelAPI, get_coordinates
 
 #import os
 import gdal, ogr
@@ -42,8 +42,10 @@ from sentinelhub import download_safe_format
 #from shapely.geometry import  mapping
 #from shapely.geometry import Polygon
 from planet import api as planet_api
-import planet.api.downloader
-
+import requests
+import tenacity
+import time
+from multiprocessing.dummy import Pool
 
 def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
                 output_folder=None, api = True):
@@ -88,10 +90,10 @@ def sent2_query(user, passwd, geojsonfile, start_date, end_date, cloud = '100',
 
 # NOWT WRONG WITH API -
 # TODO Maybe improve check of library so it doesn't use a global
-    if oldsat is True:
-        footprint = get_coordinates(geojsonfile)
-    else:
-        footprint = geojson_to_wkt(read_geojson(geojsonfile))
+#    if oldsat is True:
+#        footprint = get_coordinates(geojsonfile)
+#    else:
+    footprint = geojson_to_wkt(read_geojson(geojsonfile))
     products = api.query(footprint,
                          ((start_date, end_date)), platformname="Sentinel-2",
                          cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
@@ -394,10 +396,10 @@ def sent2_amazon(user, passwd, geojsonfile, start_date, end_date, output_folder,
     # Use sentinel sat to query  
     api = SentinelAPI(user, passwd)
 
-    if oldsat is True:
-        footprint = get_coordinates(geojsonfile)
-    else:
-        footprint = geojson_to_wkt(read_geojson(geojsonfile))
+#    if oldsat is True:
+#        footprint = get_coordinates(geojsonfile)
+#    else:
+    footprint = geojson_to_wkt(read_geojson(geojsonfile))
     products = api.query(footprint,
                          ((start_date, end_date)), platformname="Sentinel-2",
                          cloudcoverpercentage = "[0 TO "+cloud+"]")#,producttype="GRD")
@@ -751,71 +753,148 @@ def unzip_S2_granules(folder, granules=None):
     print('files extracted')
 
 
-def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band"):
-    """
-    Downloads data from Planet for a given time period
-    Parameters
-    ----------
-    aoi : string
-        an ogr compatible polygon
-
-    start_date : datetime object
-        the inclusive start of the time window
-
-    end_date : datetime object
-        the inclusive end of the time window
-
-    out_path : filepath-like object
-        A path to the output folder
-
-    item_type : string
-        Image type to download (see Planet API docs)
-
-    Returns
-    -------
-    int
-        The status of the request
-
-    Notes
-    -----
-    This will not run without the environemnt variable
-    PL_API_KEY set
-
-    """
-    # Start client
-    client = planet_api.ClientV1()
-
+def planet_query_from_ogr(aoi):
     # use OGR to extract the geometry from a feature.
-
     shp = ogr.Open(aoi)
     lyr = shp.GetLayer()
     feat = lyr.GetFeature(0)
     geom = feat.GetGeometryRef()
-
     stringJ = geom.ExportToJson()
-
     featDict = json.loads(stringJ)
-
     item_type = [item_type]
 
-    # build filter/query/thingy
+
+def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band", search_name="auto",
+                 asset_type="analytic", threads=5):
+    """
+    Downloads data from Planetlabs for a given time period in the given AOI
+
+    Parameters
+    ----------
+    aoi : dict
+        a dict containing a JSON-like polygon for the specific area
+
+    start_date : str
+        the inclusive start of the time window in UTC format
+
+    end_date : str
+        the inclusive end of the time window in UTC format
+
+    out_path : filepath-like object
+        A path to the output folder
+        Any identically-named imagery will be overwritten
+
+    item_type : str
+        Image type to download (see Planet API docs)
+
+    search_name : str
+        A name to refer to the search (required for large searches)
+
+    asset_type : str
+        Planet asset type to download (see Planet API docs)
+
+    threads : int
+        The number of downloads to perform concurrently
+
+    Notes
+    -----
+    This will not run without the environment variable
+    PL_API_KEY set; you can find one on the planet dashboard
+
+    IMPORTANT: Will not run for searches returning greater than 250 items.
+
+    """
+    session = requests.Session()
+    session.auth = (os.environ['PL_API_KEY'], '')
+    search_request = build_search_request(aoi, start_date, end_date, item_type, search_name)
+    search_result = do_quick_search(session, search_request)
+
+    thread_pool = Pool(threads)
+    threaded_dl = lambda item: activate_and_dl_planet_item(session, item, asset_type, out_path)
+    thread_pool.map(threaded_dl, search_result)
+
+
+def build_search_request(aoi, start_date, end_date, item_type, search_name):
+    """Builds a search request for the planet API"""
     date_filter = planet_api.filters.date_range("acquired", gte=start_date, lte=end_date)
-    aoi_filter = planet_api.filters.geom_filter(featDict)
+    aoi_filter = planet_api.filters.geom_filter(aoi)
     query = planet_api.filters.and_filter(date_filter, aoi_filter)
     search_request = planet_api.filters.build_search_request(query, [item_type])
+    search_request.update({'name': search_name})
+    return search_request
 
-    # Get URLS
-    search_response = client.quick_search(search_request)
 
-    #Download and save
-    downloader = planet.api.downloader.create(client)
-    downloader.download(search_response, ["visual_xml"], out_path)
+def do_quick_search(session, search_request):
+    """Tries the quick search; returns a dict of features"""
+    search_url = "https://api.planet.com/data/v1/quick-search"
+    search_request.pop("name")
+    print("Sending quick search")
+    search_result = session.post(search_url, json=search_request)
+    if search_result.status_code >= 400:
+        raise requests.ConnectionError
+    return search_result.json()["features"]
 
-    # TODO: Implement mass downloading with a cool-off in case of 429 response
+
+def do_saved_search(session, search_request):
+    """Does a saved search; this doesn't seem to work yet."""
+    search_url = "https://api.planet.com/data/v1/searches/"
+    search_response = session.post(search_url, json=search_request)
+    search_id = search_response.json()['id']
+    if search_response.json()['_links'].get('_next_url'):
+        return get_paginated_items(session)
+    else:
+        search_url = "https://api-planet.com/data/v1/searches/{}/results".format(search_id)
+        response = session.get(search_url)
+        items = response.content.json()["features"]
+        return items
+
+
+def get_paginated_items(session, search_id):
+    """Let's leave this out for now."""
+    raise Exception("pagination not handled yet")
+
+
+class TooManyRequests(requests.RequestException):
+    """Too many requests; do exponential backoff"""
+
+
+@tenacity.retry(
+    wait=tenacity.wait_exponential(),
+    stop=tenacity.stop_after_delay(10000),
+    retry=tenacity.retry_if_exception_type(TooManyRequests)
+)
+def activate_and_dl_planet_item(session, item, asset_type, file_path):
+    """Activates and downloads a single planet item"""
+    #  TODO: Implement more robust error handling here (not just 429)
+    item_id = item["id"]
+    item_type = item["properties"]["item_type"]
+    item_url = "https://api.planet.com/data/v1/"+ \
+        "item-types/{}/items/{}/assets/".format(item_type, item_id)
+    item_response = session.get(item_url)
+    print("Activating " + item_id)
+    activate_response = session.post(item_response.json()[asset_type]["_links"]["activate"])
+    while True:
+        status = session.get(item_url)
+        if status.status_code == 429:
+            print("ID {} too fast; backing off".format(item_id))
+            raise TooManyRequests
+        if status.json()[asset_type]["status"] == "active":
+            break
+    dl_link = status.json()[asset_type]["location"]
+    item_fp = os.path.join(file_path, item_id + ".tif")
+    print("Downloading item {} from {} to {}".format(item_id, dl_link, item_fp))
+    # TODO Do we want the metadata in a separate file as well as embedded in the geotiff?
+    with open(item_fp, 'wb+') as fp:
+        image_response = session.get(dl_link)
+        if image_response.status_code == 429:
+            raise TooManyRequests
+        fp.write(image_response.content)    # Don't like this; it might store the image twice. Check.
+        print("Item {} download complete".format(item_id))
 
 
 def shp_to_geojson(shp):
     pass
+
 
 def send_planet_request(data):
     pass

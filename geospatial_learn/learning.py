@@ -749,51 +749,7 @@ def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
 
 
 
-def xgb_model_cv(X_train, param, cv_folds=5, n_estimators=1000,
-                 early_stopping_rounds=100):
-    """
-    Adapted from Analytics Vidhya guide of xgboost param tuning -  
-    
-    Have changed to adapt numpy structure used for sklearn and my lib
-    """
-    X_train = X_train[X_train[:,0] != 0]
-    
-     
-    # Remove non-finite values
-    X_train = X_train[np.isfinite(X_train).all(axis=1)]
-# y labels
-    y_train = X_train[:,0]
 
-# remove labels from X_train
-    X_train = X_train[:,1:11]
-
-
-    xgtrain = xgb.DMatrix(X_train, y_train)
-    
-    cvresult = xgb.cv(param, xgtrain, 
-                      num_boost_round=n_estimators,
-                      nfold=cv_folds,
-                      metrics='error', 
-                      early_stopping_rounds=early_stopping_rounds)
-    
-    #Fit the algorithm on the data
-    predicted = np.zeros(labels.shape, dtype=np.int)
-    alg.fit(vals, predicted, eval_metric='auc')
-        
-    #Predict training set:
-    dtrain_predictions = alg.predict(vals)
-    dtrain_predprob = alg.predict_proba(vals)
-        
-    #Print model report:
-    print("\nModel Report")
-    print("Accuracy : %.4g" % metrics.accuracy_score(labels,
-                                                     dtrain_predictions))
-    print("AUC Score (Train): %f" % metrics.roc_auc_score(labels,
-                                                          dtrain_predprob))
-                    
-    feat_imp = pd.Series(alg.booster().get_fscore()).sort_values(ascending=False)
-    feat_imp.plot(kind='bar', title='Feature Importances')
-    plt.ylabel('Feature Importance Score')
 
 
 
@@ -956,7 +912,7 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     
     inDataset = gdal.Open(inputImage)
     
-    outDataset = copy_dataset_config(inputImage, outMap = outMap,
+    outDataset = _copy_dataset_config(inDataset, outMap = outMap,
                                      bands = bands)
     band = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
@@ -1235,14 +1191,11 @@ def classify_object(model, inShape, attributes, field_name=None):
 #    dbf.to_csv(inShape[:-4]+'.csv')
     
     df = dbf.to_dataframe()
-    tempList = list()
-    for name in attributes:
-        tempList.append(df[name])
-    X = pd.concat(tempList, axis=1)
-    X = X.as_matrix()
-    #X = np.delete(X, 0, axis=1)
     
-    X = np.float32(X)
+    X = df[attributes].as_matrix()
+    
+    del df
+    
     print('data ready')
     """
     Classification
@@ -1255,15 +1208,9 @@ def classify_object(model, inShape, attributes, field_name=None):
     comes into this process
     """
     #----------------------------------------------------------------------------------
-    X = X[X[:,0] != 0]
     X[np.where(np.isnan(X))]=0
     X = X[np.isfinite(X).all(axis=1)]
-    
-    # remove id/dn and labels from X_train
-
-    #X = X[:,2:arrShp[1]+1]
-
-    
+     
     
     """
     Now the classification itself - see sklearn for details on params
@@ -1427,7 +1374,7 @@ def get_training(inShape, inRas, bands, field, outFile = None):
         
         # Get raster georeference info
             
-        src_offset = bbox_to_pixel_offsets(rgt, geom)
+        src_offset = _bbox_to_pixel_offsets(rgt, geom)
         
         
         # calculate new geotransform of the feature subset
