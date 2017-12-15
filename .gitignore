@@ -27,3 +27,10 @@ config.ini
 #tests
 tests/test_outputs/
 
+/geospatial_learn/geodata.py.orig
+build/bdist.win-amd64/
+build/lib/geospatial_learn/gdal_merge.py
+docs/geospatial_learn.rst.bak
+
+new_requirement.txt
+/build/
