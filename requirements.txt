@@ -72,7 +72,7 @@ six==1.10.0
 snowballstemmer==1.2.1
 sphinx==1.5.1
 testpath==0.3
-tornado=4
+tornado
 tqdm==4.19.4
 traitlets==4.3.2
 typing==3.6.2
