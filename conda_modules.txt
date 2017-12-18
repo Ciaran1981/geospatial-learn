@@ -9,3 +9,4 @@ scikit-learn
 scipy
 gdal
 tqdm
+shapely

@@ -18,7 +18,7 @@ class CondaInstall(install):
     def run(self):
         try:
             install.run(self)
-            command = ['conda', 'install']
+            command = ['conda', 'install', '-y']
             packages = open('conda_modules.txt').read().splitlines()
             command.extend(packages)
             subprocess.check_call(command)
