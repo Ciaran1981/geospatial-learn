@@ -1,3 +1,4 @@
+-c conda-forge
 glob2
 matplotlib
 more-itertools
