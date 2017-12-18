@@ -17,7 +17,7 @@ with open('README.rst', encoding='utf-8') as f:
 class CondaInstall(install):
     def run(self):
         try:
-            super
+            install.do_egg_install(self)
             command = ['conda', 'install', '-y']
             packages = open('conda_modules.txt').read().splitlines()
             command.extend(packages)
@@ -55,5 +55,3 @@ setup(
 
     # could also include long_description, download_url, classifiers, etc.
 )
-
-
