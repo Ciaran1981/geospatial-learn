@@ -109,7 +109,7 @@ for item in l2aList:
     paths.append(granuleSet[0])
 
 print('making base image')
-outBse = geodata.stack_S2(paths[0][0], blocksize = 2048)
+outBse = geodata.stack_S2(paths[0], blocksize = 2048)
 bscmd = ['gdal_translate', '-outsize', '100%', '100%', '-of', 'GTiff',
                outBse, baseImage]
 
