@@ -31,7 +31,7 @@ Library & pypi install
 
 download from here:
 
-https://github.com/Ciaran1981/geospatial-learn/raw/master/dist/geospatial-learn-0.130.tar.gz
+https://github.com/Ciaran1981/geospatial-learn/raw/master/dist/geospatial-learn-0.131.tar.gz
 
 - cd into the folder
 
