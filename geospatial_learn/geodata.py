@@ -1058,6 +1058,134 @@ def remove_cloud_S2(inputIm, sceneIm,
     inDataset.FlushCache()
     inDataset = None     
 
+def remove_cloud_S2_stk(inputIm, sceneIm1, sceneIm2=None, baseIm = None, 
+                    blocksize = 256, FMT = None, max_size=10,
+                    dist=1):
+    """ remove cloud using the the c_utils scene classification
+        the KEA format is recommended, .tif is the default,
+        
+        no need to add the file extension this is done automatically
+        
+        Parameters
+        -----------   
+          
+        inputIm : string
+            the input image
+        
+        sceneIm1, 2 : string
+            the classification rasters used to mask out the areas in 
+        the input image
+        
+        baseIm : string
+            Another multiband raster of same size extent as the inputIm
+            where the baseIm image values are used rather than simply converting
+            to zero (in the use case of 2 sceneIm classifications)
+        
+        Returns:
+        ----------- 
+        nowt
+        
+        Notes:
+        -----------
+        Useful if you have a base image whic is a cloudless composite, which
+        you intend to replace with the current image for the next round of
+        classification/ change detection
+
+    """
+
+    if FMT == None:
+        FMT = 'Gtiff'
+        fmt = '.tif'
+    if FMT == 'HFA':
+        fmt = '.img'
+    if FMT == 'KEA':
+        fmt = '.kea'
+    if FMT == 'Gtiff':
+        fmt = '.tif'
+    
+    sceneRas1 = gdal.Open(sceneIm1)
+    if sceneIm2 != None:
+        sceneRas2 = gdal.Open(sceneIm2)
+    if baseIm != None:
+        baseRas = gdal.Open(baseIm)
+    inDataset = gdal.Open(inputIm, gdal.GA_Update)
+    tempBand = inDataset.GetRasterBand(1)
+    dtypeCode = gdal.GetDataTypeName(tempBand.DataType)
+    # common gdal datatypes - when calling eg GDT_Int32 it returns an integer
+    # hence the dict with the integer codes - not really required but allows me
+    # to see the data type
+    dtypeDict = {'Byte':1, 'UInt16':2, 'Int16':3, 'UInt16':4, 'Int32':5,
+                'Float32':6, 'Float64':7}
+#    dtype = dtypeDict[dtypeCode]
+#    tempBand = None
+#    
+    bands = inDataset.RasterCount
+        
+    band = inDataset.GetRasterBand(1)
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
+    if blocksize == None:
+        blocksize = band.GetBlockSize()
+        blocksizeX = blocksize[0]
+        blocksizeY = blocksize[1]
+    else:
+        blocksizeX = blocksize
+        blocksizeY = blocksize
+     # size of the pixel...they are square so thats ok.
+    #if not would need w x h
+    #If the block is a row, this simplifies things a bit
+    # Key issue now is to speed this part up 
+    # 
+    # TODO - this is VERY ugly fix mess of if statements
+        
+    
+    for i in tqdm(range(0, rows, blocksizeY)):
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
+            else:
+                numRows = rows -i
+        
+            for j in range(0, cols, blocksizeX):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+                mask1 = sceneRas1.ReadAsArray(j, i, numCols, numRows)
+                if sceneIm2 != None: 
+                    mask2 = sceneRas2.ReadAsArray(j, i, numCols, numRows)
+                    mask1 = np.logical_not(mask1==3)
+                    mask2 = np.logical_not(mask2==3)
+                    mask1[mask2==1]=1
+                else:
+                    mask1 =np.logical_or(mask1 ==3, mask1==4)
+                with warnings.catch_warnings():
+                            warnings.simplefilter("ignore")
+                            # both pointless provided it gets sivved by gdal
+                            remove_small_objects(mask1, min_size=max_size,
+                                                 in_place=True)
+#                            remove_small_holes(mask1, min_size=max_size,
+#                                                 in_place=True)
+                            mask1= nd.distance_transform_edt(mask1==1)<=dist
+                for band in range(1, bands+1):
+                    bnd = inDataset.GetRasterBand(band)
+                    if baseIm != None:
+                        bnd2 = baseRas.GetRasterBand(band)
+                        array2 = bnd2.ReadAsArray(j, i, numCols, numRows)
+                        array2[mask1==0]=0
+                        array = bnd.ReadAsArray(j, i, numCols, numRows)
+                        array[mask1==1]=0
+                        array += array2
+                    else:
+                        array = bnd.ReadAsArray(j, i, numCols, numRows)
+                        array[mask1==1]=0
+                    inDataset.GetRasterBand(band).WriteArray(array, j, i)
+    # This is annoying but necessary as the stats need updated and cannot be 
+    # done in above band loop as this would be very inefficient
+    for band in range(1, bands+1):
+        inDataset.GetRasterBand(band).ComputeStatistics(0)
+                        
+    inDataset.FlushCache() 
+    inDataset = None
 
 
 
