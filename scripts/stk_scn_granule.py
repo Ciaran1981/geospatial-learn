@@ -217,9 +217,9 @@ for item in cnms:
     
     print('resampling scene-map from 20 to 10m')
     
-
+    #TODO Cut out the serial subprocess usage eugh!!!
     res_cmd = ['gdal_translate', '-outsize', '200%', '200%', '-of', 'GTiff',
-               'sceneRas20, sceneRas10']
+               sceneRas20, sceneRas10]
     subprocess.call(res_cmd)
 
     
@@ -234,10 +234,10 @@ for item in cnms:
         #geodata.hist_match(stkList10m[item], templateRas)
         
     print('stacking base and new images')
-    geodata.stack_ras(baseImage, stkList10m,
-                      changeName[:-4], blocksize=256)
+    
 
-    geodata.stack_ras(baseImage, stkList10m, changeName[:-4], blocksize=256)
+
+    geodata.stack_ras([baseImage, stkList10m], changeName)
     
     subprocess.call(['rm', '-rf', baseImage])
 
@@ -246,9 +246,11 @@ for item in cnms:
     subprocess.call(bWrite)
 
     
-    fld, file = path.split(changeName[:-4])
-    
+
+
     if clipShape != None:
+        
+        fld, file = path.split(changeName[:-4])
     
         clipped = fld+file+'_clip.tif'
     
