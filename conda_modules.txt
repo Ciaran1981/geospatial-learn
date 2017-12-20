@@ -1,3 +1,4 @@
+-c anaconda
 -c conda-forge
 glob2
 matplotlib
@@ -5,6 +6,7 @@ more-itertools
 numpy
 pandas
 psutil
+pyshp
 scikit-image
 scikit-learn
 scipy
