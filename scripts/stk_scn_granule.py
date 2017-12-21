@@ -110,6 +110,21 @@ for item in l2aList:
 
 print('making base image')
 outBse = geodata.stack_S2(paths[0], blocksize = 2048)
+
+print('classifying scene and masking cloud')
+
+ootBseScn = outBse[:-4]+'_scn'+'.tif'
+
+learning.classify_pixel_bloc(cloudModel, outBse, 9, ootBseScn[:-4],
+                             blocksize=256)
+
+sen_scnFile = geodata.jp2_translate(paths[0], FMT=None, mode='scene')
+    
+geodata.combine_scene(sen_scnFile, ootBseScn)
+
+geodata.remove_cloud_S2(outBse, ootBseScn, blocksize=256)
+
+
 bscmd = ['gdal_translate', '-outsize', '100%', '100%', '-of', 'GTiff',
                outBse, baseImage]
 
