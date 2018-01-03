@@ -13,3 +13,4 @@ scipy
 gdal
 shapely
 joblib
+clyent
