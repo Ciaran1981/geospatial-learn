@@ -1,5 +1,4 @@
 alabaster>=0.7.9
-anaconda-client>=1.6.3
 Babel>=2.3.4
 backports-abc>=0.5
 bleach>=1.5.0
