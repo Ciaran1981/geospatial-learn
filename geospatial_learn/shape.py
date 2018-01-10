@@ -68,7 +68,7 @@ def shp2gj(inShape, outJson):
     buffer = []
     for sr in reader.shapeRecords():
         atr = dict(zip(field_names, sr.record))
-        geom = sr.shape.__geo_interface__
+        geom = sr.shape._median_geo_interface__
         buffer.append(dict(type="Feature", 
                            geometry=geom, properties=atr)) 
        
@@ -376,8 +376,8 @@ def _bbox_to_pixel_offsets(rgt, geom):
     # Specify offset and rows and columns to read
     xoff = int((xmin - xOrigin)/pixelWidth)
     yoff = int((yOrigin - ymax)/pixelWidth)
-    xcount = int((xmax - xmin)/pixelWidth)+1
-    ycount = int((ymax - ymin)/pixelWidth)+1
+    xcount = int((xmax - xmin)/pixelWidth)
+    ycount = int((ymax - ymin)/pixelWidth)
 #    originX = gt[0]
 #    originY = gt[3]
 #    pixel_width = gt[1]
@@ -389,9 +389,9 @@ def _bbox_to_pixel_offsets(rgt, geom):
 #    y2 = int((bbox[2] - originY) / pixel_height) + 1
 #
 #    xsize = x2 - x1
-#    ysize = y2 - y1
+#    ysize = y2 - y1se
 #    return (x1, y1, xsize, ysize)
-    return (xoff, yoff, xcount, ycount)        
+    return [xoff, yoff, xcount, ycount]        
 
 
 def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
@@ -450,24 +450,43 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
 
     # Loop through vectors
     stats = []
-    feat = vlyr.GetNextFeature()
-    features = np.arange(vlyr.GetFeatureCount())
+   # feat = vlyr.GetNextFeature()
+    #features = np.arange(vlyr.GetFeatureCount())
     rejects = list()
-    for label in tqdm(features):
+    
+    
+    for feat in tqdm(vlyr):
+       # feat = vlyr.GetNextFeature()
+        #feat = vlyr.GetFeature(label)
 
-        if feat is None:
-            continue
+#        if feat is None:
+#            feat = vlyr.GetFeature(label+1)
+#            continue
         geom = feat.geometry()
 
         src_offset = _bbox_to_pixel_offsets(rgt, geom)
+        
+        # ugly yes, but sometimes geotrans not quite right
+        if src_offset[0] + src_offset[2] > rds.RasterXSize:
+            diffx = src_offset[0] + src_offset[2] - rds.RasterXSize
+            src_offset[2] = src_offset[0] + src_offset[2] - diffx
+        elif src_offset[1] + src_offset[3] > rds.RasterYSize:
+            diffy = src_offset[1] + src_offset[3] - rds.RasterYSize
+            src_offset[3] = src_offset[1] + src_offset[3] - diffy
+            
         src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                src_offset[3])
-        if src_array is None:
-            src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
-                               src_offset[3])
-            if src_array is None:
-                rejects.append(feat.GetFID())
-                continue
+
+
+#                continue
+#        elif src_array.size is 1:
+#            rejects.append(feat.GetFID())
+#                continue
+
+#            src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+#                               src_offset[3])
+#            if src_array is None:
+#                
 
         # calculate new geotransform of the feature subset
         new_gt = (
@@ -495,7 +514,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
         # we also mask out nodata values explictly
             
 
-        #rejects.append(feat.GetField('DN'))
+
         masked = np.ma.MaskedArray(
             src_array,
             mask=np.logical_or(
@@ -503,6 +522,8 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
                 np.logical_not(rv_array)
             )
         )
+            
+        
         
         
         # TODO This is horrible there must be a better way....
@@ -515,7 +536,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
         elif stat is 'max':
             feature_stats = float(masked.max())
         elif stat is 'median':
-            feature_stats = float(masked.median())
+            feature_stats = float(np.median(masked[masked.nonzero()]))
         elif stat is 'std':
             feature_stats = float(masked.std())
         elif stat is 'sum':
@@ -533,7 +554,6 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
         if write_stat != None:
             feat.SetField(bandname, feature_stats)
             vlyr.SetFeature(feat)
-        feat = vlyr.GetNextFeature()
     if write_stat != None:
         vlyr.SyncToDisk()
     #vds.FlushCache()
@@ -541,8 +561,9 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
 
     vds = None
     rds = None
+    vlyr = None
     frame = DataFrame(stats)
-    return frame, rejects
+    return frame
 
 
     
@@ -641,7 +662,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
    #assert(vds)
     vlyr = vds.GetLayer(0)
     if write_stat != None:
-        gname = gprop[:10]
+        gname = gprop[:5]+str(band)
         vlyr.CreateField(ogr.FieldDefn(gname, ogr.OFTReal))
 
 
@@ -663,20 +684,22 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
             # advantage: each feature uses the smallest raster chunk
             # disadvantage: lots of reads on the source raster
 
-        if feat is None:
-            feat = vlyr.GetFeature(label)
+#        if feat is None:
+#            feat = vlyr.GetFeature(label)
 
         geom = feat.geometry()
         
         src_offset = _bbox_to_pixel_offsets(rgt, geom)
+        
+        if src_offset[0] + src_offset[2] > rds.RasterXSize:
+            diffx = src_offset[0] + src_offset[2] - rds.RasterXSize
+            src_offset[2] = src_offset[0] + src_offset[2] - diffx
+        elif src_offset[1] + src_offset[3] > rds.RasterYSize:
+            diffy = src_offset[1] + src_offset[3] - rds.RasterYSize
+            src_offset[3] = src_offset[1] + src_offset[3] - diffy
+        
         src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                src_offset[3])
-        if src_array is None:
-            src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
-                               src_offset[3])
-            if src_array is None:
-                rejects.append(feat.GetFID())
-                continue
 
         # calculate new geotransform of the feature subset
         new_gt = (

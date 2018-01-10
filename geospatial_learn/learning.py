@@ -28,8 +28,8 @@ except ImportError:
 
 
 from tqdm import tqdm
-import matplotlib
-matplotlib.use('agg')
+#import matplotlib
+#matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from collections import OrderedDict
@@ -77,7 +77,7 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
               numpy array of training data where the 1st column is labels
     
     outModel : string
-               the output model path which is a .py file
+               the output model path which is a .gz file, a py file is also saved
     
     cv : int
          no of folds
@@ -144,7 +144,9 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
                               warm_start=True)
         tpot.fit(X_train, y_train)
 
-    tpot.export(outModel)    
+    tpot.export(outModel[:-4]+'.py') 
+    
+    joblib.dump(tpot.fitted_pipeline_, outModel)
 
 
 def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
@@ -913,7 +915,7 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     inDataset = gdal.Open(inputImage)
     
     outDataset = _copy_dataset_config(inDataset, outMap = outMap,
-                                     bands = bands)
+                                     bands = 1)
     band = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
     rows = inDataset.RasterYSize
@@ -1068,13 +1070,18 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
         
     # TODO - a list of classes would be better eliminating the need for the one
     # class param
-    if one_class != None:
-        classes = one_class
-        
+    
     inDataset = gdal.Open(inputImage)
     
-    outDataset = copy_dataset_config(inputImage, outMap = outMap,
-                                     bands = bands)
+    
+    if one_class != None:
+        classes = one_class
+        outDataset = _copy_dataset_config(inDataset, outMap = outMap,
+                                     dtype = gdal.GDT_Float32, bands = 1)
+    else:
+        outDataset = _copy_dataset_config(inDataset, outMap = outMap,
+                                          dtype = gdal.GDT_Float32,
+                                          bands = bands)
     band = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
     rows = inDataset.RasterYSize

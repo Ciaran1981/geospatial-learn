@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/home/ubuntu/anaconda3/bin/python
 # -*- coding: utf-8 -*-
 """
 @author: Ciaran Robb
@@ -50,7 +50,7 @@ parser.add_argument("-granule", "--granule_nm", type=str, required=True,
 parser.add_argument("-model", "--scnmdl", type=str, required=True, 
                     help="model path .gz")
 
-parser.add_argument("-polygon", "--clpPoly", type=str, required=True, 
+parser.add_argument("-polygon", "--clpPoly", type=str, required=False, 
                     help="polygon to clip S2 scene (ogr compatible)")
 
 parser.add_argument("-mask", "--mask", type=bool, required=False, 
@@ -63,13 +63,11 @@ args = parser.parse_args()
 parentFolder= args.aoi
 
 aoi = args.aoinm
-scratch = parentFolder+'/scratch/'
-stacks = scratch+'/stacks'
-baseDir  = parentFolder+'/baseImage/'
-outputData  = parentFolder+'/outputData/'
-changeMaps = parentFolder+'/changeMaps/'
+scratch = path.join(parentFolder, 'scratch')
+stacks = path.join(scratch,'stacks')
+baseDir  = path.join(parentFolder,'baseImage')
 
-dirs = [scratch, stacks, baseDir, outputData, changeMaps]
+dirs = [scratch, stacks, baseDir]
 
 for fld in dirs:
     if os.path.exists(fld):
@@ -250,11 +248,15 @@ for item in cnms:
     
     fld, file = path.split(changeName[:-4])
     
-    clipped = fld+file+'_clip.tif'
+    if clipShape != None:
     
-    geodata.clip_raster(changeName, clipShape, clipped, 
+        clipped = fld+file+'_clip.tif'
+    
+        geodata.clip_raster(changeName, clipShape, clipped, 
                         nodata_value=0)
-    print(file+'  clipped')
+        print(file+'  clipped')
+    else:
+        print(file+' done')
 #    if args.mask is True:
 #        geodata.mask_raster_multi(clipped, mval=2, mask=maskRas)
 #        print(file+'masked, all done')

@@ -17,6 +17,7 @@ import numpy as np
 import glob2
 from geospatial_learn.data import _get_S2_geoinfo
 from geospatial_learn.shape import _bbox_to_pixel_offsets
+from geospatial_learn.gdal_merge import _merge
 import tempfile
 #from pyrate.shared import DEM
 import glymur
@@ -33,7 +34,7 @@ from skimage.morphology import  remove_small_objects#, remove_small_holes#disk, 
 from skimage.filters import rank
 from skimage.exposure import rescale_intensity
 import warnings
-from os import sys
+from os import sys, path
 import re
 
 
@@ -495,7 +496,7 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
         fileList = glob2.glob(path.join(granule,'IMG_DATA', 'R10m','*MSI*.jp2'))
         if len(fileList) is 0:
         # the following if is for S2 since format change
-            fileList = glob2.glob(granule+'IMG_DATA/R10m/*B0*.jp2')
+            fileList = glob2.glob(path.join(granule,'IMG_DATA/R10m/*B0*.jp2'))
         #        x_min = int(geoinfo['ulx10'])
 #        y_max = int(geoinfo['uly10'])
         x_pixels =   int(geoinfo['cols10'])
@@ -690,7 +691,7 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
         fmt = '.tif'
     
     if overwrite is True:
-        inDataset = gdal.Open(inputIm, gdal.GA_Update)
+        inDataset = gdal.Open(inDataset, gdal.GA_Update)
         outBand = inDataset.GetRasterBand(1)
         bnd = inDataset.GetRasterBand(1)
     else:
@@ -698,8 +699,8 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
         inDataset = gdal.Open(inputIm)
     
         
-        outDataset = _copy_dataset_config(inputIm, outMap = outputIm,
-                                     bands = inDataset.RasterCount)  
+        outDataset = _copy_dataset_config(inDataset, outMap = outputIm,
+                                          bands = inDataset.RasterCount)  
         bnd = inDataset.GetRasterBand(1)
         
         
@@ -970,6 +971,7 @@ def remove_cloud_S2(inputIm, sceneIm,
         
     sceneIm : string
               the scenemap to use as a mask for removing cloud
+              It is assumed the scene map consists of 1 shadow, 2 cloud, 3 land, 4 water 
         
     FMT : string
           the output gdal format eg 'Gtiff', 'KEA', 'HFA'
@@ -1052,107 +1054,100 @@ def remove_cloud_S2(inputIm, sceneIm,
     # done in above band loop due as this would be very inefficient
     for band in range(1, bands+1):
         inDataset.GetRasterBand(band).ComputeStatistics(0)
-                        
+
     inDataset.FlushCache()
     inDataset = None     
 
 
 
 
-def stack_ras(in_ras_1_path, in_ras_2_path, outFile, FMT = None, mode = None,
-              blocksize=None):
+def stack_ras(rasterList, outFile):
     """ 
-    Stack some rasters for change classification - must be same size!!!
+    Stack some rasters for change classification
     
     Parameters
     ----------- 
         
-    in_ras_1_path : string
+    rasterList : string
              the input image 
         
-    in_ras_2_path : string
-             the second image 
-        
     outFile : string
-              the output file path (no file extension required)
+              the output file path including file extension
         
-    FMT : string
-          the output gdal format eg 'Gtiff', 'KEA', 'HFA'
+
+    """
+    _merge(names = rasterList, out_file = outFile)
+    
+def combine_scene(scl, c_scn, blocksize = 256):
+    """ 
+    combine another scene classification with the sen2cor one
+    
+    Where: 
+    ----------- 
+    scl : string
+        the sen2cor one
+
+    c_scn : string
+        the independently derived one - this will be modified
+    
+    blocksize : string
+        chunck to process
         
-    min_size : int
-               size in pixels to retain of cloud mask
-        
-    blocksize : int
-                the square chunk processed at any one time
 
     """
 
-    if FMT == None:
-        FMT = 'Gtiff'
-        fmt = '.tif'
-    if FMT == 'HFA':
-        fmt = '.img'
-    if FMT == 'KEA':
-        fmt = '.kea'
-    if FMT == 'Gtiff':
-        fmt = '.tif'
     
-    inras1 = gdal.Open(in_ras_1_path, gdal.GA_ReadOnly)
+    inDataset = gdal.Open(c_scn, gdal.GA_Update)
     
-    inras2 = gdal.Open(in_ras_2_path, gdal.GA_ReadOnly)
-    
-    bands = inras1.RasterCount + inras2.RasterCount
-    
-    outDataset = _copy_dataset_config(inras1, outMap = outFile,
-                                      bands = bands)
-    
-    rows = outDataset.RasterXSize
-    cols = outDataset.RasterYSize
-    
-    if blocksize is None:
-        bnd = inras1.GetRasterBand(1)
-        blocksize = bnd.GetBlockSize()
+    sclDataset = gdal.Open(scl)
+    bnnd = inDataset.GetRasterBand(1)
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
+
+    # So with most datasets blocksize is a row scanline
+    if blocksize == None:
+        blocksize = bnnd.GetBlockSize()
         blocksizeX = blocksize[0]
         blocksizeY = blocksize[1]
-        del bnd
     else:
         blocksizeX = blocksize
         blocksizeY = blocksize
-        
-            
+    
     for i in tqdm(range(0, rows, blocksizeY)):
-        if i + blocksizeY < rows:
-            numRows = blocksizeY
-        else:
-            numRows = rows -i
-    
-        for j in range(0, cols, blocksizeX):
-            if j + blocksizeX < cols:
-                numCols = blocksizeX
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
             else:
-                numCols = cols - j
-            # This is extremely messy & inefficcient   
-            for band in range(1, bands+1):
-                    if band > inras1.RasterCount:
-                        bnd = inras2.GetRasterBand(band-inras1.RasterCount)
-                    else:
-                        bnd = inras1.GetRasterBand(band)
-                    
-                    array = bnd.ReadAsArray(j, i, numCols, numRows)
-                    outDataset.GetRasterBand(band).WriteArray(array, j, i)
-            
-    outDataset.FlushCache() 
-    outDataset = None
+                numRows = rows -i
+        
+            for j in range(0, cols, blocksizeX):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+#                for band in range(1, bands+1):
+                bnd = inDataset.GetRasterBand(1)
+                scnBnd = sclDataset.GetRasterBand(1)
+                scArray = scnBnd.ReadAsArray(j, i, numCols, numRows)
+                array = bnd.ReadAsArray(j, i, numCols, numRows)
+                # cloud
+                array[scArray > 6]=2
+                # converting water to land to avoid loss of pixels in buffer
+                # later when getting rid of cloud/shadow
+                array[np.logical_or(scArray == 6, array==4)]=3
+                bnd.WriteArray(array, j, i)
+    # This is annoying but necessary as the stats need updated and cannot be 
+    # done in above band loop due as this would be very inefficient
+    #for band in range(1, bands+1):
+    #inDataset.GetRasterBand(1).ComputeStatistics(0)
+                        
+    inDataset.FlushCache()
+    inDataset = None
     
-
 def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
     
     """ 
     Lifted straight from the cookbook and gdal func docs.
-    
-    http://pcjericks.github.io/py-gdalogr-cookbook 
-    
-    Very slow!
+
     
     Parameters
     -----------   
@@ -1165,10 +1160,11 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
               the output polygon file path 
         
     outField : string (optional)
-               size in pixels to retain of cloud mask
+               the name of the field containing burnded values
+    
+    mask : bool (optional)
+           use the input raster as a mask
         
-    blocksize : int
-                the square chunk processed at any one time
         
     band : int
            the input raster band
@@ -1192,11 +1188,14 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
         print(e)
         sys.exit(1)
     if mask == True:
-        maskband = srcband.GetMaskBand()
+        maskband = srcband
         options.append('-mask')
     else:
         mask == False
         maskband = None
+    
+    srs = osr.SpatialReference()
+    srs.ImportFromWkt( src_ds.GetProjectionRef() )
     
 
     #
@@ -1205,24 +1204,25 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1):
     dst_layername = outPoly
     drv = ogr.GetDriverByName("ESRI Shapefile")
     dst_ds = drv.CreateDataSource( dst_layername + ".shp" )
-    dst_layer = dst_ds.CreateLayer(dst_layername, srs = None )
+    dst_layer = dst_ds.CreateLayer(dst_layername, srs = srs )
+    
     if outField is None:
         dst_fieldname = 'DN'
         fd = ogr.FieldDefn( dst_fieldname, ogr.OFTInteger )
         dst_layer.CreateField( fd )
-        dst_field = 0 
+        dst_field = -1
     
     else: 
         dst_field = dst_layer.GetLayerDefn().GetFieldIndex(outField)
 
-    gdal.Polygonize(srcband, maskband, dst_layer,dst_field, options,
+    gdal.Polygonize(srcband, maskband, dst_layer, dst_field, options,
                     callback=gdal.TermProgress)
     dst_ds.FlushCache()
     
     srcband = None
     src_ds = None
     dst_ds = None
-    #mask_ds = None    
+
 
     
 def otbMeanshift(inputImage, radius, rangeF, minSize, outShape):
@@ -1363,6 +1363,8 @@ def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None,
     (rgt[3] + (src_offset[1] * rgt[5])),
     0.0,
     rgt[5])
+    
+    #TODO drop the subprocess call
     
     cmd = ['gdalwarp', '-q', '-cutline', inShape, '-crop_to_cutline', 
            '-tr', str(new_gt[1]), str(new_gt[5]),
@@ -1645,7 +1647,7 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
           gdal compatible (optional) defaults is tif
 
 
-
+ 
     """
     selem = np.ones(shape=((7,7)))
     
@@ -1887,7 +1889,8 @@ def temporal_comp2(inRasSet, outRas, q=5,  window = None, blockSize = None):
     outDataset = None #gdal. please.
     
     
-def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy', dtype = gdal.GDT_Int32, bands = 1):
+def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy',
+                         dtype = gdal.GDT_Int32, bands = 1):
     """Copies a dataset without the associated rasters.
 
     """
