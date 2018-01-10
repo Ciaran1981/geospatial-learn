@@ -29,20 +29,9 @@ Linux - based
 
 Library & pypi install
 
-Step 1.
+download from here:
 
-- open a terminal and type:
-
-.. code-block:: bash
-   
-   pip install geospatial-learn
-
-OR
-
-- download the zip from here: 
-
-  https://github.com/Ciaran1981/geospatial-learn/raw/master/archive/geospatial-learn-0.1.tar.gz
-
+https://github.com/Ciaran1981/geospatial-learn/raw/master/dist/geospatial-learn-0.131.tar.gz
 
 - cd into the folder
 
@@ -77,17 +66,9 @@ Library & pypi install
 
 Step 1.
 
-- open a powershell/anaconda prompt and type:
+download from here:
 
-.. code-block:: bash
-   
-   pip install geospatial-learn
-
-OR
-
-- download the zip from here: 
-
-  https://github.com/Ciaran1981/geospatial-learn/raw/master/archive/geospatial-learn-0.1.tar.gz
+https://github.com/Ciaran1981/geospatial-learn/raw/master/dist/geospatial-learn-0.130.tar.gz
 
 - cd into the folder
 

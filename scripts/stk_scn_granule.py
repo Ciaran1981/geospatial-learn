@@ -93,6 +93,13 @@ Create raster stacks of both the 10 & 20m imagery
 """
 #print('stacking 10 & 20m bands')
 # Might this be better run in parallel from bash?
+
+def stk20(inRas):
+    kwargs = {'mode':'20', 'blocksize': 2048}
+    stk = geodata.stack_S2(inRas, **kwargs)
+    return stk
+
+
 l2aList = glob2.glob(parentFolder+'/*L2A*'+tileId+'*.SAFE')
 if l2aList == []:
     l2aList = glob2.glob(parentFolder+'/*/*L2A*'+tileId+'*.SAFE') 
@@ -109,7 +116,30 @@ for item in l2aList:
     paths.append(granuleSet[0])
 
 print('making base image')
-outBse = geodata.stack_S2(paths[0][0], blocksize = 2048)
+outBse = geodata.stack_S2(paths[0], blocksize = 2048)
+
+outBse20 = stk20(paths[0])
+
+print('classifying scene and masking cloud')
+
+ootBseScn = outBse[:-4]+'_scn'+'.tif'
+ootBseScn10 = outBse[:-4]+'_10_scn'+'.tif'
+
+learning.classify_pixel_bloc(cloudModel, outBse20, 9, ootBseScn[:-4],
+                             blocksize=256)
+
+sen_scnFile = geodata.jp2_translate(paths[0], FMT=None, mode='scene')
+    
+geodata.combine_scene(sen_scnFile, ootBseScn)
+
+res_cmd_bse = ['gdal_translate', '-outsize', '200%', '200%', '-of', 'GTiff', 
+               ootBseScn, ootBseScn10]
+subprocess.call(res_cmd_bse)
+
+
+geodata.remove_cloud_S2(outBse, ootBseScn, blocksize=256)
+
+
 bscmd = ['gdal_translate', '-outsize', '100%', '100%', '-of', 'GTiff',
                outBse, baseImage]
 
@@ -119,11 +149,6 @@ subprocess.call(bscmd)
 # Both taking arounf 1 min per granule - this need
 
 # 10m 
-
-def stk20(inRas):
-    kwargs = {'mode':'20', 'blocksize': 2048}
-    stk = geodata.stack_S2(inRas, **kwargs)
-    return stk
 
 
 changeNames = []
@@ -217,9 +242,9 @@ for item in cnms:
     
     print('resampling scene-map from 20 to 10m')
     
-
+    #TODO Cut out the serial subprocess usage eugh!!!
     res_cmd = ['gdal_translate', '-outsize', '200%', '200%', '-of', 'GTiff',
-               'sceneRas20, sceneRas10']
+               sceneRas20, sceneRas10]
     subprocess.call(res_cmd)
 
     
@@ -234,10 +259,10 @@ for item in cnms:
         #geodata.hist_match(stkList10m[item], templateRas)
         
     print('stacking base and new images')
-    geodata.stack_ras(baseImage, stkList10m,
-                      changeName[:-4], blocksize=256)
+    
 
-    geodata.stack_ras(baseImage, stkList10m, changeName[:-4], blocksize=256)
+
+    geodata.stack_ras([baseImage, stkList10m], changeName)
     
     subprocess.call(['rm', '-rf', baseImage])
 
@@ -246,9 +271,11 @@ for item in cnms:
     subprocess.call(bWrite)
 
     
-    fld, file = path.split(changeName[:-4])
-    
+
+
     if clipShape != None:
+        
+        fld, file = path.split(changeName[:-4])
     
         clipped = fld+file+'_clip.tif'
     
