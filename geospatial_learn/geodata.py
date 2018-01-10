@@ -1059,7 +1059,7 @@ def remove_cloud_S2(inputIm, sceneIm,
 
 
 
-def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
+def stack_ras(in_ras_1_path, in_ras_2_path, outFile, FMT = None, mode = None,
               blocksize=None):
     """ 
     Stack some rasters for change classification - must be same size!!!
@@ -1067,10 +1067,10 @@ def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
     Parameters
     ----------- 
         
-    inRas1 : string
+    in_ras_1_path : string
              the input image 
         
-    inRas2 : string
+    in_ras_2_path : string
              the second image 
         
     outFile : string
@@ -1097,14 +1097,14 @@ def stack_ras(inRas1, inRas2, outFile,  FMT = None, mode = None,
     if FMT == 'Gtiff':
         fmt = '.tif'
     
-    inras1 = gdal.Open(inRas1, gdal.GA_ReadOnly)
+    inras1 = gdal.Open(in_ras_1_path, gdal.GA_ReadOnly)
     
-    inras2 = gdal.Open(inRas2, gdal.GA_ReadOnly)
+    inras2 = gdal.Open(in_ras_2_path, gdal.GA_ReadOnly)
     
     bands = inras1.RasterCount + inras2.RasterCount
     
-    outDataset = _copy_dataset_config(inRas1, outMap = outFile,
-                                     bands = bands)
+    outDataset = _copy_dataset_config(inras1, outMap = outFile,
+                                      bands = bands)
     
     rows = outDataset.RasterXSize
     cols = outDataset.RasterYSize
