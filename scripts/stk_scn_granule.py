@@ -50,7 +50,7 @@ parser.add_argument("-granule", "--granule_nm", type=str, required=True,
 parser.add_argument("-model", "--scnmdl", type=str, required=True, 
                     help="model path .gz")
 
-parser.add_argument("-polygon", "--clpPoly", type=str, required=False, 
+parser.add_argument("-polygon", "--clpPoly", type=str, required=True,
                     help="polygon to clip S2 scene (ogr compatible)")
 
 parser.add_argument("-mask", "--mask", type=bool, required=False, 
@@ -129,10 +129,10 @@ learning.classify_pixel_bloc(cloudModel, outBse20, 9, ootBseScn[:-4],
                              blocksize=256)
 
 sen_scnFile = geodata.jp2_translate(paths[0], FMT=None, mode='scene')
-    
+
 geodata.combine_scene(sen_scnFile, ootBseScn)
 
-res_cmd_bse = ['gdal_translate', '-outsize', '200%', '200%', '-of', 'GTiff', 
+res_cmd_bse = ['gdal_translate', '-outsize', '200%', '200%', '-of', 'GTiff',
                ootBseScn, ootBseScn10]
 subprocess.call(res_cmd_bse)
 
@@ -149,6 +149,11 @@ subprocess.call(bscmd)
 # Both taking arounf 1 min per granule - this need
 
 # 10m 
+
+def stk20(inRas):
+    kwargs = {'mode':'20', 'blocksize': 2048}
+    stk = geodata.stack_S2(inRas, **kwargs)
+    return stk
 
 
 changeNames = []
@@ -259,7 +264,7 @@ for item in cnms:
         #geodata.hist_match(stkList10m[item], templateRas)
         
     print('stacking base and new images')
-    
+
 
 
     geodata.stack_ras([baseImage, stkList10m], changeName)
@@ -274,7 +279,7 @@ for item in cnms:
 
 
     if clipShape != None:
-        
+
         fld, file = path.split(changeName[:-4])
     
         clipped = fld+file+'_clip.tif'

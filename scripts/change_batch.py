@@ -20,7 +20,7 @@ import os
 import argparse
 #import numpy as np
 #from datetime import datetime
-from os import  path, mkdir
+from os import  path
 import gdal
 from glob2 import glob
 import re
@@ -33,19 +33,15 @@ gdal.UseExceptions()
 parser = argparse.ArgumentParser()
 
 
+args = parser.parse_args() 
 
 
-parser.add_argument("-folder", "--flder", type=str, required=True,
+parser.add_argument("-folder", "--flder", type=str, required=True, 
+
                     help="folder with imagery L2A to be classified")
 
 parser.add_argument("-model", "--mdl", type=str, required=True, 
                     help="model path '.gz file'")
-
-parser.add_argument("-granule", "--granule_nm", type=str, required=False, 
-                    help="name of granule eg 36MYE")
-
-parser.add_argument("-date", "--inc_date", type=bool, required=False, 
-                    help="Name files with date")
 
 
 parser.add_argument("-polygon", "--clpPoly", type=str, required=False, 
@@ -55,34 +51,43 @@ parser.add_argument("-mask", "--mask", type=bool, required=False,
                     help="Raster forest mask (optional)")
 
 
-args = parser.parse_args() 
 
 
 modelPth = args.mdl
 
     
-scratch = args.flder
+
+parentFolder= args.flder
 
 
-outputData  = path.join(scratch, 'outputData')
-changeMaps = path.join(scratch, 'changeMaps')
 
-dirs = [outputData, changeMaps]
+parentFolder= args.aoi
 
-for fld in dirs:
-    if os.path.exists(fld):
-        continue
-    mkdir(fld)
+aoi = args.aoinm
+
+
+scratch = path.join(parentFolder,'scratch')
+stacks = path.join(scratch,'stacks')
+baseDir  = path.join(parentFolder,'baseImage')
+outputData  = path.join(parentFolder, 'outputData')
+changeMaps = path.join(parentFolder, 'changeMaps')
+
+dirs = [scratch, stacks, baseDir, outputData, changeMaps]
+
+#for fld in dirs:
+#    if os.path.exists(fld):
+#        continue
+#    mkdir(fld)
     
 tileId = args.granule_nm
-#baseImage = path.join(baseDir, 'T'+tileId+'.tif')
+baseImage = path.join(baseDir, tileId+'.tif')
 
 
 
 
 clipShape = args.clpPoly
 
-stackList = glob(path.join(scratch, '*.tif'))
+stackList = glob(stacks+'*clip*.tif')
 stackList.sort()
 
 #items = np.arange(len(stackList))
@@ -90,12 +95,12 @@ stackList.sort()
 for image in stackList:
     
     dr, name =os.path.split(image)
-    outMap = path.join(changeMaps, name[:-4]+'_10m_ch')
-    probMap = path.join(changeMaps, name[:-4]+'_10m_prob')
-    clipRas = path.join(changeMaps, name[:-4]+'_10m_ch_clip_.tif')
+    outMap = path.join(changeMaps, name,'_10m_ch')
+    probMap = path.join(changeMaps, name,'_10m_prob')
+    clipRas = path.join(changeMaps, name,'_10m_ch_clip_.tif')
     
-    json = path.join(outputData, name+'_10m_ch_clip.geojson')
-    outKml = path.join(outputData, name+'_10m_ch_clip')
+    json = path.join(outputData, name,'_10m_ch_clip.geojson')
+    outKml = path.join(outputData, name,'_10m_ch_clip')
        
 
     print('commencing change classification')
@@ -121,7 +126,7 @@ for image in stackList:
     #    else:
 
     learning.prob_pixel_bloc(modelPth, image, 8, probMap,
-                             7, blocksize=256)
+                             7, blocksize=256, one_class =1)
     
     
     #==============================================================================
@@ -144,18 +149,33 @@ for image in stackList:
     
     
     print('producing deforest only raster')
-    dF = outMap+'_DF.tif'
+    dF = outMap[:-4]+'_DF'
     
     geodata.mask_raster(outMap+'.tif', 1, overwrite=False, 
-                        outputIm = dF)
+                        outputIm = dF[:-4])
     
+    geodata.mask_raster(probMap+'.tif', 1, overwrite=False, 
+                        outputIm = dF[:-4]+'_prob.tif')
     
-    outDShp = dF[:-4] 
-    print('polygonising')
-    geodata.polygonize(dF+'.tif', outDShp)
+       
+    #geodata.polygonize(deforestMap+'.tif', outDShp)
+    
+    # mask arg is required for speed
+    print('polygonising deforest map')
+    outDShp = dF+'.shp'
+    polyCmd = ['gdal_polygonize.py', '-mask', dF+'.tif',
+               dF+'.tif', '-f', "ESRI Shapefile", 
+                outDShp]
+
+    subprocess.call(polyCmd) 
     
 
-    outDShp = dF[:-4]+'.shp'
+    fld, file = os.path.split(dF)    
+    date = re.findall('\d+', file)
+    date = date[0]
+    
+    dateNew = int(date[6:8]+date[4:6]+date[2:4])
+    
     # TODO
     # reinstate dateraster - wasn't working last time
     #        geodata.mask_raster(dateRas, 1, overwrite=True)
@@ -163,7 +183,7 @@ for image in stackList:
     #        geodata.date_raster(dateRas, dF[item]+'.tif')    
     # Here a load of zonal/shape stats are calculated
     
-    #shape.zonal_stats(outDShp, probMap+'.tif', 1, 'Prob', write_stat = True)
+    shape.zonal_stats(outDShp, probMap+'.tif', 1, 'Prob', write_stat = True)
     shape.shape_props(outDShp,'Area', label_field = 'DN')
     shape.shape_props(outDShp,'Perimeter', label_field = 'DN')
 
@@ -171,14 +191,7 @@ for image in stackList:
     shape.shape_props(outDShp,'MinorAxisLength', 
                       label_field = 'DN')
     #shape.write_text_field(outDShp,'County', county)
-    
-    if args.inc_date is True:
-        fld, file = os.path.split(dF)    
-        date = re.findall('\d+', file)
-        date = date[0]
-        dateNew = int(date[6:8]+date[4:6]+date[2:4])
-        shape.write_text_field(outDShp,'Date', str(date))
-    
+    shape.write_text_field(outDShp,'Date', str(date))
            
     
         
@@ -186,7 +199,7 @@ for image in stackList:
     
     
     
-    polyJscmd = ['ogr2ogr', '-f', '"GeoJSON"', 
+    polyJscmd = ['ogr2ogr', '-f', '"Geojson"', 
                  json[:-4]+'.geojson', outDShp,
                  '-s_srs', 'EPSG:32736',  '-t_srs', 'EPSG:4326']
     

@@ -30,5 +30,3 @@ def test_multi_temp_filter(managed_geotiff_dir):
     )
     # TODO: improve this assert statement to make it more that just a check
     assert gdal.Open(managed_geotiff_dir.image_paths[1])
-
-

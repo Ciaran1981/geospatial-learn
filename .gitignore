@@ -2,7 +2,7 @@
 *.pyc
 
 # Setuptools distribution folder.
-#/dist/
+/dist/
 
 # Python egg metadata, regenerated from source files by setuptools.
 /*.egg-info
@@ -28,8 +28,8 @@ config.ini
 tests/test_outputs/
 
 /geospatial_learn/geodata.py.orig
-build_old/bdist.win-amd64/
-build_old/lib/geospatial_learn/gdal_merge.py
+build/bdist.win-amd64/
+build/lib/geospatial_learn/gdal_merge.py
 docs/geospatial_learn.rst.bak
 
 new_requirement.txt
