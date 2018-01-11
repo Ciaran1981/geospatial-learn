@@ -29,7 +29,7 @@ class CondaInstall(install):
 setup(
     cmdclass={'install': CondaInstall},
     name="geospatial-learn",
-    version="0.131",
+    version="0.2dev2",
     packages=['geospatial_learn'],
     install_requires=open('requirements.txt').read().splitlines(),
     # Project uses reStructuredText, so ensure that the docutils get
