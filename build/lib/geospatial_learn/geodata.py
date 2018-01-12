@@ -1995,7 +1995,7 @@ def temporal_comp2(inRasSet, outRas, q=5,  window = None, blockSize = None):
     
     
     bandCube = np.empty([bands, x_pixels, y_pixels])
-    for band in tqdm(range(1, bands)): #gdal why
+    for band in tqdm(range(1, bands)): #gdal indexes from 1
         for i,dataset in enumerate(inDatasets):
             cubeView = bandCube[i,:,:]    #Exposes a view of bandCube; any changes made are reflected in bandCube
             np.copyto(cubeView, dataset.ReadAsArray(0)[band,:,:])
@@ -2003,10 +2003,7 @@ def temporal_comp2(inRasSet, outRas, q=5,  window = None, blockSize = None):
         outDataset.GetRasterBand(band).WriteArray(bandCube.std(0))
         outDataset.GetRasterBand(band).WriteArray(np.median(bandCube, 0))
         outDataset.GetRasterBand(band).WriteArray(np.percentile(bandCube, q, 0))
-        
-        
-        
-    outDataset = None #gdal. please.
+    outDataset = None #gdal needs files to be explicitly released
     
     
 def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy',
