@@ -51,7 +51,6 @@ tqdm
 tpot
 tornado>=4.5.1
 tenacity>=4.8.0
-traitlets>=4.3.2
 typing>=3.6.2
 wcwidth>=0.1.7
 widgetsnbextension>=1.2.6
