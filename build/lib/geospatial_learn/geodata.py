@@ -1092,8 +1092,6 @@ def remove_cloud_S2_stk(inputIm, sceneIm1, sceneIm2=None, baseIm = None,
         classification/ change detection
 
     """
-    _merge(names = rasterList, out_file = outFile)
-    
     sceneRas1 = gdal.Open(sceneIm1)
     if sceneIm2 != None:
         sceneRas2 = gdal.Open(sceneIm2)
