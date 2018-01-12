@@ -35,3 +35,4 @@ docs/geospatial_learn.rst.bak
 new_requirement.txt
 /build_old/
 *.orig
+/.pypirc
