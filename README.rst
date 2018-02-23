@@ -144,7 +144,7 @@ available soon
 Project History
 ---------------
 
-Geospatial-learn was originally written by Dr Ciaran Robb, University of Leicester. The functionality was written as part of various research projects involving Earth observation & geo-spatial data. 
+Geospatial-learn was originally written by Dr Ciaran Robb whilst at the University of Leicester. The functionality was written as part of various research projects involving Earth observation & geo-spatial data. 
 
 Geospatial-learn is currently written and maintained by Ciaran Robb and John Roberts. The module is at a very early stage at present and there is more material wrtten that has yet to be added.     
 
