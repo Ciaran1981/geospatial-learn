@@ -30,7 +30,7 @@ E.g.
 
 .. code-block:: bash
    
-   conda create -n "pygeolearn@
+   conda create -n "pygeolearn"
 
 Linux/Unix - based
 ~~~~~~~~~~~~~~~~~
