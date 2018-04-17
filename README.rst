@@ -22,16 +22,22 @@ geospatial-learn requires:
 User installation
 ~~~~~~~~~~~~~~~~~
 
-At present the setup.py only installs some of the dependencies. An anaconda package is in the works, but until that is done please do the following. This assumes you have an anaconda installation with a python 3  root OR env.
+Installation use the anaconda/miniconda system please install this first
 
-Linux - based
+If you wish to isolate the lib in its own environment simply create one using the conda cmd line with your own env name in quotes:
+
+E.g.
+
+.. code-block:: bash
+   
+   conda create -n "pygeolearn@
+
+Linux/Unix - based
 ~~~~~~~~~~~~~~~~~
 
-Library & pypi install
+Library install
 
-download from here:
-
-https://github.com/Ciaran1981/geospatial-learn/raw/master/dist/geospatial-learn-0.131.tar.gz
+download using the git clone cmd or download as a zip
 
 - cd into the folder
 
@@ -41,54 +47,14 @@ https://github.com/Ciaran1981/geospatial-learn/raw/master/dist/geospatial-learn-
     
    python setup.py install
 
-This will install the library and packages unavailable on anaconda.
-
-Step 2.
-
-Conda is very handy at managing packages, hence the 2 stage install, as some of these are external to python or themselves have multiple depends.
-
-Next, type the following (in the same terminal).
-
-.. code-block:: bash
-
-   chmod +x install_conda_packages.sh
-
-   bash ./install_conda_packages.sh
-
-All the appropriate anaconda packages will then install
+This will install the library and dependencies
 
 Windows - based
 ~~~~~~~~~~~~~~~~~   
 
-Commiserations, you are using Windows (hehe). This seems to work, though I have only tested on 1 machine. 
+Commiserations, you are using Windows (hehe)
 
-Library & pypi install
-
-Step 1.
-
-download from here:
-
-https://github.com/Ciaran1981/geospatial-learn/raw/master/dist/geospatial-learn-0.130.tar.gz
-
-- cd into the folder
-
-- open a powershell and type:
-
-.. code-block:: bash
-    
-   python setup.py install
-
-This will install the library and packages unavailable on anaconda.
-
-Step 2.
-
-Conda is very handy at managing packages, hence the 2 stage install, as some of these are external to python or themselves have multiple depends.
-
-Next, type the following (in the same terminal).
-
-.. code-block:: bash
-
-   .\install_conda_packages.bat
+Same procedure as Unix based system
 
 If you run into problems here, such as certain packages unavailable with Python 3.5/6, I suggest creating a conda environment with python 3.4, then following the above procedure. At the time of writing for example (31/08/17), gdal is not available in py3.5+ on windows anaconda and py3.6 on linux platforms.
 

@@ -806,25 +806,25 @@ def planet_query(aoi, start_date, end_date, out_path, item_type="PSScene4Band", 
     """
     session = requests.Session()
     session.auth = (os.environ['PL_API_KEY'], '')
-    search_request = build_search_request(aoi, start_date, end_date, item_type, search_name)
-    search_result = do_quick_search(session, search_request)
+    search_request = _build_search_request(aoi, start_date, end_date, item_type, search_name)
+    search_result = _do_quick_search(session, search_request)
 
     thread_pool = Pool(threads)
-    threaded_dl = lambda item: activate_and_dl_planet_item(session, item, asset_type, out_path)
+    threaded_dl = lambda item: _activate_and_dl_planet_item(session, item, asset_type, out_path)
     thread_pool.map(threaded_dl, search_result)
 
 
-def build_search_request(aoi, start_date, end_date, item_type, search_name):
+def _build_search_request(aoi, start_date, end_date, item_type, search_name):
     """Builds a search request for the planet API"""
     date_filter = planet_api.filters.date_range("acquired", gte=start_date, lte=end_date)
     aoi_filter = planet_api.filters.geom_filter(aoi)
     query = planet_api.filters.and_filter(date_filter, aoi_filter)
-    search_request = planet_api.filters.build_search_request(query, [item_type])
+    search_request = planet_api.filters._build_search_request(query, [item_type])
     search_request.update({'name': search_name})
     return search_request
 
 
-def do_quick_search(session, search_request):
+def _do_quick_search(session, search_request):
     """Tries the quick search; returns a dict of features"""
     search_url = "https://api.planet.com/data/v1/quick-search"
     search_request.pop("name")
@@ -835,13 +835,13 @@ def do_quick_search(session, search_request):
     return search_result.json()["features"]
 
 
-def do_saved_search(session, search_request):
+def _do_saved_search(session, search_request):
     """Does a saved search; this doesn't seem to work yet."""
     search_url = "https://api.planet.com/data/v1/searches/"
     search_response = session.post(search_url, json=search_request)
     search_id = search_response.json()['id']
     if search_response.json()['_links'].get('_next_url'):
-        return get_paginated_items(session)
+        return _get_paginated_items(session)
     else:
         search_url = "https://api-planet.com/data/v1/searches/{}/results".format(search_id)
         response = session.get(search_url)
@@ -849,21 +849,21 @@ def do_saved_search(session, search_request):
         return items
 
 
-def get_paginated_items(session, search_id):
+def _get_paginated_items(session, search_id):
     """Let's leave this out for now."""
     raise Exception("pagination not handled yet")
 
 
-class TooManyRequests(requests.RequestException):
+class _TooManyRequests(requests.RequestException):
     """Too many requests; do exponential backoff"""
 
 
 @tenacity.retry(
     wait=tenacity.wait_exponential(),
     stop=tenacity.stop_after_delay(10000),
-    retry=tenacity.retry_if_exception_type(TooManyRequests)
+    retry=tenacity.retry_if_exception_type(_TooManyRequests)
 )
-def activate_and_dl_planet_item(session, item, asset_type, file_path):
+def _activate_and_dl_planet_item(session, item, asset_type, file_path):
     """Activates and downloads a single planet item"""
     #  TODO: Implement more robust error handling here (not just 429)
     item_id = item["id"]
@@ -877,7 +877,7 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
         status = session.get(item_url)
         if status.status_code == 429:
             print("ID {} too fast; backing off".format(item_id))
-            raise TooManyRequests
+            raise _TooManyRequests
         if status.json()[asset_type]["status"] == "active":
             break
     dl_link = status.json()[asset_type]["location"]
@@ -887,14 +887,14 @@ def activate_and_dl_planet_item(session, item, asset_type, file_path):
     with open(item_fp, 'wb+') as fp:
         image_response = session.get(dl_link)
         if image_response.status_code == 429:
-            raise TooManyRequests
+            raise _TooManyRequests
         fp.write(image_response.content)    # Don't like this; it might store the image twice. Check.
         print("Item {} download complete".format(item_id))
 
 
-def shp_to_geojson(shp):
-    pass
-
-
-def send_planet_request(data):
-    pass
+#def shp_to_geojson(shp):
+#    pass
+#
+#
+#def send_planet_request(data):
+#    pass
