@@ -1962,7 +1962,7 @@ def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
     outDataset.FlushCache()
     outDataset = None
     
-def temporal_comp2(inRasSet, outRas, q=5,  window = None, blockSize = None):
+def temporal_comp2(inRasSet, outRas, stat, q=5,  window = None, blockSize = None):
     """
     
     Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)
@@ -1976,7 +1976,7 @@ def temporal_comp2(inRasSet, outRas, q=5,  window = None, blockSize = None):
     outRas : string
              the output raster calculated
 
-    	stat : string
+    stat : string
            the statisitc to be calculated         
 
     blocksize : int
@@ -1998,11 +1998,15 @@ def temporal_comp2(inRasSet, outRas, q=5,  window = None, blockSize = None):
     
     outDataset = _copy_dataset_config(inDatasets[1], outMap = outRas, bands = bands)
     
-#    def statChoose(X, stat, q):
-#        outDataset.GetRasterBand(band).WriteArray(bandCube.mean(0))
-#        outDataset.GetRasterBand(band).WriteArray(bandCube.std(0))
-#        outDataset.GetRasterBand(band).WriteArray(np.median(bandCube, 0))
-#        outDataset.GetRasterBand(band).WriteArray(np.percentile(bandCube, q, 0))
+    def statChoose(bandCube, stat, q=None):
+        if stat is 'mean':
+            outDataset.GetRasterBand(band).WriteArray(bandCube.mean(0))
+        elif stat is 'stdev':
+            outDataset.GetRasterBand(band).WriteArray(bandCube.std(0))
+        elif stat is 'median':
+            outDataset.GetRasterBand(band).WriteArray(np.median(bandCube, 0))
+        elif stat is 'percentile':
+            outDataset.GetRasterBand(band).WriteArray(np.percentile(bandCube, q, 0))
     
     
     bandCube = np.empty([bands, x_pixels, y_pixels])
@@ -2010,10 +2014,7 @@ def temporal_comp2(inRasSet, outRas, q=5,  window = None, blockSize = None):
         for i,dataset in enumerate(inDatasets):
             cubeView = bandCube[i,:,:]    #Exposes a view of bandCube; any changes made are reflected in bandCube
             np.copyto(cubeView, dataset.ReadAsArray(0)[band,:,:])
-        outDataset.GetRasterBand(band).WriteArray(bandCube.mean(0))
-        outDataset.GetRasterBand(band).WriteArray(bandCube.std(0))
-        outDataset.GetRasterBand(band).WriteArray(np.median(bandCube, 0))
-        outDataset.GetRasterBand(band).WriteArray(np.percentile(bandCube, q, 0))
+            statChoose(bandCube, stat, q)
         
         
         
