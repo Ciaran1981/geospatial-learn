@@ -40,7 +40,7 @@ pyzmq>=16.0.2
 requests>=2.14.2
 requests-futures>=0.9.7
 sentinelsat>=0.12.1
-sentinelhub>=0.1.7
+sentinelhub==0.1.7
 simpledbf
 simplegeneric>=0.8.1
 six>=1.10.0
