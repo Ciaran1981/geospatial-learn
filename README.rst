@@ -75,7 +75,7 @@ Docs
 
 Documentation can be found here:
 
-http://geospatial-learn.readthedocs.io/en/latest/
+https://github.io/Ciaran1981/geospatial-learn/docs/_build/html/index.html
 
 These are a work in progress!
 
