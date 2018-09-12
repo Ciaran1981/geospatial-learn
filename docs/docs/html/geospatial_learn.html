@@ -1,0 +1,1503 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>geospatial_learn package &mdash; geospatial-learn 0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Quickstart" href="quickstart.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> geospatial-learn
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">geospatial_learn package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-data">geospatial_learn.data module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#description">Description</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-geodata">geospatial_learn.geodata module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Description</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-learning">geospatial_learn.learning module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Description</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-shape">geospatial_learn.shape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Description</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-utilities">geospatial_learn.utilities module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-geospatial_learn">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">geospatial-learn</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>geospatial_learn package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/geospatial_learn.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="geospatial-learn-package">
+<h1>geospatial_learn package<a class="headerlink" href="#geospatial-learn-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-data">
+<span id="geospatial-learn-data-module"></span><h2>geospatial_learn.data module<a class="headerlink" href="#module-data" title="Permalink to this headline">¶</a></h2>
+<p>The data module</p>
+<div class="section" id="description">
+<h3>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h3>
+<p>A series of tools for the download and preprocessing of sentinel data (mainly S2).</p>
+<dl class="function">
+<dt id="data.get_intersect">
+<code class="descclassname">data.</code><code class="descname">get_intersect</code><span class="sig-paren">(</span><em>folder</em>, <em>polygon</em>, <em>resolution=None</em><span class="sig-paren">)</span><a class="headerlink" href="#data.get_intersect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get intersect between rasters and AOI polygon</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>folder</strong> (<em>string</em>) – the S2 tile folder containing the granules ending .SAFE</li>
+<li><strong>polygon</strong> (<em>string</em>) – the AOI polygon (must be same crs as rasters)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>gdal tile index is used as occasionally using raster info directly
+to compare geometry with polygons produced incorrect results, thus
+there is longer processing time, but less likelyhood of errors</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="data.get_intersect_S2">
+<code class="descclassname">data.</code><code class="descname">get_intersect_S2</code><span class="sig-paren">(</span><em>folder</em>, <em>polygon</em>, <em>pixelSize=20</em><span class="sig-paren">)</span><a class="headerlink" href="#data.get_intersect_S2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the S2 granules that intersect an area of interest, uses S2xml file
+to get granule coords - this function is quicker than get_intersect, but
+more prone to errors</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>folder</strong> (<em>string</em>)</li>
+<li><strong>polygon</strong> (<em>string</em>)</li>
+<li><strong>pixelSize</strong> (<em>int (optional)</em>)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="data.planet_query">
+<code class="descclassname">data.</code><code class="descname">planet_query</code><span class="sig-paren">(</span><em>aoi</em>, <em>start_date</em>, <em>end_date</em>, <em>out_path</em>, <em>item_type='PSScene4Band'</em>, <em>search_name='auto'</em>, <em>asset_type='analytic'</em>, <em>threads=5</em><span class="sig-paren">)</span><a class="headerlink" href="#data.planet_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Downloads data from Planetlabs for a given time period in the given AOI</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>aoi</strong> (<em>dict</em>) – a dict containing a JSON-like polygon for the specific area</li>
+<li><strong>start_date</strong> (<em>str</em>) – the inclusive start of the time window in UTC format</li>
+<li><strong>end_date</strong> (<em>str</em>) – the inclusive end of the time window in UTC format</li>
+<li><strong>out_path</strong> (<em>filepath-like object</em>) – A path to the output folder
+Any identically-named imagery will be overwritten</li>
+<li><strong>item_type</strong> (<em>str</em>) – Image type to download (see Planet API docs)</li>
+<li><strong>search_name</strong> (<em>str</em>) – A name to refer to the search (required for large searches)</li>
+<li><strong>asset_type</strong> (<em>str</em>) – Planet asset type to download (see Planet API docs)</li>
+<li><strong>threads</strong> (<em>int</em>) – The number of downloads to perform concurrently</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>This will not run without the environment variable
+PL_API_KEY set; you can find one on the planet dashboard</p>
+<p>IMPORTANT: Will not run for searches returning greater than 250 items.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="data.planet_query_from_ogr">
+<code class="descclassname">data.</code><code class="descname">planet_query_from_ogr</code><span class="sig-paren">(</span><em>aoi</em><span class="sig-paren">)</span><a class="headerlink" href="#data.planet_query_from_ogr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="data.sent1_query">
+<code class="descclassname">data.</code><code class="descname">sent1_query</code><span class="sig-paren">(</span><em>user</em>, <em>passwd</em>, <em>geojsonfile</em>, <em>start_date</em>, <em>end_date</em>, <em>output_folder=None</em>, <em>api=True</em><span class="sig-paren">)</span><a class="headerlink" href="#data.sent1_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>A convenience function that wraps sentinelsat query and download</p>
+<p class="rubric">Notes</p>
+<p>I have found the sentinesat sometimes fails to download the second image,
+so I have written some code to avoid this - choose api = False for this</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>user</strong> (<em>string</em>) – username for esa hub</li>
+<li><strong>passwd</strong> (<em>string</em>) – password for hub</li>
+<li><strong>geojsonfile</strong> (<em>string</em>) – AOI polygon of interest</li>
+<li><strong>start_date</strong> (<em>string</em>) – date of beginning of search</li>
+<li><strong>end_date</strong> (<em>string</em>) – date of end of search</li>
+<li><strong>output_folder</strong> (<em>string</em>) – where you intend to download the imagery</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="data.sent2_amazon">
+<code class="descclassname">data.</code><code class="descname">sent2_amazon</code><span class="sig-paren">(</span><em>user</em>, <em>passwd</em>, <em>geojsonfile</em>, <em>start_date</em>, <em>end_date</em>, <em>output_folder</em>, <em>tile=None</em>, <em>cloud='100'</em><span class="sig-paren">)</span><a class="headerlink" href="#data.sent2_amazon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query the ESA catalogue then download S2 from AWS with correct renaming of stuff
+Uses joblib to parallelise multiple files from aws</p>
+<p>Way quicker than ESA-based download</p>
+<p>Credit to sentinelsat for the query aspect of this function, and
+sentinelhub for the AWS aspect.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>user</strong> (<em>string</em>) – username for esa hub</li>
+<li><strong>passwd</strong> (<em>string</em>) – password for hub</li>
+<li><strong>geojsonfile</strong> (<em>string</em>) – AOI polygon of interest</li>
+<li><strong>start_date</strong> (<em>string</em>) – date of beginning of search</li>
+<li><strong>end_date</strong> (<em>string</em>) – date of end of search</li>
+<li><strong>output_folder</strong> (<em>string</em>) – where you intend to download the imagery</li>
+<li><strong>tile</strong> (<em>string</em>) – S2 tile</li>
+<li><strong>cloud</strong> (<em>string (optional)</em>) – include a cloud filter in the search</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="data.sent2_google">
+<code class="descclassname">data.</code><code class="descname">sent2_google</code><span class="sig-paren">(</span><em>scene</em>, <em>start_date</em>, <em>end_date</em>, <em>outfolder</em>, <em>cloudcover='100'</em><span class="sig-paren">)</span><a class="headerlink" href="#data.sent2_google" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download S2 data from google. Adapted from a guys script into functional
+form with some modifications</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>scene</strong> (<em>string</em>) – tileID (eg ‘36MYE’)</li>
+<li><strong>start_date</strong> (<em>string</em>) – eg. ‘2016-12-23’</li>
+<li><strong>end_date</strong> (<em>string</em>) – eg. ‘2016-12-23’</li>
+<li><strong>outfolder</strong> (<em>string</em>) – destination folder for catalog that is searched for image</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">a list of the image urls</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="data.sent2_query">
+<code class="descclassname">data.</code><code class="descname">sent2_query</code><span class="sig-paren">(</span><em>user</em>, <em>passwd</em>, <em>geojsonfile</em>, <em>start_date</em>, <em>end_date</em>, <em>cloud='100'</em>, <em>output_folder=None</em>, <em>api=True</em><span class="sig-paren">)</span><a class="headerlink" href="#data.sent2_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>A convenience function that wraps sentinelsat query &amp; download</p>
+<p class="rubric">Notes</p>
+<p>I have found the sentinesat sometimes fails to download the second image,
+so I have written some code to avoid this - choose api = False for this</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>user</strong> (<em>string</em>) – username for esa hub</li>
+<li><strong>passwd</strong> (<em>string</em>) – password for hub</li>
+<li><strong>geojsonfile</strong> (<em>string</em>) – AOI polygon of interest</li>
+<li><strong>start_date</strong> (<em>string</em>) – date of beginning of search</li>
+<li><strong>end_date</strong> (<em>string</em>) – date of end of search</li>
+<li><strong>output_folder</strong> (<em>string</em>) – where you intend to download the imagery</li>
+<li><strong>cloud</strong> (<em>string (optional)</em>) – include a cloud filter in the search</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="data.sent_attributes">
+<code class="descclassname">data.</code><code class="descname">sent_attributes</code><span class="sig-paren">(</span><em>footprints</em><span class="sig-paren">)</span><a class="headerlink" href="#data.sent_attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a sorted list of tuples each containing the date and sceneID of S2 from
+a footprints geojson produced by sentinelsat/sent1/2query</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>footprints</strong> (<em>string</em>) – path to geojson file</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a list of attribute pairs</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="data.unzip_S2_granules">
+<code class="descclassname">data.</code><code class="descname">unzip_S2_granules</code><span class="sig-paren">(</span><em>folder</em>, <em>granules=None</em><span class="sig-paren">)</span><a class="headerlink" href="#data.unzip_S2_granules" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the S2 granules dependent on a specific area in utm
+granule.</p>
+<p>This was written for the file format S2 imagery initally
+came in from the ESA hub, which was enormous and impractical.
+Fortunately this changed near end of 2016, in which case you can simply
+unzip with bash or whatever!</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>folder</strong> (<em>string</em>) – a folder contain S2 tiles</li>
+<li><strong>granules</strong> (<em>string (optional) - recommended</em>) – a list of granule UTM codes e.g [‘36MYE’, ‘36MZE’]</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-geodata">
+<span id="geospatial-learn-geodata-module"></span><h2>geospatial_learn.geodata module<a class="headerlink" href="#module-geodata" title="Permalink to this headline">¶</a></h2>
+<p>The geodata module.</p>
+<div class="section" id="id1">
+<h3>Description<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>A series of tools for the manipulation of geospatial imagery/rasters such as masking or raster algebraic type functions and the conversion of Sentinel 2 data to gdal compatible formats.</p>
+<dl class="function">
+<dt id="geodata.array2raster">
+<code class="descclassname">geodata.</code><code class="descname">array2raster</code><span class="sig-paren">(</span><em>array</em>, <em>bands</em>, <em>inRaster</em>, <em>outRas</em>, <em>dtype</em>, <em>FMT=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.array2raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save a raster from a numpy array using the geoinfo from another.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>array</strong> (<em>np array</em>) – a numpy array.</li>
+<li><strong>bands</strong> (<em>int</em>) – the no of bands.</li>
+<li><strong>inRaster</strong> (<em>string</em>) – the path of a raster.</li>
+<li><strong>outRas</strong> (<em>string</em>) – the path of the output raster.</li>
+<li><strong>dtype</strong> (<em>int</em>) – though you need to know what the number represents!
+a GDAL datatype (see the GDAL website) e.g gdal.GDT_Int32</li>
+<li><strong>FMT</strong> (<em>string</em>) – (optional) a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.batch_translate">
+<code class="descclassname">geodata.</code><code class="descname">batch_translate</code><span class="sig-paren">(</span><em>folder</em>, <em>wildcard</em>, <em>FMT=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.batch_translate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using the gdal python API, this function translates the format of files
+to commonly used formats</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>folder</strong> (<em>string</em>) – the folder containing the rasters to be translated</li>
+<li><strong>wildcard</strong> (<em>string</em>) – the format wildcard to search for e.g. ‘.tif’</li>
+<li><strong>FMT</strong> (<em>string (optional)</em>) – a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.calc_ndvi">
+<code class="descclassname">geodata.</code><code class="descname">calc_ndvi</code><span class="sig-paren">(</span><em>inputIm</em>, <em>outputIm</em>, <em>bandsList</em>, <em>blocksize=256</em>, <em>FMT=None</em>, <em>dtype=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.calc_ndvi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a copy of an image with an ndvi band added</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>inputIm</strong> (<em>string</em>) – the granule folder</li>
+<li><strong>bands</strong> (<em>list</em>) – a list of band indicies to be used, eg - [3,4] for Sent2 data</li>
+<li><strong>FMT</strong> (<em>string</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</li>
+<li><strong>blocksize</strong> (<em>int</em>) – the chunk of raster read in &amp; write out</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.clip_raster">
+<code class="descclassname">geodata.</code><code class="descname">clip_raster</code><span class="sig-paren">(</span><em>inRas</em>, <em>inShape</em>, <em>outRas</em>, <em>nodata_value=None</em>, <em>blocksize=None</em>, <em>blockmode=True</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.clip_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clip a raster</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>inRas</strong> (<em>string</em>) – the input image</li>
+<li><strong>outPoly</strong> (<em>string</em>) – the input polygon file path</li>
+<li><strong>outRas</strong> (<em>string (optional)</em>) – the clipped raster</li>
+<li><strong>nodata_value</strong> (<em>numerical (optional)</em>) – self explanatory</li>
+<li><strong>blocksize</strong> (<em>int (optional)</em>) – the square chunk processed at any one time</li>
+<li><strong>blockmode</strong> (<em>bool (optional)</em>) – whether the raster will be clipped entirely in memory or by chunck</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.color_raster">
+<code class="descclassname">geodata.</code><code class="descname">color_raster</code><span class="sig-paren">(</span><em>inRas</em>, <em>color_file</em>, <em>output_file</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.color_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a txt colorfile and make a RGB image from a grayscale one</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>inRas</strong> (<em>string</em>) – Path to input raster (single band greyscale)</li>
+<li><strong>color_file</strong> (<em>string</em>) – Path to output colorfile.txt</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.combine_scene">
+<code class="descclassname">geodata.</code><code class="descname">combine_scene</code><span class="sig-paren">(</span><em>scl</em>, <em>c_scn</em>, <em>blocksize=256</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.combine_scene" title="Permalink to this definition">¶</a></dt>
+<dd><p>combine another scene classification with the sen2cor one</p>
+<dl class="docutils">
+<dt>scl <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>the sen2cor one</dd>
+<dt>c_scn <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>the independently derived one - this will be modified</dd>
+<dt>blocksize <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>chunck to process</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.hist_match">
+<code class="descclassname">geodata.</code><code class="descname">hist_match</code><span class="sig-paren">(</span><em>inputImage</em>, <em>templateImage</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.hist_match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust the pixel values of a grayscale image such that its histogram
+matches that of a target image.</p>
+<p>Writes to the inputImage dataset so that it matches</p>
+<p>As the entire band histogram is required this can become memory
+intensive with big rasters eg 10 x 10k+</p>
+<p>Inspire by/adapted from something on stack on image processing - credit to
+that author</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>inputImage</strong> (<em>string</em>) – image to transform; the histogram is computed over the flattened array</li>
+<li><strong>templateImage</strong> (<em>string</em>) – template image can have different dimensions to source</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.jp2_translate">
+<code class="descclassname">geodata.</code><code class="descname">jp2_translate</code><span class="sig-paren">(</span><em>folder</em>, <em>FMT=None</em>, <em>mode='L1C'</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.jp2_translate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Translate all files from S2 download to a useable format</p>
+<p>Default FMT is GTiff (leave blank), for .img FMT=’HFA’, for .vrt FMT=’VRT’</p>
+<p>If you posses a gdal compiled with the corrext openjpg support use that</p>
+<p>This function might be useful if you wish to retain seperate rasters,
+but the use of stack_S2 is recommended</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>folder</strong> (<em>string</em>) – S2 granule dir</li>
+<li><strong>mode</strong> (<em>string</em>) – ‘L2A’ , ‘20’, ‘10’, L1C (default)</li>
+<li><strong>FMT</strong> (<em>string (optional)</em>) – a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.jp2_translate_batch">
+<code class="descclassname">geodata.</code><code class="descname">jp2_translate_batch</code><span class="sig-paren">(</span><em>mainFolder</em>, <em>FMT=None</em>, <em>mode=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.jp2_translate_batch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Batch version of jp2translate</p>
+<p>Perhaps only useful for the old tile format</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>mainFolder</strong> (<em>string</em>) – the path to S2 tile folder to process</li>
+<li><strong>FMT</strong> (<em>string</em>) – a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA</li>
+<li><strong>mode</strong> (<em>string (optional)</em>) – ‘L2A’ , ‘20’, ‘10’, L1C (default)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.mask_raster">
+<code class="descclassname">geodata.</code><code class="descname">mask_raster</code><span class="sig-paren">(</span><em>inputIm</em>, <em>mval</em>, <em>overwrite=True</em>, <em>outputIm=None</em>, <em>blocksize=None</em>, <em>FMT=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.mask_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a numpy masking operation on a raster where all values
+corresponding to  mask value are retained - does this in blocks for
+efficiency on larger rasters</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputIm</strong> (<em>string</em>) – the input raster</li>
+<li><strong>mval</strong> (<em>int</em>) – the mask value eg 1, 2 etc</li>
+<li><strong>FMT</strong> (<em>string</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</li>
+<li><strong>outputIm</strong> (<em>string (optional)</em>) – optionally write a separate output image, if None, will
+mask the input</li>
+<li><strong>blocksize</strong> (<em>int</em>) – the chunk of raster to read in</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A string of the output file path</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">string</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.mask_raster_multi">
+<code class="descclassname">geodata.</code><code class="descname">mask_raster_multi</code><span class="sig-paren">(</span><em>inputIm</em>, <em>mval=1</em>, <em>outval=None</em>, <em>mask=None</em>, <em>blocksize=256</em>, <em>FMT=None</em>, <em>dtype=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.mask_raster_multi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a numpy masking operation on a raster where all values
+corresponding to  mask value are retained - does this in blocks for
+efficiency on larger rasters</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>inputIm</strong> (<em>string</em>) – the granule folder</li>
+<li><strong>mval</strong> (<em>int</em>) – the masking value that delineates pixels to be kept</li>
+<li><strong>outval</strong> (<em>numerical dtype eg int, float</em>) – the areas removed will be written to this value default is 0</li>
+<li><strong>mask</strong> (<em>string</em>) – the mask raster to be used (optional)</li>
+<li><strong>FMT</strong> (<em>string</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</li>
+<li><strong>mode</strong> (<em>string</em>) – None &gt; 10m data, ‘20’ &gt;20m</li>
+<li><strong>blocksize</strong> (<em>int</em>) – the chunk of raster read in &amp; write out</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.multi_temp_filter">
+<code class="descclassname">geodata.</code><code class="descname">multi_temp_filter</code><span class="sig-paren">(</span><em>inRas</em>, <em>outRas</em>, <em>bands=None</em>, <em>windowSize=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.multi_temp_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>The multi temp filter for radar data as outlined &amp; published by
+Quegan et al, Uni of Sheffield</p>
+<p>This is only suitable for small images, as it holds intermediate data in memory</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>inRas</strong> (<em>string</em>) – the input raster</li>
+<li><strong>outRas</strong> (<em>string</em>) – the output raster</li>
+<li><strong>blocksize</strong> (<em>int</em>) – the chunck processed</li>
+<li><strong>windowsize</strong> (<em>int</em>) – the filter window size</li>
+<li><strong>FMT</strong> (<em>string</em>) – gdal compatible (optional) defaults is tif</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.multi_temp_filter_block">
+<code class="descclassname">geodata.</code><code class="descname">multi_temp_filter_block</code><span class="sig-paren">(</span><em>inRas</em>, <em>outRas</em>, <em>bands=None</em>, <em>blocksize=256</em>, <em>windowsize=7</em>, <em>FMT=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.multi_temp_filter_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multi temporal filter implementation for radar data</p>
+<p>See Quegan et al., for paper</p>
+<p>Requires an installation of OTB</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>inRas</strong> (<em>string</em>) – the input raster</li>
+<li><strong>outRas</strong> (<em>string</em>) – the output raster</li>
+<li><strong>blocksize</strong> (<em>int</em>) – the chunck processed</li>
+<li><strong>windowsize</strong> (<em>int</em>) – the filter window size</li>
+<li><strong>FMT</strong> (<em>string</em>) – gdal compatible (optional) defaults is tif</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.otbMeanshift">
+<code class="descclassname">geodata.</code><code class="descname">otbMeanshift</code><span class="sig-paren">(</span><em>inputImage</em>, <em>radius</em>, <em>rangeF</em>, <em>minSize</em>, <em>outShape</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.otbMeanshift" title="Permalink to this definition">¶</a></dt>
+<dd><p>OTB meanshift by calling the otb command line
+Written for convenience and due to otb python api being rather verbose</p>
+<p>There is a maximum size for the .shp format otb doesn’t seem to
+want to move beyond (2gb), so enormous rasters may need to be sub
+divided</p>
+<p>You will need to install OTB etc seperately</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>inputImage</strong> (<em>string</em>) – the input image</li>
+<li><strong>radius</strong> (<em>int</em>) – the kernel radius</li>
+<li><strong>rangeF</strong> (<em>int</em>) – the kernel range</li>
+<li><strong>minSize</strong> (<em>int</em>) – minimum segment size</li>
+<li><strong>outShape</strong> (<em>string</em>) – the ouput shapefile</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.polygonize">
+<code class="descclassname">geodata.</code><code class="descname">polygonize</code><span class="sig-paren">(</span><em>inRas</em>, <em>outPoly</em>, <em>outField=None</em>, <em>mask=True</em>, <em>band=1</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.polygonize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lifted straight from the cookbook and gdal func docs.</p>
+<p><a class="reference external" href="http://pcjericks.github.io/py-gdalogr-cookbook">http://pcjericks.github.io/py-gdalogr-cookbook</a></p>
+<p>Very slow!</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>inRas</strong> (<em>string</em>) – the input image</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>outPoly <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>the output polygon file path</dd>
+<dt>outField <span class="classifier-delimiter">:</span> <span class="classifier">string (optional)</span></dt>
+<dd>the name of the field containing burnded values</dd>
+<dt>mask <span class="classifier-delimiter">:</span> <span class="classifier">bool (optional)</span></dt>
+<dd>use the input raster as a mask</dd>
+<dt>band <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>the input raster band</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.remove_cloud_S2">
+<code class="descclassname">geodata.</code><code class="descname">remove_cloud_S2</code><span class="sig-paren">(</span><em>inputIm</em>, <em>sceneIm</em>, <em>blocksize=256</em>, <em>FMT=None</em>, <em>min_size=4</em>, <em>dist=1</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.remove_cloud_S2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove cloud using the a scene classification</p>
+<p>This saves back to the input raster by default</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>inputIm</strong> (<em>string</em>) – the input image</li>
+<li><strong>sceneIm</strong> (<em>string</em>) – the scenemap to use as a mask for removing cloud
+It is assumed the scene map consists of 1 shadow, 2 cloud, 3 land, 4 water</li>
+<li><strong>FMT</strong> (<em>string</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</li>
+<li><strong>min_size</strong> (<em>int</em>) – size in pixels to retain of cloud mask</li>
+<li><strong>blocksize</strong> (<em>int</em>) – the square chunk processed at any one time</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.remove_cloud_S2_stk">
+<code class="descclassname">geodata.</code><code class="descname">remove_cloud_S2_stk</code><span class="sig-paren">(</span><em>inputIm</em>, <em>sceneIm1</em>, <em>sceneIm2=None</em>, <em>baseIm=None</em>, <em>blocksize=256</em>, <em>FMT=None</em>, <em>max_size=10</em>, <em>dist=1</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.remove_cloud_S2_stk" title="Permalink to this definition">¶</a></dt>
+<dd><p>remove cloud using the the c_utils scene classification
+the KEA format is recommended, .tif is the default,</p>
+<p>no need to add the file extension this is done automatically</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>inputIm</strong> (<em>string</em>) – the input image</li>
+<li><strong>sceneIm1, 2</strong> (<em>string</em>) – the classification rasters used to mask out the areas in</li>
+<li><strong>the input image</strong></li>
+<li><strong>baseIm</strong> (<em>string</em>) – Another multiband raster of same size extent as the inputIm
+where the baseIm image values are used rather than simply converting
+to zero (in the use case of 2 sceneIm classifications)</li>
+<li><strong>Returns</strong></li>
+<li><strong>———–</strong></li>
+<li><strong>nowt</strong></li>
+<li><strong>Notes</strong></li>
+<li><strong>———–</strong></li>
+<li><strong>Useful if you have a base image whic is a cloudless composite, which</strong></li>
+<li><strong>you intend to replace with the current image for the next round of</strong></li>
+<li><strong>classification/ change detection</strong></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.stack_S2">
+<code class="descclassname">geodata.</code><code class="descname">stack_S2</code><span class="sig-paren">(</span><em>granule</em>, <em>inFMT='jp2'</em>, <em>FMT=None</em>, <em>mode=None</em>, <em>old_order=False</em>, <em>blocksize=2048</em>, <em>overwrite=True</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.stack_S2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stacks S2 bands downloaded from ESA site</p>
+<p>Can translate directly from jp2 format (this is recommended and is
+default).</p>
+<p>If you possess gdal 2.1 with jp2k support then alternatively use
+gdal_translate</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>granule</strong> (<em>string</em>) – the granule folder</li>
+<li><strong>inFMT</strong> (<em>string (optional)</em>) – the format of the bands will likely be jp2</li>
+<li><strong>FMT</strong> (<em>string (optional)</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</li>
+<li><strong>mode</strong> (<em>string (optional)</em>) – None, ‘10’  ‘20’</li>
+<li><strong>old_order</strong> (<em>bool (optional)</em>) – this function used to order the 20m imagery 2,3,4,5,6,7,11,12,8a
+if false ordered like this 2,3,4,5,6,7,8a,11,12</li>
+<li><strong>blocksize</strong> (<em>int (optional)</em>) – the chunk of jp2 to read in - glymur seems to work fastest with 2048</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A string of the output file path</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">string</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.stack_ras">
+<code class="descclassname">geodata.</code><code class="descname">stack_ras</code><span class="sig-paren">(</span><em>rasterList</em>, <em>outFile</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.stack_ras" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stack some rasters for change classification</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>rasterList</strong> (<em>string</em>) – the input image</li>
+<li><strong>outFile</strong> (<em>string</em>) – the output file path including file extension</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.temporal_comp">
+<code class="descclassname">geodata.</code><code class="descname">temporal_comp</code><span class="sig-paren">(</span><em>fileList</em>, <em>outMap</em>, <em>stat='percentile'</em>, <em>q=95</em>, <em>folder=None</em>, <em>blocksize=None</em>, <em>FMT=None</em>, <em>dtype=5</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.temporal_comp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last">
+<li><p class="first"><strong>FileList</strong> (<em>list of strings</em>) – the files to be inputed, if None a folder must be specified</p>
+</li>
+<li><p class="first"><strong>outMap</strong> (<em>string</em>) –      the output raster calculated</p>
+<dl class="docutils">
+<dt>stat <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">the statisitc to be calculated</p>
+</dd>
+</dl>
+</li>
+<li><p class="first"><strong>blocksize</strong> (<em>int</em>) – the chunck processed</p>
+</li>
+<li><p class="first"><strong>q</strong> (<em>int</em>) – the ith percentile if percentile is the stat used</p>
+</li>
+<li><p class="first"><strong>FMT</strong> (<em>string</em>) – gdal compatible (optional) defaults is tif</p>
+</li>
+<li><p class="first"><strong>dtype</strong> (<em>string</em>) – gdal datatype (default gdal.GDT_Int32)</p>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.temporal_comp2">
+<code class="descclassname">geodata.</code><code class="descname">temporal_comp2</code><span class="sig-paren">(</span><em>inRasSet</em>, <em>outRas</em>, <em>stat</em>, <em>q=5</em>, <em>window=None</em>, <em>blockSize=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.temporal_comp2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)</p>
+<blockquote>
+<div>Parameters</div></blockquote>
+<dl class="docutils">
+<dt>inRasSet <span class="classifier-delimiter">:</span> <span class="classifier">list of strings</span></dt>
+<dd>the files to be inputed, if None a folder must be specified</dd>
+<dt>outRas <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>the output raster calculated</dd>
+<dt>stat <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>the statisitc to be calculated</dd>
+<dt>blocksize <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>the chunck processed</dd>
+<dt>q <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>the  ith percentile if percentile is the stat used</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="geodata.tile_rasters">
+<code class="descclassname">geodata.</code><code class="descname">tile_rasters</code><span class="sig-paren">(</span><em>inImage</em>, <em>outputImage</em>, <em>tilesize</em><span class="sig-paren">)</span><a class="headerlink" href="#geodata.tile_rasters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split a large raster into smaller ones</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>inImage</strong> (<em>string</em>) – the path to input raster</li>
+<li><strong>outputImage</strong> (<em>string</em>) – the path to the output image</li>
+<li><strong>tilesize</strong> (<em>int</em>) – the side of a square tile</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-learning">
+<span id="geospatial-learn-learning-module"></span><h2>geospatial_learn.learning module<a class="headerlink" href="#module-learning" title="Permalink to this headline">¶</a></h2>
+<p>the learning module</p>
+<div class="section" id="id2">
+<h3>Description<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>The learning module set of functions provide a framework to optimise and classify
+EO data for both per pixel or object properties</p>
+<p>Performance notes:
+This was tested on an i7 intel with 16gb of ram, so with large images/arrays
+of stats this will inevitably be slower - especially with a more standard machine.</p>
+<dl class="function">
+<dt id="learning.RF_oob_opt">
+<code class="descclassname">learning.</code><code class="descname">RF_oob_opt</code><span class="sig-paren">(</span><em>model</em>, <em>X_train</em>, <em>min_est</em>, <em>max_est</em>, <em>step</em>, <em>regress=False</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.RF_oob_opt" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function uses the oob score to find the best parameters.</p>
+<p>This cannot be parallelized due to the warm start bootstrapping, so is
+potentially slower than the other cross val in the create_model function</p>
+<p>This function is based on an example from the sklearn site</p>
+<p>This function plots a graph diplaying the oob rate</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>model</strong> (<em>string (.gz)</em>) – path to model to be saved</li>
+<li><strong>X_train</strong> (<em>np array</em>) – numpy array of training data where the 1st column is labels</li>
+<li><strong>min_est</strong> (<em>int</em>) – min no of trees</li>
+<li><strong>max_est</strong> (<em>int</em>) – max no of trees</li>
+<li><strong>step</strong> (<em>int</em>) – the step at which no of trees is increased</li>
+<li><strong>regress</strong> (<em>bool</em>) – boolean where if True it is a regressor</li>
+<li><strong>Returns</strong> (<em>tuple of np arrays</em>)</li>
+<li><strong>———————–</strong></li>
+<li><strong>error rate, best estimator</strong></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.classify_object">
+<code class="descclassname">learning.</code><code class="descname">classify_object</code><span class="sig-paren">(</span><em>model</em>, <em>inShape</em>, <em>attributes</em>, <em>field_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_object" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classify a polygon/point file attributes (‘object based’) using an sklearn
+model</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>model</strong> (<em>string</em>) – path to input model</li>
+<li><strong>inShape</strong> (<em>string</em>) – input shapefile path (must be .shp for now….)</li>
+<li><strong>attributes</strong> (<em>list of stings</em>) – list of attributes names</li>
+<li><strong>field_name</strong> (<em>string</em>) – name of classified label field (optional)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.classify_pixel">
+<code class="descclassname">learning.</code><code class="descname">classify_pixel</code><span class="sig-paren">(</span><em>model</em>, <em>inputDir</em>, <em>bands</em>, <em>outMap</em>, <em>probMap</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_pixel" title="Permalink to this definition">¶</a></dt>
+<dd><p>A function to classify an image using a pre-saved model - assumes
+a folder of tiled rasters for memory management - classify_pixel_block is
+recommended instead of this function</p>
+<p>Parameters</p>
+<dl class="docutils">
+<dt>model <span class="classifier-delimiter">:</span> <span class="classifier">sklearn model</span></dt>
+<dd>a path to a scikit learn model that has been saved</dd>
+<dt>inputDir <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>a folder with images to be classified</dd>
+<dt>bands <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>the no of image bands eg 8</dd>
+<dt>outMap <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>path to output image excluding the file format ‘pathto/mymap’</dd>
+<dt>probMap <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>path to output prob image excluding the file format ‘pathto/mymap’</dd>
+<dt>FMT <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>optional parameter - gdal readable fmt</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.classify_pixel_bloc">
+<code class="descclassname">learning.</code><code class="descname">classify_pixel_bloc</code><span class="sig-paren">(</span><em>model</em>, <em>inputImage</em>, <em>bands</em>, <em>outMap</em>, <em>blocksize=None</em>, <em>FMT=None</em>, <em>ndvi=None</em>, <em>dtype=5</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_pixel_bloc" title="Permalink to this definition">¶</a></dt>
+<dd><p>A block processing classifier for large rasters, supports KEA, HFA, &amp; Gtiff
+formats. KEA is recommended, Gtiff is the default</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>model</strong> (<em>sklearn model</em>) – a path to a scikit learn model that has been saved</li>
+<li><strong>inputImage</strong> (<em>string</em>) – path to image including the file fmt ‘Myimage.tif’</li>
+<li><strong>bands</strong> (<em>band</em>) – the no of image bands eg 8</li>
+<li><strong>outMap</strong> (<em>string</em>) – path to output image excluding the file format ‘pathto/mymap’</li>
+<li><strong>FMT</strong> (<em>string</em>) – optional parameter - gdal readable fmt</li>
+<li><strong>blocksize</strong> (<em>int (optional)</em>) – size of raster chunck in pixels 256 tends to be quickest
+if you put None it will read size from gdal (this doesn’t always pay off!)</li>
+<li><strong>dtype</strong> (<em>int (optional - gdal syntax gdal.GDT_Int32)</em>) – a gdal dataype - default is int32</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Block processing is sequential, but quite a few sklearn models are parallel
+so that has been prioritised rather than raster IO</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.create_model">
+<code class="descclassname">learning.</code><code class="descname">create_model</code><span class="sig-paren">(</span><em>X_train</em>, <em>outModel</em>, <em>clf='svc'</em>, <em>random=False</em>, <em>cv=6</em>, <em>cores=-1</em>, <em>strat=True</em>, <em>regress=False</em>, <em>params=None</em>, <em>scoring=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Brute force or random model creating using scikit learn. Either use the
+default params in this function or enter your own (recommended - see sklearn)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>X_train</strong> (<em>np array</em>) – numpy array of training data where the 1st column is labels</li>
+<li><strong>outModel</strong> (<em>string</em>) – the output model path which is a gz file</li>
+<li><strong>clf</strong> (<em>string</em>) – an sklearn or xgb classifier/regressor
+logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb</li>
+<li><strong>random</strong> (<em>bool</em>) – if True, a random param search</li>
+<li><strong>cv</strong> (<em>int</em>) – no of folds</li>
+<li><strong>cores</strong> (<em>int or -1 (default)</em>) – the no of parallel jobs</li>
+<li><strong>strat</strong> (<em>bool</em>) – a stratified grid search</li>
+<li><strong>regress</strong> (<em>bool</em>) – a regression model if True, a classifier if False</li>
+<li><strong>params</strong> (<em>a dict of model params (see scikit learn)</em>) – enter your own params dict rather than the range provided</li>
+<li><strong>scoring</strong> (<em>string</em>) – a suitable sklearn scoring type (see notes)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<div>There are more sophisticated ways to tune a model, this greedily
+searches everything but can be computationally costly. Fine tuning
+in a more measured way is likely better. There are numerous books,
+guides etc…
+E.g. with gb- first tune no of trees for gb, then learning rate, then
+tree specific</div></blockquote>
+<blockquote>
+<div><p>From my own experience and reading around</p>
+<p>sklearn svms tend to be not great on large training sets and are
+slower with these (i have tried on HPCs and they time out on multi fits)</p>
+<p>sklearn ‘gb’ is very slow to train, though quick to predict</p>
+<p>xgb is much faster, but rather different in algorithmic detail -
+ie won’t produce same results as sklearn…</p>
+<p>xgb also uses the sklearn wrapper params which differ from those in
+xgb docs, hence they are commented next to the area of code</p>
+<p>Scoring types - there are a lot - some of which won’t work for
+multi-class, regression etc - see the sklearn docs!</p>
+<p>‘accuracy’, ‘adjusted_rand_score’, ‘average_precision’, ‘f1’,
+‘f1_macro’, ‘f1_micro’, ‘f1_samples’, ‘f1_weighted’, ‘neg_log_loss’,
+‘neg_mean_absolute_error’, ‘neg_mean_squared_error’,
+‘neg_median_absolute_error’, ‘precision’, ‘precision_macro’,
+‘precision_micro’, ‘precision_samples’, ‘precision_weighted’,
+‘r2’, ‘recall’, ‘recall_macro’, ‘recall_micro’, ‘recall_samples’,
+‘recall_weighted’, ‘roc_auc’</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.create_model_tpot">
+<code class="descclassname">learning.</code><code class="descname">create_model_tpot</code><span class="sig-paren">(</span><em>X_train</em>, <em>outModel</em>, <em>cv=6</em>, <em>cores=-1</em>, <em>regress=False</em>, <em>params=None</em>, <em>scoring=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model_tpot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a model using the tpot library where genetic algorithms
+are used to optimise pipline and params.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>X_train</strong> (<em>np array</em>) – numpy array of training data where the 1st column is labels</li>
+<li><strong>outModel</strong> (<em>string</em>) – the output model path which is a .py file</li>
+<li><strong>cv</strong> (<em>int</em>) – no of folds</li>
+<li><strong>cores</strong> (<em>int or -1 (default)</em>) – the no of parallel jobs</li>
+<li><strong>strat</strong> (<em>bool</em>) – a stratified grid search</li>
+<li><strong>regress</strong> (<em>bool</em>) – a regression model if True, a classifier if False</li>
+<li><strong>params</strong> (<em>a dict of model params (see tpot)</em>) – enter your own params dict rather than the range provided</li>
+<li><strong>scoring</strong> (<em>string</em>) – a suitable sklearn scoring type (see notes)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.get_training">
+<code class="descclassname">learning.</code><code class="descname">get_training</code><span class="sig-paren">(</span><em>inShape</em>, <em>inRas</em>, <em>bands</em>, <em>field</em>, <em>outFile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect training as an np array for use with create model function</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inShape</strong> (<em>string</em>) – the input shapefile - must be esri .shp at present</li>
+<li><strong>inRas</strong> (<em>string</em>) – the input raster from which the training is extracted</li>
+<li><strong>bands</strong> (<em>int</em>) – no of bands</li>
+<li><strong>field</strong> (<em>string</em>) – the attribute field containing the training labels</li>
+<li><strong>outFile</strong> (<em>string (optional)</em>) – path to the training file saved as joblib format (eg - ‘training.gz’)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><em>A tuple containing</em></li>
+<li><em>-np array of training data</em></li>
+<li><em>-list of polygons with invalid geometry that were not collected</em></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.get_training_point">
+<code class="descclassname">learning.</code><code class="descname">get_training_point</code><span class="sig-paren">(</span><em>inShape</em>, <em>inRas</em>, <em>bands</em>, <em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training_point" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Collect training as a np array for use with create model function using</dt>
+<dd>point data</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inShape</strong> (<em>string</em>) – the input shapefile - must be esri .shp at present</li>
+<li><strong>inRas</strong> (<em>string</em>) – the input raster from which the training is extracted</li>
+<li><strong>bands</strong> (<em>int</em>) – no of bands</li>
+<li><strong>field</strong> (<em>string</em>) – the attribute field containing the training labels</li>
+<li><strong>outFile</strong> (<em>string (optional)</em>) – path to the training file saved as joblib format (eg - ‘training.gz’)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><em>A tuple containing</em></li>
+<li><em>-np array of training data</em></li>
+<li><em>-list of polygons with invalid geometry that were not collected</em></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>UNFINISHED DO NOT USE</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.get_training_shp">
+<code class="descclassname">learning.</code><code class="descname">get_training_shp</code><span class="sig-paren">(</span><em>inShape</em>, <em>label_field</em>, <em>feat_fields</em>, <em>outFile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training_shp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect training from a shapefile attribute table. Used for object-based
+classification (typically).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inShape</strong> (<em>string</em>) – the input shapefile - must be esri .shp at present</li>
+<li><strong>label_field</strong> (<em>string</em>) – the field name for the class labels</li>
+<li><strong>feat_fields</strong> (<em>list</em>) – the field names of the feature data</li>
+<li><strong>outFile</strong> (<em>string (optional)</em>) – path to training data to be saved (.gz)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><em>training data as a dataframe, first column is labels, rest are features</em></li>
+<li><em>list of reject features</em></li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.plot_feature_importances">
+<code class="descclassname">learning.</code><code class="descname">plot_feature_importances</code><span class="sig-paren">(</span><em>modelPth</em>, <em>featureNames</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.plot_feature_importances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the feature importances of an ensemble classifier</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>modelPth</strong> (<em>string</em>) – A sklearn model path</li>
+<li><strong>featureNames</strong> (<em>list of strings</em>) – a list of feature names</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.prob_pixel_bloc">
+<code class="descclassname">learning.</code><code class="descname">prob_pixel_bloc</code><span class="sig-paren">(</span><em>model</em>, <em>inputImage</em>, <em>bands</em>, <em>outMap</em>, <em>classes</em>, <em>blocksize=None</em>, <em>FMT=None</em>, <em>one_class=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.prob_pixel_bloc" title="Permalink to this definition">¶</a></dt>
+<dd><p>A block processing classifier for large rasters that produces a probability,
+output.</p>
+<p>Supports KEA, HFA, &amp; Gtiff formats -KEA is recommended, Gtiff is the default</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>model</strong> (<em>string</em>) – a path to a scikit learn model that has been saved</li>
+<li><strong>inputImage</strong> (<em>string</em>) – path to image including the file fmt ‘Myimage.tif’</li>
+<li><strong>bands</strong> (<em>int</em>) – the no of image bands eg 8</li>
+<li><strong>outMap</strong> (<em>string</em>) – path to output image excluding the file format ‘pathto/mymap’</li>
+<li><strong>classes</strong> (<em>int</em>) – no of classes</li>
+<li><strong>blocksize</strong> (<em>int (optional)</em>) – size of raster chunck 256 tends to be quickest if you put None it
+will read size from gdal (this doesn’t always pay off!)</li>
+<li><strong>FMT</strong> (<em>string</em>) – optional parameter - gdal readable fmt eg ‘Gtiff’</li>
+<li><strong>one_class</strong> (<em>int</em>) – choose a single class to produce output prob raster</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Block processing is sequential, but quite a few sklearn models are parallel
+so that has been prioritised rather than raster IO</p>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-shape">
+<span id="geospatial-learn-shape-module"></span><h2>geospatial_learn.shape module<a class="headerlink" href="#module-shape" title="Permalink to this headline">¶</a></h2>
+<p>The shape module.</p>
+<div class="section" id="id3">
+<h3>Description<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>This module contains various functions for the writing of data in OGR vector
+formats. The functions are mainly concerned with writing geometric or pixel based attributes, with the view to them being classified in the learning module</p>
+<dl class="function">
+<dt id="shape.shape_props">
+<code class="descclassname">shape.</code><code class="descname">shape_props</code><span class="sig-paren">(</span><em>inShape</em>, <em>prop</em>, <em>inRas=None</em>, <em>label_field='ID'</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.shape_props" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate various geometric properties of a set of polygons
+Output will be relative to geographic units where relevant, but normalised where not (eg Eccentricity)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>inShape</strong> (<em>string</em>) – input shape file path</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>inRas <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>a raster to get the correct dimensions from (optional), required for
+scikit-image props</dd>
+<dt>prop <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>Scikit image regionprops prop
+(see <a class="reference external" href="http://scikit-image.org/docs/dev/api/skimage.measure.html">http://scikit-image.org/docs/dev/api/skimage.measure.html</a>)</dd>
+</dl>
+<p>OGR is used to generate most of these as it is faster but the string
+keys are same as scikit-image see notes for which require raster</p>
+<p class="rubric">Notes</p>
+<p>Only shape file needed (OGR / shapely / numpy based)</p>
+<p>‘MajorAxisLength’, ‘MinorAxisLength’, Area’, ‘Eccentricity’, ‘Solidity’,
+‘Extent’: ‘Extent’, ‘Perimeter’: ‘Perim’</p>
+<p>Raster required</p>
+<dl class="docutils">
+<dt>‘Orientation’ and the remainder of props calcualble with scikit-image. These</dt>
+<dd>process a bit slower than the above ones</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.shp2gj">
+<code class="descclassname">shape.</code><code class="descname">shp2gj</code><span class="sig-paren">(</span><em>inShape</em>, <em>outJson</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.shp2gj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a geojson/json to a shapefile</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>inShape</strong> (<em>string</em>) – input shapefile</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>outJson <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>output geojson</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Credit to person who posted this on the pyshp site</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.texture_stats">
+<code class="descclassname">shape.</code><code class="descname">texture_stats</code><span class="sig-paren">(</span><em>vector_path</em>, <em>raster_path</em>, <em>band</em>, <em>gprop='contrast'</em>, <em>offset=0</em>, <em>angle=0</em>, <em>write_stat=None</em>, <em>nodata_value=None</em>, <em>mean=True</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.texture_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate and optionally write texture stats for an OGR compatible polygon
+based on underlying raster values</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>vector_path</strong> (<em>string</em>) – input shapefile</li>
+<li><strong>raster_path</strong> (<em>string</em>) – input raster path</li>
+<li><strong>gprop</strong> (<em>string</em>) – a skimage gclm property
+entropy, contrast, dissimilarity, homogeneity, ASM, energy,
+correlation</li>
+<li><strong>offset</strong> (<em>int</em>) – distance in pixels to measure</li>
+<li><strong>angle</strong> (<em>int</em>) – angle in degrees from pixel (int)</li>
+<li><strong>mean</strong> (<em>bool</em>) – take the mean of all offsets</li>
+<li><strong>Important to note that the results will be unreliable for glcm</strong></li>
+<li><strong>texture features if seg is true as non-masked values will be zero or</strong></li>
+<li><strong>some weird no data and will affect results</strong></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Important</p>
+<p>The texture of the bounding box is at present the “relible” measure</p>
+<p>Using the segment only results in potentially spurious results due to the
+scikit-image algorithm measuring texture over zero/nodata to number pixels
+(e.g 0&gt;54). The segment part will be developed in due course to overcome
+this issue</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.write_text_field">
+<code class="descclassname">shape.</code><code class="descname">write_text_field</code><span class="sig-paren">(</span><em>inShape</em>, <em>fieldName</em>, <em>attribute</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.write_text_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a string to a ogr vector file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>inShape</strong> (<em>string</em>) – input OGR vecotr file</li>
+<li><strong>fieldName</strong> (<em>string</em>) – name of field being written</li>
+<li><strong>attribute</strong> (<em>string</em>) – ‘text to enter in each entry of column’</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.zonal_stats">
+<code class="descclassname">shape.</code><code class="descname">zonal_stats</code><span class="sig-paren">(</span><em>vector_path</em>, <em>raster_path</em>, <em>band</em>, <em>bandname</em>, <em>stat='mean'</em>, <em>write_stat=None</em>, <em>nodata_value=0</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate zonal stats for an OGR polygon file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>vector_path</strong> (<em>string</em>) – input shapefile</li>
+<li><strong>raster_path</strong> (<em>string</em>) – input raster</li>
+<li><strong>band</strong> (<em>int</em>) – an integer val eg - 2</li>
+<li><strong>bandname</strong> (<em>string</em>) – eg - blue</li>
+<li><strong>stat</strong> (<em>string</em>) – string of a stat to calculate, if omitted it will be ‘mean’
+others: ‘mode’, ‘min’,’mean’,’max’, ‘std’,’ sum’, ‘count’,’var’,
+skew’, ‘kurtosis’</li>
+<li><strong>write_stat</strong> (<em>bool (optional)</em>) – If True, stat will be written to OGR file, if false, dataframe
+only returned (bool)</li>
+<li><strong>nodata_value</strong> (<em>numerical</em>) – If used the no data val of the raster</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-utilities">
+<span id="geospatial-learn-utilities-module"></span><h2>geospatial_learn.utilities module<a class="headerlink" href="#module-utilities" title="Permalink to this headline">¶</a></h2>
+<p>Created on Thu Sep  8 22:35:39 2016
+&#64;author: Ciaran Robb
+Research Associate in Earth Observation
+Centre for Landscape and Climate Research (CLCR)
+Department of Geography, University of Leicester, University Road, Leicester,
+LE1 7RH, UK</p>
+<p>If you use code to publish work cite/acknowledge me and authors of libs etc as
+appropriate</p>
+<dl class="function">
+<dt id="utilities.min_bound_rectangle">
+<code class="descclassname">utilities.</code><code class="descname">min_bound_rectangle</code><span class="sig-paren">(</span><em>points</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.min_bound_rectangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the smallest bounding rectangle for a set of points.
+Returns a set of points representing the corners of the bounding box.
+:Parameters: <strong>points</strong> (<em>list</em>) – An nx2 iterable of points</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">an nx2 list of coordinates</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-geospatial_learn">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-geospatial_learn" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="quickstart.html" class="btn btn-neutral" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Ciaran Robb.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.3',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
