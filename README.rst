@@ -75,7 +75,7 @@ Docs
 
 Documentation can be found here:
 
-https://Ciaran1981.github.io/geospatial-learn/_build/html/index.html 
+https://ciaran1981.github.io/geospatial-learn/docs/html/index.html 
 
 These are a work in progress!
 
