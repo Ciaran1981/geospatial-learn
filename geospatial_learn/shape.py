@@ -24,9 +24,9 @@ import  ogr, osr
 from tqdm import tqdm
 import numpy as np
 from scipy.stats.mstats import mode
-from geospatial_learn.utilities import min_bound_rectangle
+#from geospatial_learn.utilities import min_bound_rectangle
 from shapely.wkt import loads
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, LineString
 
 from pandas import DataFrame
 import pysal as ps
@@ -176,34 +176,32 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
         elif prop is 'MajorAxisLength':
 
             # this is a bit hacky at present but works!!
-            #TODO: Make less hacky
-            x,y=poly1.exterior.coords.xy
-            xy = np.vstack((x,y))
-            rec = min_bound_rectangle(xy.transpose())
-            poly2 = Polygon(rec)
-            minx, miny, maxx, maxy = poly2.bounds
+            #TODO: I'm not sure either is quite right but using shapely is closer
+            #x, y = poly1.minimum_rotated_rectangle.exterior.coords.xy       
+            # get major/minor axis measurements
+            #minor_axis = min(mbr_lengths)
+            #major_axis = max(mbr_lengths)
+            #x, y = conv.minimum_rotated_rectangle.exterior.coords.xy
+            #x,y=conv.exterior.coords.xy
+            #xy = np.vstack((x,y))
+            #rec = min_bound_rectangle(xy.transpose())
+            #poly2 = Polygon(rec)
+            minx, miny, maxx, maxy = conv.minimum_rotated_rectangle.bounds
             axis1 = maxx - minx
             axis2 = maxy - miny
             stats = np.array([axis1, axis2])
             feat.SetField(fldName, stats.max())
             lyr.SetFeature(feat)
         elif prop is 'MinorAxisLength':
-            x,y = conv.exterior.coords.xy
-            xy = np.vstack((x,y))
-            rec = min_bound_rectangle(xy.transpose())
-            poly2 = Polygon(rec)
-            minx, miny, maxx, maxy = poly2.bounds
+            minx, miny, maxx, maxy = conv.minimum_rotated_rectangle.bounds
             axis1 = maxx - minx
             axis2 = maxy - miny
             stats = np.array([axis1, axis2])
             feat.SetField(fldName, stats.min())
             lyr.SetFeature(feat)
+            lyr.SetFeature(feat)
         elif prop is 'Eccentricity':
-            x,y = conv.exterior.coords.xy
-            xy = np.vstack((x,y))
-            rec = min_bound_rectangle(xy.transpose())
-            poly2 = Polygon(rec)
-            minx, miny, maxx, maxy = poly2.bounds
+            minx, miny, maxx, maxy = conv.minimum_rotated_rectangle.bounds
             axis1 = maxx - minx
             axis2 = maxy - miny
             stats = np.array([axis1, axis2])
