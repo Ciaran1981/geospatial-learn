@@ -24,9 +24,9 @@ import  ogr, osr
 from tqdm import tqdm
 import numpy as np
 from scipy.stats.mstats import mode
-#from geospatial_learn.utilities import min_bound_rectangle
+from geospatial_learn.utilities import min_bound_rectangle
 from shapely.wkt import loads
-from shapely.geometry import Polygon, LineString
+from shapely.geometry import Polygon
 
 from pandas import DataFrame
 import pysal as ps
@@ -176,32 +176,34 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
         elif prop is 'MajorAxisLength':
 
             # this is a bit hacky at present but works!!
-            #TODO: I'm not sure either is quite right but using shapely is closer
-            #x, y = poly1.minimum_rotated_rectangle.exterior.coords.xy       
-            # get major/minor axis measurements
-            #minor_axis = min(mbr_lengths)
-            #major_axis = max(mbr_lengths)
-            #x, y = conv.minimum_rotated_rectangle.exterior.coords.xy
-            #x,y=conv.exterior.coords.xy
-            #xy = np.vstack((x,y))
-            #rec = min_bound_rectangle(xy.transpose())
-            #poly2 = Polygon(rec)
-            minx, miny, maxx, maxy = conv.minimum_rotated_rectangle.bounds
+            #TODO: Make less hacky
+            x,y=poly1.exterior.coords.xy
+            xy = np.vstack((x,y))
+            rec = min_bound_rectangle(xy.transpose())
+            poly2 = Polygon(rec)
+            minx, miny, maxx, maxy = poly2.bounds
             axis1 = maxx - minx
             axis2 = maxy - miny
             stats = np.array([axis1, axis2])
             feat.SetField(fldName, stats.max())
             lyr.SetFeature(feat)
         elif prop is 'MinorAxisLength':
-            minx, miny, maxx, maxy = conv.minimum_rotated_rectangle.bounds
+            x,y = conv.exterior.coords.xy
+            xy = np.vstack((x,y))
+            rec = min_bound_rectangle(xy.transpose())
+            poly2 = Polygon(rec)
+            minx, miny, maxx, maxy = poly2.bounds
             axis1 = maxx - minx
             axis2 = maxy - miny
             stats = np.array([axis1, axis2])
             feat.SetField(fldName, stats.min())
             lyr.SetFeature(feat)
-            lyr.SetFeature(feat)
         elif prop is 'Eccentricity':
-            minx, miny, maxx, maxy = conv.minimum_rotated_rectangle.bounds
+            x,y = conv.exterior.coords.xy
+            xy = np.vstack((x,y))
+            rec = min_bound_rectangle(xy.transpose())
+            poly2 = Polygon(rec)
+            minx, miny, maxx, maxy = poly2.bounds
             axis1 = maxx - minx
             axis2 = maxy - miny
             stats = np.array([axis1, axis2])
@@ -416,7 +418,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     stat : string
            string of a stat to calculate, if omitted it will be 'mean'
            others: 'mode', 'min','mean','max', 'std',' sum', 'count','var',
-           skew', 'kurtosis'
+           skew', 'kurt (osis)'
                      
     write_stat : bool (optional)
                 If True, stat will be written to OGR file, if false, dataframe
@@ -502,8 +504,6 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
             )
         )
         
-        
-        # TODO This is horrible there must be a better way....
         if stat is 'mode':
             feature_stats = mode(masked)[0]
         elif stat is 'min':
@@ -513,18 +513,18 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
         elif stat is 'max':
             feature_stats = float(masked.max())
         elif stat is 'median':
-            feature_stats = float(masked.median())
+            feature_stats = float(np.median(masked[masked.nonzero()]))
         elif stat is 'std':
             feature_stats = float(masked.std())
         elif stat is 'sum':
             feature_stats = float(masked.sum())
-        elif stat is 'count':
-            feature_stats = int(masked.count())
+#        elif stat is 'count':
+#            feature_stats = int(masked.count())
         elif stat is 'var':
             feature_stats = float(masked.var())
         elif stat is 'skew':
             feature_stats = float(skew(masked[masked.nonzero()]))
-        elif stat is 'kurtosis':
+        elif stat is 'kurt':
             feature_stats = float(kurtosis(masked[masked.nonzero()]))
         
         stats.append(feature_stats)
@@ -540,8 +540,40 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     vds = None
     rds = None
     frame = DataFrame(stats)
-    return frame, rejects
+    
+    if write_stat != None:
+        return frame, rejects
+    
+def zonal_stats_all(vector_path, raster_path, bandnames):
+    """ 
+    Calculate zonal stats for an OGR polygon file
+    
+    Parameters
+    ----------
+    
+    vector_path : string
+                  input shapefile
+        
+    raster_path : string
+                  input raster
 
+    band : int
+           an integer val eg - 2
+
+    bandnames : list
+               eg - ['b','g','r','nir']
+        
+    nodata_value : numerical
+                   If used the no data val of the raster
+        
+    """    
+
+    statList = ['mean', 'min', 'max', 'median', 'std', 'var', 'skew', 'kurt']
+
+# zonal stats
+    for bnd,name in enumerate(bandnames):
+    
+        [zonal_stats(vector_path, raster_path, bnd+1, name+st, stat=st, write_stat = True) for st in statList]
 
     
 def write_text_field(inShape, fieldName, attribute):
