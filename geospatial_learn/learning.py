@@ -29,7 +29,7 @@ except ImportError:
 
 from tqdm import tqdm
 import matplotlib
-matplotlib.use('agg')
+#matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from collections import OrderedDict
@@ -53,7 +53,7 @@ from scipy.stats import randint as sp_randint
 from scipy.stats import expon
 #from scipy.sparse import csr_matrix
 from tpot import TPOTClassifier, TPOTRegressor
-
+import warnings
 from geospatial_learn.geodata import _copy_dataset_config
 
 import pandas as pd
@@ -70,6 +70,8 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
     Create a model using the tpot library where genetic algorithms
     are used to optimise pipline and params. 
     
+    This also supports xgboost incidentally
+    
     Parameters
     ----------  
     
@@ -77,7 +79,8 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
               numpy array of training data where the 1st column is labels
     
     outModel : string
-               the output model path which is a .py file
+               the output model path (which is a .py file)
+               from which to run the pipeline
     
     cv : int
          no of folds
@@ -302,10 +305,10 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         if params is None:
                 # This is based on the Tianqi Chen author of xgb
                 # tips for data science as a starter
-                # he recommends fixing trees - I haven't as default here...
+                # he recommends fixing trees - they are 200 by default here
                 # crunch this first then fine tune rest
                 # 
-                ntrees = 500
+                ntrees = 200
                 param_grid={'n_estimators': [ntrees],
                             'learning_rate': [0.1], # fine tune last
                             'max_depth': [4, 6, 8, 10],
@@ -913,7 +916,7 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     inDataset = gdal.Open(inputImage)
     
     outDataset = _copy_dataset_config(inDataset, outMap = outMap,
-                                     bands = bands)
+                                     dtype = gdal.GDT_Byte, bands = 1)
     band = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
     rows = inDataset.RasterYSize
@@ -985,31 +988,33 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
 #                for band in range(1,bands+1):
 #                    band1 = inDataset.GetRasterBand(band)
 #                    data = band1.ReadAsArray(j, i, numCols, numRows)
-                if X.max() == 0:
-                    continue              
-                else:
-                    X.shape = ((bands,numRows*numCols))
-                    X = X.transpose() 
-                    X = np.where(np.isfinite(X),X,0) 
-                    # this is a slower line   
-                    #Xs= csr_matrix(X)
-                    
-                    # YUCK!!!!!! This is a repulsive solution
-                    if ndvi != None:
-                        ndvi1 = (X[:,3] - X[:,2]) / (X[:,3] + X[:,2]) 
-                        ndvi1.shape = (len(ndvi1), 1)
-                        ndvi1 = np.where(np.isfinite(ndvi1),ndvi1,0) 
-                        ndvi2 = (X[:,7] - X[:,6]) / (X[:,7] + X[:,6]) 
-                        ndvi2.shape = (len(ndvi2), 1)
-                        ndvi2 = np.where(np.isfinite(ndvi2),ndvi2,0) 
-                        
-                        X = np.hstack((X[:,0:4], ndvi1, X[:,4:8], ndvi2))
-                        
-                       
-                    predictClass = model1.predict(X)
-                    predictClass[X[:,0]==0]=0                    
-                    predictClass = np.reshape(predictClass, (numRows, numCols))
-                    outBand.WriteArray(predictClass,j,i)
+                with warnings.catch_warnings():
+                            warnings.simplefilter("ignore")
+                            if X.max() == 0:
+                                continue              
+                            else:
+                                X.shape = ((bands,numRows*numCols))
+                                X = X.transpose() 
+                                X = np.where(np.isfinite(X),X,0) 
+                                # this is a slower line   
+                                #Xs= csr_matrix(X)
+                                
+                                # YUCK!!!!!! This is a repulsive solution
+                                if ndvi != None:
+                                    ndvi1 = (X[:,3] - X[:,2]) / (X[:,3] + X[:,2]) 
+                                    ndvi1.shape = (len(ndvi1), 1)
+                                    ndvi1 = np.where(np.isfinite(ndvi1),ndvi1,0) 
+                                    ndvi2 = (X[:,7] - X[:,6]) / (X[:,7] + X[:,6]) 
+                                    ndvi2.shape = (len(ndvi2), 1)
+                                    ndvi2 = np.where(np.isfinite(ndvi2),ndvi2,0) 
+                                    
+                                    X = np.hstack((X[:,0:4], ndvi1, X[:,4:8], ndvi2))
+                                    
+                                   
+                                predictClass = model1.predict(X)
+                                predictClass[X[:,0]==0]=0                    
+                                predictClass = np.reshape(predictClass, (numRows, numCols))
+                                outBand.WriteArray(predictClass,j,i)
                 #print(i,j)
     outDataset.FlushCache()
     outDataset = None
@@ -1073,7 +1078,7 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
         
     inDataset = gdal.Open(inputImage)
     
-    outDataset = copy_dataset_config(inputImage, outMap = outMap,
+    outDataset = _copy_dataset_config(inputImage, outMap = outMap,
                                      bands = bands)
     band = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
@@ -1577,4 +1582,41 @@ def get_training_point(inShape, inRas, bands, field):
     return outData, rejects
     
     
+def rmse_vector_lyr(inShape, attributes):
+
+    """ 
+    Using sklearn get the rmse of 2 vector attributes 
+    (the actual and predicted of course in the order ['actual', 'pred'])
     
+    
+    Parameters 
+    ----------- 
+    
+    inShape : string
+              the input vector of OGR type
+        
+    attributes : list
+           a list of strings denoting the attributes
+         
+
+    """    
+    
+    #open the layer etc
+    shp = ogr.Open(inShape)
+    lyr = shp.GetLayer()
+    labels = np.arange(lyr.GetFeatureCount())
+    
+    # empty arrays for att
+    pred = np.zeros((1, lyr.GetFeatureCount()))
+    true = np.zeros((1, lyr.GetFeatureCount()))
+    
+    for label in labels: 
+        feat = lyr.GetFeature(label)
+        true[:,label] = feat.GetField(attributes[0])
+        pred[:,label] = feat.GetField(attributes[1])
+    
+    
+    
+    error = np.sqrt(metrics.mean_squared_error(true, pred))
+    
+    return error    
