@@ -47,7 +47,7 @@ setup(
           'Topic :: Utilities'],
     # metadata for upload to PyPI
     # zip_safe = True,
-    author="Ciaran Robb and John Roberts",
+    author="Ciaran Robb",
     description=descript,
     long_description=long_description,
     license='GPLv3+',

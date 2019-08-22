@@ -1,2 +1,0 @@
-include install_conda_packages.bat
-include install_conda_packages.sh

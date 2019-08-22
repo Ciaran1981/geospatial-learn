@@ -45,6 +45,7 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, Gradi
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 #from sklearn.cross_validation import cross_val_score
 from sklearn.externals import joblib
+from sklearn import metrics
 import joblib as jb
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from geospatial_learn.geodata import array2raster

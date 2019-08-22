@@ -29,7 +29,7 @@ from shapely.wkt import loads
 from shapely.geometry import Polygon
 
 from pandas import DataFrame
-import pysal as ps
+from pysal.lib import io
 import pandas as pd
 #from osgeo.gdalconst import *
 #import sys
@@ -776,7 +776,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
 
 
 def _dbf2DF(dbfile, upper=True): #Reads in DBF files and returns Pandas DF
-    db = ps.open(dbfile) #Pysal to open DBF
+    db = io.open(dbfile) #Pysal to open DBF
     d = {col: db.by_col(col) for col in db.header} #Convert dbf to dictionary
     #pandasDF = pd.DataFrame(db[:]) #Convert to Pandas DF
     pandasDF = pd.DataFrame(d) #Convert to Pandas DF
