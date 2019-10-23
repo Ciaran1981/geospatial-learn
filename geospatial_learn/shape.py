@@ -428,7 +428,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
                    If used the no data val of the raster
         
     """    
-    # Inspired/Adapted from Matt Perry's excellent script
+    # Inspired by Matt Perry's excellent script
     
     rds = gdal.Open(raster_path, gdal.GA_ReadOnly)
     #assert(rds)
@@ -504,27 +504,27 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
             )
         )
         
-        if stat is 'mode':
+        if stat == 'mode':
             feature_stats = mode(masked)[0]
-        elif stat is 'min':
+        elif stat == 'min':
             feature_stats = float(masked.min())
-        elif stat is 'mean':
+        elif stat == 'mean':
             feature_stats = float(masked.mean())
-        elif stat is 'max':
+        elif stat == 'max':
             feature_stats = float(masked.max())
-        elif stat is 'median':
+        elif stat == 'median':
             feature_stats = float(np.median(masked[masked.nonzero()]))
-        elif stat is 'std':
+        elif stat == 'std':
             feature_stats = float(masked.std())
-        elif stat is 'sum':
+        elif stat == 'sum':
             feature_stats = float(masked.sum())
 #        elif stat is 'count':
 #            feature_stats = int(masked.count())
-        elif stat is 'var':
+        elif stat == 'var':
             feature_stats = float(masked.var())
-        elif stat is 'skew':
+        elif stat == 'skew':
             feature_stats = float(skew(masked[masked.nonzero()]))
-        elif stat is 'kurt':
+        elif stat == 'kurt':
             feature_stats = float(kurtosis(masked[masked.nonzero()]))
         
         stats.append(feature_stats)
@@ -737,7 +737,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
                                                     np.logical_not(rv_array)))
         
         
-        if gprop is 'entropy':
+        if gprop == 'entropy':
             _, counts = np.unique(zone.nonzero(), return_counts=True)
             props = entropy(counts, base=2)
         elif mean is True and gprop != 'entropy':

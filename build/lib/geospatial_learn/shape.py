@@ -29,7 +29,7 @@ from shapely.wkt import loads
 from shapely.geometry import Polygon
 
 from pandas import DataFrame
-import pysal as ps
+from pysal.lib import io
 import pandas as pd
 #from osgeo.gdalconst import *
 #import sys
@@ -68,7 +68,7 @@ def shp2gj(inShape, outJson):
     buffer = []
     for sr in reader.shapeRecords():
         atr = dict(zip(field_names, sr.record))
-        geom = sr.shape._median_geo_interface__
+        geom = sr.shape.__geo_interface__
         buffer.append(dict(type="Feature", 
                            geometry=geom, properties=atr)) 
        
@@ -376,8 +376,8 @@ def _bbox_to_pixel_offsets(rgt, geom):
     # Specify offset and rows and columns to read
     xoff = int((xmin - xOrigin)/pixelWidth)
     yoff = int((yOrigin - ymax)/pixelWidth)
-    xcount = int((xmax - xmin)/pixelWidth)
-    ycount = int((ymax - ymin)/pixelWidth)
+    xcount = int((xmax - xmin)/pixelWidth)+1
+    ycount = int((ymax - ymin)/pixelWidth)+1
 #    originX = gt[0]
 #    originY = gt[3]
 #    pixel_width = gt[1]
@@ -389,9 +389,9 @@ def _bbox_to_pixel_offsets(rgt, geom):
 #    y2 = int((bbox[2] - originY) / pixel_height) + 1
 #
 #    xsize = x2 - x1
-#    ysize = y2 - y1se
+#    ysize = y2 - y1
 #    return (x1, y1, xsize, ysize)
-    return [xoff, yoff, xcount, ycount]        
+    return (xoff, yoff, xcount, ycount)        
 
 
 def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
@@ -418,7 +418,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     stat : string
            string of a stat to calculate, if omitted it will be 'mean'
            others: 'mode', 'min','mean','max', 'std',' sum', 'count','var',
-           skew', 'kurtosis'
+           skew', 'kurt (osis)'
                      
     write_stat : bool (optional)
                 If True, stat will be written to OGR file, if false, dataframe
@@ -450,43 +450,24 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
 
     # Loop through vectors
     stats = []
-   # feat = vlyr.GetNextFeature()
-    #features = np.arange(vlyr.GetFeatureCount())
+    feat = vlyr.GetNextFeature()
+    features = np.arange(vlyr.GetFeatureCount())
     rejects = list()
-    
-    
-    for feat in tqdm(vlyr):
-       # feat = vlyr.GetNextFeature()
-        #feat = vlyr.GetFeature(label)
+    for label in tqdm(features):
 
-#        if feat is None:
-#            feat = vlyr.GetFeature(label+1)
-#            continue
+        if feat is None:
+            continue
         geom = feat.geometry()
 
         src_offset = _bbox_to_pixel_offsets(rgt, geom)
-        
-        # ugly yes, but sometimes geotrans not quite right
-        if src_offset[0] + src_offset[2] > rds.RasterXSize:
-            diffx = src_offset[0] + src_offset[2] - rds.RasterXSize
-            src_offset[2] = src_offset[0] + src_offset[2] - diffx
-        elif src_offset[1] + src_offset[3] > rds.RasterYSize:
-            diffy = src_offset[1] + src_offset[3] - rds.RasterYSize
-            src_offset[3] = src_offset[1] + src_offset[3] - diffy
-            
         src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                src_offset[3])
-
-
-#                continue
-#        elif src_array.size is 1:
-#            rejects.append(feat.GetFID())
-#                continue
-
-#            src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
-#                               src_offset[3])
-#            if src_array is None:
-#                
+        if src_array is None:
+            src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
+                               src_offset[3])
+            if src_array is None:
+                rejects.append(feat.GetFID())
+                continue
 
         # calculate new geotransform of the feature subset
         new_gt = (
@@ -514,7 +495,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
         # we also mask out nodata values explictly
             
 
-
+        #rejects.append(feat.GetField('DN'))
         masked = np.ma.MaskedArray(
             src_array,
             mask=np.logical_or(
@@ -522,11 +503,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
                 np.logical_not(rv_array)
             )
         )
-            
         
-        
-        
-        # TODO This is horrible there must be a better way....
         if stat is 'mode':
             feature_stats = mode(masked)[0]
         elif stat is 'min':
@@ -541,19 +518,20 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
             feature_stats = float(masked.std())
         elif stat is 'sum':
             feature_stats = float(masked.sum())
-        elif stat is 'count':
-            feature_stats = int(masked.count())
+#        elif stat is 'count':
+#            feature_stats = int(masked.count())
         elif stat is 'var':
             feature_stats = float(masked.var())
         elif stat is 'skew':
             feature_stats = float(skew(masked[masked.nonzero()]))
-        elif stat is 'kurtosis':
+        elif stat is 'kurt':
             feature_stats = float(kurtosis(masked[masked.nonzero()]))
         
         stats.append(feature_stats)
         if write_stat != None:
             feat.SetField(bandname, feature_stats)
             vlyr.SetFeature(feat)
+        feat = vlyr.GetNextFeature()
     if write_stat != None:
         vlyr.SyncToDisk()
     #vds.FlushCache()
@@ -561,10 +539,41 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
 
     vds = None
     rds = None
-    vlyr = None
     frame = DataFrame(stats)
-    return frame
+    
+    if write_stat != None:
+        return frame, rejects
+    
+def zonal_stats_all(vector_path, raster_path, bandnames):
+    """ 
+    Calculate zonal stats for an OGR polygon file
+    
+    Parameters
+    ----------
+    
+    vector_path : string
+                  input shapefile
+        
+    raster_path : string
+                  input raster
 
+    band : int
+           an integer val eg - 2
+
+    bandnames : list
+               eg - ['b','g','r','nir']
+        
+    nodata_value : numerical
+                   If used the no data val of the raster
+        
+    """    
+
+    statList = ['mean', 'min', 'max', 'median', 'std', 'var', 'skew', 'kurt']
+
+# zonal stats
+    for bnd,name in enumerate(bandnames):
+    
+        [zonal_stats(vector_path, raster_path, bnd+1, name+st, stat=st, write_stat = True) for st in statList]
 
     
 def write_text_field(inShape, fieldName, attribute):
@@ -662,7 +671,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
    #assert(vds)
     vlyr = vds.GetLayer(0)
     if write_stat != None:
-        gname = gprop[:5]+str(band)
+        gname = gprop[:10]
         vlyr.CreateField(ogr.FieldDefn(gname, ogr.OFTReal))
 
 
@@ -684,22 +693,20 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
             # advantage: each feature uses the smallest raster chunk
             # disadvantage: lots of reads on the source raster
 
-#        if feat is None:
-#            feat = vlyr.GetFeature(label)
+        if feat is None:
+            feat = vlyr.GetFeature(label)
 
         geom = feat.geometry()
         
         src_offset = _bbox_to_pixel_offsets(rgt, geom)
-        
-        if src_offset[0] + src_offset[2] > rds.RasterXSize:
-            diffx = src_offset[0] + src_offset[2] - rds.RasterXSize
-            src_offset[2] = src_offset[0] + src_offset[2] - diffx
-        elif src_offset[1] + src_offset[3] > rds.RasterYSize:
-            diffy = src_offset[1] + src_offset[3] - rds.RasterYSize
-            src_offset[3] = src_offset[1] + src_offset[3] - diffy
-        
         src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                src_offset[3])
+        if src_array is None:
+            src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
+                               src_offset[3])
+            if src_array is None:
+                rejects.append(feat.GetFID())
+                continue
 
         # calculate new geotransform of the feature subset
         new_gt = (
@@ -769,7 +776,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
 
 
 def _dbf2DF(dbfile, upper=True): #Reads in DBF files and returns Pandas DF
-    db = ps.open(dbfile) #Pysal to open DBF
+    db = io.open(dbfile) #Pysal to open DBF
     d = {col: db.by_col(col) for col in db.header} #Convert dbf to dictionary
     #pandasDF = pd.DataFrame(db[:]) #Convert to Pandas DF
     pandasDF = pd.DataFrame(d) #Convert to Pandas DF
