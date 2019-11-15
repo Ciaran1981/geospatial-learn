@@ -56,10 +56,6 @@ Commiserations, you are using Windows (hehe)
 
 Same procedure as Unix based system
 
-If you run into problems here, such as certain packages unavailable with Python 3.5/6, I suggest creating a conda environment with python 3.4, then following the above procedure. At the time of writing for example (31/08/17), gdal is not available in py3.5+ on windows anaconda and py3.6 on linux platforms.
-
-I have not provided xgboost instructions here, there are some on the native website along with ensuring the lib points to your python environment of choice. 
-
 
 Quickstart
 ----------
@@ -110,14 +106,8 @@ available soon
 Project History
 ---------------
 
-Geospatial-learn was originally written by Dr Ciaran Robb whilst at the University of Leicester. The functionality was written as part of various research projects involving Earth observation & geo-spatial data. 
+Geospatial-learn is written and maintained by Ciaran Robb. The functionality was written as part of various research projects involving Earth observation & geo-spatial data. 
 
-Geospatial-learn is currently written and maintained by Ciaran Robb and John Roberts. The module is at a very early stage at present and there is more material wrtten that has yet to be added.     
-
-Help and Support
-----------------
-
-available soon
 
 Citation
 ~~~~~~~~
