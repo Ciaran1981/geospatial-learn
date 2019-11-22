@@ -1,0 +1,47 @@
+name: geospatial_learn
+
+dependencies:
+  - python=3
+  - pip
+  - opencv
+  - numpy
+  - jupyter
+  - matplotlib
+  - gdal
+  - scikit-image
+  - scikit-learn
+  - pytest
+  - git
+  - pandas
+  - imageio
+  - ipywidgets
+  - nb_conda
+  - joblib
+  - glob2
+  - pillow
+  - tqdm
+  - joblib
+  - lxml
+  - pandas
+  - glob2
+  - more-itertools
+  - psutil
+  - shapely
+  - tenacity
+  - tpot
+  - simpledbf
+  - glymur
+  - xgboost
+  - pysal
+
+  - pip:
+    - pyzbar
+    - pysolar
+    - mapboxgl
+    - git+https://github.com/smarnach/pyexiftool.git#egg=pyexiftoolpy
+    - imageio-ffmpeg
+    - open3d
+    - git+https://github.com/Ciaran1981/geospatial-learn#egg=geospatial-learnpy
+    - xmltodict
+    - sentinelhub==0.1.7
+    - planet

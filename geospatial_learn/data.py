@@ -14,33 +14,20 @@ import json
 import glob2
 import os
 from tqdm import tqdm
-#from sentinelsat import sentinel
-# TODO maybe improve this so it doesn't use a global
-#try:
 from sentinelsat import SentinelAPI, read_geojson, geojson_to_wkt
-#except:
-#    ImportError 
-#    print('using older version of sentinelsat')
-#    oldsat = True
-#    from sentinelsat.sentinel import SentinelAPI, get_coordinates
 
-#import os
 import gdal, ogr
-#import select
-#import shapefile
+
 import numpy as np
-#import xml.etree.ElementTree as etree
+
 from more_itertools import unique_everseen
 from shapely.wkt import loads
 import xmltodict
-#import wget
 import csv
 import datetime
 import sys
 from joblib import Parallel, delayed
 from sentinelhub import download_safe_format
-#from shapely.geometry import  mapping
-#from shapely.geometry import Polygon
 from planet import api as planet_api
 import requests
 import tenacity

@@ -29,21 +29,19 @@ except ImportError:
 
 from tqdm import tqdm
 import matplotlib
-#matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from collections import OrderedDict
-#import os
+
 import shapefile
 import glob
 from sklearn import svm
 import gdal, ogr#,osr
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
-#from sklearn import cross_validation, metrics 
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier,RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import LogisticRegression, SGDClassifier
-#from sklearn.cross_validation import cross_val_score
+
 from sklearn.externals import joblib
 from sklearn import metrics
 import joblib as jb
@@ -52,7 +50,6 @@ from geospatial_learn.geodata import array2raster
 from geospatial_learn.shape import _bbox_to_pixel_offsets#, zonal_stats
 from scipy.stats import randint as sp_randint
 from scipy.stats import expon
-#from scipy.sparse import csr_matrix
 from tpot import TPOTClassifier, TPOTRegressor
 import warnings
 from geospatial_learn.geodata import _copy_dataset_config

@@ -9,11 +9,9 @@ This module contains various functions for the writing of data in OGR vector
 formats. The functions are mainly concerned with writing geometric or pixel based attributes, with the view to them being classified in the learning module
 
 """
-#from time import time
 from skimage.measure import regionprops
 from scipy.stats import entropy, skew, kurtosis
 from skimage import feature
-#from rasterstats import zonal_stats
 from sklearn import cluster
 import shapefile
 from simpledbf import Dbf5
@@ -27,12 +25,9 @@ from scipy.stats.mstats import mode
 from geospatial_learn.utilities import min_bound_rectangle
 from shapely.wkt import loads
 from shapely.geometry import Polygon
-
 from pandas import DataFrame
 from pysal.lib import io
 import pandas as pd
-#from osgeo.gdalconst import *
-#import sys
 
 gdal.UseExceptions()
 ogr.UseExceptions()
