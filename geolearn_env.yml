@@ -32,6 +32,10 @@ dependencies:
   - glymur
   - xgboost
   - pysal
+  - pyshp
+  - pytables
+  - sqlalchemy
+  - urbanaccess
 
   - pip:
     - pyzbar
@@ -45,3 +49,6 @@ dependencies:
     - sentinelhub==0.1.7
     - planet
     - simpledbf
+
+
+
