@@ -29,7 +29,6 @@ dependencies:
   - shapely
   - tenacity
   - tpot
-  - simpledbf
   - glymur
   - xgboost
   - pysal
@@ -45,3 +44,4 @@ dependencies:
     - xmltodict
     - sentinelhub==0.1.7
     - planet
+    - simpledbf

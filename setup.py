@@ -2,7 +2,7 @@
 """
 @author: ciaran
 """
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.install import install
 from io import open
 import subprocess

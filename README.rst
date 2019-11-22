@@ -24,37 +24,9 @@ User installation
 
 Installation use the anaconda/miniconda system please install this first
 
-If you wish to isolate the lib in its own environment simply create one using the conda cmd line with your own env name in quotes:
-
-E.g.
-
 .. code-block:: bash
    
-   conda create -n "pygeolearn"
-
-Linux/Unix - based
-~~~~~~~~~~~~~~~~~
-
-Library install
-
-download using the git clone cmd or download as a zip
-
-- cd into the folder
-
-- open a terminal and type:
-
-.. code-block:: bash
-    
-   python setup.py install
-
-This will install the library and dependencies
-
-Windows - based
-~~~~~~~~~~~~~~~~~   
-
-Commiserations, you are using Windows (hehe)
-
-Same procedure as Unix based system
+conda env create -f geolearn_env.yml
 
 
 Quickstart
