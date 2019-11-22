@@ -605,8 +605,8 @@ def write_text_field(inShape, fieldName, attribute):
 
     
 
-def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
-                  angle=0, write_stat=None, nodata_value=None, mean=True):
+def texture_stats(vector_path, raster_path, band, gprop='contrast',
+                  offset=2,angle=0, write_stat=None, nodata_value=0, mean=False):
     
     """ 
     Calculate and optionally write texture stats for an OGR compatible polygon
@@ -627,10 +627,14 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
             correlation
         
     offset : int
-             distance in pixels to measure 
+             distance in pixels to measure - minimum of 2!!!
         
     angle : int
-            angle in degrees from pixel (int)
+            angle in degrees from pixel (int) 
+            
+            135  90    45
+            \    I    /
+                 c    -  0         
      
     mean : bool
            take the mean of all offsets
@@ -666,7 +670,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
    #assert(vds)
     vlyr = vds.GetLayer(0)
     if write_stat != None:
-        gname = gprop[:10]
+        gname = gprop[:10]+str(band)
         vlyr.CreateField(ogr.FieldDefn(gname, ogr.OFTReal))
 
 
@@ -702,6 +706,9 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
             if src_array is None:
                 rejects.append(feat.GetFID())
                 continue
+            if src_array.size == 1:
+                rejects.append(feat.GetFID())
+                continue
 
         # calculate new geotransform of the feature subset
         new_gt = (
@@ -730,21 +737,22 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast', offset=0,
         zone = np.ma.MaskedArray(src_array,
                                  mask=np.logical_or(src_array == nodata_value, 
                                                     np.logical_not(rv_array)))
-        
+
         
         if gprop == 'entropy':
-            _, counts = np.unique(zone.nonzero(), return_counts=True)
+            _, counts = np.unique(zone, return_counts=True)
             props = entropy(counts, base=2)
         elif mean is True and gprop != 'entropy':
             angles = np.radians([135,90,45,0])
             
-            g = feature.greycomatrix(np.uint8(zone.nonzero()), [1],
+            
+            g = feature.greycomatrix(zone, [offset],
                                      angles, symmetric=True)
             props = feature.greycoprops(g, prop=gprop)
             props = props.mean()
         elif mean is False and gprop != 'entropy': 
-            g = feature.greycomatrix(np.uint8(zone.nonzero()), [offset],
-                                     [np.radians(angle)], symmetric=True)
+            g = feature.greycomatrix(zone, [offset],
+                                     [np.radians(angle)], 256, symmetric=True)
             props = feature.greycoprops(g, prop=gprop)
        
             
