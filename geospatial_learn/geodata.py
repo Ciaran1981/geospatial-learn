@@ -16,7 +16,6 @@ import os
 import numpy as np
 import glob2
 from geospatial_learn.data import _get_S2_geoinfo
-from geospatial_learn.shape import _bbox_to_pixel_offsets
 from geospatial_learn.gdal_merge import _merge
 import tempfile
 #from pyrate.shared import DEM
@@ -898,18 +897,18 @@ def calc_ndvi(inputIm, outputIm, bandsList, blocksize = 256, FMT = None, dtype=N
         fmt = '.tif'
     
     if dtype is None:
-        dtype = gdal.GDT_Int32
+        dtype = gdal.GDT_Float32
         
     inDataset = gdal.Open(inputIm, gdal.GA_Update)
     
-    bands = inDataset.RasterCount+1
+    bands = int(inDataset.RasterCount+1)
     
     bnnd = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
     rows = inDataset.RasterYSize
 
-    outDataset = _copy_dataset_config(inputIm, outMap = outputIm,
-                                     bands = bands)
+    outDataset = _copy_dataset_config(inDataset, outMap=outputIm,
+                                     bands=bands, dtype=dtype)
     
     # So with most datasets blocksize is a row scanline
     if blocksize == None:

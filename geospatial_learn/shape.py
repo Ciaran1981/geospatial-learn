@@ -24,10 +24,17 @@ import numpy as np
 from scipy.stats.mstats import mode
 from geospatial_learn.utilities import min_bound_rectangle
 from shapely.wkt import loads
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, box, LineString
 from pandas import DataFrame
 from pysal.lib import io
 import pandas as pd
+from skimage.segmentation import active_contour, find_boundaries
+from shapely.affinity import affine_transform, rotate
+import morphsnakes as ms
+from geospatial_learn.geodata import _copy_dataset_config, polygonize
+import warnings
+from skimage.filters import gaussian
+from skimage import exposure
 
 gdal.UseExceptions()
 ogr.UseExceptions()
@@ -162,13 +169,13 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
         wkt=geom.ExportToWkt()
         poly1 = loads(wkt)
         conv = poly1.convex_hull
-        if prop is 'Area':
+        if prop == 'Area':
             stat = geom.Area()
             fldName = propNames[prop]
             feat.SetField(fldName, stat)
             lyr.SetFeature(feat)
 
-        elif prop is 'MajorAxisLength':
+        elif prop == 'MajorAxisLength':
 
             # this is a bit hacky at present but works!!
             #TODO: Make less hacky
@@ -182,7 +189,7 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
             stats = np.array([axis1, axis2])
             feat.SetField(fldName, stats.max())
             lyr.SetFeature(feat)
-        elif prop is 'MinorAxisLength':
+        elif prop == 'MinorAxisLength':
             x,y = conv.exterior.coords.xy
             xy = np.vstack((x,y))
             rec = min_bound_rectangle(xy.transpose())
@@ -193,7 +200,7 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
             stats = np.array([axis1, axis2])
             feat.SetField(fldName, stats.min())
             lyr.SetFeature(feat)
-        elif prop is 'Eccentricity':
+        elif prop == 'Eccentricity':
             x,y = conv.exterior.coords.xy
             xy = np.vstack((x,y))
             rec = min_bound_rectangle(xy.transpose())
@@ -205,24 +212,24 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
             ecc = stats.min() / stats.max()
             feat.SetField(fldName, ecc)
             lyr.SetFeature(feat)            
-        elif prop is 'Solidity':
+        elif prop == 'Solidity':
             #conv = poly1.convex_hull
             bbox = poly1.envelope
             stat = conv.area / bbox.area
             feat.SetField(fldName, stat)
             lyr.SetFeature(feat)
-        elif prop is 'Extent':
+        elif prop == 'Extent':
             bbox = poly1.envelope
             stat = poly1.area / bbox.area
             feat.SetField(fldName, stat)
             lyr.SetFeature(feat)
-        elif prop is 'Perimeter':
+        elif prop == 'Perimeter':
             bbox = poly1.envelope
             stat = poly1.length # important to note length means
             feat.SetField(fldName, stat)
             lyr.SetFeature(feat) 
             # TODO - this may not write to shape as a tuple
-        elif prop is 'Centroid':
+        elif prop == 'Centroid':
             cent=poly1.centroid
             stat = cent.coords[0]            
         else:
@@ -480,7 +487,11 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
         mem_layer.CreateFeature(feat.Clone())
 
         # Rasterize it
+
         rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
+     
+        rvds.SetGeoTransform(new_gt)
+        rvds.SetProjection(rds.GetProjectionRef())
         rvds.SetGeoTransform(new_gt)
         gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
         rv_array = rvds.ReadAsArray()
@@ -539,7 +550,9 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     if write_stat != None:
         return frame, rejects
     
-def zonal_stats_all(vector_path, raster_path, bandnames):
+def zonal_stats_all(vector_path, raster_path, bandnames, 
+                    statList = ['mean', 'min', 'max', 'median', 'std',
+                                'var', 'skew', 'kurt']):
     """ 
     Calculate zonal stats for an OGR polygon file
     
@@ -563,13 +576,181 @@ def zonal_stats_all(vector_path, raster_path, bandnames):
         
     """    
 
-    statList = ['mean', 'min', 'max', 'median', 'std', 'var', 'skew', 'kurt']
-
 # zonal stats
     for bnd,name in enumerate(bandnames):
     
         [zonal_stats(vector_path, raster_path, bnd+1, name+st, stat=st, write_stat = True) for st in statList]
 
+def zonal_rgb_idx(vector_path, raster_path, nodata_value=0):
+    
+    """ 
+    Calculate zonal stats for an OGR polygon file
+    
+    Parameters
+    ----------
+    
+    vector_path : string
+                  input shapefile
+        
+    raster_path : string
+                  input raster
+        
+    nodata_value : numerical
+                   If used the no data val of the raster
+        
+    """    
+    # Inspired by Matt Perry's excellent script
+    
+    rds = gdal.Open(raster_path, gdal.GA_ReadOnly)
+    #assert(rds)
+    rb = rds.GetRasterBand(1)
+    rgt = rds.GetGeoTransform()
+
+    if nodata_value:
+        nodata_value = float(nodata_value)
+        rb.SetNoDataValue(nodata_value)
+
+    vds = ogr.Open(vector_path, 1)  # TODO maybe open update if we want to write stats
+   #assert(vds)
+    vlyr = vds.GetLayer(0)
+    #if write_stat != None:
+    field_names = ['ExG', 'ExR', 'ExGR', 'ExGR', 'CIVE', 'NDI', 'RGBVI', 'VARI',
+         'ARI', 'RGBI', 'GLI', 'TGL']
+    
+    [vlyr.CreateField(ogr.FieldDefn(f, ogr.OFTReal)) for f in field_names]
+
+    mem_drv = ogr.GetDriverByName('Memory')
+    driver = gdal.GetDriverByName('MEM')
+
+    # Loop through vectors
+    stats = []
+    feat = vlyr.GetNextFeature()
+    features = np.arange(vlyr.GetFeatureCount())
+    rejects = list()
+    for label in tqdm(features):
+
+        if feat is None:
+            continue
+        geom = feat.geometry()
+
+        src_offset = _bbox_to_pixel_offsets(rgt, geom)
+    
+        new_gt = (
+        (rgt[0] + (src_offset[0] * rgt[1])),
+        rgt[1],
+        0.0,
+        (rgt[3] + (src_offset[1] * rgt[5])),
+        0.0,
+        rgt[5])
+
+            
+        # Create a temporary vector layer in memory
+        mem_ds = mem_drv.CreateDataSource('out')
+        mem_layer = mem_ds.CreateLayer('poly', None, ogr.wkbPolygon)
+        mem_layer.CreateFeature(feat.Clone())
+
+        # Rasterize it
+
+        rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
+     
+        rvds.SetGeoTransform(new_gt)
+        rvds.SetProjection(rds.GetProjectionRef())
+        rvds.SetGeoTransform(new_gt)
+        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
+        rv_array = rvds.ReadAsArray()>0
+        
+                
+        # There must be a less ugly way surely......
+        rgb = np.zeros(( src_offset[3], src_offset[2], 3))
+        
+        for band in range(1, rds.RasterCount):
+            rBnd = rds.GetRasterBand(band)
+            rgb[:,:, band-1] = rBnd.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                               src_offset[3])
+            rgb[:,:, band-1]*=rv_array
+            
+        r = rgb[:,:,0]
+        g = rgb[:,:,1]
+        b = rgb[:,:,2]
+        del rgb
+        
+        # This all horrendously inefficient for now - must be addressed
+        
+        exG = (g * 2) - (r - b)        
+        feat.SetField('ExG', np.nanmean(exG))            
+        exR = (r * 1.4) - g
+        feat.SetField('ExR', np.nanmean(exR))
+        exGR = exG-exR
+        feat.SetField('ExGR', np.nanmean(exGR))       
+        CIVE = (r * 0.441) - (g * 0.811) + (b * 0.385) +18.78745
+        feat.SetField('CIVE', np.nanmean(CIVE))
+        # someting not right with this one!
+        NDI = (g - r) / (g + r)
+        feat.SetField('NDI', np.nanmean(NDI))
+        RGBVI = (g**2 - b) * r / (g**2 + b) * r
+        feat.SetField('RGBVI', np.nanmean(RGBVI))
+        VARI = (g-r) / (g+r) - b
+        feat.SetField('VARI', np.nanmean(VARI))
+        ARI = 1 / (g * r)
+        feat.SetField('ARI', np.nanmean(ARI))
+        RGBI = r / g
+        feat.SetField('RGBI', np.nanmean(RGBI))
+        GLI = (g-r) + (g-b) / (2* g) + r + b
+        feat.SetField('GLI', np.nanmean(GLI))        
+        TGL = (g - 0.39) * (r - 0.61) * b
+        feat.SetField('TGL', np.nanmean(TGL)) 
+        # Mask the source data array with our current feature
+        # we take the logical_not to flip 0<->1 to get the correct mask effect
+        # we also mask out nodata values explictly
+            
+
+        #rejects.append(feat.GetField('DN'))
+#        masked = np.ma.MaskedArray(
+#            rgb,
+#            mask=np.logical_or(
+#                rgb == nodata_value,
+#                np.logical_not(rv_array)
+#            )
+#        )
+#        
+#        if stat == 'mode':
+#            feature_stats = mode(masked)[0]
+#        elif stat == 'min':
+#            feature_stats = float(masked.min())
+#        elif stat == 'mean':
+#            feature_stats = float(masked.mean())
+#        elif stat == 'max':
+#            feature_stats = float(masked.max())
+#        elif stat == 'median':
+#            feature_stats = float(np.median(masked[masked.nonzero()]))
+#        elif stat == 'std':
+#            feature_stats = float(masked.std())
+#        elif stat == 'sum':
+#            feature_stats = float(masked.sum())
+##        elif stat is 'count':
+##            feature_stats = int(masked.count())
+#        elif stat == 'var':
+#            feature_stats = float(masked.var())
+#        elif stat == 'skew':
+#            feature_stats = float(skew(masked[masked.nonzero()]))
+#        elif stat == 'kurt':
+#            feature_stats = float(kurtosis(masked[masked.nonzero()]))
+#        
+#        stats.append(feature_stats)
+#        if write_stat != None:
+#        feat.SetField(bandname, feature_stats)
+        vlyr.SetFeature(feat)
+        feat = vlyr.GetNextFeature()
+
+    vds.SyncToDisk()
+    #vds.FlushCache()
+
+
+    vds = None
+    rds = None
+#    
+#    if write_stat != None:
+#        return frame, rejects
     
 def write_text_field(inShape, fieldName, attribute):
     
@@ -633,7 +814,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast',
             angle in degrees from pixel (int) 
             
             135  90    45
-            \    I    /
+            \    |    /
                  c    -  0         
      
     mean : bool
@@ -698,6 +879,10 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast',
         geom = feat.geometry()
         
         src_offset = _bbox_to_pixel_offsets(rgt, geom)
+        
+        src_offset = list(src_offset)
+        
+        
         src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                src_offset[3])
         if src_array is None:
@@ -726,7 +911,13 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast',
         mem_layer.CreateFeature(feat.Clone())
 
         # Rasterize it
-        rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
+        #with warnings.catch_warnings():
+
+        warnings.simplefilter("ignore")
+        rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Int32)
+     
+        rvds.SetGeoTransform(new_gt)
+        rvds.SetProjection(rds.GetProjectionRef())
         rvds.SetGeoTransform(new_gt)
         gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
         rv_array = rvds.ReadAsArray()
@@ -775,8 +966,389 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast',
     frame = DataFrame(stats)
     return frame, rejects
 
-    
 
+def snake(vector_path, raster_path, outShp, band, buf=1, nodata_value=0,
+          boundary='fixed', alpha=0.1, beta=1.0, w_line=0, w_edge=0, gamma=0.1,
+          max_iterations=2500, smooth=False, eq=False):
+    
+    """ 
+    Deform a line using active contours based on the values of an underlying
+    
+    raster - based on skimage at present so 
+    
+    not quick!
+    
+    Notes
+    -----
+    
+    Param explanations for snake/active contour from scikit-image api
+    
+    Parameters
+    ----------
+    
+    
+    vector_path: string
+                  input shapefile
+        
+    raster_path: string
+                  input raster
+
+    band: int
+           an integer val eg - 2
+
+    buf: int
+            the buffer area to include for the snake deformation
+            
+    alpha: float
+            Snake length shape parameter. Higher values makes snake contract faster.
+            
+    beta: float
+        Snake smoothness shape parameter. Higher values makes snake smoother.
+    
+    w_line: float
+    
+           Controls attraction to brightness. Use negative values to attract toward dark regions.
+           
+    w_edge: float
+            Controls attraction to edges. Use negative values to repel snake from edges.
+    
+    gamma: float
+    
+            Explicit time stepping parameter.
+    
+    max_iterations: int
+            
+            No of iterations to evolve snake        
+    
+    boundary: string
+            Scikit-image text:
+            Boundary conditions for the contour. Can be one of ‘periodic’, 
+            ‘free’, ‘fixed’, ‘free-fixed’, or ‘fixed-free’. 
+            ‘periodic’ attaches the two ends of the snake, ‘fixed’ 
+            holds the end-points in place, 
+            and ‘free’ allows free movement of the ends. 
+            ‘fixed’ and ‘free’ can be combined by parsing ‘fixed-free’, 
+            ‘free-fixed’. Parsing ‘fixed-fixed’ or ‘free-free’ 
+            yields same behaviour as ‘fixed’ and ‘free’, respectively.
+            
+    nodata_value: numerical
+                   If used the no data val of the raster
+        
+    """    
+    
+    # Partly inspired by the Heikpe paper...
+    # TODO actually implement the Heipke paper properly
+    
+    rds = gdal.Open(raster_path, gdal.GA_ReadOnly)
+    #assert(rds)
+    rb = rds.GetRasterBand(band)
+    rgt = rds.GetGeoTransform()
+
+    if nodata_value:
+        nodata_value = float(nodata_value)
+        rb.SetNoDataValue(nodata_value)
+
+    vds = ogr.Open(vector_path, 1)  # TODO maybe open update if we want to write stats
+   #assert(vds)
+    vlyr = vds.GetLayer(0)
+#    if write_stat != None:
+#        vlyr.CreateField(ogr.FieldDefn(bandname, ogr.OFTReal))
+
+    mem_drv = ogr.GetDriverByName('Memory')
+    driver = gdal.GetDriverByName('MEM')
+
+    # Loop through vectors
+
+    feat = vlyr.GetNextFeature()
+    features = np.arange(vlyr.GetFeatureCount())
+    
+    
+    # make a new vector to be writtent
+    
+    outShapefile = outShp
+    outDriver = ogr.GetDriverByName("ESRI Shapefile")
+    
+    # Remove output shapefile if it already exists
+    if os.path.exists(outShapefile):
+        outDriver.DeleteDataSource(outShapefile)
+    
+    # get the spatial ref
+    ref = vlyr.GetSpatialRef()
+    
+    # Create the output shapefile
+    outDataSource = outDriver.CreateDataSource(outShapefile)
+    outLayer = outDataSource.CreateLayer("OutLyr", geom_type=ogr.wkbMultiLineString,
+                                         srs=ref)
+    
+    # Add an ID field
+    idField = ogr.FieldDefn("id", ogr.OFTInteger)
+    outLayer.CreateField(idField)
+    
+    
+    
+#    rejects = list()
+    for label in tqdm(features):
+
+        if feat is None:
+            continue
+        geom = feat.geometry()
+        
+        buff = geom.Buffer(buf)
+        
+        wkt=buff.ExportToWkt()
+        
+        poly1 = loads(wkt)
+        
+        src_offset = _bbox_to_pixel_offsets(rgt, buff)
+        
+        src_offset = list(src_offset)
+        
+        for idx, off in enumerate(src_offset):
+            if off <=0:
+                src_offset[idx]=0
+               
+        src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                               src_offset[3])
+        if src_array is None:
+            src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
+                               src_offset[3])
+            if src_array is None:
+#                rejects.append(feat.GetFID())
+                continue
+
+        # calculate new geotransform of the feature subset
+        new_gt = (
+        (rgt[0] + (src_offset[0] * rgt[1])),
+        rgt[1],
+        0.0,
+        (rgt[3] + (src_offset[1] * rgt[5])),
+        0.0,
+        rgt[5])
+                    
+
+        
+        mem_ds = mem_drv.CreateDataSource('out')
+        mem_layer = mem_ds.CreateLayer('line', None, ogr.wkbPolygon)
+        mem_layer.CreateFeature(feat.Clone())
+#
+#        # Rasterize it
+        #
+        rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
+        rvds.SetGeoTransform(new_gt)
+        rvds.SetProjection(rds.GetProjectionRef())
+        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore")
+                            gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
+        rv_array = rvds.ReadAsArray()
+        
+        rr, cc = rv_array.nonzero()
+        
+        
+    
+        
+        init = np.array([rr, cc]).T
+        
+        if smooth == True:
+            src_array = gaussian(src_array)
+        if eq == True:
+            src_array = exposure.equalize_hist(src_array)
+            
+    
+        snake = active_contour(src_array, init, boundary_condition=boundary,
+                           alpha=alpha, beta=beta, w_line=w_line, w_edge=w_edge,
+                           gamma=gamma, max_iterations=max_iterations,
+                           coordinates='rc')        
+        """
+        for reference
+        xOrigin = rgt[0]
+        yOrigin = rgt[3]
+        pixelWidth = rgt[1]
+        pixelHeight = rgt[5]
+
+       """ 
+# FOR REF WHEN DEBUGGING DONT DEL
+#        xlist = list(snake[:,1])
+#        ylist = list(snake[:,0])
+#        
+#        #snakeLine = LineString(zip(xlist, ylist))     
+               
+        snList=snake.tolist()
+        outSnk = []
+#                
+#        
+#        upper_left_x, x_res, x_rotation, upper_left_y, y_rotation, y_res = rgt
+        
+        
+        for s in snList:
+            x = s[1]
+            y = s[0]
+            xout = (x * new_gt[1]) + new_gt[0]
+            yout = (y * new_gt[5]) + new_gt[3]
+            
+            outSnk.append([xout, yout])
+
+        snakeLine2 = LineString(outSnk)
+        
+        
+        geomOut = ogr.CreateGeometryFromWkt(snakeLine2.wkt)
+        
+        featureDefn = outLayer.GetLayerDefn()
+        feature = ogr.Feature(featureDefn)
+        
+        feature.SetGeometry(geomOut)
+        feature.SetField("id", 1)
+        outLayer.CreateFeature(feature)
+        feature = None
+        
+        
+        
+
+    outDataSource.SyncToDisk()
+      
+    outDataSource=None
+    vds = None    
+        
+def ms_snake(vector_path, raster_path, outShp, band, buf=1, nodata_value=0,
+          iterations=200,  smoothing=3, lambda1=1, lambda2=1):
+    
+    """ 
+    Deform a line using active contours where the end-points are fixed based
+    
+    on the values of an underlying raster
+    
+    Parameters
+    ----------
+    
+    vector_path : string
+                  input shapefile
+        
+    raster_path : string
+                  input raster
+
+    band : int
+           an integer val eg - 2
+
+    bandname : string
+               eg - blue
+          
+    nodata_value : numerical
+                   If used the no data val of the raster
+        
+    """    
+    
+    # Partly inspired by the Heikpe paper...
+   
+    
+    rds = gdal.Open(raster_path, gdal.GA_ReadOnly)
+    #assert(rds)
+    rb = rds.GetRasterBand(band)
+    rgt = rds.GetGeoTransform()
+
+    if nodata_value:
+        nodata_value = float(nodata_value)
+        rb.SetNoDataValue(nodata_value)
+
+    vds = ogr.Open(vector_path, 1)  # TODO maybe open update if we want to write stats
+   #assert(vds)
+    vlyr = vds.GetLayer(0)
+#    if write_stat != None:
+#        vlyr.CreateField(ogr.FieldDefn(bandname, ogr.OFTReal))
+
+    mem_drv = ogr.GetDriverByName('Memory')
+    driver = gdal.GetDriverByName('MEM')
+
+    # Loop through vectors
+
+    feat = vlyr.GetNextFeature()
+    features = np.arange(vlyr.GetFeatureCount())
+
+    
+    outDataset = _copy_dataset_config(rds, outMap = outShp[:-4],
+                                     bands = 1)
+    
+    outBnd = outDataset.GetRasterBand(1)
+    
+#    rejects = list()
+    for label in tqdm(features):
+
+        if feat is None:
+            continue
+        geom = feat.geometry()
+        
+        buff = geom.Buffer(buf)
+        
+        wkt=buff.ExportToWkt()
+        
+        poly1 = loads(wkt)
+        
+        src_offset = _bbox_to_pixel_offsets(rgt, buff)
+        
+        src_offset = list(src_offset)
+        
+        for idx, off in enumerate(src_offset):
+            if off <=0:
+                src_offset[idx]=0
+               
+        src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                               src_offset[3])
+        if src_array is None:
+            src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
+                               src_offset[3])
+            if src_array is None:
+#                rejects.append(feat.GetFID())
+                continue
+
+        # calculate new geotransform of the feature subset
+        new_gt = (
+        (rgt[0] + (src_offset[0] * rgt[1])),
+        rgt[1],
+        0.0,
+        (rgt[3] + (src_offset[1] * rgt[5])),
+        0.0,
+        rgt[5])
+                    
+        # Create a temporary vector layer in memory
+        mem_ds = mem_drv.CreateDataSource('out')
+        mem_layer = mem_ds.CreateLayer('poly', None, ogr.wkbPolygon)
+        mem_layer.CreateFeature(feat.Clone())
+#
+#        # Rasterize it
+        
+        rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
+        rvds.SetGeoTransform(new_gt)
+        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
+        rv_array = rvds.ReadAsArray()
+        
+        
+        bw = ms.morphological_chan_vese(src_array, iterations=iterations,
+                               init_level_set=rv_array,
+                               smoothing=smoothing, lambda1=lambda1,
+                               lambda2=lambda2)
+        
+        segoot = np.int32(bw)
+        segoot[bw[bw>0]]=label+1
+        
+        outBnd.WriteArray(segoot, src_offset[0], src_offset[1])
+        
+
+        """
+        for reference
+        xOrigin = rgt[0]
+        yOrigin = rgt[3]
+        pixelWidth = rgt[1]
+        pixelHeight = rgt[5]
+        
+       """
+    
+    outDataset.FlushCache()
+    
+    outDataset=None
+    vds = None
+    
+    polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1)    
+
+    
+                
 
 def _dbf2DF(dbfile, upper=True): #Reads in DBF files and returns Pandas DF
     db = io.open(dbfile) #Pysal to open DBF
@@ -788,3 +1360,19 @@ def _dbf2DF(dbfile, upper=True): #Reads in DBF files and returns Pandas DF
     db.close() 
     return pandasDF
     
+##### make a new vector to be written for reference
+    
+#    outShapefile = outShp
+#    outDriver = ogr.GetDriverByName("ESRI Shapefile")
+#    
+#    # Remove output shapefile if it already exists
+#    if os.path.exists(outShapefile):
+#        outDriver.DeleteDataSource(outShapefile)
+#    
+#    # Create the output shapefile
+#    outDataSource = outDriver.CreateDataSource(outShapefile)
+#    outLayer = outDataSource.CreateLayer("OutLyr", geom_type=ogr.wkbMultiPolygon)
+#    
+#    # Add an ID field
+#    idField = ogr.FieldDefn("id", ogr.OFTInteger)
+#    outLayer.CreateField(idField)
