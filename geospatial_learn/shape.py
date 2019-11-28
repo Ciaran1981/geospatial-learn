@@ -581,10 +581,10 @@ def zonal_stats_all(vector_path, raster_path, bandnames,
     
         [zonal_stats(vector_path, raster_path, bnd+1, name+st, stat=st, write_stat = True) for st in statList]
 
-def zonal_rgb_idx(vector_path, raster_path, nodata_value=0):
+def zonal_rgb_idx(vector_path, raster_path, nodata_value='nan'):
     
     """ 
-    Calculate zonal stats for an OGR polygon file
+    Calculate RGB-based indicies per segment/AOI
     
     Parameters
     ----------
@@ -689,12 +689,14 @@ def zonal_rgb_idx(vector_path, raster_path, nodata_value=0):
         b = rgb[:,:,2]
         del rgb
         
-        # This all horrendously inefficient for now - must be addressed
+        # This all horrendously inefficient for now - must be addressed later
+        # otsu threshold works perfectly on green band - would be better stat representation
+        
         exG = (g * 2) - (r - b)        
         feat.SetField('ExGmn', np.nanmean(exG))            
         exR = (r * 1.4) - g
         feat.SetField('ExRmn', np.nanmean(exR))
-        exGR = exG-exR
+        exGR = exG - exR
         feat.SetField('ExGRmn', np.nanmean(exGR))       
         CIVE = ((r * 0.441) - (g * 0.811)) + (b * 0.385) +18.78745
         feat.SetField('CIVEmn', np.nanmean(CIVE))
@@ -703,7 +705,7 @@ def zonal_rgb_idx(vector_path, raster_path, nodata_value=0):
         feat.SetField('NDImn', np.nanmean(NDI))
         RGBVI = ((g**2 - b) * r) / ((g**2 + b) * r)
         feat.SetField('RGBVImn', np.nanmean(RGBVI))
-        VARI = (g-r) / (g+r) - b
+        VARI = ((g-r) / (g+r)- b)
         feat.SetField('VARImn', np.nanmean(VARI))
         ARI = 1 / (g * r)
         feat.SetField('ARImn', np.nanmean(ARI))
