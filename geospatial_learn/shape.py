@@ -599,7 +599,7 @@ def zonal_rgb_idx(vector_path, raster_path, nodata_value=0):
                    If used the no data val of the raster
         
     """    
-    # Inspired by Matt Perry's excellent script
+    #TODO ad other stat types - consider mask array for safety......
     
     rds = gdal.Open(raster_path, gdal.GA_ReadOnly)
     #assert(rds)
@@ -614,8 +614,8 @@ def zonal_rgb_idx(vector_path, raster_path, nodata_value=0):
    #assert(vds)
     vlyr = vds.GetLayer(0)
     #if write_stat != None:
-    field_names = ['ExG', 'ExR', 'ExGR', 'ExGR', 'CIVE', 'NDI', 'RGBVI', 'VARI',
-         'ARI', 'RGBI', 'GLI', 'TGL']
+    field_names = ['ExGmn', 'ExRmn', 'ExGRmn', 'CIVEmn', 'NDImn', 'RGBVImn', 'VARImn',
+         'ARImn', 'RGBImn', 'GLImn', 'TGLmn']
     
     [vlyr.CreateField(ogr.FieldDefn(f, ogr.OFTReal)) for f in field_names]
 
@@ -668,38 +668,8 @@ def zonal_rgb_idx(vector_path, raster_path, nodata_value=0):
             rgb[:,:, band-1] = rBnd.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                src_offset[3])
             rgb[:,:, band-1]*=rv_array
-            
-        r = rgb[:,:,0]
-        g = rgb[:,:,1]
-        b = rgb[:,:,2]
-        del rgb
         
-        # This all horrendously inefficient for now - must be addressed
-        
-        exG = (g * 2) - (r - b)        
-        feat.SetField('ExG', np.nanmean(exG))            
-        exR = (r * 1.4) - g
-        feat.SetField('ExR', np.nanmean(exR))
-        exGR = exG-exR
-        feat.SetField('ExGR', np.nanmean(exGR))       
-        CIVE = (r * 0.441) - (g * 0.811) + (b * 0.385) +18.78745
-        feat.SetField('CIVE', np.nanmean(CIVE))
-        # someting not right with this one!
-        NDI = (g - r) / (g + r)
-        feat.SetField('NDI', np.nanmean(NDI))
-        RGBVI = (g**2 - b) * r / (g**2 + b) * r
-        feat.SetField('RGBVI', np.nanmean(RGBVI))
-        VARI = (g-r) / (g+r) - b
-        feat.SetField('VARI', np.nanmean(VARI))
-        ARI = 1 / (g * r)
-        feat.SetField('ARI', np.nanmean(ARI))
-        RGBI = r / g
-        feat.SetField('RGBI', np.nanmean(RGBI))
-        GLI = (g-r) + (g-b) / (2* g) + r + b
-        feat.SetField('GLI', np.nanmean(GLI))        
-        TGL = (g - 0.39) * (r - 0.61) * b
-        feat.SetField('TGL', np.nanmean(TGL)) 
-        # Mask the source data array with our current feature
+                # Mask the source data array with our current feature
         # we take the logical_not to flip 0<->1 to get the correct mask effect
         # we also mask out nodata values explictly
             
@@ -713,32 +683,38 @@ def zonal_rgb_idx(vector_path, raster_path, nodata_value=0):
 #            )
 #        )
 #        
-#        if stat == 'mode':
-#            feature_stats = mode(masked)[0]
-#        elif stat == 'min':
-#            feature_stats = float(masked.min())
-#        elif stat == 'mean':
-#            feature_stats = float(masked.mean())
-#        elif stat == 'max':
-#            feature_stats = float(masked.max())
-#        elif stat == 'median':
-#            feature_stats = float(np.median(masked[masked.nonzero()]))
-#        elif stat == 'std':
-#            feature_stats = float(masked.std())
-#        elif stat == 'sum':
-#            feature_stats = float(masked.sum())
-##        elif stat is 'count':
-##            feature_stats = int(masked.count())
-#        elif stat == 'var':
-#            feature_stats = float(masked.var())
-#        elif stat == 'skew':
-#            feature_stats = float(skew(masked[masked.nonzero()]))
-#        elif stat == 'kurt':
-#            feature_stats = float(kurtosis(masked[masked.nonzero()]))
-#        
-#        stats.append(feature_stats)
-#        if write_stat != None:
-#        feat.SetField(bandname, feature_stats)
+            
+        r = rgb[:,:,0]
+        g = rgb[:,:,1]
+        b = rgb[:,:,2]
+        del rgb
+        
+        # This all horrendously inefficient for now - must be addressed
+        exG = (g * 2) - (r - b)        
+        feat.SetField('ExGmn', np.nanmean(exG))            
+        exR = (r * 1.4) - g
+        feat.SetField('ExRmn', np.nanmean(exR))
+        exGR = exG-exR
+        feat.SetField('ExGRmn', np.nanmean(exGR))       
+        CIVE = ((r * 0.441) - (g * 0.811)) + (b * 0.385) +18.78745
+        feat.SetField('CIVEmn', np.nanmean(CIVE))
+        # someting not right with this one!
+        NDI = (g - r) / (g + r)
+        feat.SetField('NDImn', np.nanmean(NDI))
+        RGBVI = ((g**2 - b) * r) / ((g**2 + b) * r)
+        feat.SetField('RGBVImn', np.nanmean(RGBVI))
+        VARI = (g-r) / (g+r) - b
+        feat.SetField('VARImn', np.nanmean(VARI))
+        ARI = 1 / (g * r)
+        feat.SetField('ARImn', np.nanmean(ARI))
+        RGBI = r / g
+        feat.SetField('RGBImn', np.nanmean(RGBI))
+        GLI = ((g-r) + (g-b)) / (2* g) + r + b
+        feat.SetField('GLImn', np.nanmean(GLI))        
+        TGL = (g - 0.39) * (r - 0.61) * b
+        feat.SetField('TGLmn', np.nanmean(TGL)) 
+
+
         vlyr.SetFeature(feat)
         feat = vlyr.GetNextFeature()
 
