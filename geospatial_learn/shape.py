@@ -37,7 +37,7 @@ from skimage.filters import gaussian
 from skimage import exposure
 
 gdal.UseExceptions()
-ogr.UseExceptions()
+#ogr.UseExceptions()
 
 
 def shp2gj(inShape, outJson):
@@ -581,7 +581,65 @@ def zonal_stats_all(vector_path, raster_path, bandnames,
     
         [zonal_stats(vector_path, raster_path, bnd+1, name+st, stat=st, write_stat = True) for st in statList]
 
-def zonal_rgb_idx(vector_path, raster_path, nodata_value='nan'):
+def _set_rgb_ind(feat, rv_array, src_offset, rds, nodata_value):
+    
+    
+    rgb = np.zeros((src_offset[3], src_offset[2], 3))
+    
+    for band in range(1, rds.RasterCount):
+        
+        rBnd = rds.GetRasterBand(band)
+        
+        rgb[:,:, band-1] = rBnd.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                                   src_offset[3])
+        
+        
+        # Mask the source data array with our current feature
+        # we take the logical_not to flip 0<->1 to get the correct mask effect
+        # we also mask out nodata values explictly
+                   
+        r = rgb[:,:,0]
+        g = rgb[:,:,1]
+        b = rgb[:,:,2]
+        
+        r = np.ma.MaskedArray(r, mask=np.logical_or(r == nodata_value,
+                                                            np.logical_not(rv_array)))
+        g = np.ma.MaskedArray(g, mask=np.logical_or(g == nodata_value,
+                                                            np.logical_not(rv_array)))
+        b = np.ma.MaskedArray(b, mask=np.logical_or(b == nodata_value,
+                                                            np.logical_not(rv_array)))        
+        
+    del rgb
+        
+    # This all horrendously inefficient for now - must be addressed later
+    # For some reason ogr won't accept the masked.mean() in the set feature function hence the float - must be python -> C++ type thing
+    # otsu threshold works perfectly on green band - would be better stat representation
+    exG = (g * 2) - (r - b)        
+    feat.SetField('ExGmn', float(exG.mean()))            
+    exR = (r * 1.4) - g
+    feat.SetField('ExRmn',  float(exR.mean()))
+    exGR = exG - exR
+    feat.SetField('ExGRmn',  float(exGR.mean()))       
+    cive = ((r * 0.441) - (g * 0.811)) + (b * 0.385) +18.78745
+    feat.SetField('CIVEmn',  float(cive.mean()))
+    # someting not right with this one!
+    ndi = (g - r) / (g + r)
+    feat.SetField('NDImn',  float(ndi.mean()))
+    rgbvi = ((g**2 - b) * r) / ((g**2 + b) * r)
+    feat.SetField('RGBVImn',  float(rgbvi.mean()))
+    vari = ((g-r) / (g+r)- b)
+    feat.SetField('VARImn',  float(vari.mean()))
+    ari = 1 / (g * r)
+    feat.SetField('ARImn',  float(ari.mean()))
+    rgbi = r / g
+    feat.SetField('RGBImn',  float(rgbi.mean()))
+    gli = ((g-r) + (g-b)) / (2* g) + r + b
+    feat.SetField('GLImn',  float(gli.mean())) 
+    tgl = (g - 0.39) * (r - 0.61) * b
+    feat.SetField('TGLmn',  float(tgl.mean()))
+        
+
+def zonal_rgb_idx(vector_path, raster_path, nodata_value=0):
     
     """ 
     Calculate RGB-based indicies per segment/AOI
@@ -627,6 +685,7 @@ def zonal_rgb_idx(vector_path, raster_path, nodata_value='nan'):
     feat = vlyr.GetNextFeature()
     features = np.arange(vlyr.GetFeatureCount())
     rejects = list()
+    
     for label in tqdm(features):
 
         if feat is None:
@@ -659,64 +718,8 @@ def zonal_rgb_idx(vector_path, raster_path, nodata_value='nan'):
         gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
         rv_array = rvds.ReadAsArray()>0
         
-                
-        # There must be a less ugly way surely......
-        rgb = np.zeros(( src_offset[3], src_offset[2], 3))
+        _set_rgb_ind(feat, rv_array, src_offset, rds, nodata_value)
         
-        for band in range(1, rds.RasterCount):
-            rBnd = rds.GetRasterBand(band)
-            rgb[:,:, band-1] = rBnd.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
-                               src_offset[3])
-            rgb[:,:, band-1]*=rv_array
-        
-                # Mask the source data array with our current feature
-        # we take the logical_not to flip 0<->1 to get the correct mask effect
-        # we also mask out nodata values explictly
-            
-
-        #rejects.append(feat.GetField('DN'))
-#        masked = np.ma.MaskedArray(
-#            rgb,
-#            mask=np.logical_or(
-#                rgb == nodata_value,
-#                np.logical_not(rv_array)
-#            )
-#        )
-#        
-            
-        r = rgb[:,:,0]
-        g = rgb[:,:,1]
-        b = rgb[:,:,2]
-        del rgb
-        
-        # This all horrendously inefficient for now - must be addressed later
-        # otsu threshold works perfectly on green band - would be better stat representation
-        
-        exG = (g * 2) - (r - b)        
-        feat.SetField('ExGmn', np.nanmean(exG))            
-        exR = (r * 1.4) - g
-        feat.SetField('ExRmn', np.nanmean(exR))
-        exGR = exG - exR
-        feat.SetField('ExGRmn', np.nanmean(exGR))       
-        CIVE = ((r * 0.441) - (g * 0.811)) + (b * 0.385) +18.78745
-        feat.SetField('CIVEmn', np.nanmean(CIVE))
-        # someting not right with this one!
-        NDI = (g - r) / (g + r)
-        feat.SetField('NDImn', np.nanmean(NDI))
-        RGBVI = ((g**2 - b) * r) / ((g**2 + b) * r)
-        feat.SetField('RGBVImn', np.nanmean(RGBVI))
-        VARI = ((g-r) / (g+r)- b)
-        feat.SetField('VARImn', np.nanmean(VARI))
-        ARI = 1 / (g * r)
-        feat.SetField('ARImn', np.nanmean(ARI))
-        RGBI = r / g
-        feat.SetField('RGBImn', np.nanmean(RGBI))
-        GLI = ((g-r) + (g-b)) / (2* g) + r + b
-        feat.SetField('GLImn', np.nanmean(GLI))        
-        TGL = (g - 0.39) * (r - 0.61) * b
-        feat.SetField('TGLmn', np.nanmean(TGL)) 
-
-
         vlyr.SetFeature(feat)
         feat = vlyr.GetNextFeature()
 
