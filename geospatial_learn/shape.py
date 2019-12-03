@@ -35,9 +35,10 @@ from geospatial_learn.geodata import _copy_dataset_config, polygonize
 import warnings
 from skimage.filters import gaussian
 from skimage import exposure
+from skimage.filters import threshold_otsu, threshold_niblack, threshold_sauvola
 
 gdal.UseExceptions()
-#ogr.UseExceptions()
+ogr.UseExceptions()
 
 
 def shp2gj(inShape, outJson):
@@ -598,18 +599,26 @@ def _set_rgb_ind(feat, rv_array, src_offset, rds, nodata_value):
         # we take the logical_not to flip 0<->1 to get the correct mask effect
         # we also mask out nodata values explictly
                    
-        r = rgb[:,:,0]
-        g = rgb[:,:,1]
-        b = rgb[:,:,2]
-        
-        r = np.ma.MaskedArray(r, mask=np.logical_or(r == nodata_value,
-                                                            np.logical_not(rv_array)))
-        g = np.ma.MaskedArray(g, mask=np.logical_or(g == nodata_value,
-                                                            np.logical_not(rv_array)))
-        b = np.ma.MaskedArray(b, mask=np.logical_or(b == nodata_value,
-                                                            np.logical_not(rv_array)))        
-        
+    r = rgb[:,:,0]
+    g = rgb[:,:,1]
+    b = rgb[:,:,2]
+    
     del rgb
+    
+    r = r / (r+g+b)
+    g = g / (r+g+b)
+    b = b / (r+g+b)
+    
+
+    
+    r = np.ma.MaskedArray(r, mask=np.logical_or(r == nodata_value,
+                                                        np.logical_not(rv_array)))
+    g = np.ma.MaskedArray(g, mask=np.logical_or(g == nodata_value,
+                                                        np.logical_not(rv_array)))
+    b = np.ma.MaskedArray(b, mask=np.logical_or(b == nodata_value,
+                                                        np.logical_not(rv_array)))        
+        
+    
         
     # This all horrendously inefficient for now - must be addressed later
     # For some reason ogr won't accept the masked.mean() in the set feature function hence the float - must be python -> C++ type thing
@@ -1180,6 +1189,7 @@ def snake(vector_path, raster_path, outShp, band, buf=1, nodata_value=0,
         feature.SetField("id", 1)
         outLayer.CreateFeature(feature)
         feature = None
+        feat = vlyr.GetNextFeature()
         
         
         
@@ -1189,13 +1199,14 @@ def snake(vector_path, raster_path, outShp, band, buf=1, nodata_value=0,
     outDataSource=None
     vds = None    
         
-def ms_snake(vector_path, raster_path, outShp, band, buf=1, nodata_value=0,
-          iterations=200,  smoothing=3, lambda1=1, lambda2=1):
+def ms_snake(vector_path, raster_path, outShp, band, buf=1, algo="ACWE", nodata_value=0,
+          iterations=200,  smoothing=3, lambda1=1, lambda2=1, threshold=0.69, 
+          balloon=-1):
     
     """ 
-    Deform a line using active contours where the end-points are fixed based
+    Deform a polygon using active contours on the values of an underlying raster.
     
-    on the values of an underlying raster
+    This uses morphsnakes and explanations are from there.
     
     Parameters
     ----------
@@ -1209,11 +1220,46 @@ def ms_snake(vector_path, raster_path, outShp, band, buf=1, nodata_value=0,
     band : int
            an integer val eg - 2
 
-    bandname : string
-               eg - blue
+    algo : string
+           either "GAC" (geodesic active contours) or the default "ACWE" (active contours without edges)
           
     nodata_value : numerical
                    If used the no data val of the raster
+
+    iterations : uint
+        Number of iterations to run.
+        
+    smoothing : uint, optional
+    
+        Number of times the smoothing operator is applied per iteration.
+        Reasonable values are around 1-4. Larger values lead to smoother
+        segmentations.
+    
+    lambda1 : float, optional
+    
+        Weight parameter for the outer region. If `lambda1` is larger than
+        `lambda2`, the outer region will contain a larger range of values than
+        the inner region.
+        
+    lambda2 : float, optional
+    
+        Weight parameter for the inner region. If `lambda2` is larger than
+        `lambda1`, the inner region will contain a larger range of values than
+        the outer region.
+    
+    threshold : float, optional
+    
+        Areas of the image with a value smaller than this threshold will be
+        considered borders. The evolution of the contour will stop in this
+        areas.
+        
+    balloon : float, optional
+    
+        Balloon force to guide the contour in non-informative areas of the
+        image, i.e., areas where the gradient of the image is too small to push
+        the contour towards a border. A negative value will shrink the contour,
+        while a positive value will expand the contour in these areas. Setting
+        this to zero will disable the balloon force.
         
     """    
     
@@ -1244,8 +1290,8 @@ def ms_snake(vector_path, raster_path, outShp, band, buf=1, nodata_value=0,
     features = np.arange(vlyr.GetFeatureCount())
 
     
-    outDataset = _copy_dataset_config(rds, outMap = outShp[:-4],
-                                     bands = 1)
+    outDataset = _copy_dataset_config(rds, outMap = outShp[:-4]+'.tif',
+                                     bands = 1, )
     
     outBnd = outDataset.GetRasterBand(1)
     
@@ -1300,16 +1346,22 @@ def ms_snake(vector_path, raster_path, outShp, band, buf=1, nodata_value=0,
         gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
         rv_array = rvds.ReadAsArray()
         
+        if algo == "ACWE":       
         
-        bw = ms.morphological_chan_vese(src_array, iterations=iterations,
-                               init_level_set=rv_array,
-                               smoothing=smoothing, lambda1=lambda1,
-                               lambda2=lambda2)
-        
+            bw = ms.morphological_chan_vese(src_array, iterations=iterations,
+                                   init_level_set=rv_array,
+                                   smoothing=smoothing, lambda1=lambda1,
+                                   lambda2=lambda2)
+        elif algo == "GAC":
+            gimg = ms.inverse_gaussian_gradient(src_array)
+            bw = ms.morphological_geodesic_active_contour(gimg, iterations, rv_array,
+                                             smoothing=smoothing, threshold=threshold,
+                                             balloon=balloon)
         segoot = np.int32(bw)
-        segoot[bw[bw>0]]=label+1
-        
+        segoot*=int(label)+1
         outBnd.WriteArray(segoot, src_offset[0], src_offset[1])
+        del segoot
+        feat = vlyr.GetNextFeature()
         
 
         """
@@ -1326,9 +1378,159 @@ def ms_snake(vector_path, raster_path, outShp, band, buf=1, nodata_value=0,
     outDataset=None
     vds = None
     
+    # This is a hacky solution for now really, but it works well enough!
     polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1)    
 
+def thresh_seg(vector_path, raster_path, outShp, band, algo='otsu', nodata_value=0):
     
+    """ 
+    Use an image processing technique to threshold foreground and background in a polygon segment.
+    
+    This default is otsu's method.
+    
+    Parameters
+    ----------
+    
+    vector_path : string
+                  input shapefile
+        
+    raster_path : string
+                  input raster
+
+    band : int
+           an integer val eg - 2
+
+    algo : string
+           'otsu', niblack, sauvola
+          
+    nodata_value : numerical
+                   If used the no data val of the raster
+
+ 
+    """    
+    
+    # Partly inspired by the Heikpe paper...
+   
+    
+    rds = gdal.Open(raster_path, gdal.GA_ReadOnly)
+    #assert(rds)
+    rb = rds.GetRasterBand(band)
+    rgt = rds.GetGeoTransform()
+
+    if nodata_value:
+        nodata_value = float(nodata_value)
+        rb.SetNoDataValue(nodata_value)
+
+    vds = ogr.Open(vector_path, 1)  # TODO maybe open update if we want to write stats
+   #assert(vds)
+    vlyr = vds.GetLayer(0)
+#    if write_stat != None:
+#        vlyr.CreateField(ogr.FieldDefn(bandname, ogr.OFTReal))
+
+    mem_drv = ogr.GetDriverByName('Memory')
+    driver = gdal.GetDriverByName('MEM')
+
+    # Loop through vectors
+
+    feat = vlyr.GetNextFeature()
+    features = np.arange(vlyr.GetFeatureCount())
+
+    
+    outDataset = _copy_dataset_config(rds, outMap = outShp[:-4]+'.tif',
+                                     bands = 1, )
+    
+    outBnd = outDataset.GetRasterBand(1)
+    
+#    rejects = list()
+    for label in tqdm(features):
+
+        if feat is None:
+            continue
+        geom = feat.geometry()
+        
+        src_offset = _bbox_to_pixel_offsets(rgt, geom)
+        
+        src_offset = list(src_offset)
+        
+        
+        src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                               src_offset[3])
+        if src_array is None:
+            src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
+                               src_offset[3])
+            if src_array is None:
+                rejects.append(feat.GetFID())
+                continue
+            if src_array.size == 1:
+                rejects.append(feat.GetFID())
+                continue
+
+        # calculate new geotransform of the feature subset
+        new_gt = (
+        (rgt[0] + (src_offset[0] * rgt[1])),
+        rgt[1],
+        0.0,
+        (rgt[3] + (src_offset[1] * rgt[5])),
+        0.0,
+        rgt[5])
+            
+            
+        # Create a temporary vector layer in memory
+        mem_ds = mem_drv.CreateDataSource('out')
+        mem_layer = mem_ds.CreateLayer('poly', None, ogr.wkbPolygon)
+        mem_layer.CreateFeature(feat.Clone())
+
+        # Rasterize it
+        #with warnings.catch_warnings():
+
+        warnings.simplefilter("ignore")
+        rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Int32)
+     
+        rvds.SetGeoTransform(new_gt)
+        rvds.SetProjection(rds.GetProjectionRef())
+        rvds.SetGeoTransform(new_gt)
+        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
+        rv_array = rvds.ReadAsArray()
+        
+        src_array *= rv_array>0
+        if src_array.max()==0:
+            continue
+#        zone = np.ma.MaskedArray(src_array,
+#                                 mask=np.logical_or(src_array == nodata_value, 
+#                                                    np.logical_not(rv_array)))
+        
+        if algo == 'otsu':       
+            t = threshold_otsu(src_array)
+        elif algo == 'niblack':
+            t = threshold_niblack(src_array)
+        elif algo == 'sauvola':
+            t = threshold_sauvola(src_array)                            
+                             
+        bw = src_array > t
+
+        segoot = np.int32(bw)
+        segoot*=int(label)+1
+        outBnd.WriteArray(segoot, src_offset[0], src_offset[1])
+        del segoot
+        feat = vlyr.GetNextFeature()
+        
+
+        """
+        for reference
+        xOrigin = rgt[0]
+        yOrigin = rgt[3]
+        pixelWidth = rgt[1]
+        pixelHeight = rgt[5]
+        
+       """
+    
+    outDataset.FlushCache()
+    
+    outDataset=None
+    vds = None
+    
+    # This is a hacky solution for now really, but it works well enough!
+    polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1)        
                 
 
 def _dbf2DF(dbfile, upper=True): #Reads in DBF files and returns Pandas DF

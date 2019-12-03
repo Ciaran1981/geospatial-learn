@@ -952,7 +952,98 @@ def calc_ndvi(inputIm, outputIm, bandsList, blocksize = 256, FMT = None, dtype=N
     outDataset.FlushCache()
     outDataset = None
 
+def rgb_ind(inputIm, outputIm, blocksize = 256, FMT = None, 
+            dtype=gdal.GDT_Float32):
+    """ 
+    Create a copy of an image with an ndvi band added
+    
+    Parameters 
+    ----------- 
+    
+    inputIm : string
+              the granule folder 
+        
+    bands : list
+            a list of band indicies to be used, eg - [3,4] for Sent2 data
 
+    FMT : string
+          the output gdal format eg 'Gtiff', 'KEA', 'HFA'
+        
+    blocksize : int
+                the chunk of raster read in & write out
+    
+
+    """
+
+    if FMT == None:
+        FMT = 'Gtiff'
+        fmt = '.tif'
+    if FMT == 'HFA':
+        fmt = '.img'
+    if FMT == 'KEA':
+        fmt = '.kea'
+    if FMT == 'Gtiff':
+        fmt = '.tif'
+    
+    if dtype is None:
+        dtype = gdal.GDT_Float32
+        
+    inDataset = gdal.Open(inputIm, gdal.GA_Update)
+    
+    bands = int(inDataset.RasterCount)
+    
+    bnnd = inDataset.GetRasterBand(1)
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
+
+    outDataset = _copy_dataset_config(inDataset, outMap=outputIm,
+                                     bands=bands, dtype=dtype)
+    
+    # So with most datasets blocksize is a row scanline
+    if blocksize == None:
+        blocksize = bnnd.GetBlockSize()
+        blocksizeX = blocksize[0]
+        blocksizeY = blocksize[1]
+    else:
+        blocksizeX = blocksize
+        blocksizeY = blocksize         
+    
+                
+    for i in tqdm(range(0, rows, blocksizeY)):
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
+            else:
+                numRows = rows -i
+        
+            for j in range(0, cols, blocksizeX):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+                rgb = np.zeros((numRows, numCols, 3))
+                
+                for band in range(1, bands):
+                    inbnd = inDataset.GetRasterBand(band)
+                    rgb[:,:, band-1] = inbnd.ReadAsArray(j, i, numCols, numRows)
+                
+                # ugly and efficient for now
+                r = rgb[:,:,0]
+                g = rgb[:,:,1]
+                b = rgb[:,:,2]
+    
+                del rgb
+    
+                r = r / (r+g+b)
+                g = g / (r+g+b)
+                b = b / (r+g+b)
+                outList = [r,g,b]
+                del r, g, b
+                for band in range(1, bands):
+                    outbnd = outDataset.GetRasterBand(band)
+                    outbnd.WriteArray(outList[band-1], j , i)
+
+    outDataset.FlushCache()
+    outDataset = None
 
 
 def remove_cloud_S2(inputIm, sceneIm,
