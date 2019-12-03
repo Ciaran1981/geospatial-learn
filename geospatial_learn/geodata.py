@@ -104,7 +104,7 @@ def array2raster(array, bands, inRaster, outRas, dtype, FMT=None):
     driver = gdal.GetDriverByName(FMT)
 
     dataset = driver.Create(
-        outRas+fmt, 
+        outRas, 
         x_pixels,
         y_pixels,
         bands,
