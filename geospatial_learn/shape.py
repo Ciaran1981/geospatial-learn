@@ -1199,7 +1199,7 @@ def snake(vector_path, raster_path, outShp, band, buf=1, nodata_value=0,
     outDataSource=None
     vds = None    
         
-def ms_snake(vector_path, raster_path, outShp, band, buf=1, algo="ACWE", nodata_value=0,
+def ms_snake(vector_path, raster_path, outShp, band, buf=0, algo="ACWE", nodata_value=0,
           iterations=200,  smoothing=3, lambda1=1, lambda2=1, threshold=0.69, 
           balloon=-1):
     
@@ -1302,11 +1302,16 @@ def ms_snake(vector_path, raster_path, outShp, band, buf=1, algo="ACWE", nodata_
             continue
         geom = feat.geometry()
         
-        buff = geom.Buffer(buf)
-        
-        wkt=buff.ExportToWkt()
-        
-        poly1 = loads(wkt)
+        if buf != 0:
+            
+            buff = geom.Buffer(buf)
+            
+            # for debug
+            #wkt=buff.ExportToWkt()
+
+            #poly1 = loads(wkt)
+        else:
+            buff=geom
         
         src_offset = _bbox_to_pixel_offsets(rgt, buff)
         
