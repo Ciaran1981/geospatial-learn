@@ -12,9 +12,9 @@ formats. The functions are mainly concerned with writing geometric or pixel base
 from skimage.measure import regionprops
 from scipy.stats import entropy, skew, kurtosis
 from skimage import feature
-from sklearn import cluster
+#from sklearn import cluster
 import shapefile
-from simpledbf import Dbf5
+#from simpledbf import Dbf5
 import os
 import gdal
 from json import dumps
@@ -28,14 +28,16 @@ from shapely.geometry import Polygon, box, LineString
 from pandas import DataFrame
 from pysal.lib import io
 import pandas as pd
-from skimage.segmentation import active_contour, find_boundaries
-from shapely.affinity import affine_transform, rotate
+#from skimage.segmentation import active_contour, find_boundaries
+#from shapely.affinity import affine_transform, rotate
 import morphsnakes as ms
 from geospatial_learn.geodata import _copy_dataset_config, polygonize
 import warnings
 from skimage.filters import gaussian
 from skimage import exposure
 from skimage.filters import threshold_otsu, threshold_niblack, threshold_sauvola
+from skimage.transform import hough_line, hough_line_peaks
+from skimage.draw import line
 
 gdal.UseExceptions()
 ogr.UseExceptions()
@@ -1535,7 +1537,223 @@ def thresh_seg(vector_path, raster_path, outShp, band, algo='otsu', nodata_value
     vds = None
     
     # This is a hacky solution for now really, but it works well enough!
-    polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1)        
+    polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1)    
+
+def hough2line(vArray, hArray, inRaster, outShp):
+    
+        """ 
+        Detect and write Hough lines to a line shapefile
+        
+        There two input arrays on the to keep line detection clean eg 2 orientations,
+        such as vertical and horizontal
+        
+        Parameters
+        ----------
+        
+        vArray : np array
+                      an array of edge or edge like feature can be continuous or binary
+            
+        hArray : np array
+                      a second binary array from which lines are detetcted
+    
+        inRaster : string
+               path to an input raster from which the geo-reffing is obtained
+    
+        outShp : string
+               path to the output shapefile
+             
+    
+     
+        """    
+        inRas = gdal.Open(inRaster, gdal.GA_ReadOnly)
+
+#        rb = inRas.GetRasterBand(band)
+        rgt = inRas.GetGeoTransform()
+        
+        ref = inRas.GetSpatialRef()
+        
+        outShapefile = outShp
+        outDriver = ogr.GetDriverByName("ESRI Shapefile")
+        
+        # Remove output shapefile if it already exists
+        if os.path.exists(outShapefile):
+            outDriver.DeleteDataSource(outShapefile)
+        
+        # get the spatial ref
+        #ref = vlyr.GetSpatialRef()
+        
+        # Create the output shapefile
+        outDataSource = outDriver.CreateDataSource(outShapefile)
+        outLayer = outDataSource.CreateLayer("OutLyr", geom_type=ogr.wkbMultiLineString,
+                                         srs=ref)
+        
+        # Add an ID field
+        idField = ogr.FieldDefn("id", ogr.OFTInteger)
+        outLayer.CreateField(idField)
+        
+        
+        """
+        Standard Hough ##############################################################
+        """
+        # Horizontal
+        
+        tested_angles = np.linspace(-np.pi / 2, np.pi / 2, 360)
+        hh, htheta, hd = hough_line(hArray, theta=tested_angles)
+        origin = np.array((0, hArray.shape[1]))
+        
+        
+        empty = np.zeros_like(hArray, dtype=np.bool)
+        
+        height, width = empty.shape
+        
+        bbox = box(width, height, 0, 0)
+        
+        
+        # Here we adapt the skimage loop to draw a bw line into the image
+        for _, angle, dist in tqdm(zip(*hough_line_peaks(hh, htheta, hd))):
+        
+        # here we obtain y extrema in our arbitrary coord system
+            y0, y1 = (dist - origin * np.cos(angle)) / np.sin(angle)
+            
+            # shapely used to get the geom and intersection in our arbitrary
+            # coordinate system
+            linestr = LineString([[origin[0], y0], [origin[1], y1]])
+            
+            # just in case this has not been done
+            #rotated = rotate(linestr, 90, origin='centroid')
+            
+            # here for readability visual query
+            # shapely in-built converts to np via np.array(inter)
+            inter = bbox.intersection(linestr)
+            
+            in_coord= np.array(bbox.intersection(linestr).coords)
+            
+            coord = np.around(in_coord)
+            
+            # for readability just now
+            x1 = int(coord[0][0])
+            y1 = int(coord[0][1]) 
+            x2 = int(coord[1][0])
+            y2 = int(coord[1][1])
+            
+            if y1 == height:
+                y1 = height-1
+            elif y2 == height:
+                y2 = height-1
+            elif x1 == width:
+                x1 = width-1
+            elif x2 == width:
+                x2 = width-1
+            
+            
+            rr, cc = line(x1, y1, x2, y2)
+            
+            #empty[cc,rr]=1    
+            outSnk = []
+            
+            snList = np.arange(len(cc))
+            
+            for s in snList:
+                x = rr[s]
+                y = cc[s]
+                xout = (x * rgt[1]) + rgt[0]
+                yout = (y * rgt[5]) + rgt[3]
+                
+                outSnk.append([xout, yout])
+            
+            snakeLine2 = LineString(outSnk)
+            
+            
+            geomOut = ogr.CreateGeometryFromWkt(snakeLine2.wkt)
+            
+            featureDefn = outLayer.GetLayerDefn()
+            feature = ogr.Feature(featureDefn)
+            
+            feature.SetGeometry(geomOut)
+            feature.SetField("id", 1)
+            outLayer.CreateFeature(feature)
+            feature = None
+    
+
+        vh, vtheta, vd = hough_line(vArray, theta=tested_angles)
+        origin = np.array((0, hArray.shape[1]))
+    
+    
+        height, width = empty.shape
+    
+        bbox = box(width, height, 0, 0)
+    
+    
+    # Here we adapt the skimage loop to draw a bw line into the image
+        for _, angle, dist in tqdm(zip(*hough_line_peaks(vh, vtheta, vd))):
+            
+            # here we obtain y extrema in our arbitrary coord system
+            y0, y1 = (dist - origin * np.cos(angle)) / np.sin(angle)
+            
+            # shapely used to get the geom and intersection in our arbitrary
+            # coordinate system
+            linestr = LineString([[origin[0], y0], [origin[1], y1]])
+            
+            # just in case this has not been done
+            #rotated = rotate(linestr, 90, origin='centroid')
+            
+            # here for readability visual query
+            # shapely in-built converts to np via np.array(inter)
+            inter = bbox.intersection(linestr)
+            
+            in_coord= np.array(bbox.intersection(linestr).coords)
+            
+            coord = np.around(in_coord)
+            
+            # for readability just now
+            x1 = int(coord[0][0])
+            y1 = int(coord[0][1]) 
+            x2 = int(coord[1][0])
+            y2 = int(coord[1][1])
+            
+            if y1 == height:
+                y1 = height-1
+            elif y2 == height:
+                y2 = height-1
+            elif x1 == width:
+                x1 = width-1
+            elif x2 == width:
+                x2 = width-1
+            
+            
+            rr, cc = line(x1, y1, x2, y2)
+            
+            #empty[cc,rr]=1
+            
+            outSnk = []
+            
+            snList = np.arange(len(cc))
+            
+            for s in snList:
+                x = rr[s]
+                y = cc[s]
+                xout = (x * rgt[1]) + rgt[0]
+                yout = (y * rgt[5]) + rgt[3]
+                
+                outSnk.append([xout, yout])
+        
+            snakeLine2 = LineString(outSnk)
+            
+            
+            geomOut = ogr.CreateGeometryFromWkt(snakeLine2.wkt)
+            
+            featureDefn = outLayer.GetLayerDefn()
+            feature = ogr.Feature(featureDefn)
+            
+            feature.SetGeometry(geomOut)
+            feature.SetField("id", 1)
+            outLayer.CreateFeature(feature)
+            feature = None
+        
+        
+        outDataSource.SyncToDisk()
+          
+        outDataSource=None    
                 
 
 def _dbf2DF(dbfile, upper=True): #Reads in DBF files and returns Pandas DF

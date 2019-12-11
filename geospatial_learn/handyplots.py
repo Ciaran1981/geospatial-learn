@@ -18,7 +18,6 @@ appropriate
 import numpy as np
 
 import matplotlib
-matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
 from skimage.segmentation import mark_boundaries

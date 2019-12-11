@@ -1414,17 +1414,17 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1, filetype="
         mask = False
         maskband = None
     
-    srs = osr.SpatialReference()
-    srs.ImportFromWkt( src_ds.GetProjectionRef() )
+#    srs = osr.SpatialReference()
+#    srs.ImportFromWkt( src_ds.GetProjectionRef() )
     
-
+    ref = src_ds.GetSpatialRef()
     #
     #  create output datasource
     #
     dst_layername = outPoly
     drv = ogr.GetDriverByName(filetype)
     dst_ds = drv.CreateDataSource( dst_layername)
-    dst_layer = dst_ds.CreateLayer(dst_layername, srs = srs )
+    dst_layer = dst_ds.CreateLayer(dst_layername, srs = ref )
     
     if outField is None:
         dst_fieldname = 'DN'

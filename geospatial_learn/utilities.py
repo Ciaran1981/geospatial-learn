@@ -2,10 +2,8 @@
 """
 Created on Thu Sep  8 22:35:39 2016
 @author: Ciaran Robb
-Research Associate in Earth Observation
-Centre for Landscape and Climate Research (CLCR)
-Department of Geography, University of Leicester, University Road, Leicester, 
-LE1 7RH, UK 
+Aberytswyth Uni
+Wales
 
 If you use code to publish work cite/acknowledge me and authors of libs etc as 
 appropriate 
@@ -13,7 +11,220 @@ appropriate
 
 import numpy as np
 from scipy.spatial import ConvexHull
-from scipy.ndimage.interpolation import rotate
+#from scipy.ndimage.interpolation import rotate
+from scipy import ndimage as ndi
+import cv2
+import matplotlib.pyplot as plt
+from geospatial_learn.geodata import array2raster
+import gdal, ogr
+from tqdm import tqdm
+from skimage.feature import match_template
+from skimage.color import rgb2gray
+from skimage import io
+
+
+def temp_match(vector_path, raster_path, band, nodata_value=0):
+    
+    """ 
+    Based on polygons return template matched images
+    
+    
+    Parameters
+    ----------
+    
+    vector_path : string
+                  input shapefile
+        
+    raster_path : string
+                  input raster
+
+    band : int
+           an integer val eg - 2
+        
+    nodata_value : numerical
+                   If used the no data val of the raster
+    Returns
+    -------
+    list of template match arrays same size as input
+        
+    """    
+
+    
+    rds = gdal.Open(raster_path, gdal.GA_ReadOnly)
+    #assert(rds)
+    rb = rds.GetRasterBand(band)
+    
+    
+    
+    rgt = rds.GetGeoTransform()
+
+    if nodata_value:
+        nodata_value = float(nodata_value)
+        rb.SetNoDataValue(nodata_value)
+
+    vds = ogr.Open(vector_path, 1)  # TODO maybe open update if we want to write stats
+   #assert(vds)
+    vlyr = vds.GetLayer(0)
+
+    mem_drv = ogr.GetDriverByName('Memory')
+    driver = gdal.GetDriverByName('MEM')
+
+    # Loop through vectors
+    feat = vlyr.GetNextFeature()
+    features = np.arange(vlyr.GetFeatureCount())
+    rejects = list()
+    
+    arList = []
+    for label in features:
+
+        if feat is None:
+            continue
+        geom = feat.geometry()
+
+        src_offset = _bbox_to_pixel_offsets(rgt, geom)
+        src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                               src_offset[3])
+        if src_array is None:
+            src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
+                               src_offset[3])
+            if src_array is None:
+                rejects.append(feat.GetFID())
+                continue
+
+        # calculate new geotransform of the feature subset
+        new_gt = (
+        (rgt[0] + (src_offset[0] * rgt[1])),
+        rgt[1],
+        0.0,
+        (rgt[3] + (src_offset[1] * rgt[5])),
+        0.0,
+        rgt[5])
+
+            
+        # Create a temporary vector layer in memory
+        mem_ds = mem_drv.CreateDataSource('out')
+        mem_layer = mem_ds.CreateLayer('poly', None, ogr.wkbPolygon)
+        mem_layer.CreateFeature(feat.Clone())
+
+        # Rasterize it
+
+        rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
+     
+        rvds.SetGeoTransform(new_gt)
+        rvds.SetProjection(rds.GetProjectionRef())
+        rvds.SetGeoTransform(new_gt)
+        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
+        rv_array = rvds.ReadAsArray()
+        
+        # Mask the source data array with our current feature
+        # we take the logical_not to flip 0<->1 to get the correct mask effect
+        # we also mask out nodata values explictly
+            
+
+        #rejects.append(feat.GetField('DN'))
+        masked = np.ma.MaskedArray(
+            src_array,
+            mask=np.logical_or(
+                src_array == nodata_value,
+                np.logical_not(rv_array)
+            )
+        )
+        
+        arList.append(masked)
+        feat = vlyr.GetNextFeature()
+        
+        
+    gray = rgb2gray(io.imread(raster_path))
+    
+    outList = []
+    for a in tqdm(arList):
+       result = match_template(gray, a, pad_input=True)
+       outList.append(result)
+
+    
+    return outList
+
+
+def test_gabor(im, size=100, stdv=4, angle=0, stripe_width=11, height=0, no_stripes= 0):
+    
+    def deginrad(degree):
+        radiant = 2*np.pi/360 * degree
+        return radiant
+    
+    img = rgb2gray(io.imread(im))
+
+    theta = deginrad(angle)   # unit circle: left: -90 deg, right: 90 deg, straight: 0 deg
+    g_kernel = cv2.getGaborKernel((size, size), stdv, theta, stripe_width, height, 
+                                  no_stripes, ktype=cv2.CV_32F)
+    filtered_img = cv2.filter2D(img, cv2.CV_8UC3, g_kernel)
+    
+    theta2 = deginrad(90)
+    g_kernel2 = cv2.getGaborKernel((size, size), stdv, theta2, stripe_width, height, 
+                                  no_stripes, ktype=cv2.CV_32F)
+    filtered_img2 = cv2.filter2D(img, cv2.CV_8UC3, g_kernel2)
+    
+    
+    fig=plt.figure()
+    fig.add_subplot(1, 3, 1)
+    plt.imshow(img)
+    fig.add_subplot(1, 3, 2)
+    plt.imshow(filtered_img)
+    fig.add_subplot(1, 3, 3)
+    plt.imshow(filtered_img2)
+    
+    h, w = g_kernel.shape[:2]
+    g_kernel = cv2.resize(g_kernel, (3*w, 3*h), interpolation=cv2.INTER_CUBIC)
+    cv2.imshow('gabor kernel (resized)', g_kernel)
+    
+    
+#    filtered_img[img==0]=0
+#    filtered_img2[img==0]=0
+
+    return  filtered_img, filtered_img2   
+
+
+def accum_gabor(inRas, outRas):
+    
+    
+    img = gdal.Open(inRas).GetRasterBand(1).ReadAsArray()
+    
+    
+
+    def compute_feats(image, kernels):
+        feats = np.zeros((len(kernels), 2), dtype=np.double)
+        for k, kernel in enumerate(kernels):
+            filtered = ndi.convolve(image, kernel, mode='wrap')
+            feats[k, 0] = filtered.mean()
+            feats[k, 1] = filtered.var()
+        return feats
+    
+     
+    def build_filters():
+         filters = []
+         ksize = 31
+         for theta in np.arange(0, np.pi, np.pi / 16):
+             kern = cv2.getGaborKernel((ksize, ksize), 4.0, theta, 10.0, 0.5, 0, ktype=cv2.CV_32F)
+             kern /= 1.5*kern.sum()
+             filters.append(kern)
+         return filters
+    
+    
+        
+    def process(img, filters):
+        accum = np.zeros_like(img)
+        for i, kern in enumerate(filters):
+             fimg = cv2.filter2D(img, cv2.CV_8UC3, kern)
+#             fig.add_subplot(rows, columns, i+1)
+#             plt.imshow(img)
+             np.maximum(accum, fimg, accum)
+#        plt.show()
+        return accum
+
+    gfilters = build_filters()
+    gabber = process(img, gfilters)
+    
+    array2raster(gabber, 1, inRas, outRas, gdal.GDT_Byte)
+
 
 def min_bound_rectangle(points):
     """
@@ -87,3 +298,86 @@ def min_bound_rectangle(points):
         
     
     return rval
+
+def _bbox_to_pixel_offsets(rgt, geom):
+    
+    """ 
+    Internal function to get pixel geo-locations of bbox of a polygon
+    
+    Parameters
+    ----------
+    
+    rgt : array
+          List of points defining polygon (?)
+          
+    geom : shapely.geometry
+           Structure defining geometry
+    
+    Returns
+    -------
+    int
+       x offset
+           
+    int
+       y offset
+           
+    xcount : int
+             rows of bounding box
+             
+    ycount : int
+             columns of bounding box
+    """
+    
+    xOrigin = rgt[0]
+    yOrigin = rgt[3]
+    pixelWidth = rgt[1]
+    pixelHeight = rgt[5]
+    ring = geom.GetGeometryRef(0)
+    numpoints = ring.GetPointCount()
+    pointsX = []; pointsY = []
+    
+    if (geom.GetGeometryName() == 'MULTIPOLYGON'):
+        count = 0
+        pointsX = []; pointsY = []
+        for polygon in geom:
+            geomInner = geom.GetGeometryRef(count)
+            ring = geomInner.GetGeometryRef(0)
+            numpoints = ring.GetPointCount()
+            for p in range(numpoints):
+                    lon, lat, z = ring.GetPoint(p)
+                    pointsX.append(lon)
+                    pointsY.append(lat)
+            count += 1
+    elif (geom.GetGeometryName() == 'POLYGON'):
+        ring = geom.GetGeometryRef(0)
+        numpoints = ring.GetPointCount()
+        pointsX = []; pointsY = []
+        for p in range(numpoints):
+                lon, lat, z = ring.GetPoint(p)
+                pointsX.append(lon)
+                pointsY.append(lat)
+            
+    xmin = min(pointsX)
+    xmax = max(pointsX)
+    ymin = min(pointsY)
+    ymax = max(pointsY)
+
+    # Specify offset and rows and columns to read
+    xoff = int((xmin - xOrigin)/pixelWidth)
+    yoff = int((yOrigin - ymax)/pixelWidth)
+    xcount = int((xmax - xmin)/pixelWidth)+1
+    ycount = int((ymax - ymin)/pixelWidth)+1
+#    originX = gt[0]
+#    originY = gt[3]
+#    pixel_width = gt[1]
+#    pixel_height = gt[5]
+#    x1 = int((bbox[0] - originX) / pixel_width)
+#    x2 = int((bbox[1] - originX) / pixel_width) + 1
+#
+#    y1 = int((bbox[3] - originY) / pixel_height)
+#    y2 = int((bbox[2] - originY) / pixel_height) + 1
+#
+#    xsize = x2 - x1
+#    ysize = y2 - y1
+#    return (x1, y1, xsize, ysize)
+    return (xoff, yoff, xcount, ycount)  
