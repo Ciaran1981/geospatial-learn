@@ -28,16 +28,18 @@ from shapely.geometry import Polygon, box, LineString
 from pandas import DataFrame
 from pysal.lib import io
 import pandas as pd
-#from skimage.segmentation import active_contour, find_boundaries
+from skimage.segmentation import active_contour#, find_boundaries
 #from shapely.affinity import affine_transform, rotate
 import morphsnakes as ms
-from geospatial_learn.geodata import _copy_dataset_config, polygonize
+from geospatial_learn.geodata import _copy_dataset_config, polygonize, array2raster
 import warnings
 from skimage.filters import gaussian
 from skimage import exposure
 from skimage.filters import threshold_otsu, threshold_niblack, threshold_sauvola
 from skimage.transform import hough_line, hough_line_peaks
 from skimage.draw import line
+import matplotlib
+matplotlib.use('Qt5Agg')
 
 gdal.UseExceptions()
 ogr.UseExceptions()
@@ -959,9 +961,9 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast',
     return frame, rejects
 
 
-def snake(vector_path, raster_path, outShp, band, buf=1, nodata_value=0,
+def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
           boundary='fixed', alpha=0.1, beta=1.0, w_line=0, w_edge=0, gamma=0.1,
-          max_iterations=2500, smooth=False, eq=False):
+          max_iterations=2500, smooth=False, eq=False, rgb=True):
     
     """ 
     Deform a line using active contours based on the values of an underlying
@@ -1025,6 +1027,8 @@ def snake(vector_path, raster_path, outShp, band, buf=1, nodata_value=0,
             
     nodata_value: numerical
                    If used the no data val of the raster
+    rgb: bool
+        read in bands 1-3 assuming them to be RGB
         
     """    
     
@@ -1098,8 +1102,18 @@ def snake(vector_path, raster_path, outShp, band, buf=1, nodata_value=0,
         for idx, off in enumerate(src_offset):
             if off <=0:
                 src_offset[idx]=0
-               
-        src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                
+        if rgb == True:
+            rgbList = []
+            for band in range(1,4):
+                arr = rds.GetRasterBand(band).ReadAsArray(src_offset[0], 
+                                        src_offset[1], src_offset[2],
+                                        src_offset[3])
+                rgbList.append(arr)
+                
+            src_array = np.vstack((rgbList[0], rgbList[1], rgbList[2]))
+        else:
+            src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                src_offset[3])
         if src_array is None:
             src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
@@ -1564,7 +1578,8 @@ def hough2line(vArray, hArray, inRaster, outShp):
              
     
      
-        """    
+        """         
+        
         inRas = gdal.Open(inRaster, gdal.GA_ReadOnly)
 
 #        rb = inRas.GetRasterBand(band)
@@ -1586,6 +1601,7 @@ def hough2line(vArray, hArray, inRaster, outShp):
         outDataSource = outDriver.CreateDataSource(outShapefile)
         outLayer = outDataSource.CreateLayer("OutLyr", geom_type=ogr.wkbMultiLineString,
                                          srs=ref)
+    
         
         # Add an ID field
         idField = ogr.FieldDefn("id", ogr.OFTInteger)
@@ -1638,17 +1654,17 @@ def hough2line(vArray, hArray, inRaster, outShp):
             
             if y1 == height:
                 y1 = height-1
-            elif y2 == height:
+            if y2 == height:
                 y2 = height-1
-            elif x1 == width:
+            if x1 == width:
                 x1 = width-1
-            elif x2 == width:
+            if x2 == width:
                 x2 = width-1
             
             
             rr, cc = line(x1, y1, x2, y2)
             
-            #empty[cc,rr]=1    
+            empty[cc,rr]=1    
             outSnk = []
             
             snList = np.arange(len(cc))
@@ -1713,17 +1729,18 @@ def hough2line(vArray, hArray, inRaster, outShp):
             
             if y1 == height:
                 y1 = height-1
-            elif y2 == height:
+            if y2 == height:
                 y2 = height-1
-            elif x1 == width:
+            if x1 == width:
                 x1 = width-1
-            elif x2 == width:
+            if x2 == width:
                 x2 = width-1
             
             
             rr, cc = line(x1, y1, x2, y2)
             
-            #empty[cc,rr]=1
+            
+            empty[cc,rr]=1
             
             outSnk = []
             
@@ -1753,8 +1770,68 @@ def hough2line(vArray, hArray, inRaster, outShp):
         
         outDataSource.SyncToDisk()
           
-        outDataSource=None    
-                
+        outDataSource=None
+        
+        
+        array2raster(np.invert(empty), 1, inRaster, outShp[:-3]+"tif",  gdal.GDT_Int32)
+        
+        polygonize(outShp[:-4]+'.tif', outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
+        
+        
+        
+
+
+
+
+
+
+#def line2poly(inShp, outShp):
+#    
+#    
+#    
+#    vds = ogr.Open(inShp, 1)  
+#   #assert(vds)
+#    vlyr = vds.GetLayer(0)
+#    
+#    outShapefile = outShp
+#    outDriver = ogr.GetDriverByName("ESRI Shapefile")
+#        
+#        # Remove output shapefile if it already exists
+#    if os.path.exists(outShapefile):
+#        outDriver.DeleteDataSource(outShapefile)
+#        
+#        # get the spatial ref
+#    ref = vlyr.GetSpatialRef()
+#        
+#        # Create the output shapefile
+#    outDataSource = outDriver.CreateDataSource(outShapefile)
+#    outLayer = outDataSource.CreateLayer("OutLyr", geom_type=ogr.wkbPolygon,
+#                                     srs=ref)
+#    
+#        
+#        # Add an ID field
+#    idField = ogr.FieldDefn("id", ogr.OFTInteger)
+#    outLayer.CreateField(idField)
+#    
+#    feat = vlyr.GetNextFeature()
+#    features = np.arange(vlyr.GetFeatureCount())
+#    multiline = ogr.Geometry(ogr.wkbMultiLineString)
+#    
+##    rejects = list()
+#    for label in tqdm(features):
+#        
+#        geom = feat.GetGeometryRef()
+#        
+#        wkt = geom.ExportToWkt()    
+#    
+#        line = ogr.CreateGeometryFromWkt(wkt)
+#        
+#        multiline.AddGeometry(line)
+#            
+#    polygon = ogr.BuildPolygonFromEdges(multiline)
+
+
+
 
 def _dbf2DF(dbfile, upper=True): #Reads in DBF files and returns Pandas DF
     db = io.open(dbfile) #Pysal to open DBF

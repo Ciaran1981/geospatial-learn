@@ -35,7 +35,8 @@ from skimage.exposure import rescale_intensity
 import warnings
 from os import sys, path
 import re
-
+import matplotlib
+matplotlib.use('Qt5Agg')
 
 #from pathlib import Path
 

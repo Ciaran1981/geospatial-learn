@@ -21,7 +21,11 @@ from tqdm import tqdm
 from skimage.feature import match_template
 from skimage.color import rgb2gray
 from skimage import io
-
+import matplotlib
+matplotlib.use('Qt5Agg')
+import napari
+import dask
+import dask.array as da
 
 def temp_match(vector_path, raster_path, band, nodata_value=0):
     
@@ -145,7 +149,8 @@ def temp_match(vector_path, raster_path, band, nodata_value=0):
     return outList
 
 
-def test_gabor(im, size=100, stdv=4, angle=0, stripe_width=11, height=0, no_stripes= 0):
+def test_gabor(im, size=100, stdv=4, angle=0, stripe_width=11, height=0,
+               no_stripes=0, plot=True):
     
     def deginrad(degree):
         radiant = 2*np.pi/360 * degree
@@ -158,19 +163,19 @@ def test_gabor(im, size=100, stdv=4, angle=0, stripe_width=11, height=0, no_stri
                                   no_stripes, ktype=cv2.CV_32F)
     filtered_img = cv2.filter2D(img, cv2.CV_8UC3, g_kernel)
     
-    theta2 = deginrad(90)
+    theta2 = deginrad(angle+90)
     g_kernel2 = cv2.getGaborKernel((size, size), stdv, theta2, stripe_width, height, 
                                   no_stripes, ktype=cv2.CV_32F)
     filtered_img2 = cv2.filter2D(img, cv2.CV_8UC3, g_kernel2)
     
-    
-    fig=plt.figure()
-    fig.add_subplot(1, 3, 1)
-    plt.imshow(img)
-    fig.add_subplot(1, 3, 2)
-    plt.imshow(filtered_img)
-    fig.add_subplot(1, 3, 3)
-    plt.imshow(filtered_img2)
+    if plot == True:
+        fig=plt.figure()
+        fig.add_subplot(1, 3, 1)
+        plt.imshow(img)
+        fig.add_subplot(1, 3, 2)
+        plt.imshow(filtered_img)
+        fig.add_subplot(1, 3, 3)
+        plt.imshow(filtered_img2)
     
     h, w = g_kernel.shape[:2]
     g_kernel = cv2.resize(g_kernel, (3*w, 3*h), interpolation=cv2.INTER_CUBIC)
@@ -381,3 +386,20 @@ def _bbox_to_pixel_offsets(rgt, geom):
 #    ysize = y2 - y1
 #    return (x1, y1, xsize, ysize)
     return (xoff, yoff, xcount, ycount)  
+
+
+
+def image_thresh(image):
+
+#    image = rgb2gray(io.imread(im))
+    
+    def threshold(image, t):
+        arr = da.from_array(image, chunks=image.shape)
+        return arr > t
+    
+    all_thresholds = da.stack([threshold(image, t) for t in np.arange(255)])
+    
+    viewer = napari.view_image(image, name='input image')
+    viewer.add_image(all_thresholds,
+        name='thresholded', colormap='magenta', blending='additive'
+    )
