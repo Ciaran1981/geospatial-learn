@@ -26,6 +26,7 @@ matplotlib.use('Qt5Agg')
 import napari
 import dask
 import dask.array as da
+from skimage.measure import regionprops
 
 def temp_match(vector_path, raster_path, band, nodata_value=0):
     
@@ -403,3 +404,17 @@ def image_thresh(image):
     viewer.add_image(all_thresholds,
         name='thresholded', colormap='magenta', blending='additive'
     )
+
+def colorscale(seg, prop):
+    
+    props = regionprops(seg)
+    
+    labels = np.unique(seg)
+    propIm = np.zeros_like(seg, dtype=np.float64) 
+    for label in labels:
+        if label==0:
+            continue
+        propval=props[label-1][prop] 
+        propIm[seg==label]=propval
+    
+    return propIm
