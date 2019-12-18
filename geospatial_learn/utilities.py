@@ -24,9 +24,16 @@ from skimage import io
 import matplotlib
 matplotlib.use('Qt5Agg')
 import napari
-import dask
 import dask.array as da
 from skimage.measure import regionprops
+from skimage import color
+#import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import ImageGrid
+from geospatial_learn.geodata import _copy_dataset_config
+
+
+
+
 
 def temp_match(vector_path, raster_path, band, nodata_value=0):
     
@@ -189,10 +196,44 @@ def test_gabor(im, size=100, stdv=4, angle=0, stripe_width=11, height=0,
     return  filtered_img, filtered_img2   
 
 
-def accum_gabor(inRas, outRas):
+def accum_gabor(inRas, outRas, size=9, stdv=4, no_angles=16, stripe_width=11, height=0,
+               no_stripes=0, blockproc=False):
+    
+    """ 
+    Process with a custom gabor filter and output an raster containing each 
+    kernel output as a band
     
     
-    img = gdal.Open(inRas).GetRasterBand(1).ReadAsArray()
+    Parameters
+    ----------
+    
+    inRas : string
+                  input raster
+        
+    outRas : string
+                  output raster
+
+    size : int
+           size of in gabor kerne
+        
+    stdv : int
+           stdv of of gabor kernel
+    
+    no_angles : int
+           number of angles  in gabor kerne
+
+    stripe_width : int
+           width of stripe in gabor kernel   
+        
+    no_stripes : int
+           num of stripes in gabor kernel      
+           
+    height : int
+          height/compactness of gabor kernel  
+          
+    blocproc : bool
+          whether to process in chunks - necessary for large images!
+    """  
     
     
 
@@ -207,29 +248,121 @@ def accum_gabor(inRas, outRas):
      
     def build_filters():
          filters = []
-         ksize = 31
-         for theta in np.arange(0, np.pi, np.pi / 16):
-             kern = cv2.getGaborKernel((ksize, ksize), 4.0, theta, 10.0, 0.5, 0, ktype=cv2.CV_32F)
+         
+         for theta in np.arange(0, np.pi, np.pi / no_angles):
+             kern = cv2.getGaborKernel((size, size), stdv, theta, stripe_width, height, 
+                                  no_stripes, ktype=cv2.CV_32F)
              kern /= 1.5*kern.sum()
              filters.append(kern)
          return filters
     
     
-        
+    thetaz = np.arange(0, np.pi, np.pi / no_angles)
+    degrees = np.rad2deg(thetaz)
+
+
     def process(img, filters):
+
         accum = np.zeros_like(img)
+        fmgList = []
+
         for i, kern in enumerate(filters):
              fimg = cv2.filter2D(img, cv2.CV_8UC3, kern)
-#             fig.add_subplot(rows, columns, i+1)
-#             plt.imshow(img)
+             fmgList.append(fimg)   
              np.maximum(accum, fimg, accum)
-#        plt.show()
-        return accum
-
-    gfilters = build_filters()
-    gabber = process(img, gfilters)
+             
+        return accum, fmgList
     
-    array2raster(gabber, 1, inRas, outRas, gdal.GDT_Byte)
+    
+    def plot_it(fmgList):
+        
+        """
+        plt a grid of images
+
+        """
+       
+        
+        fig = plt.figure(figsize=(10., 10.))
+        grid = ImageGrid(fig, 111,  # similar to subplot(111)
+                         nrows_ncols=(4, 4),  # creates 2x2 grid of axes
+                         axes_pad=0.3,  # pad between axes in inch.
+                         )
+
+        for ax, im, d in zip(grid, fmgList, degrees):
+            # Iterating over the grid returns the Axes.            
+            ax.imshow(im)
+            ax.set_title(str(d)+' degrees')
+            ax.set_axis_off()
+        
+        plt.show()
+        
+
+    gfilters = build_filters()  
+
+
+                  
+    inDataset = gdal.Open(inRas)
+    
+    outDataset = _copy_dataset_config(inDataset, outMap = outRas,
+                                     dtype = gdal.GDT_Byte, bands = no_angles)
+    band = inDataset.GetRasterBand(1)
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
+    
+    bands = inDataset.RasterCount
+    
+    if bands > 3:
+        bands = 3
+
+    blocksizeX = 256
+    blocksizeY = 256
+        
+    if blockproc == True:            
+        for i in tqdm(range(0, rows, blocksizeY)):
+                if i + blocksizeY < rows:
+                    numRows = blocksizeY
+                else:
+                    numRows = rows -i
+            
+                for j in range(0, cols, blocksizeX):
+                    if j + blocksizeX < cols:
+                        numCols = blocksizeX
+                    else:
+                        numCols = cols - j
+                    if bands == 1:
+                        band1 = inDataset.GetRasterBand(band)
+                        data = band1.ReadAsArray(j, i, numCols, numRows)                        
+                    else:
+                        data = np.zeros((blocksizeX,blocksizeX, bands))
+                                                
+                        for band in range(1,bands+1):
+                            band1 = inDataset.GetRasterBand(band)
+                            data[:,:,band-1] = band1.ReadAsArray(j, i, numCols, numRows)
+                        data = color.rgb2gray(data)
+                    
+                    _, fmgList = process(data, gfilters)
+                    
+                    # [:256, :256] this will pad it..... 
+                    
+                    [outDataset.GetRasterBand(k+1).WriteArray(f
+                    , j,  i) for k, f in enumerate(fmgList)] 
+    
+                        
+        outDataset.FlushCache()
+        outDataset = None
+                
+   
+    
+    else:
+        img  = io.imread(inRas)
+        
+        gabber, fmgList = process(img, gfilters)
+        
+        plot_it(fmgList)
+        
+        [outDataset.GetRasterBand(k+1).WriteArray(f) for k, f in enumerate(fmgList)]
+        
+        array2raster(gabber, 1, inRas, outRas, gdal.GDT_Byte)
 
 
 def min_bound_rectangle(points):

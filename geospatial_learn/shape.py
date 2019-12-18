@@ -1040,6 +1040,9 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
     #assert(rds)
     rb = rds.GetRasterBand(band)
     rgt = rds.GetGeoTransform()
+    
+    cols = rds.RasterXSize
+    rows = rds.RasterYSiz
 
     if nodata_value:
         nodata_value = float(nodata_value)
@@ -1081,7 +1084,11 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
     idField = ogr.FieldDefn("id", ogr.OFTInteger)
     outLayer.CreateField(idField)
     
-    
+#            for reference
+#        xOrigin = rgt[0]
+#        yOrigin = rgt[3]
+#        pixelWidth = rgt[1]
+#        pixelHeight = rgt[5]
     
 #    rejects = list()
     for label in tqdm(features):
@@ -1100,9 +1107,10 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
         
         src_offset = list(src_offset)
         
-        for idx, off in enumerate(src_offset):
-            if off <=0:
-                src_offset[idx]=0
+#        for idx, off in enumerate(src_offset):
+#            if off <=0:
+#                src_offset[idx]=0
+#            if off >
                 
         if rgb == True:
             rgbList = []
@@ -1692,7 +1700,7 @@ def hough2line(hArray, inRaster, outShp, vArray=None, prob=True, line_length=100
                 outLayer.CreateFeature(feature)
                 feature = None
                 
-            if vArray != None:
+            if hasattr(vArray, 'shape'):
         
     
                 vh, vtheta, vd = hough_line(vArray, theta=tested_angles)

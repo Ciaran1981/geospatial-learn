@@ -28,12 +28,12 @@ except ImportError:
 
 
 from tqdm import tqdm
-import matplotlib
+
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from collections import OrderedDict
 
-import shapefile
+
 import glob
 from sklearn import svm
 import gdal, ogr#,osr
