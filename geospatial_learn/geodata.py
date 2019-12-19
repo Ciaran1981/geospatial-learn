@@ -1951,18 +1951,6 @@ def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
             gdal datatype (default gdal.GDT_Int32)
     """
     
-    if FMT == None:
-        FMT = 'Gtiff'
-        fmt = '.tif'
-    if FMT == 'HFA':
-        fmt = '.img'
-    if FMT == 'KEA':
-        fmt = '.kea'
-    if FMT == 'Gtiff':
-        fmt = '.tif'
-    
-    # dict of stats
-
     
     if fileList is None:
         rasterList = glob2.glob(path.join(folder,'*.tif'))
@@ -1990,13 +1978,13 @@ def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
         blocksizeY = blocksize
 
     def statChoose(X, stat, q):
-        if stat is 'mean':
+        if stat == 'mean':
             stats = np.nanmean(X, axis=2)
-        elif stat is 'std':
+        elif stat == 'std':
             stats = np.nanstd(X, axis=2)
-        elif stat is 'percentile':
+        elif stat == 'percentile':
             stats = np.nanpercentile(X, q, axis=2)    
-        elif stat is 'median':
+        elif stat == 'median':
             stats = np.nanmedian(X, axis=2)
             
         
@@ -2053,76 +2041,135 @@ def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
     outDataset.FlushCache()
     outDataset = None
     
-def temporal_comp2(inRasSet, outRas, stat, q=5,  window = None, blockSize = None):
-    """
     
-    Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)
-
-	Parameters 
+def stat_comp(inRas, outMap, bandList = None,  stat = 'percentile', q = 95, 
+                  blocksize=256,
+                  FMT=None,  dtype = gdal.GDT_Float32):
+    
+    """
+    Calculate depth wise stat on a multi band raster with selected or all bands
+            
+    Parameters 
     ---------- 
     
-    inRasSet : list of strings
-               the files to be inputed, if None a folder must be specified
+    inRas : string
+               input Raster
     
-    outRas : string
+    outMap : string
              the output raster calculated
 
     stat : string
-           the statisitc to be calculated         
+           the statisitc to be calculated make sure there 
+           are no nans as nan percentile is far too slow        
 
     blocksize : int
                 the chunck processed 
 
     q : int
-        the  ith percentile if percentile is the stat used         
-            
+        the ith percentile if percentile is the stat used         
     
-    """
-    #use multtemp filter block and classify_pixel_bloc as inspiration
-    #Watch out for block processing    
+    FMT : string
+          gdal compatible (optional) defaults is tif
 
-    inDatasets = [gdal.Open(raster) for raster in inRasSet]
-    
-    bands = inDatasets[0].RasterCount
-    x_pixels = inDatasets[0].RasterXSize  # number of pixels in x
-    y_pixels = inDatasets[0].RasterYSize  # number of pixels in y
-    
-    outDataset = _copy_dataset_config(inDatasets[1], outMap = outRas, bands = bands)
-    
-    def statChoose(bandCube, stat, q=None):
-        if stat is 'mean':
-            outDataset.GetRasterBand(band).WriteArray(bandCube.mean(0))
-        elif stat is 'stdev':
-            outDataset.GetRasterBand(band).WriteArray(bandCube.std(0))
-        elif stat is 'median':
-            outDataset.GetRasterBand(band).WriteArray(np.median(bandCube, 0))
-        elif stat is 'percentile':
-            outDataset.GetRasterBand(band).WriteArray(np.percentile(bandCube, q, 0))
+    dtype : string
+            gdal datatype (default gdal.GDT_Int32)
+    """
     
     
-    bandCube = np.empty([bands, x_pixels, y_pixels])
-    for band in tqdm(range(1, bands)): #gdal why
-        for i,dataset in enumerate(inDatasets):
-            cubeView = bandCube[i,:,:]    #Exposes a view of bandCube; any changes made are reflected in bandCube
-            np.copyto(cubeView, dataset.ReadAsArray(0)[band,:,:])
-            statChoose(bandCube, stat, q)
+
+    inDataset = gdal.Open(inRas)
+    
+    
+    ootbands = len(bandList)
+    
+    bands = inDataset.RasterCount
+    
+    outDataset = _copy_dataset_config(inDataset, outMap = outMap,
+                                     bands = 1)
         
-        
-        
-    outDataset = None #gdal. please.
+    band = inDataset.GetRasterBand(1)
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
     
+    # So with most datasets blocksize is a row scanline
+    if blocksize == None:
+        blocksize = band.GetBlockSize()
+        blocksizeX = blocksize[0]
+        blocksizeY = blocksize[1]
+    else:
+        blocksizeX = blocksize
+        blocksizeY = blocksize
+
+    def statChoose(X, stat, q):
+        if stat == 'mean':
+            stats = np.nanmean(X, axis=2)
+        elif stat == 'std':
+            stats = np.nanstd(X, axis=2)
+        elif stat == 'percentile':
+            # slow as feck
+            stats = np.percentile(X, q, axis=2)    
+        elif stat == 'median':
+            stats = np.nanmedian(X, axis=2)
+            
+        
+        return stats
     
+        
+    if blocksizeY==1:
+        rows = np.arange(outDataset.RasterYSize, dtype=np.int)                
+        for row in tqdm(rows):
+            i = int(row)
+            j = 0
+            X = np.zeros(shape = (blocksizeY , blocksizeX, ootbands))
+
+            for ind, im in enumerate(bandList):
+                array = inDataset.GetRasterBand(im).ReadAsArray(j,i,
+                                            blocksizeX, j)
+                array.shape = (1, blocksizeX)
+                X[:,:,ind] = array
+                    
+            stArray = statChoose(X, stat, q)
+
+            outDataset.GetRasterBand(band).WriteArray(stArray,j,i)
+
+
+    # else it is a block            
+    else:
+        for i in tqdm(range(0, rows, blocksizeY)):
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
+            else:
+                numRows = rows -i
+        
+            for j in range(0, cols, blocksizeX):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+                X = np.zeros(shape = (numRows, numCols, ootbands))
+
+                for ind, im in enumerate(bandList):
+                    array = inDataset.GetRasterBand(im).ReadAsArray(j,i,
+                                            numCols, numRows)
+                    
+                    X[:,:,ind] = array
+                    
+                stArray = statChoose(X, stat, q)
+
+                outDataset.GetRasterBand(1).WriteArray(stArray,j,i)
+
+                    #print(i,j)
+    outDataset.FlushCache()
+    outDataset = None    
+
+
+
 def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy',
                          dtype = gdal.GDT_Int32, bands = 1):
     """Copies a dataset without the associated rasters.
 
     """
-    if FMT == 'HFA':
-        fmt = '.img'
-    if FMT == 'KEA':
-        fmt = '.kea'
-    if FMT == 'Gtiff':
-        fmt = '.tif'
+
     
     x_pixels = inDataset.RasterXSize  # number of pixels in x
     y_pixels = inDataset.RasterYSize  # number of pixels in y
@@ -2156,4 +2203,62 @@ def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy',
     outDataset.SetProjection(projection)
     
     return outDataset
-    
+
+# Can't remember if this works   
+#def temporal_comp2(inRasSet, outRas, stat, q=5,  window = None, blockSize = None):
+#    """
+#    
+#    Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)
+#
+#	Parameters 
+#    ---------- 
+#    
+#    inRasSet : list of strings
+#               the files to be inputed, if None a folder must be specified
+#    
+#    outRas : string
+#             the output raster calculated
+#
+#    stat : string
+#           the statisitc to be calculated         
+#
+#    blocksize : int
+#                the chunck processed 
+#
+#    q : int
+#        the  ith percentile if percentile is the stat used         
+#            
+#    
+#    """
+#    #use multtemp filter block and classify_pixel_bloc as inspiration
+#    #Watch out for block processing    
+#
+#    inDatasets = [gdal.Open(raster) for raster in inRasSet]
+#    
+#    bands = inDatasets[0].RasterCount
+#    x_pixels = inDatasets[0].RasterXSize  # number of pixels in x
+#    y_pixels = inDatasets[0].RasterYSize  # number of pixels in y
+#    
+#    outDataset = _copy_dataset_config(inDatasets[1], outMap = outRas, bands = bands)
+#    
+#    def statChoose(bandCube, stat, q=None):
+#        if stat == 'mean':
+#            outDataset.GetRasterBand(band).WriteArray(bandCube.mean(0))
+#        elif stat == 'stdev':
+#            outDataset.GetRasterBand(band).WriteArray(bandCube.std(0))
+#        elif stat == 'median':
+#            outDataset.GetRasterBand(band).WriteArray(np.median(bandCube, 0))
+#        elif stat == 'percentile':
+#            outDataset.GetRasterBand(band).WriteArray(np.percentile(bandCube, q, 0))
+#    
+#    
+#    bandCube = np.empty([bands, x_pixels, y_pixels])
+#    for band in tqdm(range(1, bands)): #gdal why
+#        for i,dataset in enumerate(inDatasets):
+#            cubeView = bandCube[i,:,:]    #Exposes a view of bandCube; any changes made are reflected in bandCube
+#            np.copyto(cubeView, dataset.ReadAsArray(0)[band,:,:])
+#            statChoose(bandCube, stat, q)
+#        
+#        
+#    outDataset.FlushCache()
+#    outDataset = None #gdal. please.

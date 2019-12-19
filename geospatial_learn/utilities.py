@@ -157,8 +157,8 @@ def temp_match(vector_path, raster_path, band, nodata_value=0):
     return outList
 
 
-def test_gabor(im, size=100, stdv=4, angle=0, stripe_width=11, height=0,
-               no_stripes=0, plot=True):
+def test_gabor(im, size=100, width=4, angle=0, stripe_width=11, eccen=0,
+               phase_off=0, plot=True):
     
     def deginrad(degree):
         radiant = 2*np.pi/360 * degree
@@ -167,13 +167,13 @@ def test_gabor(im, size=100, stdv=4, angle=0, stripe_width=11, height=0,
     img = rgb2gray(io.imread(im))
 
     theta = deginrad(angle)   # unit circle: left: -90 deg, right: 90 deg, straight: 0 deg
-    g_kernel = cv2.getGaborKernel((size, size), stdv, theta, stripe_width, height, 
-                                  no_stripes, ktype=cv2.CV_32F)
+    g_kernel = cv2.getGaborKernel((size, size), width, theta, stripe_width, eccen, 
+                                  phase_off, ktype=cv2.CV_32F)
     filtered_img = cv2.filter2D(img, cv2.CV_8UC3, g_kernel)
     
     theta2 = deginrad(angle+90)
-    g_kernel2 = cv2.getGaborKernel((size, size), stdv, theta2, stripe_width, height, 
-                                  no_stripes, ktype=cv2.CV_32F)
+    g_kernel2 = cv2.getGaborKernel((size, size), width, theta2, stripe_width, eccen, 
+                                  phase_off, ktype=cv2.CV_32F)
     filtered_img2 = cv2.filter2D(img, cv2.CV_8UC3, g_kernel2)
     
     if plot == True:
@@ -196,46 +196,52 @@ def test_gabor(im, size=100, stdv=4, angle=0, stripe_width=11, height=0,
     return  filtered_img, filtered_img2   
 
 
-def accum_gabor(inRas, outRas, size=9, stdv=4, no_angles=16, stripe_width=11, height=0,
-               no_stripes=0, blockproc=False):
+def accum_gabor(inRas, outRas=None, size=(9,9), width=4, no_angles=16, stripe_width=11, eccen=1,
+               phase_off=0, blockproc=False):
     
     """ 
-    Process with a custom gabor filter and output an raster containing each 
+    Process with custom gabor filters and output an raster containing each 
     kernel output as a band
     
     
     Parameters
     ----------
     
-    inRas : string
+    inRas: string
                   input raster
         
-    outRas : string
+    outRas: string
                   output raster
 
-    size : int
-           size of in gabor kerne
+    size: tuple
+           size of in gabor kernel in pixels (ksize)
         
-    stdv : int
-           stdv of of gabor kernel
+    width: int
+           stdv / of of gabor kernel (sigma/stdv)
     
-    no_angles : int
-           number of angles  in gabor kerne
+    no_angles: int
+           number of angles  in gabor kernel (theta)
 
-    stripe_width : int
-           width of stripe in gabor kernel   
+    stripe_width: int
+           width of stripe in gabor kernel (lambda/wavelength)  
         
-    no_stripes : int
-           num of stripes in gabor kernel      
+    phase_off: int
+           the phase offset of the kernel      
            
-    height : int
-          height/compactness of gabor kernel  
+    eccen: int
+          the elipticity of the kernel when = 1 the gaussian envelope is circular
           
-    blocproc : bool
-          whether to process in chunks - necessary for large images!
+    blocproc: bool
+          whether to process in chunks - necessary for very large images!
     """  
     
-    
+    # ksize - size of gabor filter (n, n)
+    # sigma - standard deviation of the gaussian function
+    # theta - orientation of the normal to the parallel stripes
+    # lambda - wavelength of the sunusoidal factor
+    # gamma - spatial aspect ratio
+    # psi - phase offset
+    # ktype - type and range of values that each pixel in the gabor kernel can hold
 
     def compute_feats(image, kernels):
         feats = np.zeros((len(kernels), 2), dtype=np.double)
@@ -250,8 +256,8 @@ def accum_gabor(inRas, outRas, size=9, stdv=4, no_angles=16, stripe_width=11, he
          filters = []
          
          for theta in np.arange(0, np.pi, np.pi / no_angles):
-             kern = cv2.getGaborKernel((size, size), stdv, theta, stripe_width, height, 
-                                  no_stripes, ktype=cv2.CV_32F)
+             kern = cv2.getGaborKernel(size, width, theta, stripe_width, eccen, 
+                                  phase_off, ktype=cv2.CV_32F)
              kern /= 1.5*kern.sum()
              filters.append(kern)
          return filters
@@ -274,10 +280,10 @@ def accum_gabor(inRas, outRas, size=9, stdv=4, no_angles=16, stripe_width=11, he
         return accum, fmgList
     
     
-    def plot_it(fmgList):
+    def plot_it(fmgList, gFilters):
         
         """
-        plt a grid of images
+        plt a grid of images for gab filters and outputs
 
         """
        
@@ -294,6 +300,18 @@ def accum_gabor(inRas, outRas, size=9, stdv=4, no_angles=16, stripe_width=11, he
             ax.set_title(str(d)+' degrees')
             ax.set_axis_off()
         
+        fig1 = plt.figure(figsize=(10., 10.))
+        grid1 = ImageGrid(fig1, 111,  # similar to subplot(111)
+                         nrows_ncols=(4, 4),  # creates 2x2 grid of axes
+                         axes_pad=0.3,  # pad between axes in inch.
+                         )
+
+        for ax1, im1, d1 in zip(grid1, gFilters, degrees):
+            # Iterating over the grid returns the Axes.            
+            ax1.imshow(im1)
+            ax1.set_title(str(d1)+' degrees')
+            ax1.set_axis_off()
+        
         plt.show()
         
 
@@ -303,8 +321,9 @@ def accum_gabor(inRas, outRas, size=9, stdv=4, no_angles=16, stripe_width=11, he
                   
     inDataset = gdal.Open(inRas)
     
-    outDataset = _copy_dataset_config(inDataset, outMap = outRas,
-                                     dtype = gdal.GDT_Byte, bands = no_angles)
+    if outRas != None:
+        outDataset = _copy_dataset_config(inDataset, outMap = outRas,
+                                         dtype = gdal.GDT_Byte, bands = no_angles)
     band = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
     rows = inDataset.RasterYSize
@@ -317,7 +336,7 @@ def accum_gabor(inRas, outRas, size=9, stdv=4, no_angles=16, stripe_width=11, he
     blocksizeX = 256
     blocksizeY = 256
         
-    if blockproc == True:            
+    if blockproc == True and outRas != None:            
         for i in tqdm(range(0, rows, blocksizeY)):
                 if i + blocksizeY < rows:
                     numRows = blocksizeY
@@ -342,7 +361,7 @@ def accum_gabor(inRas, outRas, size=9, stdv=4, no_angles=16, stripe_width=11, he
                     
                     _, fmgList = process(data, gfilters)
                     
-                    # [:256, :256] this will pad it..... 
+# TODO                    # [:256, :256] this will pad it.....but still getting edge effect - why?
                     
                     [outDataset.GetRasterBand(k+1).WriteArray(f
                     , j,  i) for k, f in enumerate(fmgList)] 
@@ -358,11 +377,13 @@ def accum_gabor(inRas, outRas, size=9, stdv=4, no_angles=16, stripe_width=11, he
         
         gabber, fmgList = process(img, gfilters)
         
-        plot_it(fmgList)
+        plot_it(fmgList, gfilters)
         
-        [outDataset.GetRasterBand(k+1).WriteArray(f) for k, f in enumerate(fmgList)]
+        if outRas != None:
         
-        array2raster(gabber, 1, inRas, outRas, gdal.GDT_Byte)
+            [outDataset.GetRasterBand(k+1).WriteArray(f) for k, f in enumerate(fmgList)]
+            
+            array2raster(gabber, 1, inRas, outRas[:-4]+'_comp.tif', gdal.GDT_Byte)
 
 
 def min_bound_rectangle(points):
@@ -470,7 +491,7 @@ def _bbox_to_pixel_offsets(rgt, geom):
     xOrigin = rgt[0]
     yOrigin = rgt[3]
     pixelWidth = rgt[1]
-    pixelHeight = rgt[5]
+    pixeleccen = rgt[5]
     ring = geom.GetGeometryRef(0)
     numpoints = ring.GetPointCount()
     pointsX = []; pointsY = []
@@ -509,12 +530,12 @@ def _bbox_to_pixel_offsets(rgt, geom):
 #    originX = gt[0]
 #    originY = gt[3]
 #    pixel_width = gt[1]
-#    pixel_height = gt[5]
+#    pixel_eccen = gt[5]
 #    x1 = int((bbox[0] - originX) / pixel_width)
 #    x2 = int((bbox[1] - originX) / pixel_width) + 1
 #
-#    y1 = int((bbox[3] - originY) / pixel_height)
-#    y2 = int((bbox[2] - originY) / pixel_height) + 1
+#    y1 = int((bbox[3] - originY) / pixel_eccen)
+#    y2 = int((bbox[2] - originY) / pixel_eccen) + 1
 #
 #    xsize = x2 - x1
 #    ysize = y2 - y1
