@@ -1562,7 +1562,7 @@ def thresh_seg(vector_path, raster_path, outShp, band, algo='otsu', nodata_value
     # This is a hacky solution for now really, but it works well enough!
     polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1)    
 
-def hough2line(hArray, inRaster, outShp, vArray=None, prob=True, line_length=100,
+def hough2line(hArray, inRaster, outShp, auto=False, vArray=None, prob=False, line_length=100,
                line_gap=200):
     
         """ 
@@ -1574,9 +1574,6 @@ def hough2line(hArray, inRaster, outShp, vArray=None, prob=True, line_length=100
         Parameters
         ----------
         
-        vArray : np array
-                      an array of edge or edge like feature can be continuous or binary
-            
         hArray : np array
                       a second binary array from which lines are detetcted
     
@@ -1585,9 +1582,19 @@ def hough2line(hArray, inRaster, outShp, vArray=None, prob=True, line_length=100
     
         outShp : string
                path to the output line shapefile a corresponding polygon will also be written to disk
+        auto : bool
+                detect and constrain angles to + / - of the image positive values
+                    
+        vArray : np array
+                      an array of edge or edge like feature can be continuous or binary
+                         
+        prob : bool
+               Whether to use a probabalistic hough - default is false
              
-    
-     
+        line_length : int
+               If using prob hough the min. line length threshold        
+        line_gap : int
+               If using prob hough the min. line gap threshold           
         """         
         
         inRas = gdal.Open(inRaster, gdal.GA_ReadOnly)
@@ -1617,11 +1624,21 @@ def hough2line(hArray, inRaster, outShp, vArray=None, prob=True, line_length=100
         idField = ogr.FieldDefn("id", ogr.OFTInteger)
         outLayer.CreateField(idField)
         
+        if auto == True:
+            
+            bw = vArray > 0
+            props = regionprops(bw*1)
+            orient = props[0]['Orientation']
+            angleV = np.degrees(orient) +180
+            angleD = 90 - np.degrees(orient)
+        
         if prob == False:
             """
             Standard Hough ##############################################################
             """
             # Horizontal
+             # so actually we want tested angles to be constrained to the orientation of the field
+            
             
             tested_angles = np.linspace(-np.pi / 2, np.pi / 2, 360)
             hh, htheta, hd = hough_line(hArray, theta=tested_angles)
@@ -1702,7 +1719,7 @@ def hough2line(hArray, inRaster, outShp, vArray=None, prob=True, line_length=100
                 
             if hasattr(vArray, 'shape'):
         
-    
+                tested_angles = np.linspace(-np.pi / 2, np.pi / 2, 360)
                 vh, vtheta, vd = hough_line(vArray, theta=tested_angles)
                 origin = np.array((0, hArray.shape[1]))
             
@@ -1783,6 +1800,8 @@ def hough2line(hArray, inRaster, outShp, vArray=None, prob=True, line_length=100
         else:
             
             huff = phl(hArray, line_length=line_length, line_gap=line_gap)
+            
+
 
             empty = np.zeros_like(hArray, dtype=np.bool)
 
@@ -1819,8 +1838,45 @@ def hough2line(hArray, inRaster, outShp, vArray=None, prob=True, line_length=100
                 feature.SetGeometry(geomOut)
                 feature.SetField("id", 1)
                 outLayer.CreateFeature(feature)
+                
+            if hasattr(vArray, 'shape'):
             
-
+                huff2 = phl(vArray, line_length=line_length, line_gap=line_gap)
+                
+                for linez in huff2:
+                
+                    # jeez that is ugly as feck
+                    x1 = linez[0][0]
+                    y1 = linez[0][1]
+                    x2 = linez[1][0]
+                    y2 = linez[1][1]
+                    rr, cc = line(y1, x1, y2, x2)
+                    empty[rr, cc]=1
+                    
+                    outSnk = []
+                        
+                    snList = np.arange(len(cc))
+                    
+                    for s in snList:
+                        x = cc[s]
+                        y = rr[s]
+                        xout = (x * rgt[1]) + rgt[0]
+                        yout = (y * rgt[5]) + rgt[3]
+                        
+                        outSnk.append([xout, yout])
+                    
+                    snakeLine2 = LineString(outSnk)
+                    
+                    
+                    geomOut = ogr.CreateGeometryFromWkt(snakeLine2.wkt)
+                    
+                    featureDefn = outLayer.GetLayerDefn()
+                    feature = ogr.Feature(featureDefn)
+                    
+                    feature.SetGeometry(geomOut)
+                    feature.SetField("id", 1)
+                    outLayer.CreateFeature(feature)
+                
         
         outDataSource.SyncToDisk()
           
