@@ -12,6 +12,7 @@ appropriate
 import numpy as np
 from scipy.spatial import ConvexHull
 #from scipy.ndimage.interpolation import rotate
+from skimage import exposure
 from scipy import ndimage as ndi
 import cv2
 import matplotlib.pyplot as plt
@@ -35,10 +36,24 @@ from scipy.ndimage import gaussian_filter
 
 from skimage.transform import rescale
 
+#TODO
+#def rgbind(inRas):
+#    
+#    
+#    img = imread(inRas)
+#    
+#    
+#    r = img[:,:,0] / (np.sum(img, axis=2))
+#    g = img[:,:,1] / (np.sum(img, axis=2))
+#    b = img[:,:,2] / (np.sum(img, axis=2))                    
+#
+#    exG = (g * 2) - (r - b)        
+#           
+#    exR = (r * 1.4) - g
+    
 
 
-
-def temp_match(vector_path, raster_path, band, nodata_value=0, ind=0):
+def temp_match(vector_path, raster_path, band, nodata_value=0, ind=None):
     
     """ 
     Based on polygons return template matched images
@@ -162,7 +177,9 @@ def temp_match(vector_path, raster_path, band, nodata_value=0, ind=0):
         
     for a in tqdm(arList):
        result = match_template(gray, a, pad_input=True)
+       np.where(gray==0, 0, result)
        outList.append(result)
+       
 
     
     return outList
@@ -174,8 +191,7 @@ def test_gabor(im, size=9,  freq=0.1, angle=None, funct='cos', plot=True,
     image positive values bounding box - implemented from numpy with more intuitive 
     params 
     
-    This is written to highlight boundaries between crop growing plots 
-    (tramlines effectively)    
+    This is the numpy based one 
     
     Parameters
     ----------
@@ -226,7 +242,10 @@ def test_gabor(im, size=9,  freq=0.1, angle=None, funct='cos', plot=True,
         radiant = 2*np.pi/360 * degree
         return radiant
     
-    img = rgb2gray(io.imread(im))
+    if hasattr(im, 'shape'):
+        img = im
+    else:
+        img = rgb2gray(io.imread(im))
     
     if smooth == True:
         
@@ -263,25 +282,17 @@ def test_gabor(im, size=9,  freq=0.1, angle=None, funct='cos', plot=True,
         fig.add_subplot(1, 4, 4)
         plt.imshow(g, interpolation=interp)
     
-    #h, w = g_kernel.shape[:2]
-    #g_kernel = cv2.resize(g_kernel, (3*w, 3*h), interpolation=cv2.INTER_CUBIC)
-    #cv2.imshow('gabor kernel (resized)', g_kernel)
-    
-    
-    
-#    filtered_img[img==0]=0
-#    filtered_img2[img==0]=0
+
 
     return  filtered_img, filtered_img2   
 
-def test_gabor_cv(im, size=9,  stdv=1, angle=None, wave_length=3, eccen=1,
+def test_gabor_cv2(im, size=9,  stdv=1, angle=None, wave_length=3, eccen=1,
                phase_off=0, plot=True, smooth=True, interp='none'):
     """ 
     Process image with gabor filter bank of specified orientation or derived from
     image positive values bounding box
     
-    This is written to highlight boundaries between crop growing plots 
-    (tramlines effectively)    
+    This is the open cv based one
     
     Parameters
     ----------
@@ -319,30 +330,17 @@ def test_gabor_cv(im, size=9,  stdv=1, angle=None, wave_length=3, eccen=1,
     # psi - phase offset
     # ktype - type and range of values that each pixel in the gabor kernel can hold
     
+
     
-    def genGabor(sz, omega, theta, func=np.cos, K=np.pi):
-        
-        sz = (sz,sz)
-        radius = (int(sz[0]/2.0), int(sz[1]/2.0))
-        [x, y] = np.meshgrid(range(-radius[0], radius[0]+1), range(-radius[1], radius[1]+1))
-    
-        x1 = x * np.cos(theta) + y * np.sin(theta)
-        y1 = -x * np.sin(theta) + y * np.cos(theta)
-        
-        gauss = omega**2 / (4*np.pi * K**2) * np.exp(- omega**2 / (8*K**2) * ( 4 * x1**2 + y1**2))
-    #     myimshow(gauss)
-        sinusoid = func(omega * x1) * np.exp(K**2 / 2)
-    #     myimshow(sinusoid)
-        gabor = gauss * sinusoid
-        return gabor
-    
-    g = genGabor(size,  freq, angle)
-    
+
     def deginrad(degree):
         radiant = 2*np.pi/360 * degree
         return radiant
-    
-    img = rgb2gray(io.imread(im))
+    if hasattr(im, 'shape'):
+        img = im
+    else:
+        
+        img = rgb2gray(io.imread(im))
     
     if smooth == True:
         
