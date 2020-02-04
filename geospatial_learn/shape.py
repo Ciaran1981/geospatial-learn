@@ -33,6 +33,7 @@ from skimage.segmentation import active_contour#, find_boundaries
 import morphsnakes as ms
 from geospatial_learn.geodata import _copy_dataset_config, polygonize, array2raster
 import warnings
+from skimage.measure import LineModelND, ransac
 from skimage.filters import gaussian
 from skimage import exposure
 from skimage.filters import threshold_otsu, threshold_niblack, threshold_sauvola
@@ -40,6 +41,7 @@ from skimage.transform import hough_line, hough_line_peaks
 from skimage.draw import line
 from skimage.transform import probabilistic_hough_line as phl
 from skimage.io import imread
+from skimage.feature import canny
 import matplotlib
 matplotlib.use('Qt5Agg')
 
@@ -1569,7 +1571,7 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):
     origin = np.array((0, inArray.shape[1]))
     
     
-    #                empty = np.zeros_like(inArray, dtype=np.bool)
+    #empty = np.zeros_like(inArray, dtype=np.bool)
     
     height, width = inArray.shape
     
@@ -1685,10 +1687,23 @@ def _phl_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt,
         feature.SetField("id", 1)
         outLayer.CreateFeature(feature)
     return outArray
+
+from numpy.lib.stride_tricks import as_strided as ast
+
+def block_view(A, block=(3, 3)):
+    """Provide a 2D block view to 2D array. No error checking made.
+    Therefore meaningful (as implemented) only for blocks strictly
+    compatible with the shape of A."""
+    # simple shape and strides computations may seem at first strange
+    # unless one is able to recognize the 'tuple additions' involved ;-)
+    shape= (A.shape[0]/ block[0], A.shape[1]/ block[1])+ block
+    strides= (block[0]* A.strides[0], block[1]* A.strides[1])+ A.strides
+    return ast(A, shape= shape, strides= strides)
+
         
 
 def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=False, line_length=100,
-               line_gap=200, valrange=2, interval=10):
+               line_gap=200, valrange=2, interval=10, binwidth=40):
     
         """ 
         Detect and write Hough lines to a line shapefile
@@ -1780,6 +1795,7 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             Standard Hough ##############################################################
             """
             if hasattr(vArray, 'shape'):
+                
                 empty =_std_huff(vArray, empty, outLayer, angleV, valrange, interval, rgt)
             if hasattr(hArray, 'shape'):
                 empty =_std_huff(hArray, empty, outLayer, angleD, valrange, interval, rgt)
@@ -1812,7 +1828,139 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
         polygonize(outShp[:-4]+'.tif', outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
         
         
+def _do_ransac(inArray, order='col'):
+    
+    outArray = np.zeros_like(inArray)
+    
+    #th = filters.threshold_otsu(inArray)
+    
+    #bw = inArray > th
+    
+    
+    inDex = np.where(inArray > 0)
+    if order == 'col':
         
+        inData = np.column_stack([inDex[0], inDex[1]])
+        
+        
+        model = LineModelND()
+        model.estimate(inData)
+    
+        model_robust, inliers = ransac(inData, LineModelND, min_samples=2,
+                                       residual_threshold=1, max_trials=1000)
+    
+    
+        outliers = inliers == False
+    
+        
+        line_x = inData[:, 0]
+        line_y = model.predict_y(line_x)
+        line_y_robust = model_robust.predict_y(line_x)
+    
+        outArray[line_x, np.int64(np.round(line_y_robust))]=1
+        
+    if order == 'row':
+        
+        inData = np.column_stack([inDex[1], inDex[0]])
+    
+    
+        model = LineModelND()
+        model.estimate(inData)
+    
+        model_robust, inliers = ransac(inData, LineModelND, min_samples=2,
+                                   residual_threshold=1, max_trials=1000)
+    
+    
+        outliers = inliers == False
+        
+        line_x = inData[:,0]
+        line_y = model.predict_y(line_x)
+
+        line_y_robust = model_robust.predict_y(line_x)
+        
+        outArray[np.int64(np.round(line_y_robust)), line_x]=1
+
+    
+    return outArray
+    
+def ransac_lines(inRas, sigma=3, binwidth=40):
+
+
+    inDataset = gdal.Open(inRas)
+        
+    outDataset = _copy_dataset_config(inDataset, outMap = outRas,
+                                     dtype = gdal.GDT_Byte, bands = 1)
+    band = inDataset.GetRasterBand(2)
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
+    outBand = outDataset.GetRasterBand(1)
+    
+    
+    blocksizeY = inDataset.RasterYSize
+    
+    blocksizeX = binwidth
+    
+    
+    # vertical lines
+    
+    for i in range(0, rows, blocksizeY):
+        if i + blocksizeY < rows:
+            numRows = blocksizeY
+        else:
+            numRows = rows -i
+        
+        for j in tqdm(range(0, cols, blocksizeX)):
+            if j + blocksizeX < cols:
+                numCols = blocksizeX
+            else:
+                numCols = cols - j
+            
+            inArray = band.ReadAsArray(j,i, numCols, numRows)
+            #glim = nd.gaussian_laplace(inArray, sigma=4)
+            edge = canny(inArray, sigma=sigma)
+            oot = _do_ransac(edge, order='col')
+            
+            outBand.WriteArray(oot,j,i)
+    
+    # horizontal lines
+    
+    blocksizeY = binwidth
+    
+    blocksizeX = inDataset.RasterXSize
+    
+    for i in tqdm(range(0, rows, blocksizeY)):
+        if i + blocksizeY < rows:
+            numRows = blocksizeY
+        else:
+            numRows = rows -i
+        
+        for j in range(0, cols, blocksizeX):
+            if j + blocksizeX < cols:
+                numCols = blocksizeX
+            else:
+                numCols = cols - j
+            
+            inArray = band.ReadAsArray(j,i, numCols, numRows)
+            #glim = nd.gaussian_laplace(inArray, sigma=4)
+            edge = canny(inArray, sigma=sigma)
+            oot = _do_ransac(edge, order='row')
+            
+            outArray = outBand.ReadAsArray(j,i, numCols, numRows)
+            
+    
+            outArray[oot==1]=1
+            
+            outBand.WriteArray(outArray,j,i)
+    
+            
+    outDataset.FlushCache()
+    outDataset = None
+    outIm = io.imread(outRas)
+    
+    array2raster(np.invert(outIm), 1, inRas, inRas[:-4]+"seg.tif",  gdal.GDT_Int32)
+        
+    polygonize(inRas[:-4]+"seg.tif", inRas[:-4]+"seg.shp", outField=None,  mask = True, band = 1)
+    return outIm        
 
 
 

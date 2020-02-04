@@ -35,7 +35,8 @@ from geospatial_learn.geodata import _copy_dataset_config
 from scipy.ndimage import gaussian_filter
 
 from skimage.transform import rescale
-
+from skimage.feature import canny
+from skimage.measure import LineModelND, ransac
 #TODO
 #def rgbind(inRas):
 #    
@@ -50,7 +51,77 @@ from skimage.transform import rescale
 #    exG = (g * 2) - (r - b)        
 #           
 #    exR = (r * 1.4) - g
+
+def iter_ransac(image):
     
+    # The plan here is to make the outliers inliers each time or summit
+    
+    outArray = np.zeros_like(image)
+    
+    #th = filters.threshold_otsu(inArray)
+    
+    bw = canny(image, sigma=3)
+    
+    
+    inDex = np.where(bw > 0)
+    
+    inData = np.column_stack([inDex[0], inDex[1]])
+    
+    for i in tqdm(range(0, 30)):           
+        
+        model = LineModelND()
+        model.estimate(inData)
+        
+        model_robust, inliers = ransac(inData, LineModelND, min_samples=2,
+                                       residual_threshold=1, max_trials=1000)
+        
+        
+        outliers = np.invert(inliers)
+        
+        
+        
+        
+        line_x = inData[:, 0]
+        line_y = model.predict_y(line_x)
+        line_y_robust = model_robust.predict_y(line_x)
+        
+#        if np.any(line_y_robust < 0) == True:
+#            
+#            inData = np.column_stack([inData[1], inData[0]])
+#            
+#            model = LineModelND()
+#            model.estimate(inData)
+#            
+#            
+#    
+#    
+#            model = LineModelND()
+#            model.estimate(inData)
+#        
+#            model_robust, inliers = ransac(inData, LineModelND, min_samples=2,
+#                                       residual_threshold=1, max_trials=1000)
+#        
+#        
+#            outliers = inliers == False
+#            
+#            line_x = inData[:,0]
+#            line_y = model.predict_y(line_x)
+#    
+#            line_y_robust = model_robust.predict_y(line_x)
+#            
+#            outArray[np.int64(np.round(line_y_robust)), line_x]=1
+#            inData = inData[:,0:2][outliers==True]
+#            inData = np.column_stack([inData[:,1], inData[:,0]])
+#        
+#        else:
+            
+        
+        outArray[line_x, np.int64(np.round(line_y_robust))]=1
+    
+        inData = inData[:,0:2][outliers==True]
+        
+    
+    return outArray
 
 
 def temp_match(vector_path, raster_path, band, nodata_value=0, ind=None):

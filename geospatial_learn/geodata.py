@@ -15,7 +15,7 @@ import gdal, ogr,  osr
 import os
 import numpy as np
 import glob2
-from geospatial_learn.data import _get_S2_geoinfo
+#from geospatial_learn.data import _get_S2_geoinfo
 from geospatial_learn.gdal_merge import _merge
 import tempfile
 #from pyrate.shared import DEM
