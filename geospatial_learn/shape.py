@@ -1043,7 +1043,7 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
     rgt = rds.GetGeoTransform()
     
     cols = rds.RasterXSize
-    rows = rds.RasterYSiz
+    rows = rds.RasterYSize
 
     if nodata_value:
         nodata_value = float(nodata_value)
@@ -1566,7 +1566,7 @@ def thresh_seg(vector_path, raster_path, outShp, band, algo='otsu', nodata_value
 def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):
                 
     tested_angles = np.linspace(angl- np.radians(valrange),
-                                angl + np.radians(valrange), interval)
+                                angl + np.radians(valrange), num=interval)
     hh, htheta, hd = hough_line(inArray, theta=tested_angles)
     origin = np.array((0, inArray.shape[1]))
     
@@ -1578,7 +1578,7 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):
     bbox = box(width, height, 0, 0)
                     
                     
-                    # Here we adapt the skimage loop to draw a bw line into the image
+    # Here we adapt the skimage loop to draw a bw line into the image
     for _, angle, dist in tqdm(zip(*hough_line_peaks(hh, htheta, hd))):
     
     # here we obtain y extrema in our arbitrary coord system
@@ -1649,7 +1649,7 @@ def _phl_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt,
               line_length, line_gap):
     
     tested_angles = np.linspace(angl - np.radians(valrange),
-                                angl + np.radians(valrange), interval)
+                                angl + np.radians(valrange), num=interval)
     huff = phl(inArray, line_length=line_length, line_gap=line_gap, 
                            theta=tested_angles)
     
@@ -1661,7 +1661,7 @@ def _phl_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt,
         x2 = linez[1][0]
         y2 = linez[1][1]
         rr, cc = line(y1, x1, y2, x2)
-        empty[rr, cc]=1
+        outArray[rr, cc]=1
         
         outSnk = []
             
@@ -1703,7 +1703,7 @@ def block_view(A, block=(3, 3)):
         
 
 def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=False, line_length=100,
-               line_gap=200, valrange=2, interval=10, binwidth=40):
+               line_gap=20, valrange=3, interval=10, binwidth=40, band=2, sigma=3):
     
         """ 
         Detect and write Hough lines to a line shapefile
@@ -1722,9 +1722,11 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
         
         vArray: np array
               a binary array for hough line detection must be in order y
+              if auto is selected then it must be set to a value not None
               
         hArray: np array
-              a binary array for hough line detection must be in order y              
+              a binary array for hough line detection must be in order y
+                if auto is selected then it must be set to a value not None              
         auto: bool
                 detect and constrain angles to + / - of the image positive values              
                          
@@ -1774,13 +1776,19 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
 
         if auto == True:
             
-            tempIm = imread(inRaster)
-            bw = tempIm[:,:,0] > 0
+            tempIm = inRas.GetRasterBand(band).ReadAsArray()
+            bw = tempIm > 0
             props = regionprops(bw*1)
             orient = props[0]['Orientation']
-            angleD = orient
-            angleV = orient + np.radians(90)
-            del tempIm, bw
+            angleV = np.pi - orient
+            angleD = (np.pi - orient) + np.deg2rad(90)
+            edge = canny(tempIm, sigma=sigma)
+            #array2raster(edge, 1, inRaster, outShp[:-4]+"edge.tif",  gdal.GDT_Byte)
+            if hArray != None:
+                hArray = edge
+            if vArray != None:
+                vArray = edge
+            del tempIm#, edge
             
         else:
             angleV= np.pi /2
@@ -1822,13 +1830,15 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
         
         if prob == True:
             array2raster(empty, 1, inRaster, outShp[:-3]+"tif",  gdal.GDT_Int32)
-        else:        
+        else:
+            empty = np.uint8(np.invert(empty))
+            empty[bw==0]=0
             array2raster(np.invert(empty), 1, inRaster, outShp[:-3]+"tif",  gdal.GDT_Int32)
         
         polygonize(outShp[:-4]+'.tif', outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
         
         
-def _do_ransac(inArray, order='col'):
+def _do_ransac(inArray, order='col', mxt=1000):
     
     outArray = np.zeros_like(inArray)
     
@@ -1847,7 +1857,7 @@ def _do_ransac(inArray, order='col'):
         model.estimate(inData)
     
         model_robust, inliers = ransac(inData, LineModelND, min_samples=2,
-                                       residual_threshold=1, max_trials=1000)
+                                       residual_threshold=1, max_trials=mxt)
     
     
         outliers = inliers == False
@@ -1868,7 +1878,7 @@ def _do_ransac(inArray, order='col'):
         model.estimate(inData)
     
         model_robust, inliers = ransac(inData, LineModelND, min_samples=2,
-                                   residual_threshold=1, max_trials=1000)
+                                   residual_threshold=1, max_trials=mxt)
     
     
         outliers = inliers == False
@@ -1883,7 +1893,7 @@ def _do_ransac(inArray, order='col'):
     
     return outArray
     
-def ransac_lines(inRas, sigma=3, binwidth=40):
+def ransac_lines(inRas, outRas, sigma=3, binwidth=40):
 
 
     inDataset = gdal.Open(inRas)

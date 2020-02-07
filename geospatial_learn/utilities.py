@@ -37,6 +37,88 @@ from scipy.ndimage import gaussian_filter
 from skimage.transform import rescale
 from skimage.feature import canny
 from skimage.measure import LineModelND, ransac
+
+
+def iter_ransac(image, sigma=3, no_iter=10, order = 'col', mxt=2500):
+    
+    # The plan here is to make the outliers inliers each time or summit
+    
+    outArray = np.zeros_like(image)
+    
+    #th = filters.threshold_otsu(inArray)
+    
+    bw = canny(image, sigma=sigma)
+    
+    
+    inDex = np.where(bw > 0)
+    
+    if order =='col':       
+    
+        inData = np.column_stack([inDex[0], inDex[1]])
+        
+    if order == 'row':
+        inData = np.column_stack([inDex[1], inDex[0]])
+    
+    for i in tqdm(range(0, no_iter)):
+        
+#        if orient == 'v':
+        
+        if order == 'col':
+        
+            #inData = np.column_stack([inDex[0], inDex[1]])
+            
+            
+            model = LineModelND()
+            model.estimate(inData)
+        
+            model_robust, inliers = ransac(inData, LineModelND, min_samples=2,
+                                           residual_threshold=1, max_trials=mxt)
+        
+        
+            outliers = np.invert(inliers)
+        
+            
+            line_x = inData[:, 0]
+            line_y = model.predict_y(line_x)
+            line_y_robust = model_robust.predict_y(line_x)
+        
+            outArray[line_x, np.int64(np.round(line_y_robust))]=1
+        
+        if order == 'row':
+        
+#            inData = np.column_stack([inDex[1], inDex[0]])
+        
+        
+            model = LineModelND()
+            model.estimate(inData)
+        
+            model_robust, inliers = ransac(inData, LineModelND, min_samples=2,
+                                       residual_threshold=1, max_trials=mxt)
+        
+        
+            outliers = np.invert(inliers)
+        
+            
+            line_x = inData[:,0]
+            line_y = model.predict_y(line_x)
+    
+            line_y_robust = model_robust.predict_y(line_x)
+            
+            outArray[np.int64(np.round(line_y_robust)), line_x]=1
+
+#    
+        
+        
+    
+        inData = inData[:,0:2][outliers==True]
+        del model, model_robust, inliers, outliers
+        
+    
+    return outArray
+
+
+
+
 #TODO
 #def rgbind(inRas):
 #    
