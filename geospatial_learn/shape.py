@@ -1564,9 +1564,9 @@ def thresh_seg(vector_path, raster_path, outShp, band, algo='otsu', nodata_value
     polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1)    
     
 def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):
-                
-    tested_angles = np.linspace(angl- np.radians(valrange),
-                                angl + np.radians(valrange), num=interval)
+    
+    tested_angles = np.linspace(angl - np.radians(valrange), angl + np.radians(valrange))
+
     hh, htheta, hd = hough_line(inArray, theta=tested_angles)
     origin = np.array((0, inArray.shape[1]))
     
@@ -1581,7 +1581,7 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):
                     # Here we adapt the skimage loop to draw a bw line into the image
     for _, angle, dist in tqdm(zip(*hough_line_peaks(hh, htheta, hd))):
     
-    # here we obtain y extrema in our arbitrary coord system
+# here we obtain y extrema in our arbitrary coord system
         y0, y1 = (dist - origin * np.cos(angle)) / np.sin(angle)
         
         # shapely used to get the geom and intersection in our arbitrary
@@ -1615,9 +1615,22 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):
             x2 = width-1
         
         
-        rr, cc = line(x1, y1, x2, y2)
+        cc, rr = line(x1, y1, x2, y2)
         
-        outArray[cc,rr]=1    
+        
+#        tmpemp = np.zeros_like(outArray)
+#        
+#        tmpemp[rr, cc]=1
+#        prop = regionprops(np.int32(tmpemp))
+#        
+#        orient = prop[0]['Orientation']
+#        
+#        if orient != angl:
+#            continue
+#        else:
+        outArray[rr, cc]=1
+        
+
         outSnk = []
         
         snList = np.arange(len(cc))
@@ -1649,7 +1662,7 @@ def _phl_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt,
               line_length, line_gap):
     
     tested_angles = np.linspace(angl - np.radians(valrange),
-                                angl + np.radians(valrange), interval)
+                                angl + np.radians(valrange), num=interval)
     huff = phl(inArray, line_length=line_length, line_gap=line_gap, 
                            theta=tested_angles)
     
@@ -1661,7 +1674,18 @@ def _phl_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt,
         x2 = linez[1][0]
         y2 = linez[1][1]
         rr, cc = line(y1, x1, y2, x2)
-        empty[rr, cc]=1
+#        
+#        tmpemp = np.zeros_like(outArray, dtype=np.int32)
+        
+#        tmpemp[rr, cc]=1
+#        prop = regionprops(np.int32(tmpemp))
+#        
+#        orient = prop[0]['Orientation']
+#        
+#        if orient != angl:
+#            continue
+#        else:
+        outArray[rr, cc]=1
         
         outSnk = []
             
@@ -1779,8 +1803,17 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             bw = tempIm > 0
             props = regionprops(bw*1)
             orient = props[0]['Orientation']
-            angleD = orient
-            angleV = orient + np.radians(90)
+
+            # if the the binary box is pointing negatively along maj axis
+            if orient < 0:
+                angleV = np.pi - orient
+                angleD = (np.pi - orient) + np.deg2rad(90)                
+            else:
+            # if the the binary box is pointing positively along maj axis
+                angleV = np.pi + orient
+                angleD = (np.pi + orient) + np.deg2rad(90)
+            
+           
             hArray = canny(tempIm, sigma=sigma)
             vArray=hArray
             del tempIm, bw
