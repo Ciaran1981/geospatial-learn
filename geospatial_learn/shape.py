@@ -1962,7 +1962,7 @@ def ransac_lines(inRas, outRas, sigma=3, binwidth=40):
             
     outDataset.FlushCache()
     outDataset = None
-    outIm = io.imread(outRas)
+    outIm = imread(outRas)
     
     array2raster(np.invert(outIm), 1, inRas, inRas[:-4]+"seg.tif",  gdal.GDT_Int32)
         
