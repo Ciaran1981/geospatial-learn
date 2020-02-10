@@ -1832,8 +1832,7 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
         polygonize(outShp[:-4]+'.tif', outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
         
         
-        
-def _do_ransac(inArray, order='col', mxt=1000):
+def _do_ransac(inArray, order='col'):
     
     outArray = np.zeros_like(inArray)
     
@@ -1852,7 +1851,7 @@ def _do_ransac(inArray, order='col', mxt=1000):
         model.estimate(inData)
     
         model_robust, inliers = ransac(inData, LineModelND, min_samples=2,
-                                       residual_threshold=1, max_trials=mxt)
+                                       residual_threshold=1, max_trials=2500)
     
     
         outliers = inliers == False
@@ -1873,7 +1872,7 @@ def _do_ransac(inArray, order='col', mxt=1000):
         model.estimate(inData)
     
         model_robust, inliers = ransac(inData, LineModelND, min_samples=2,
-                                   residual_threshold=1, max_trials=mxt)
+                                   residual_threshold=1, max_trials=2500)
     
     
         outliers = inliers == False
