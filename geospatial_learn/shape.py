@@ -1702,8 +1702,9 @@ def block_view(A, block=(3, 3)):
 
         
 
-def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=False, line_length=100,
-               line_gap=200, valrange=2, interval=10, binwidth=40):
+def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=False,
+               sigma=3, line_length=100,
+               line_gap=200, valrange=2, interval=10, band=2,  binwidth=40):
     
         """ 
         Detect and write Hough lines to a line shapefile
@@ -1774,12 +1775,14 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
 
         if auto == True:
             
-            tempIm = imread(inRaster)
-            bw = tempIm[:,:,0] > 0
+            tempIm = inRas.GetRasterBand(band).ReadAsArray()
+            bw = tempIm > 0
             props = regionprops(bw*1)
             orient = props[0]['Orientation']
             angleD = orient
             angleV = orient + np.radians(90)
+            hArray = canny(tempIm, sigma=sigma)
+            vArray=hArray
             del tempIm, bw
             
         else:
