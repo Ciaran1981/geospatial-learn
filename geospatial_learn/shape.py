@@ -1636,8 +1636,8 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):
         snList = np.arange(len(cc))
         
         for s in snList:
-            x = rr[s]
-            y = cc[s]
+            y = rr[s]
+            x = cc[s]
             xout = (x * rgt[1]) + rgt[0]
             yout = (y * rgt[5]) + rgt[3]
             
@@ -1728,7 +1728,7 @@ def block_view(A, block=(3, 3)):
 
 def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=False,
                sigma=3, line_length=100,
-               line_gap=200, valrange=2, interval=10, band=2,  binwidth=40):
+               line_gap=200, valrange=2, interval=10, band=2,  eq=False):
     
         """ 
         Detect and write Hough lines to a line shapefile
@@ -1794,7 +1794,20 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
         outLayer.CreateField(idField)
         
         empty = np.zeros((inRas.RasterYSize, inRas.RasterXSize), dtype=np.bool)
-
+        
+    #because I am thick - finally solved below
+    #Degrees (°) 	Radians (rad) 	Radians (rad)
+    #0° 	0 rad 	0 rad
+    #30° 	π/6 rad 	0.5235987756 rad
+    #45° 	π/4 rad 	0.7853981634 rad
+    #60° 	π/3 rad 	1.0471975512 rad
+    #90° 	π/2 rad 	1.5707963268 rad
+    #120° 	2π/3 rad 	2.0943951024 rad
+    #135° 	3π/4 rad 	2.3561944902 rad
+    #150° 	5π/6 rad 	2.6179938780 rad
+    #180° 	π rad 	3.1415926536 rad
+    #270° 	3π/2 rad 	4.7123889804 rad
+    #360° 	2π rad 	6.2831853072 rad
 
 
         if auto == True:
@@ -1805,15 +1818,16 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             orient = props[0]['Orientation']
 
             # if the the binary box is pointing negatively along maj axis
-            if orient < 0:
+            if orient < np.pi:
                 angleV = np.pi - orient
                 angleD = (np.pi - orient) + np.deg2rad(90)                
             else:
             # if the the binary box is pointing positively along maj axis
                 angleV = np.pi + orient
                 angleD = (np.pi + orient) + np.deg2rad(90)
-            
-           
+            if eq == True:
+                tempIm = exposure.equalize_hist(tempIm)
+                       
             hArray = canny(tempIm, sigma=sigma)
             vArray=hArray
             del tempIm, bw
@@ -2004,6 +2018,72 @@ def ransac_lines(inRas, outRas, sigma=3, binwidth=40):
 
 
 
+def meshgrid(outputGridfn,xmin,xmax,ymin,ymax,gridHeight,gridWidth):
+
+    # convert sys.argv to float
+    xmin = float(xmin)
+    xmax = float(xmax)
+    ymin = float(ymin)
+    ymax = float(ymax)
+    gridWidth = float(gridWidth)
+    gridHeight = float(gridHeight)
+
+    # get rows
+    rows = ceil((ymax-ymin)/gridHeight)
+    # get columns
+    cols = ceil((xmax-xmin)/gridWidth)
+
+    # start grid cell envelope
+    ringXleftOrigin = xmin
+    ringXrightOrigin = xmin + gridWidth
+    ringYtopOrigin = ymax
+    ringYbottomOrigin = ymax-gridHeight
+
+    # create output file
+    outDriver = ogr.GetDriverByName('ESRI Shapefile')
+    if os.path.exists(outputGridfn):
+        os.remove(outputGridfn)
+    outDataSource = outDriver.CreateDataSource(outputGridfn)
+    outLayer = outDataSource.CreateLayer(outputGridfn,geom_type=ogr.wkbPolygon )
+    featureDefn = outLayer.GetLayerDefn()
+
+    # create grid cells
+    countcols = 0
+    while countcols < cols:
+        countcols += 1
+
+        # reset envelope for rows
+        ringYtop = ringYtopOrigin
+        ringYbottom =ringYbottomOrigin
+        countrows = 0
+
+        while countrows < rows:
+            countrows += 1
+            ring = ogr.Geometry(ogr.wkbLinearRing)
+            ring.AddPoint(ringXleftOrigin, ringYtop)
+            ring.AddPoint(ringXrightOrigin, ringYtop)
+            ring.AddPoint(ringXrightOrigin, ringYbottom)
+            ring.AddPoint(ringXleftOrigin, ringYbottom)
+            ring.AddPoint(ringXleftOrigin, ringYtop)
+            poly = ogr.Geometry(ogr.wkbPolygon)
+            poly.AddGeometry(ring)
+
+            # add new geom to layer
+            outFeature = ogr.Feature(featureDefn)
+            outFeature.SetGeometry(poly)
+            outLayer.CreateFeature(outFeature)
+            outFeature = None
+
+            # new envelope for next poly
+            ringYtop = ringYtop - gridHeight
+            ringYbottom = ringYbottom - gridHeight
+
+        # new envelope for next poly
+        ringXleftOrigin = ringXleftOrigin + gridWidth
+        ringXrightOrigin = ringXrightOrigin + gridWidth
+
+    # Save and close DataSources
+    outDataSource = None
 
 
 
