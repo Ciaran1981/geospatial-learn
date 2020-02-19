@@ -11,6 +11,7 @@ formats. The functions are mainly concerned with writing geometric or pixel base
 """
 from skimage.measure import regionprops
 from scipy.stats import entropy, skew, kurtosis
+import scipy.ndimage as nd
 from skimage import feature
 #from sklearn import cluster
 import shapefile
@@ -24,7 +25,7 @@ import numpy as np
 from scipy.stats.mstats import mode
 from geospatial_learn.utilities import min_bound_rectangle
 from shapely.wkt import loads
-from shapely.geometry import Polygon, box, LineString
+from shapely.geometry import Polygon, box, LineString, Point, LinearRing
 from pandas import DataFrame
 from pysal.lib import io 
 import pandas as pd
@@ -43,6 +44,10 @@ from skimage.transform import probabilistic_hough_line as phl
 from skimage.io import imread
 from skimage.feature import canny
 import matplotlib
+from geospatial_learn.shapely_tools import clip_lines_with_polygon, read_geometries
+from math import ceil
+from centerline.geometry import Centerline
+
 matplotlib.use('Qt5Agg')
 
 gdal.UseExceptions()
@@ -1098,7 +1103,7 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
             continue
         geom = feat.geometry()
         
-        buff = geom.Buffer(buf)
+        buff = geom.Buffer(0.01)
         
         wkt=buff.ExportToWkt()
         
@@ -1106,12 +1111,18 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
         
         src_offset = _bbox_to_pixel_offsets(rgt, buff)
         
+        # xoff, yoff, xcount, ycount
+        
         src_offset = list(src_offset)
+    
+        
+        
         
 #        for idx, off in enumerate(src_offset):
 #            if off <=0:
 #                src_offset[idx]=0
-#            if off >
+            
+#            if off > 
                 
         if rgb == True:
             rgbList = []
@@ -1157,9 +1168,16 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
                             gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
         rv_array = rvds.ReadAsArray()
         
+        dist = nd.morphology.distance_transform_edt(np.logical_not(rv_array))
+        
+        # covert the dist raster to the actual units
+        dist *= rgt[1]
+        
+        bw = dist <=buf
+        
         rr, cc = rv_array.nonzero()
         
-        
+        src_array[bw==0]=0
     
         
         init = np.array([rr, cc]).T
@@ -1563,7 +1581,7 @@ def thresh_seg(vector_path, raster_path, outShp, band, algo='otsu', nodata_value
     # This is a hacky solution for now really, but it works well enough!
     polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1)    
     
-def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):
+def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt, mk=None):
     
     tested_angles = np.linspace(angl - np.radians(valrange), angl + np.radians(valrange))
 
@@ -1576,12 +1594,19 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):
     height, width = inArray.shape
     
     bbox = box(width, height, 0, 0)
-                    
+    
+    msk = ogr.Open(mk)
+    msklyr = msk.GetLayer(0)
+    mskFeat = msklyr.GetFeature(0)
+    geom = mskFeat.GetGeometryRef()
+    wkt=geom.ExportToWkt()
+    poly = loads(wkt)
+
                     
                     # Here we adapt the skimage loop to draw a bw line into the image
     for _, angle, dist in tqdm(zip(*hough_line_peaks(hh, htheta, hd))):
     
-# here we obtain y extrema in our arbitrary coord system
+        # here we obtain y extrema in our arbitrary coord system
         y0, y1 = (dist - origin * np.cos(angle)) / np.sin(angle)
         
         # shapely used to get the geom and intersection in our arbitrary
@@ -1593,7 +1618,7 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):
         
         # here for readability visual query
         # shapely in-built converts to np via np.array(inter)
-        inter = bbox.intersection(linestr)
+        #inter = bbox.intersection(linestr)
         
         in_coord= np.array(bbox.intersection(linestr).coords)
         
@@ -1614,22 +1639,10 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):
         if x2 == width:
             x2 = width-1
         
-        
         cc, rr = line(x1, y1, x2, y2)
         
         
-#        tmpemp = np.zeros_like(outArray)
-#        
-#        tmpemp[rr, cc]=1
-#        prop = regionprops(np.int32(tmpemp))
-#        
-#        orient = prop[0]['Orientation']
-#        
-#        if orient != angl:
-#            continue
-#        else:
         outArray[rr, cc]=1
-        
 
         outSnk = []
         
@@ -1642,9 +1655,25 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):
             yout = (y * rgt[5]) + rgt[3]
             
             outSnk.append([xout, yout])
+            
+        # This is horrifically slow and must be addressed immediately
+
+        out = [s for s in outSnk if Point(s).within(poly)]
         
-        snakeLine2 = LineString(outSnk)
+        snakeLine2 = LineString(out)
+
+        # almost there issue fairly likely the input data 
+        # This has worked on most examples in isolation
         
+#        lines_clip = clip_lines_with_polygon([snakeLine2], poly, 
+#                                                    tolerance=0.0001, within=True,
+#                                                    return_index=False)
+
+        
+        
+        # my god this lib is shit at times
+        #TODO - need to undertand the intersection output better
+
         
         geomOut = ogr.CreateGeometryFromWkt(snakeLine2.wkt)
         
@@ -1659,7 +1688,7 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):
 
 
 def _phl_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt, 
-              line_length, line_gap):
+              line_length, line_gap, mask=None):
     
     tested_angles = np.linspace(angl - np.radians(valrange),
                                 angl + np.radians(valrange), num=interval)
@@ -1674,18 +1703,10 @@ def _phl_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt,
         x2 = linez[1][0]
         y2 = linez[1][1]
         rr, cc = line(y1, x1, y2, x2)
-#        
-#        tmpemp = np.zeros_like(outArray, dtype=np.int32)
-        
-#        tmpemp[rr, cc]=1
-#        prop = regionprops(np.int32(tmpemp))
-#        
-#        orient = prop[0]['Orientation']
-#        
-#        if orient != angl:
-#            continue
-#        else:
+
         outArray[rr, cc]=1
+        
+        outArray[inArray==0]=0
         
         outSnk = []
             
@@ -1714,7 +1735,7 @@ def _phl_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt,
 
 from numpy.lib.stride_tricks import as_strided as ast
 
-def block_view(A, block=(3, 3)):
+def _block_view(A, block=(3, 3)):
     """Provide a 2D block view to 2D array. No error checking made.
     Therefore meaningful (as implemented) only for blocks strictly
     compatible with the shape of A."""
@@ -1781,7 +1802,7 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             outDriver.DeleteDataSource(outShapefile)
         
         # get the spatial ref
-        #ref = vlyr.GetSpatialRef()
+#        ref = vlyr.GetSpatialRef()
         
         # Create the output shapefile
         outDataSource = outDriver.CreateDataSource(outShapefile)
@@ -1795,25 +1816,31 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
         
         empty = np.zeros((inRas.RasterYSize, inRas.RasterXSize), dtype=np.bool)
         
-    #because I am thick - finally solved below
-    #Degrees (°) 	Radians (rad) 	Radians (rad)
-    #0° 	0 rad 	0 rad
-    #30° 	π/6 rad 	0.5235987756 rad
-    #45° 	π/4 rad 	0.7853981634 rad
-    #60° 	π/3 rad 	1.0471975512 rad
-    #90° 	π/2 rad 	1.5707963268 rad
-    #120° 	2π/3 rad 	2.0943951024 rad
-    #135° 	3π/4 rad 	2.3561944902 rad
-    #150° 	5π/6 rad 	2.6179938780 rad
-    #180° 	π rad 	3.1415926536 rad
-    #270° 	3π/2 rad 	4.7123889804 rad
-    #360° 	2π rad 	6.2831853072 rad
+        #because I am thick - finally solved below
+        #Degrees (°) 	Radians (rad) 	Radians (rad)
+        #0° 	0 rad 	0 rad
+        #30° 	π/6 rad 	0.5235987756 rad
+        #45° 	π/4 rad 	0.7853981634 rad
+        #60° 	π/3 rad 	1.0471975512 rad
+        #90° 	π/2 rad 	1.5707963268 rad
+        #120° 	2π/3 rad 	2.0943951024 rad
+        #135° 	3π/4 rad 	2.3561944902 rad
+        #150° 	5π/6 rad 	2.6179938780 rad
+        #180° 	π rad 	3.1415926536 rad
+        #270° 	3π/2 rad 	4.7123889804 rad
+        #360° 	2π rad 	6.2831853072 rad
 
 
         if auto == True:
             
             tempIm = inRas.GetRasterBand(band).ReadAsArray()
             bw = tempIm > 0
+            
+            bwRas = inRaster[:-4]+'bw.tif'
+            maskShp = inRaster[:-4]+'bwmask.shp'
+            array2raster(bw, 1, inRaster, bwRas,  gdal.GDT_Byte)
+            polygonize(bwRas, maskShp, outField=None,  mask = True, band = 1)  
+#            
             props = regionprops(bw*1)
             orient = props[0]['Orientation']
 
@@ -1830,7 +1857,7 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
                        
             hArray = canny(tempIm, sigma=sigma)
             vArray=hArray
-            del tempIm, bw
+            del tempIm
             
         else:
             angleV= np.pi /2
@@ -1846,9 +1873,9 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             """
             if hasattr(vArray, 'shape'):
                 
-                empty =_std_huff(vArray, empty, outLayer, angleV, valrange, interval, rgt)
+                empty =_std_huff(vArray, empty, outLayer, angleV, valrange, interval, rgt, mk=maskShp)
             if hasattr(hArray, 'shape'):
-                empty =_std_huff(hArray, empty, outLayer, angleD, valrange, interval, rgt)
+                empty =_std_huff(hArray, empty, outLayer, angleD, valrange, interval, rgt, mk=maskShp)
            
         
         else:
@@ -1874,14 +1901,16 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             array2raster(empty, 1, inRaster, outShp[:-3]+"tif",  gdal.GDT_Int32)
         else:
             inv = np.invert(empty)
-            tmp  = imread(inRaster)
-            inv[tmp[:,:,0]==0]=0
+            tmp  = imread(inRaster, as_gray=True)
+            inv[tmp==0]=0
             del tmp
             array2raster(inv, 1, inRaster, outShp[:-3]+"tif",  gdal.GDT_Int32)
         
         polygonize(outShp[:-4]+'.tif', outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
-        
-        
+
+
+
+
 def _do_ransac(inArray, order='col'):
     
     outArray = np.zeros_like(inArray)
@@ -2018,15 +2047,67 @@ def ransac_lines(inRas, outRas, sigma=3, binwidth=40):
 
 
 
-def meshgrid(outputGridfn,xmin,xmax,ymin,ymax,gridHeight,gridWidth):
+def meshgrid(inShp, outShp, xmin=None, xmax=None, ymin=None, ymax=None, gridHeight=None, gridWidth=None):
 
     # convert sys.argv to float
-    xmin = float(xmin)
-    xmax = float(xmax)
-    ymin = float(ymin)
-    ymax = float(ymax)
-    gridWidth = float(gridWidth)
-    gridHeight = float(gridHeight)
+    
+    shape = ogr.Open(inShp)
+    
+    lyr = shape.GetLayer()
+    
+    feat = lyr.GetFeature(0)
+    
+    geom = feat.GetGeometryRef()
+    
+    
+    numpoints = geom.GetPointCount()
+    pointsX = []; pointsY = []
+    
+    if (geom.GetGeometryName() == 'MULTIPOLYGON'):
+        count = 0
+        pointsX = []; pointsY = []
+        for polygon in geom:
+            geomInner = geom.GetGeometryRef(count)
+            ring = geomInner.GetGeometryRef(0)
+            numpoints = ring.GetPointCount()
+            for p in range(numpoints):
+                    lon, lat, z = ring.GetPoint(p)
+                    pointsX.append(lon)
+                    pointsY.append(lat)
+            count += 1
+    elif (geom.GetGeometryName() == 'POLYGON'):
+        ring = geom.GetGeometryRef(0)
+        numpoints = ring.GetPointCount()
+        pointsX = []; pointsY = []
+        for p in range(numpoints):
+                lon, lat, z = ring.GetPoint(p)
+                pointsX.append(lon)
+                pointsY.append(lat)
+            
+    xmin = min(pointsX)
+    xmax = max(pointsX)
+    ymin = min(pointsY)
+    ymax = max(pointsY)
+    
+    
+    wkt=geom.ExportToWkt()
+    poly1 = loads(wkt)
+
+
+
+    # so here we spin the rectangle round to the vertical then measure it
+    x,y=poly1.exterior.coords.xy
+    xy = np.vstack((x,y))
+    rec = min_bound_rectangle(xy.transpose())
+    poly2 = Polygon(rec)
+    minx, miny, maxx, maxy = poly2.bounds
+    axis1 = maxx - minx
+    axis2 = maxy - miny
+    axes = np.array([axis1, axis2])
+    
+
+    gridWidth = float(1)
+    gridHeight = float(1)
 
     # get rows
     rows = ceil((ymax-ymin)/gridHeight)
@@ -2035,16 +2116,18 @@ def meshgrid(outputGridfn,xmin,xmax,ymin,ymax,gridHeight,gridWidth):
 
     # start grid cell envelope
     ringXleftOrigin = xmin
-    ringXrightOrigin = xmin + gridWidth
+    ringXrightOrigin = xmin + gridWidth 
     ringYtopOrigin = ymax
     ringYbottomOrigin = ymax-gridHeight
 
     # create output file
     outDriver = ogr.GetDriverByName('ESRI Shapefile')
-    if os.path.exists(outputGridfn):
-        os.remove(outputGridfn)
-    outDataSource = outDriver.CreateDataSource(outputGridfn)
-    outLayer = outDataSource.CreateLayer(outputGridfn,geom_type=ogr.wkbPolygon )
+    if os.path.exists(outShp):
+        os.remove(outShp)
+    
+    ref = lyr.GetSpatialRef()
+    outDataSource = outDriver.CreateDataSource(outShp)
+    outLayer = outDataSource.CreateLayer(outShp, geom_type=ogr.wkbPolygon, srs=ref)
     featureDefn = outLayer.GetLayerDefn()
 
     # create grid cells
@@ -2083,6 +2166,8 @@ def meshgrid(outputGridfn,xmin,xmax,ymin,ymax,gridHeight,gridWidth):
         ringXrightOrigin = ringXrightOrigin + gridWidth
 
     # Save and close DataSources
+    
+    outDataSource.SyncToDisk()
     outDataSource = None
 
 
