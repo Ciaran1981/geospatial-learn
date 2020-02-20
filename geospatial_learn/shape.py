@@ -44,6 +44,7 @@ from skimage.transform import probabilistic_hough_line as phl
 from skimage.io import imread
 from skimage.feature import canny
 import matplotlib
+from shapely.affinity import rotate
 #from geospatial_learn.shapely_tools import clip_lines_with_polygon, read_geometries
 from math import ceil
 #from centerline.geometry import Centerline
@@ -2043,11 +2044,29 @@ def ransac_lines(inRas, outRas, sigma=3, binwidth=40):
 
 
 
-def meshgrid(inShp, outShp, xmin=None, xmax=None, ymin=None, ymax=None, gridHeight=None, gridWidth=None):
+def meshgrid(inRaster, outShp, gridHeight=1, gridWidth=1):
 
-    # convert sys.argv to float
+    #TODO - make alternating intervals make it rotational
     
-    shape = ogr.Open(inShp)
+    
+    # make a mask for non-zero vals for our mesh
+    inRas = gdal.Open(inRaster)
+    tempIm = inRas.GetRasterBand(1).ReadAsArray()
+    
+    bw = tempIm > 0
+    
+    props = regionprops(bw*1)
+    orient = props[0]['Orientation']
+    
+    bwRas = inRaster[:-4]+'bw.tif'
+    maskShp = inRaster[:-4]+'bwmask.shp'
+    array2raster(bw, 1, inRaster, bwRas,  gdal.GDT_Byte)
+    polygonize(bwRas, maskShp, outField=None,  mask = True, band = 1)
+    
+    inRas = None
+    del bw, tempIm
+
+    shape = ogr.Open(maskShp)
     
     lyr = shape.GetLayer()
     
@@ -2055,55 +2074,66 @@ def meshgrid(inShp, outShp, xmin=None, xmax=None, ymin=None, ymax=None, gridHeig
     
     geom = feat.GetGeometryRef()
     
+
     
-    numpoints = geom.GetPointCount()
-    pointsX = []; pointsY = []
-    
-    if (geom.GetGeometryName() == 'MULTIPOLYGON'):
-        count = 0
-        pointsX = []; pointsY = []
-        for polygon in geom:
-            geomInner = geom.GetGeometryRef(count)
-            ring = geomInner.GetGeometryRef(0)
-            numpoints = ring.GetPointCount()
-            for p in range(numpoints):
-                    lon, lat, z = ring.GetPoint(p)
-                    pointsX.append(lon)
-                    pointsY.append(lat)
-            count += 1
-    elif (geom.GetGeometryName() == 'POLYGON'):
-        ring = geom.GetGeometryRef(0)
-        numpoints = ring.GetPointCount()
-        pointsX = []; pointsY = []
-        for p in range(numpoints):
-                lon, lat, z = ring.GetPoint(p)
-                pointsX.append(lon)
-                pointsY.append(lat)
-            
-    xmin = min(pointsX)
-    xmax = max(pointsX)
-    ymin = min(pointsY)
-    ymax = max(pointsY)
-    
+    # not rotated!
+#    numpoints = geom.GetPointCount()
+#    pointsX = []; pointsY = []
+#    
+#    if (geom.GetGeometryName() == 'MULTIPOLYGON'):
+#        count = 0
+#        pointsX = []; pointsY = []
+#        for polygon in geom:
+#            geomInner = geom.GetGeometryRef(count)
+#            ring = geomInner.GetGeometryRef(0)
+#            numpoints = ring.GetPointCount()
+#            for p in range(numpoints):
+#                    lon, lat, z = ring.GetPoint(p)
+#                    pointsX.append(lon)
+#                    pointsY.append(lat)
+#            count += 1
+#    elif (geom.GetGeometryName() == 'POLYGON'):
+#        ring = geom.GetGeometryRef(0)
+#        numpoints = ring.GetPointCount()
+#        pointsX = []; pointsY = []
+#        for p in range(numpoints):
+#                lon, lat, z = ring.GetPoint(p)
+#                pointsX.append(lon)
+#                pointsY.append(lat)
+#            
+#    xmin = min(pointsX)
+#    xmax = max(pointsX)
+#    ymin = min(pointsY)
+#    ymax = max(pointsY)
+#    
     
     wkt=geom.ExportToWkt()
     poly1 = loads(wkt)
+    
+    if orient < np.pi:
+        poly2 = rotate(poly1, np.pi-orient, use_radians=True)
+    else:
+        poly2 = rotate(poly1, np.pi+orient, use_radians=True)
+    
+    xmin, ymin, xmax, ymax = poly2.bounds
+    
+    
 
 
 
     # so here we spin the rectangle round to the vertical then measure it
-    x,y=poly1.exterior.coords.xy
-    xy = np.vstack((x,y))
-    rec = min_bound_rectangle(xy.transpose())
-    poly2 = Polygon(rec)
-    minx, miny, maxx, maxy = poly2.bounds
-    axis1 = maxx - minx
-    axis2 = maxy - miny
-    axes = np.array([axis1, axis2])
-    
+#    x,y=poly2.exterior.coords.xy
+#    xy = np.vstack((x,y))
+#    rec = min_bound_rectangle(xy.transpose())
+#    poly2 = Polygon(rec)
+#    minx, miny, maxx, maxy = poly2.bounds
+#    axis1 = maxx - minx
+#    axis2 = maxy - miny
+#    axes = np.array([axis1, axis2])
+#    
 
-    gridWidth = float(1)
-    gridHeight = float(1)
+    gridWidth = float(gridHeight)
+    gridHeight = float(gridWidth)
 
     # get rows
     rows = ceil((ymax-ymin)/gridHeight)
@@ -2145,11 +2175,15 @@ def meshgrid(inShp, outShp, xmin=None, xmax=None, ymin=None, ymax=None, gridHeig
             ring.AddPoint(ringXleftOrigin, ringYbottom)
             ring.AddPoint(ringXleftOrigin, ringYtop)
             poly = ogr.Geometry(ogr.wkbPolygon)
+            
             poly.AddGeometry(ring)
-
+            g2 = poly.ExportToWkt()
+            poly3 = loads(g2)
+            poly4 = rotate(poly3, np.pi+orient, use_radians=True)
+            
             # add new geom to layer
             outFeature = ogr.Feature(featureDefn)
-            outFeature.SetGeometry(poly)
+            outFeature.SetGeometry(poly4.to_wkt())
             outLayer.CreateFeature(outFeature)
             outFeature = None
 

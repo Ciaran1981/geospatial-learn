@@ -37,6 +37,7 @@ from scipy.ndimage import gaussian_filter
 from skimage.transform import rescale
 from skimage.feature import canny
 from skimage.measure import LineModelND, ransac
+from skimage.draw import line
 #TODO
 #def rgbind(inRas):
 #    
@@ -51,6 +52,9 @@ from skimage.measure import LineModelND, ransac
 #    exG = (g * 2) - (r - b)        
 #           
 #    exR = (r * 1.4) - g
+
+
+    
 
 def iter_ransac(image, sigma=3, no_iter=10, order = 'col', mxt=2500):
     
