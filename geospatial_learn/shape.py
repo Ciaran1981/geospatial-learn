@@ -44,9 +44,9 @@ from skimage.transform import probabilistic_hough_line as phl
 from skimage.io import imread
 from skimage.feature import canny
 import matplotlib
-from geospatial_learn.shapely_tools import clip_lines_with_polygon, read_geometries
+#from geospatial_learn.shapely_tools import clip_lines_with_polygon, read_geometries
 from math import ceil
-from centerline.geometry import Centerline
+#from centerline.geometry import Centerline
 
 matplotlib.use('Qt5Agg')
 
@@ -1581,7 +1581,7 @@ def thresh_seg(vector_path, raster_path, outShp, band, algo='otsu', nodata_value
     # This is a hacky solution for now really, but it works well enough!
     polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1)    
     
-def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt, mk=None):
+def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):#, mk=None):
     
     tested_angles = np.linspace(angl - np.radians(valrange), angl + np.radians(valrange))
 
@@ -1595,12 +1595,13 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt, mk=Non
     
     bbox = box(width, height, 0, 0)
     
-    msk = ogr.Open(mk)
-    msklyr = msk.GetLayer(0)
-    mskFeat = msklyr.GetFeature(0)
-    geom = mskFeat.GetGeometryRef()
-    wkt=geom.ExportToWkt()
-    poly = loads(wkt)
+#    msk = ogr.Open(mk)
+#    msklyr = msk.GetLayer(0)
+#    mskFeat = msklyr.GetFeature(0)
+#    geom = mskFeat.GetGeometryRef()
+#    wkt=geom.ExportToWkt()
+#    poly = loads(wkt)
+#    bw = imread(mk)
 
                     
                     # Here we adapt the skimage loop to draw a bw line into the image
@@ -1642,11 +1643,20 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt, mk=Non
         cc, rr = line(x1, y1, x2, y2)
         
         
+        
         outArray[rr, cc]=1
+        
 
         outSnk = []
+
+#        Works but rotation is a little bit out
+#        preArray = np.zeros_like(outArray)
+#        preArray[rr,cc]=1
+#        preArray[bw==0]=0
+#        x1,y1 = np.where(preArray==1)
+#        Replace rr and cc with x1,y1 and see the results are a wee bit out
         
-        snList = np.arange(len(cc))
+        snList = np.arange(len(rr))
         
         for s in snList:
             y = rr[s]
@@ -1655,24 +1665,8 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt, mk=Non
             yout = (y * rgt[5]) + rgt[3]
             
             outSnk.append([xout, yout])
-            
-        # This is horrifically slow and must be addressed immediately
-
-        out = [s for s in outSnk if Point(s).within(poly)]
-        
-        snakeLine2 = LineString(out)
-
-        # almost there issue fairly likely the input data 
-        # This has worked on most examples in isolation
-        
-#        lines_clip = clip_lines_with_polygon([snakeLine2], poly, 
-#                                                    tolerance=0.0001, within=True,
-#                                                    return_index=False)
-
-        
-        
-        # my god this lib is shit at times
-        #TODO - need to undertand the intersection output better
+                    
+        snakeLine2 = LineString(outSnk)
 
         
         geomOut = ogr.CreateGeometryFromWkt(snakeLine2.wkt)
@@ -1684,6 +1678,7 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt, mk=Non
         feature.SetField("id", 1)
         outLayer.CreateFeature(feature)
         feature = None
+#        del preArray
     return outArray
 
 
@@ -1706,7 +1701,7 @@ def _phl_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt,
 
         outArray[rr, cc]=1
         
-        outArray[inArray==0]=0
+
         
         outSnk = []
             
@@ -1873,9 +1868,9 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             """
             if hasattr(vArray, 'shape'):
                 
-                empty =_std_huff(vArray, empty, outLayer, angleV, valrange, interval, rgt, mk=maskShp)
+                empty =_std_huff(vArray, empty, outLayer, angleV, valrange, interval, rgt)#, mk=bwRas)
             if hasattr(hArray, 'shape'):
-                empty =_std_huff(hArray, empty, outLayer, angleD, valrange, interval, rgt, mk=maskShp)
+                empty =_std_huff(hArray, empty, outLayer, angleD, valrange, interval, rgt)#, mk=bwRas)
            
         
         else:
@@ -1901,12 +1896,13 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             array2raster(empty, 1, inRaster, outShp[:-3]+"tif",  gdal.GDT_Int32)
         else:
             inv = np.invert(empty)
-            tmp  = imread(inRaster, as_gray=True)
+            tmp  = imread(bwRas)#, as_gray=True)
             inv[tmp==0]=0
-            del tmp
-            array2raster(inv, 1, inRaster, outShp[:-3]+"tif",  gdal.GDT_Int32)
+            sg, _ = nd.label(inv)
+            del tmp, inv
+            array2raster(sg, 1, inRaster, outShp[:-3]+"tif",  gdal.GDT_Int32)
         
-        polygonize(outShp[:-4]+'.tif', outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
+        polygonize(outShp[:-3]+'tif', outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
 
 
 
