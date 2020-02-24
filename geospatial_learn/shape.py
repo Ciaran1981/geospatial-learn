@@ -43,9 +43,10 @@ from skimage.draw import line
 from skimage.transform import probabilistic_hough_line as phl
 from skimage.io import imread
 from skimage.feature import canny
+from skimage.morphology import remove_small_objects
 import matplotlib
 from shapely.affinity import rotate
-#from geospatial_learn.shapely_tools import clip_lines_with_polygon, read_geometries
+from geospatial_learn.geodata import rasterize
 from math import ceil
 #from centerline.geometry import Centerline
 
@@ -1244,7 +1245,7 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
     outDataSource=None
     vds = None    
         
-def ms_snake(vector_path, raster_path, outShp, band, buf=0, algo="ACWE", nodata_value=0,
+def ms_snake(vector_path, raster_path, outShp, band=2, buf=0, algo="ACWE", nodata_value=0,
           iterations=200,  smoothing=3, lambda1=1, lambda2=1, threshold=0.69, 
           balloon=-1):
     
@@ -1315,13 +1316,14 @@ def ms_snake(vector_path, raster_path, outShp, band, buf=0, algo="ACWE", nodata_
     #assert(rds)
     rb = rds.GetRasterBand(band)
     rgt = rds.GetGeoTransform()
-
+    
+    
     if nodata_value:
         nodata_value = float(nodata_value)
         rb.SetNoDataValue(nodata_value)
 
     vds = ogr.Open(vector_path, 1)  # TODO maybe open update if we want to write stats
-   #assert(vds)
+
     vlyr = vds.GetLayer(0)
 #    if write_stat != None:
 #        vlyr.CreateField(ogr.FieldDefn(bandname, ogr.OFTReal))
@@ -1331,7 +1333,7 @@ def ms_snake(vector_path, raster_path, outShp, band, buf=0, algo="ACWE", nodata_
 
     # Loop through vectors
 
-    feat = vlyr.GetNextFeature()
+    #feat = vlyr.GetNextFeature()
     features = np.arange(vlyr.GetFeatureCount())
 
     
@@ -1340,23 +1342,21 @@ def ms_snake(vector_path, raster_path, outShp, band, buf=0, algo="ACWE", nodata_
     
     outBnd = outDataset.GetRasterBand(1)
     
+    
+
+#    seg = np.zeros_like(rb.ReadAsArray())
+#    tempRas = vector_path[:-4]+'.tif'
+    
+#    rasterize(vector_path, raster_path, tempRas)
+#    sgbnd = gdal.Open(tempRas).GetRasterBand(1)
+#    seg = sgbnd.ReadAsArray()
 #    rejects = list()
     for label in tqdm(features):
 
-        if feat is None:
-            continue
-        geom = feat.geometry()
-        
-        if buf != 0:
-            
-            buff = geom.Buffer(buf)
-            
-            # for debug
-            #wkt=buff.ExportToWkt()
-
-            #poly1 = loads(wkt)
-        else:
-            buff=geom
+        feat = vlyr.GetFeature(label)
+#        if feat is None:
+#            continue
+        buff = feat.geometry()
         
         src_offset = _bbox_to_pixel_offsets(rgt, buff)
         
@@ -1396,6 +1396,18 @@ def ms_snake(vector_path, raster_path, outShp, band, buf=0, algo="ACWE", nodata_
         gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
         rv_array = rvds.ReadAsArray()
         
+        
+        dist = nd.morphology.distance_transform_edt(np.logical_not(rv_array))
+        
+        # covert the dist raster to the actual units
+        dist *= rgt[1]
+        
+        bw = dist <=buf
+        
+        
+        src_array[bw==0]=0
+    
+        
         if algo == "ACWE":       
         
             bw = ms.morphological_chan_vese(src_array, iterations=iterations,
@@ -1409,8 +1421,18 @@ def ms_snake(vector_path, raster_path, outShp, band, buf=0, algo="ACWE", nodata_
                                              balloon=balloon)
         segoot = np.int32(bw)
         segoot*=int(label)+1
-        outBnd.WriteArray(segoot, src_offset[0], src_offset[1])
-        del segoot
+        
+        # very important not to overwrite results
+        if label > 0:
+            ootArray = outBnd.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                               src_offset[3])
+            ootArray[segoot==label+1]=label+1
+            outBnd.WriteArray(ootArray, src_offset[0], src_offset[1])
+        else:
+    
+            outBnd.WriteArray(segoot, src_offset[0], src_offset[1])
+        
+        del segoot, bw
         feat = vlyr.GetNextFeature()
         
 
@@ -1491,6 +1513,7 @@ def thresh_seg(vector_path, raster_path, outShp, band, algo='otsu', nodata_value
     
     outBnd = outDataset.GetRasterBand(1)
     
+
 #    rejects = list()
     for label in tqdm(features):
 
@@ -1745,7 +1768,7 @@ def _block_view(A, block=(3, 3)):
 
 def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=False,
                sigma=3, line_length=100,
-               line_gap=200, valrange=2, interval=10, band=2,  eq=False):
+               line_gap=200, valrange=2, interval=10, band=2,  eq=False, min_area=64):
     
         """ 
         Detect and write Hough lines to a line shapefile
@@ -1787,6 +1810,8 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
 
 #        rb = inRas.GetRasterBand(band)
         rgt = inRas.GetGeoTransform()
+        
+        pixel_res = rgt[1]
         
         ref = inRas.GetSpatialRef()
         
@@ -1833,9 +1858,9 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             bw = tempIm > 0
             
             bwRas = inRaster[:-4]+'bw.tif'
-            maskShp = inRaster[:-4]+'bwmask.shp'
+            #maskShp = inRaster[:-4]+'bwmask.shp'
             array2raster(bw, 1, inRaster, bwRas,  gdal.GDT_Byte)
-            polygonize(bwRas, maskShp, outField=None,  mask = True, band = 1)  
+            #polygonize(bwRas, maskShp, outField=None,  mask = True, band = 1)  
 #            
             props = regionprops(bw*1)
             orient = props[0]['Orientation']
@@ -1856,6 +1881,11 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             del tempIm
             
         else:
+            tempIm = inRas.GetRasterBand(band).ReadAsArray()
+            bw = tempIm > 0
+            
+            bwRas = inRaster[:-4]+'bw.tif'
+            array2raster(bw, 1, inRaster, bwRas,  gdal.GDT_Byte)
             angleV= np.pi /2
             angleD= np.pi /2
             interval = 360
@@ -1899,6 +1929,10 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             inv = np.invert(empty)
             tmp  = imread(bwRas)#, as_gray=True)
             inv[tmp==0]=0
+            min_final = np.round(min_area/pixel_res)
+            if min_final <= 0:
+                min_final=4
+            remove_small_objects(inv, min_size=min_final, in_place=True)
             sg, _ = nd.label(inv)
             del tmp, inv
             array2raster(sg, 1, inRaster, outShp[:-3]+"tif",  gdal.GDT_Int32)
