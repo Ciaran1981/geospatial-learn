@@ -961,16 +961,16 @@ def rgb_ind(inputIm, outputIm, blocksize = 256, FMT = None,
     Parameters 
     ----------- 
     
-    inputIm : string
-              the granule folder 
+    inputIm: string
+              the input rgb image
         
-    bands : list
-            a list of band indicies to be used, eg - [3,4] for Sent2 data
+    outputIm: string
+            the output image
 
-    FMT : string
+    FMT: string
           the output gdal format eg 'Gtiff', 'KEA', 'HFA'
         
-    blocksize : int
+    blocksize: int
                 the chunk of raster read in & write out
     
 

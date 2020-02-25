@@ -46,7 +46,7 @@ from skimage.feature import canny
 from skimage.morphology import remove_small_objects
 import matplotlib
 from shapely.affinity import rotate
-from geospatial_learn.geodata import rasterize
+#from geospatial_learn.geodata import rasterize
 from math import ceil
 #from centerline.geometry import Centerline
 
@@ -1887,11 +1887,14 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             bwRas = inRaster[:-4]+'bw.tif'
             array2raster(bw, 1, inRaster, bwRas,  gdal.GDT_Byte)
             angleV= np.pi /2
-            angleD= np.pi /2
+            angleD= np.pi 
             interval = 360
             valrange =0 
-        
-
+            if hArray ==None:
+                hArray = canny(tempIm, sigma=sigma)
+            if vArray ==None:
+                vArray = canny(tempIm, sigma=sigma)
+            
         
         if prob == False:
             """
@@ -1929,7 +1932,7 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             inv = np.invert(empty)
             tmp  = imread(bwRas)#, as_gray=True)
             inv[tmp==0]=0
-            min_final = np.round(min_area/pixel_res)
+            min_final = np.round(min_area/(pixel_res*pixel_res))
             if min_final <= 0:
                 min_final=4
             remove_small_objects(inv, min_size=min_final, in_place=True)

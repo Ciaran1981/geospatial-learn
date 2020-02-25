@@ -38,21 +38,6 @@ from skimage.transform import rescale
 from skimage.feature import canny
 from skimage.measure import LineModelND, ransac
 from skimage.draw import line
-#TODO
-#def rgbind(inRas):
-#    
-#    
-#    img = imread(inRas)
-#    
-#    
-#    r = img[:,:,0] / (np.sum(img, axis=2))
-#    g = img[:,:,1] / (np.sum(img, axis=2))
-#    b = img[:,:,2] / (np.sum(img, axis=2))                    
-#
-#    exG = (g * 2) - (r - b)        
-#           
-#    exR = (r * 1.4) - g
-
 
     
 
