@@ -954,7 +954,7 @@ def calc_ndvi(inputIm, outputIm, bandsList, blocksize = 256, FMT = None, dtype=N
     outDataset = None
 
 def rgb_ind(inputIm, outputIm, blocksize = 256, FMT = None, 
-            dtype=gdal.GDT_Float32):
+            dtype=gdal.GDT_Int32):
     """ 
     Create a copy of an image with an ndvi band added
     
@@ -987,7 +987,7 @@ def rgb_ind(inputIm, outputIm, blocksize = 256, FMT = None,
         fmt = '.tif'
     
     if dtype is None:
-        dtype = gdal.GDT_Float32
+        dtype = gdal.GDT_Byte
         
     inDataset = gdal.Open(inputIm, gdal.GA_Update)
     
@@ -1023,7 +1023,7 @@ def rgb_ind(inputIm, outputIm, blocksize = 256, FMT = None,
                     numCols = cols - j
                 rgb = np.zeros((numRows, numCols, 3))
                 
-                for band in range(1, bands):
+                for band in range(1, bands+1):
                     inbnd = inDataset.GetRasterBand(band)
                     rgb[:,:, band-1] = inbnd.ReadAsArray(j, i, numCols, numRows)
                 
@@ -1034,12 +1034,12 @@ def rgb_ind(inputIm, outputIm, blocksize = 256, FMT = None,
     
                 del rgb
     
-                r = r / (r+g+b)
-                g = g / (r+g+b)
-                b = b / (r+g+b)
+                r = r / (r+g+b) * 10000
+                g = g / (r+g+b) * 10000
+                b = b / (r+g+b) * 10000
                 outList = [r,g,b]
                 del r, g, b
-                for band in range(1, bands):
+                for band in range(1, bands+1):
                     outbnd = outDataset.GetRasterBand(band)
                     outbnd.WriteArray(outList[band-1], j , i)
 

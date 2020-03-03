@@ -1619,6 +1619,11 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):#, mk=
     
     bbox = box(width, height, 0, 0)
     
+    angl - np.radians(valrange), angl + np.radians(valrange)
+    
+    # opencv is simpler but dont get it yet
+    #lines = cv2.HoughLines(re, 1, 150, None, 0, 0)
+    
 #    msk = ogr.Open(mk)
 #    msklyr = msk.GetLayer(0)
 #    mskFeat = msklyr.GetFeature(0)
@@ -1768,7 +1773,7 @@ def _block_view(A, block=(3, 3)):
 
 def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=False,
                sigma=3, line_length=100,
-               line_gap=200, valrange=2, interval=10, band=2,  eq=False, min_area=64):
+               line_gap=200, valrange=2, interval=10, band=2,  eq=False, min_area=None):
     
         """ 
         Detect and write Hough lines to a line shapefile
@@ -1873,8 +1878,12 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             # if the the binary box is pointing positively along maj axis
                 angleV = np.pi + orient
                 angleD = (np.pi + orient) + np.deg2rad(90)
+#            if tempIm.max() < 1:
+#                tempIm =exposure.rescale_intensity(tempIm, out_range='uint8')
             if eq == True:
+                tempIm[tempIm=='nan']=0
                 tempIm = exposure.equalize_hist(tempIm)
+                tempIm =exposure.rescale_intensity(tempIm, out_range='uint8')
                        
             hArray = canny(tempIm, sigma=sigma)
             vArray=hArray
@@ -1883,7 +1892,6 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
         else:
             tempIm = inRas.GetRasterBand(band).ReadAsArray()
             bw = tempIm > 0
-            
             bwRas = inRaster[:-4]+'bw.tif'
             array2raster(bw, 1, inRaster, bwRas,  gdal.GDT_Byte)
             angleV= np.pi /2
@@ -1932,10 +1940,11 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             inv = np.invert(empty)
             tmp  = imread(bwRas)#, as_gray=True)
             inv[tmp==0]=0
-            min_final = np.round(min_area/(pixel_res*pixel_res))
-            if min_final <= 0:
-                min_final=4
-            remove_small_objects(inv, min_size=min_final, in_place=True)
+            if min_area != None:
+                min_final = np.round(min_area/(pixel_res*pixel_res))
+                if min_final <= 0:
+                    min_final=4
+                remove_small_objects(inv, min_size=min_final, in_place=True)
             sg, _ = nd.label(inv)
             del tmp, inv
             array2raster(sg, 1, inRaster, outShp[:-3]+"tif",  gdal.GDT_Int32)
