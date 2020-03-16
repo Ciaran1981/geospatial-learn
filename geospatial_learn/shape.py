@@ -48,6 +48,7 @@ import matplotlib
 from shapely.affinity import rotate
 #from geospatial_learn.geodata import rasterize
 from math import ceil
+from phasepack.phasecong import phasecong
 #from centerline.geometry import Centerline
 
 matplotlib.use('Qt5Agg')
@@ -1771,9 +1772,10 @@ def _block_view(A, block=(3, 3)):
 
         
 
-def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=False,
-               sigma=3, line_length=100,
-               line_gap=200, valrange=2, interval=10, band=2,  eq=False, min_area=None):
+def hough2line(inRaster, outShp, sigma=3, edge='phase', n_orient=6, vArray=None, 
+               hArray=None, auto=False,  prob=False, line_length=100,
+               line_gap=200, valrange=2, interval=360, band=2,  eq=False, 
+               min_area=None):
     
         """ 
         Detect and write Hough lines to a line shapefile
@@ -1790,6 +1792,16 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
         outShp: string
                path to the output line shapefile a corresponding polygon will also be written to disk
         
+        edge: string
+              the edge detection method - either phase congruency or canny
+              phase is default.
+        
+        sigma: int
+              the number of stdv's defining the gaussian envelope if using canny edge
+        
+        n_orient: int
+              the number of orientations used if using phase congruency edge
+              
         vArray: np array
               a binary array for hough line detection must be in order y
               
@@ -1872,22 +1884,53 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
 
             # if the the binary box is pointing negatively along maj axis
             if orient < np.pi:
-                angleV = np.pi - orient
-                angleD = (np.pi - orient) + np.deg2rad(90)                
+                angleD = np.pi - orient
+                angleV = angleD - np.deg2rad(90)
             else:
             # if the the binary box is pointing positively along maj axis
-                angleV = np.pi + orient
-                angleD = (np.pi + orient) + np.deg2rad(90)
+                angleD = np.pi + orient
+                angleV = angleD + np.deg2rad(90)
 #            if tempIm.max() < 1:
 #                tempIm =exposure.rescale_intensity(tempIm, out_range='uint8')
             if eq == True:
                 tempIm[tempIm=='nan']=0
                 tempIm = exposure.equalize_hist(tempIm)
                 tempIm =exposure.rescale_intensity(tempIm, out_range='uint8')
-                       
-            hArray = canny(tempIm, sigma=sigma)
-            vArray=hArray
-            del tempIm
+            
+            def _do_phasecong(tempIm, angleV, angleD, norient=n_orient):
+                ph = phasecong(tempIm, norient=norient)
+                orientIm = ph[4]
+                anglez = np.array([p * (np.pi / 6) for p in range(1,7)])
+                
+                ootV = np.abs(np.array(anglez) - angleV)
+                ootH = np.abs(np.array(anglez) - angleD)
+                
+                
+                vInd = np.where(ootV==ootV.min())
+                hInd = np.where(ootH==ootH.min())
+                
+                v = int(vInd[0])+1
+                h = int(hInd[0])+1
+                
+                if v>=6:
+                    v -= 1
+                if h >=6:
+                    h -= 1                
+
+                vT = threshold_otsu(orientIm[v])
+                hT = threshold_otsu(orientIm[h])
+                vArray = orientIm[v]>=vT
+                hArray = orientIm[h]>=hT
+                
+                return vArray, hArray
+            if edge == 'phase':
+                vArray, hArray = _do_phasecong(tempIm, angleV, angleD)
+            else:
+                hArray = canny(tempIm, sigma=sigma)
+                vArray = hArray
+                      
+            
+            #del tempIm
             
         else:
             tempIm = inRas.GetRasterBand(band).ReadAsArray()
@@ -1898,8 +1941,11 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             angleD= np.pi 
             interval = 360
             valrange =0 
+            
+            
             if hArray ==None:
                 hArray = canny(tempIm, sigma=sigma)
+                #ph = phasecong(tempIm, norient=6)
             if vArray ==None:
                 vArray = canny(tempIm, sigma=sigma)
             
@@ -1938,18 +1984,18 @@ def hough2line(inRaster, outShp, vArray=None, hArray=None, auto=False,  prob=Fal
             array2raster(empty, 1, inRaster, outShp[:-3]+"tif",  gdal.GDT_Int32)
         else:
             inv = np.invert(empty)
-            tmp  = imread(bwRas)#, as_gray=True)
-            inv[tmp==0]=0
+            inv[tempIm==0]=0
             if min_area != None:
                 min_final = np.round(min_area/(pixel_res*pixel_res))
                 if min_final <= 0:
                     min_final=4
                 remove_small_objects(inv, min_size=min_final, in_place=True)
-            sg, _ = nd.label(inv)
-            del tmp, inv
-            array2raster(sg, 1, inRaster, outShp[:-3]+"tif",  gdal.GDT_Int32)
+            #sg, _ = nd.label(inv)
+            segRas=outShp[:-3]+"seg.tif"
+            array2raster(inv, 1, inRaster, segRas,  gdal.GDT_Int32)
+            del tempIm, inv
         
-        polygonize(outShp[:-3]+'tif', outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
+        polygonize(segRas, outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
 
 
 
