@@ -1620,7 +1620,7 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):#, mk=
     
     bbox = box(width, height, 0, 0)
     
-    angl - np.radians(valrange), angl + np.radians(valrange)
+    #angl - np.radians(valrange), angl + np.radians(valrange)
     
     # opencv is simpler but dont get it yet
     #lines = cv2.HoughLines(re, 1, 150, None, 0, 0)
@@ -1774,7 +1774,7 @@ def _block_view(A, block=(3, 3)):
 
 def hough2line(inRaster, outShp, sigma=3, edge='phase', n_orient=6, vArray=None, 
                hArray=None, auto=False,  prob=False, line_length=100,
-               line_gap=200, valrange=2, interval=360, band=2,  eq=False, 
+               line_gap=200, valrange=1, interval=360, band=2,  eq=False, 
                min_area=None):
     
         """ 
@@ -1902,6 +1902,7 @@ def hough2line(inRaster, outShp, sigma=3, edge='phase', n_orient=6, vArray=None,
                 orientIm = ph[4]
                 anglez = np.array([p * (np.pi / 6) for p in range(1,7)])
                 
+                # hang on this is not working
                 ootV = np.abs(np.array(anglez) - angleV)
                 ootH = np.abs(np.array(anglez) - angleD)
                 
@@ -2127,7 +2128,8 @@ def ransac_lines(inRas, outRas, sigma=3, binwidth=40):
             
     outDataset.FlushCache()
     outDataset = None
-    outIm = imread(outRas)
+    tmpIm = gdal.Open(outRas)
+    outIm = tmpIm.GetRasterBand(1).ReadAsArray()
     
     array2raster(np.invert(outIm), 1, inRas, inRas[:-4]+"seg.tif",  gdal.GDT_Int32)
         
