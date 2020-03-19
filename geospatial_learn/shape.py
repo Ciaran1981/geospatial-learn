@@ -1772,7 +1772,8 @@ def _block_view(A, block=(3, 3)):
 
         
 
-def hough2line(inRaster, outShp, sigma=3, edge='phase', n_orient=6, vArray=None, 
+def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None, 
+               high_t=None, n_orient=6, vArray=None, 
                hArray=None, auto=False,  prob=False, line_length=100,
                line_gap=200, valrange=1, interval=360, band=2,  eq=False, 
                min_area=None):
@@ -1823,14 +1824,14 @@ def hough2line(inRaster, outShp, sigma=3, edge='phase', n_orient=6, vArray=None,
                The no of intervals of the range of values tested if using auto  
         """         
         #TODO this is FAR too long
-        inRas = gdal.Open(inRaster, gdal.GA_ReadOnly)
+        inDataset = gdal.Open(inRas, gdal.GA_ReadOnly)
 
 #        rb = inRas.GetRasterBand(band)
-        rgt = inRas.GetGeoTransform()
+        rgt = inDataset.GetGeoTransform()
         
         pixel_res = rgt[1]
         
-        ref = inRas.GetSpatialRef()
+        ref = inDataset.GetSpatialRef()
         
         outShapefile = outShp
         outDriver = ogr.GetDriverByName("ESRI Shapefile")
@@ -1852,9 +1853,9 @@ def hough2line(inRaster, outShp, sigma=3, edge='phase', n_orient=6, vArray=None,
         idField = ogr.FieldDefn("id", ogr.OFTInteger)
         outLayer.CreateField(idField)
         
-        empty = np.zeros((inRas.RasterYSize, inRas.RasterXSize), dtype=np.bool)
+        empty = np.zeros((inDataset.RasterYSize, inDataset.RasterXSize), dtype=np.bool)
         
-        #because I am thick - finally solved below
+        #because I am thick
         #Degrees (°) 	Radians (rad) 	Radians (rad)
         #0° 	0 rad 	0 rad
         #30° 	π/6 rad 	0.5235987756 rad
@@ -1871,18 +1872,22 @@ def hough2line(inRaster, outShp, sigma=3, edge='phase', n_orient=6, vArray=None,
 
         if auto == True:
             
-            tempIm = inRas.GetRasterBand(band).ReadAsArray()
+            tempIm = inDataset.GetRasterBand(band).ReadAsArray()
             bw = tempIm > 0
             
-            bwRas = inRaster[:-4]+'bw.tif'
+            bwRas = inRas[:-4]+'bw.tif'
             #maskShp = inRaster[:-4]+'bwmask.shp'
-            array2raster(bw, 1, inRaster, bwRas,  gdal.GDT_Byte)
+            array2raster(bw, 1, inRas, bwRas,  gdal.GDT_Byte)
             #polygonize(bwRas, maskShp, outField=None,  mask = True, band = 1)  
 #            
             props = regionprops(bw*1)
             orient = props[0]['Orientation']
 
             # if the the binary box is pointing negatively along maj axis
+            
+            if orient < 0:
+                orient += np.pi
+            
             if orient < np.pi:
                 angleD = np.pi - orient
                 angleV = angleD - np.deg2rad(90)
@@ -1927,17 +1932,18 @@ def hough2line(inRaster, outShp, sigma=3, edge='phase', n_orient=6, vArray=None,
             if edge == 'phase':
                 vArray, hArray = _do_phasecong(tempIm, angleV, angleD)
             else:
-                hArray = canny(tempIm, sigma=sigma)
+                hArray = canny(tempIm, sigma=sigma, low_threshold=low_t,
+                               high_threshold=high_t)
                 vArray = hArray
                       
             
             #del tempIm
             
         else:
-            tempIm = inRas.GetRasterBand(band).ReadAsArray()
+            tempIm = inDataset.GetRasterBand(band).ReadAsArray()
             bw = tempIm > 0
-            bwRas = inRaster[:-4]+'bw.tif'
-            array2raster(bw, 1, inRaster, bwRas,  gdal.GDT_Byte)
+            bwRas = inRas[:-4]+'bw.tif'
+            array2raster(bw, 1, inRas, bwRas,  gdal.GDT_Byte)
             angleV= np.pi /2
             angleD= np.pi 
             interval = 360
@@ -1982,7 +1988,7 @@ def hough2line(inRaster, outShp, sigma=3, edge='phase', n_orient=6, vArray=None,
         outDataSource=None
         
         if prob == True:
-            array2raster(empty, 1, inRaster, outShp[:-3]+"tif",  gdal.GDT_Int32)
+            array2raster(empty, 1, inRas, outShp[:-3]+"tif",  gdal.GDT_Int32)
         else:
             inv = np.invert(empty)
             inv[tempIm==0]=0
@@ -1993,7 +1999,7 @@ def hough2line(inRaster, outShp, sigma=3, edge='phase', n_orient=6, vArray=None,
                 remove_small_objects(inv, min_size=min_final, in_place=True)
             #sg, _ = nd.label(inv)
             segRas=outShp[:-3]+"seg.tif"
-            array2raster(inv, 1, inRaster, segRas,  gdal.GDT_Int32)
+            array2raster(inv, 1, inRas, segRas,  gdal.GDT_Int32)
             del tempIm, inv
         
         polygonize(segRas, outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
