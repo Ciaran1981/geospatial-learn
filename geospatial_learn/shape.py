@@ -1679,12 +1679,6 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):#, mk=
 
         outSnk = []
 
-#        Works but rotation is a little bit out
-#        preArray = np.zeros_like(outArray)
-#        preArray[rr,cc]=1
-#        preArray[bw==0]=0
-#        x1,y1 = np.where(preArray==1)
-#        Replace rr and cc with x1,y1 and see the results are a wee bit out
         
         snList = np.arange(len(rr))
         
@@ -1708,7 +1702,7 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):#, mk=
         feature.SetField("id", 1)
         outLayer.CreateFeature(feature)
         feature = None
-#        del preArray
+
     return outArray
 
 
@@ -1770,12 +1764,41 @@ def _block_view(A, block=(3, 3)):
     strides= (block[0]* A.strides[0], block[1]* A.strides[1])+ A.strides
     return ast(A, shape= shape, strides= strides)
 
-        
+def _do_phasecong(tempIm, angleV, angleD, norient=6):
+    """
+    process phase congruency on an image returning vars for hough2line
+    A subfunction used in hough2line.
+    """
+    ph = phasecong(tempIm, norient=norient)
+    orientIm = ph[4]
+    anglez = np.array([p * (np.pi / 6) for p in range(1,7)])
+    
+    # hang on this is not working
+    ootV = np.abs(np.array(anglez) - angleV)
+    ootH = np.abs(np.array(anglez) - angleD)
+    
+    
+    vInd = np.where(ootV==ootV.min())
+    hInd = np.where(ootH==ootH.min())
+    
+    v = int(vInd[0])+1
+    h = int(hInd[0])+1
+    
+    if v>=6:
+        v -= 1
+    if h >=6:
+        h -= 1                
+
+    vT = threshold_otsu(orientIm[v])
+    hT = threshold_otsu(orientIm[h])
+    vArray = orientIm[v]>=vT
+    hArray = orientIm[h]>=hT     
+    return vArray, hArray
 
 def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None, 
-               high_t=None, n_orient=6, vArray=None, 
-               hArray=None, auto=False,  prob=False, line_length=100,
-               line_gap=200, valrange=1, interval=360, band=2,  eq=False, 
+               high_t=None, n_orient=6, hArray=True, vArray=True,
+               prob=False, line_length=100,
+               line_gap=200, valrange=1, interval=360, band=2,
                min_area=None):
     
         """ 
@@ -1803,11 +1826,11 @@ def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None,
         n_orient: int
               the number of orientations used if using phase congruency edge
               
-        vArray: np array
-              a binary array for hough line detection must be in order y
+        vArray: bool
+              whether to detect lines on approx vert axis
               
-        hArray: np array
-              a binary array for hough line detection must be in order y              
+        hArray: bool
+              whether to detect lines on approx horz axis             
         auto: bool
                 detect and constrain angles to + / - of the image positive values              
                          
@@ -1869,93 +1892,48 @@ def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None,
         #270° 	3π/2 rad 	4.7123889804 rad
         #360° 	2π rad 	6.2831853072 rad
 
+            
+        tempIm = inDataset.GetRasterBand(band).ReadAsArray()
+        bw = tempIm > 0
+        
+        bwRas = inRas[:-4]+'bw.tif'
+        #maskShp = inRaster[:-4]+'bwmask.shp'
+        array2raster(bw, 1, inRas, bwRas,  gdal.GDT_Byte)
+        #polygonize(bwRas, maskShp, outField=None,  mask = True, band = 1)   
+        props = regionprops(bw*1)
+        orient = props[0]['Orientation']
 
-        if auto == True:
-            
-            tempIm = inDataset.GetRasterBand(band).ReadAsArray()
-            bw = tempIm > 0
-            
-            bwRas = inRas[:-4]+'bw.tif'
-            #maskShp = inRaster[:-4]+'bwmask.shp'
-            array2raster(bw, 1, inRas, bwRas,  gdal.GDT_Byte)
-            #polygonize(bwRas, maskShp, outField=None,  mask = True, band = 1)  
-#            
-            props = regionprops(bw*1)
-            orient = props[0]['Orientation']
-
-            # if the the binary box is pointing negatively along maj axis
-            
-            if orient < 0:
-                orient += np.pi
-            
-            if orient < np.pi:
-                angleD = np.pi - orient
-                angleV = angleD - np.deg2rad(90)
-            else:
-            # if the the binary box is pointing positively along maj axis
-                angleD = np.pi + orient
-                angleV = angleD + np.deg2rad(90)
-#            if tempIm.max() < 1:
-#                tempIm =exposure.rescale_intensity(tempIm, out_range='uint8')
-            if eq == True:
-                tempIm[tempIm=='nan']=0
-                tempIm = exposure.equalize_hist(tempIm)
-                tempIm =exposure.rescale_intensity(tempIm, out_range='uint8')
-            
-            def _do_phasecong(tempIm, angleV, angleD, norient=n_orient):
-                ph = phasecong(tempIm, norient=norient)
-                orientIm = ph[4]
-                anglez = np.array([p * (np.pi / 6) for p in range(1,7)])
-                
-                # hang on this is not working
-                ootV = np.abs(np.array(anglez) - angleV)
-                ootH = np.abs(np.array(anglez) - angleD)
-                
-                
-                vInd = np.where(ootV==ootV.min())
-                hInd = np.where(ootH==ootH.min())
-                
-                v = int(vInd[0])+1
-                h = int(hInd[0])+1
-                
-                if v>=6:
-                    v -= 1
-                if h >=6:
-                    h -= 1                
-
-                vT = threshold_otsu(orientIm[v])
-                hT = threshold_otsu(orientIm[h])
-                vArray = orientIm[v]>=vT
-                hArray = orientIm[h]>=hT
-                
-                return vArray, hArray
-            if edge == 'phase':
-                vArray, hArray = _do_phasecong(tempIm, angleV, angleD)
-            else:
-                hArray = canny(tempIm, sigma=sigma, low_threshold=low_t,
-                               high_threshold=high_t)
-                vArray = hArray
-                      
-            
-            #del tempIm
-            
+        # if the the binary box is pointing negatively along maj axis
+        
+        if orient < 0:
+            orient += np.pi
+        
+        if orient < np.pi:
+            angleD = np.pi - orient
+            angleV = angleD - np.deg2rad(90)
         else:
-            tempIm = inDataset.GetRasterBand(band).ReadAsArray()
-            bw = tempIm > 0
-            bwRas = inRas[:-4]+'bw.tif'
-            array2raster(bw, 1, inRas, bwRas,  gdal.GDT_Byte)
-            angleV= np.pi /2
-            angleD= np.pi 
-            interval = 360
-            valrange =0 
-            
-            
-            if hArray ==None:
-                hArray = canny(tempIm, sigma=sigma)
-                #ph = phasecong(tempIm, norient=6)
-            if vArray ==None:
-                vArray = canny(tempIm, sigma=sigma)
-            
+        # if the the binary box is pointing positively along maj axis
+            angleD = np.pi + orient
+            angleV = angleD + np.deg2rad(90)
+        
+        # We must have a float to get rid of  zero to nonzero image 
+        # boundary, otherwise huff will only detect the
+        inIm = tempIm.astype(np.float32)
+        inIm[inIm==0]=np.nan     
+
+        if edge == 'phase':
+            vArray, hArray = _do_phasecong(tempIm, angleV, angleD)
+        else: 
+            # else it is canny
+        
+            if hArray == True:
+                hArray = canny(inIm, sigma=sigma, low_threshold=low_t,
+                               high_threshold=high_t)
+            if vArray == True:    
+                vArray = canny(inIm, sigma=sigma, low_threshold=low_t,
+                               high_threshold=high_t)
+        del inIm
+                                  
         
         if prob == False:
             """
