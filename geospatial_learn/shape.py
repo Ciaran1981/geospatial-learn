@@ -37,13 +37,13 @@ import warnings
 from skimage.measure import LineModelND, ransac
 from skimage.filters import gaussian
 from skimage import exposure
-from skimage.filters import threshold_otsu, threshold_niblack, threshold_sauvola
+from skimage.filters import threshold_otsu, threshold_niblack, threshold_sauvola, apply_hysteresis_threshold
 from skimage.transform import hough_line, hough_line_peaks
 from skimage.draw import line
 from skimage.transform import probabilistic_hough_line as phl
 from skimage.io import imread
 from skimage.feature import canny
-from skimage.morphology import remove_small_objects
+from skimage.morphology import remove_small_objects, remove_small_holes, medial_axis, skeletonize
 import matplotlib
 from shapely.affinity import rotate
 #from geospatial_learn.geodata import rasterize
@@ -971,9 +971,9 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast',
     return frame, rejects
 
 
-def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
-          boundary='fixed', alpha=0.1, beta=1.0, w_line=0, w_edge=0, gamma=0.1,
-          max_iterations=2500, smooth=False, eq=False, rgb=True):
+def snake(inShp, inRas, outShp, band=1, buf=1, nodata_value=0,
+          boundary='fixed', alpha=0.1, beta=30.0, w_line=0, w_edge=0, gamma=0.01,
+          max_iterations=2500, smooth=True, eq=False, rgb=False):
     
     """ 
     Deform a line using active contours based on the values of an underlying
@@ -1045,7 +1045,7 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
     # Partly inspired by the Heikpe paper...
     # TODO actually implement the Heipke paper properly
     
-    rds = gdal.Open(raster_path, gdal.GA_ReadOnly)
+    rds = gdal.Open(inRas, gdal.GA_ReadOnly)
     #assert(rds)
     rb = rds.GetRasterBand(band)
     rgt = rds.GetGeoTransform()
@@ -1057,7 +1057,7 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
         nodata_value = float(nodata_value)
         rb.SetNoDataValue(nodata_value)
 
-    vds = ogr.Open(vector_path, 1)  # TODO maybe open update if we want to write stats
+    vds = ogr.Open(inShp, 1)  # TODO maybe open update if we want to write stats
    #assert(vds)
     vlyr = vds.GetLayer(0)
 #    if write_stat != None:
@@ -1106,7 +1106,7 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
             continue
         geom = feat.geometry()
         
-        buff = geom.Buffer(0.01)
+        buff = geom.Buffer(buf)
         
         wkt=buff.ExportToWkt()
         
@@ -1180,8 +1180,9 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
         
         rr, cc = rv_array.nonzero()
         
-        src_array[bw==0]=0
-    
+#        src_array[bw==0]=0
+#        src_array = np.float32(src_array)
+#        src_array[src_array==0]=np.nan
         
         init = np.array([rr, cc]).T
         
@@ -1194,7 +1195,11 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
         snake = active_contour(src_array, init, boundary_condition=boundary,
                            alpha=alpha, beta=beta, w_line=w_line, w_edge=w_edge,
                            gamma=gamma, max_iterations=max_iterations,
-                           coordinates='rc')        
+                           coordinates='rc')
+        #dear skimage this function is deeply flawed.....grrrr
+        # there should NOT be negative coordinate values in the output
+        
+        
         """
         for reference
         xOrigin = rgt[0]
@@ -1208,8 +1213,16 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
 #        ylist = list(snake[:,0])
 #        
 #        #snakeLine = LineString(zip(xlist, ylist))     
-               
-        snList=snake.tolist()
+       # snakeFinite = snake[snake[:,0]>=0] 
+        
+        #snakeFinite
+        
+#        sr = np.int32(snakeFinite[:,0])
+#        sc = np.int32(snakeFinite[:,1])
+        
+        finite = snake[snake[:,0]>=0]
+        snakeR = np.round(finite)
+        snList=snakeR.tolist()
         outSnk = []
 #                
 #        
@@ -1246,8 +1259,8 @@ def snake(vector_path, raster_path, outShp, band=1, buf=1, nodata_value=0,
     outDataSource=None
     vds = None    
         
-def ms_snake(vector_path, raster_path, outShp, band=2, buf=0, algo="ACWE", nodata_value=0,
-          iterations=200,  smoothing=3, lambda1=1, lambda2=1, threshold=0.69, 
+def ms_snake(inShp, inRas, outShp, band=2, buf1=0, buf2=0, algo="ACWE", nodata_value=0,
+          iterations=200,  smoothing=3, lambda1=1, lambda2=1, threshold='auto', 
           balloon=-1):
     
     """ 
@@ -1258,22 +1271,31 @@ def ms_snake(vector_path, raster_path, outShp, band=2, buf=0, algo="ACWE", nodat
     Parameters
     ----------
     
-    vector_path : string
+    vector_path: string
                   input shapefile
         
-    raster_path : string
+    raster_path: string
                   input raster
 
-    band : int
+    band: int
            an integer val eg - 2
 
-    algo : string
+    algo: string
            either "GAC" (geodesic active contours) or the default "ACWE" (active contours without edges)
+    buf1: int
+           the buffer if any in map units for the bounding box of the poly which
+           extracts underlying pixel values.
+           
+    buf2: int
+           the buffer if any in map units for the expansion or contraction
+           of the poly which will initialise the active contour. 
+           This is here as you may wish to adjust the init polygon so it does not
+           converge on a adjacent one or undesired area. 
           
-    nodata_value : numerical
+    nodata_value: numerical
                    If used the no data val of the raster
 
-    iterations : uint
+    iterations: uint
         Number of iterations to run.
         
     smoothing : uint, optional
@@ -1282,25 +1304,25 @@ def ms_snake(vector_path, raster_path, outShp, band=2, buf=0, algo="ACWE", nodat
         Reasonable values are around 1-4. Larger values lead to smoother
         segmentations.
     
-    lambda1 : float, optional
+    lambda1: float, optional
     
         Weight parameter for the outer region. If `lambda1` is larger than
         `lambda2`, the outer region will contain a larger range of values than
         the inner region.
         
-    lambda2 : float, optional
+    lambda2: float, optional
     
         Weight parameter for the inner region. If `lambda2` is larger than
         `lambda1`, the inner region will contain a larger range of values than
         the outer region.
     
-    threshold : float, optional
+    threshold: float, optional
     
         Areas of the image with a value smaller than this threshold will be
         considered borders. The evolution of the contour will stop in this
         areas.
         
-    balloon : float, optional
+    balloon: float, optional
     
         Balloon force to guide the contour in non-informative areas of the
         image, i.e., areas where the gradient of the image is too small to push
@@ -1313,7 +1335,7 @@ def ms_snake(vector_path, raster_path, outShp, band=2, buf=0, algo="ACWE", nodat
     # Partly inspired by the Heikpe paper...
    
     
-    rds = gdal.Open(raster_path, gdal.GA_ReadOnly)
+    rds = gdal.Open(inRas, gdal.GA_ReadOnly)
     #assert(rds)
     rb = rds.GetRasterBand(band)
     rgt = rds.GetGeoTransform()
@@ -1323,7 +1345,7 @@ def ms_snake(vector_path, raster_path, outShp, band=2, buf=0, algo="ACWE", nodat
         nodata_value = float(nodata_value)
         rb.SetNoDataValue(nodata_value)
 
-    vds = ogr.Open(vector_path, 1)  # TODO maybe open update if we want to write stats
+    vds = ogr.Open(inShp, 1)  # TODO maybe open update if we want to write stats
 
     vlyr = vds.GetLayer(0)
 #    if write_stat != None:
@@ -1357,7 +1379,8 @@ def ms_snake(vector_path, raster_path, outShp, band=2, buf=0, algo="ACWE", nodat
         feat = vlyr.GetFeature(label)
 #        if feat is None:
 #            continue
-        buff = feat.geometry()
+        geom = feat.geometry()
+        buff = geom.Buffer(buf1)
         
         src_offset = _bbox_to_pixel_offsets(rgt, buff)
         
@@ -1397,16 +1420,24 @@ def ms_snake(vector_path, raster_path, outShp, band=2, buf=0, algo="ACWE", nodat
         gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
         rv_array = rvds.ReadAsArray()
         
-        
-        dist = nd.morphology.distance_transform_edt(np.logical_not(rv_array))
+        if buf2 < 0:
+            dist = nd.morphology.distance_transform_edt(rv_array)
+        else:
+            dist = nd.morphology.distance_transform_edt(np.logical_not(rv_array))
         
         # covert the dist raster to the actual units
         dist *= rgt[1]
         
-        bw = dist <=buf
-        
-        
-        src_array[bw==0]=0
+        # expand or contract the blob
+        if buf2 != 0:
+            if buf2 > 0:                
+                rv_array = dist <=buf2
+            else:
+                rv_array = dist >=abs(buf2)
+                       
+        # this will stop it working as ti will converge on boundary!!!
+        # kept so you are not tempted to reinstate!
+        #src_array[bw==0]=0
     
         
         if algo == "ACWE":       
@@ -1454,7 +1485,8 @@ def ms_snake(vector_path, raster_path, outShp, band=2, buf=0, algo="ACWE", nodat
     # This is a hacky solution for now really, but it works well enough!
     polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1)    
 
-def thresh_seg(vector_path, raster_path, outShp, band, algo='otsu', nodata_value=0):
+def thresh_seg(inShp, inRas, outShp, band, buf=0, algo='otsu',
+               min_area=4, nodata_value=0):
     
     """ 
     Use an image processing technique to threshold foreground and background in a polygon segment.
@@ -1482,10 +1514,10 @@ def thresh_seg(vector_path, raster_path, outShp, band, algo='otsu', nodata_value
  
     """    
     
-    # Partly inspired by the Heikpe paper...
+    
    
     
-    rds = gdal.Open(raster_path, gdal.GA_ReadOnly)
+    rds = gdal.Open(inRas, gdal.GA_ReadOnly)
     #assert(rds)
     rb = rds.GetRasterBand(band)
     rgt = rds.GetGeoTransform()
@@ -1494,7 +1526,7 @@ def thresh_seg(vector_path, raster_path, outShp, band, algo='otsu', nodata_value
         nodata_value = float(nodata_value)
         rb.SetNoDataValue(nodata_value)
 
-    vds = ogr.Open(vector_path, 1)  # TODO maybe open update if we want to write stats
+    vds = ogr.Open(inShp, 1)  # TODO maybe open update if we want to write stats
    #assert(vds)
     vlyr = vds.GetLayer(0)
 #    if write_stat != None:
@@ -1510,10 +1542,10 @@ def thresh_seg(vector_path, raster_path, outShp, band, algo='otsu', nodata_value
 
     
     outDataset = _copy_dataset_config(rds, outMap = outShp[:-4]+'.tif',
-                                     bands = 1, )
+                                     bands = 1)
     
     outBnd = outDataset.GetRasterBand(1)
-    
+    pixel_res = rgt[1]
 
 #    rejects = list()
     for label in tqdm(features):
@@ -1522,7 +1554,9 @@ def thresh_seg(vector_path, raster_path, outShp, band, algo='otsu', nodata_value
             continue
         geom = feat.geometry()
         
-        src_offset = _bbox_to_pixel_offsets(rgt, geom)
+        buff = geom.Buffer(buf)
+        
+        src_offset = _bbox_to_pixel_offsets(rgt, buff)
         
         src_offset = list(src_offset)
         
@@ -1581,8 +1615,18 @@ def thresh_seg(vector_path, raster_path, outShp, band, algo='otsu', nodata_value
             t = threshold_sauvola(src_array)                            
                              
         bw = src_array > t
+        
+        remove_small_holes(bw, in_place=True, area_threshold=4)
+        if min_area != None:
+            min_final = np.round(min_area/(pixel_res*pixel_res))
+        
+            if min_final <= 0:
+                min_final=4
+        
+            remove_small_objects(bw, min_size=min_final, in_place=True)
 
-        segoot = np.int32(bw)
+        segoot = np.int32(bw)        
+        
         segoot*=int(label)+1
         outBnd.WriteArray(segoot, src_offset[0], src_offset[1])
         del segoot
@@ -1764,39 +1808,52 @@ def _block_view(A, block=(3, 3)):
     strides= (block[0]* A.strides[0], block[1]* A.strides[1])+ A.strides
     return ast(A, shape= shape, strides= strides)
 
-def _do_phasecong(tempIm, angleV, angleD, norient=6):
+def _do_phasecong(tempIm,  low_t, hi_t, norient=6):
     """
     process phase congruency on an image returning vars for hough2line
-    A subfunction used in hough2line.
+    A subfunction used in hough2line. 
+    
+    At present skeletonising the result, though a better solution for final edges
+    is needed
     """
     ph = phasecong(tempIm, norient=norient)
-    orientIm = ph[4]
-    anglez = np.array([p * (np.pi / 6) for p in range(1,7)])
-    
-    # hang on this is not working
-    ootV = np.abs(np.array(anglez) - angleV)
-    ootH = np.abs(np.array(anglez) - angleD)
-    
-    
-    vInd = np.where(ootV==ootV.min())
-    hInd = np.where(ootH==ootH.min())
-    
-    v = int(vInd[0])+1
-    h = int(hInd[0])+1
-    
-    if v>=6:
-        v -= 1
-    if h >=6:
-        h -= 1                
 
-    vT = threshold_otsu(orientIm[v])
-    hT = threshold_otsu(orientIm[h])
-    vArray = orientIm[v]>=vT
-    hArray = orientIm[h]>=hT     
-    return vArray, hArray
+    re = exposure.rescale_intensity(ph[0], out_range='uint8')
+    
+    hyst = apply_hysteresis_threshold(re, low_t, hi_t)
+    
+    hyst[tempIm==0]=0
+    
+    skel = skeletonize(hyst)
+    
+    return skel
+#    orientIm = ph[4]
+#    anglez = np.array([p * (np.pi / 6) for p in range(1,7)])
+#    
+#    # hang on this is not working
+#    ootV = np.abs(np.array(anglez) - angleV)
+#    ootH = np.abs(np.array(anglez) - angleD)
+#    
+#    
+#    vInd = np.where(ootV==ootV.min())
+#    hInd = np.where(ootH==ootH.min())
+#    
+#    v = int(vInd[0])+1
+#    h = int(hInd[0])+1
+#    
+#    if v>=6:
+#        v -= 1
+#    if h >=6:
+#        h -= 1                
+#
+#    vT = threshold_otsu(orientIm[v])
+#    hT = threshold_otsu(orientIm[h])
+#    vArray = orientIm[v]>=vT
+#    hArray = orientIm[h]>=hT     
+#    return vArray, hArray
 
 def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None, 
-               high_t=None, n_orient=6, hArray=True, vArray=True,
+               hi_t=None, n_orient=6, hArray=True, vArray=True,
                prob=False, line_length=100,
                line_gap=200, valrange=1, interval=360, band=2,
                min_area=None):
@@ -1831,9 +1888,15 @@ def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None,
               
         hArray: bool
               whether to detect lines on approx horz axis             
-        auto: bool
-                detect and constrain angles to + / - of the image positive values              
-                         
+        low_t: 
+              the low hysteresis threshold
+              the secondary low gradient threshold permitted if connected to 
+              a high threshold pixel
+        hi_t: 
+              the high hysteresis threshold.
+              the principal gradient threshold from which the low values are permitted 
+              provided they are connected to pixels of this one
+                                       
         prob: bool
                Whether to use a probabalistic hough - default is false
              
@@ -1922,16 +1985,18 @@ def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None,
         inIm[inIm==0]=np.nan     
 
         if edge == 'phase':
-            vArray, hArray = _do_phasecong(tempIm, angleV, angleD)
+            vArray = _do_phasecong(tempIm, angleV, angleD)
+            hArray = vArray
+           
         else: 
             # else it is canny
         
             if hArray == True:
                 hArray = canny(inIm, sigma=sigma, low_threshold=low_t,
-                               high_threshold=high_t)
+                               high_threshold=hi_t)
             if vArray == True:    
                 vArray = canny(inIm, sigma=sigma, low_threshold=low_t,
-                               high_threshold=high_t)
+                               high_threshold=hi_t)
         del inIm
                                   
         
@@ -2337,6 +2402,8 @@ def _dbf2DF(dbfile, upper=True): #Reads in DBF files and returns Pandas DF
         pandasDF.columns = map(str.upper, db.header) 
     db.close() 
     return pandasDF
+
+
     
 ##### make a new vector to be written for reference
     

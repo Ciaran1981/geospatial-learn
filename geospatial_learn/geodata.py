@@ -6,19 +6,18 @@ The geodata module.
 Description
 -----------
 
-A series of tools for the manipulation of geospatial imagery/rasters such as masking or raster algebraic type functions and the conversion of Sentinel 2 data to gdal compatible formats.  
+A series of tools for the manipulation of geospatial imagery/rasters such as
+masking or raster algebraic type functions and the conversion of Sentinel 2 
+data to gdal compatible formats.  
 
 """
 import gdal, ogr,  osr
-#from PIL import Image, ImageDraw
-
 import os
 import numpy as np
 import glob2
 #from geospatial_learn.data import _get_S2_geoinfo
 from geospatial_learn.gdal_merge import _merge
 import tempfile
-#from pyrate.shared import DEM
 import glymur
 from tqdm import tqdm
 #from skimage.util import pad
@@ -34,21 +33,15 @@ from skimage.filters import rank
 from skimage.exposure import rescale_intensity
 import warnings
 from os import sys, path
-import re
+#import re
 import matplotlib
 matplotlib.use('Qt5Agg')
 
-#from pathlib import Path
-
-#import xmltodict
-#from c_utils.misc import chanvese
 
 gdal.UseExceptions()
 ogr.UseExceptions()
 osr.UseExceptions()
 
-# TODO - cythonise loop block processing as separate function then 
-# use an index in similar way to stack_S2
 
 def array2raster(array, bands, inRaster, outRas, dtype, FMT=None):
     
