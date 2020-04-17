@@ -27,7 +27,7 @@ from geospatial_learn.utilities import min_bound_rectangle
 from shapely.wkt import loads
 from shapely.geometry import Polygon, box, LineString, Point, LinearRing
 from pandas import DataFrame
-from pysal.lib import io 
+#from pysal.lib import io 
 import pandas as pd
 from skimage.segmentation import active_contour#, find_boundaries
 #from shapely.affinity import affine_transform, rotate
@@ -44,11 +44,14 @@ from skimage.transform import probabilistic_hough_line as phl
 from skimage.io import imread
 from skimage.feature import canny
 from skimage.morphology import remove_small_objects, remove_small_holes, medial_axis, skeletonize
+from skimage.util import img_as_float, invert
+
 import matplotlib
 from shapely.affinity import rotate
 #from geospatial_learn.geodata import rasterize
 from math import ceil
 from phasepack.phasecong import phasecong
+import mahotas as mh
 #from centerline.geometry import Centerline
 
 matplotlib.use('Qt5Agg')
@@ -1808,25 +1811,71 @@ def _block_view(A, block=(3, 3)):
     strides= (block[0]* A.strides[0], block[1]* A.strides[1])+ A.strides
     return ast(A, shape= shape, strides= strides)
 
-def _do_phasecong(tempIm,  low_t, hi_t, norient=6):
+def _non_max_suppression(img, D):
+    M, N = img.shape
+    Z = np.zeros((M,N), dtype=np.int32)
+    angle = D * 180. / np.pi
+    angle[angle < 0] += 180
+
+    
+    for i in range(1,M-1):
+        for j in range(1,N-1):
+            try:
+                q = 255
+                r = 255
+                
+               #angle 0
+                if (0 <= angle[i,j] < 22.5) or (157.5 <= angle[i,j] <= 180):
+                    q = img[i, j+1]
+                    r = img[i, j-1]
+                #angle 45
+                elif (22.5 <= angle[i,j] < 67.5):
+                    q = img[i+1, j-1]
+                    r = img[i-1, j+1]
+                #angle 90
+                elif (67.5 <= angle[i,j] < 112.5):
+                    q = img[i+1, j]
+                    r = img[i-1, j]
+                #angle 135
+                elif (112.5 <= angle[i,j] < 157.5):
+                    q = img[i-1, j-1]
+                    r = img[i+1, j+1]
+
+                if (img[i,j] >= q) and (img[i,j] >= r):
+                    Z[i,j] = img[i,j]
+                else:
+                    Z[i,j] = 0
+
+            except IndexError as e:
+                pass
+    
+    return Z
+
+def _do_phasecong(tempIm,  low_t, hi_t, norient=6):#, skel='medial'):
     """
     process phase congruency on an image returning vars for hough2line
     A subfunction used in hough2line. 
     
-    At present skeletonising the result, though a better solution for final edges
-    is needed
+    At present skeletonising the result with the medial axis, though a better
+    solution for final edges is needed ultimately
     """
     ph = phasecong(tempIm, norient=norient)
 
     re = exposure.rescale_intensity(ph[0], out_range='uint8')
     
-    hyst = apply_hysteresis_threshold(re, low_t, hi_t)
+    nonmax = _non_max_suppression(re, ph[3])
+    
+    hyst = apply_hysteresis_threshold(nonmax, low_t, hi_t)
     
     hyst[tempIm==0]=0
     
-    skel = skeletonize(hyst)
+#    if skel == 'medial':
+#        skel = medial_axis(hyst)
+#    else:
+#        skel = skeletonize(hyst)
+#    
     
-    return skel
+    return hyst
 #    orientIm = ph[4]
 #    anglez = np.array([p * (np.pi / 6) for p in range(1,7)])
 #    
@@ -1961,10 +2010,19 @@ def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None,
         
         bwRas = inRas[:-4]+'bw.tif'
         #maskShp = inRaster[:-4]+'bwmask.shp'
-        array2raster(bw, 1, inRas, bwRas,  gdal.GDT_Byte)
+        
         #polygonize(bwRas, maskShp, outField=None,  mask = True, band = 1)   
         props = regionprops(bw*1)
         orient = props[0]['Orientation']
+        
+        # we will need these.....
+        perim = mh.bwperim(bw)
+#        bkgrnd = invert(bw)
+        
+        
+        bw[perim==1]=0
+        array2raster(bw, 1, inRas, bwRas,  gdal.GDT_Byte)
+        
 
         # if the the binary box is pointing negatively along maj axis
         
@@ -1979,28 +2037,38 @@ def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None,
             angleD = np.pi + orient
             angleV = angleD + np.deg2rad(90)
         
-        # We must have a float to get rid of  zero to nonzero image 
-        # boundary, otherwise huff will only detect the
-        inIm = tempIm.astype(np.float32)
-        inIm[inIm==0]=np.nan     
+
+        
+            
 
         if edge == 'phase':
-            vArray = _do_phasecong(tempIm, angleV, angleD)
-            hArray = vArray
+            ph = _do_phasecong(tempIm,  low_t, hi_t, norient=6)
+            
+            ph[perim==1]=0
+            
+            if hArray is True:
+                vArray = ph
+            if hArray is True:
+                hArray = ph
+            del ph
            
         else: 
             # else it is canny
+            # We must have a float to get rid of  zero to nonzero image 
+            # boundary, otherwise huff will only detect the non-zero boundary
+            inIm = tempIm.astype(np.float32)
+            inIm[inIm==0]=np.nan 
         
-            if hArray == True:
+            if hArray is True:
                 hArray = canny(inIm, sigma=sigma, low_threshold=low_t,
                                high_threshold=hi_t)
-            if vArray == True:    
+            if vArray is True:    
                 vArray = canny(inIm, sigma=sigma, low_threshold=low_t,
                                high_threshold=hi_t)
-        del inIm
+            del inIm
                                   
         
-        if prob == False:
+        if prob is False:
             """
             Standard Hough ##############################################################
             """
@@ -2030,7 +2098,7 @@ def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None,
           
         outDataSource=None
         
-        if prob == True:
+        if prob is True:
             array2raster(empty, 1, inRas, outShp[:-3]+"tif",  gdal.GDT_Int32)
         else:
             inv = np.invert(empty)
@@ -2105,7 +2173,7 @@ def _do_ransac(inArray, order='col'):
     
     return outArray
     
-def ransac_lines(inRas, outRas, sigma=3, binwidth=40):
+def ransac_lines(inRas, outRas, sigma=3, row=True, col=True, binwidth=40):
 
 
     inDataset = gdal.Open(inRas)
@@ -2124,55 +2192,58 @@ def ransac_lines(inRas, outRas, sigma=3, binwidth=40):
     
     
     # vertical lines
-    
-    for i in range(0, rows, blocksizeY):
-        if i + blocksizeY < rows:
-            numRows = blocksizeY
-        else:
-            numRows = rows -i
+    if col is True:
         
-        for j in tqdm(range(0, cols, blocksizeX)):
-            if j + blocksizeX < cols:
-                numCols = blocksizeX
+        
+        for i in range(0, rows, blocksizeY):
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
             else:
-                numCols = cols - j
+                numRows = rows -i
             
-            inArray = band.ReadAsArray(j,i, numCols, numRows)
-            #glim = nd.gaussian_laplace(inArray, sigma=4)
-            edge = canny(inArray, sigma=sigma)
-            oot = _do_ransac(edge, order='col')
-            
-            outBand.WriteArray(oot,j,i)
+            for j in tqdm(range(0, cols, blocksizeX)):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+                
+                inArray = band.ReadAsArray(j,i, numCols, numRows)
+                #glim = nd.gaussian_laplace(inArray, sigma=4)
+                edge = canny(inArray, sigma=sigma)
+                oot = _do_ransac(edge, order='col')
+                
+                outBand.WriteArray(oot,j,i)
     
+    if row is True:
     # horizontal lines
     
-    blocksizeY = binwidth
-    
-    blocksizeX = inDataset.RasterXSize
-    
-    for i in tqdm(range(0, rows, blocksizeY)):
-        if i + blocksizeY < rows:
-            numRows = blocksizeY
-        else:
-            numRows = rows -i
+        blocksizeY = binwidth
         
-        for j in range(0, cols, blocksizeX):
-            if j + blocksizeX < cols:
-                numCols = blocksizeX
+        blocksizeX = inDataset.RasterXSize
+        
+        for i in tqdm(range(0, rows, blocksizeY)):
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
             else:
-                numCols = cols - j
+                numRows = rows -i
             
-            inArray = band.ReadAsArray(j,i, numCols, numRows)
-            #glim = nd.gaussian_laplace(inArray, sigma=4)
-            edge = canny(inArray, sigma=sigma)
-            oot = _do_ransac(edge, order='row')
-            
-            outArray = outBand.ReadAsArray(j,i, numCols, numRows)
-            
-    
-            outArray[oot==1]=1
-            
-            outBand.WriteArray(outArray,j,i)
+            for j in range(0, cols, blocksizeX):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+                
+                inArray = band.ReadAsArray(j,i, numCols, numRows)
+                #glim = nd.gaussian_laplace(inArray, sigma=4)
+                edge = canny(inArray, sigma=sigma)
+                oot = _do_ransac(edge, order='row')
+                
+                outArray = outBand.ReadAsArray(j,i, numCols, numRows)
+                
+        
+                outArray[oot==1]=1
+                
+                outBand.WriteArray(outArray,j,i)
     
             
     outDataset.FlushCache()
@@ -2189,7 +2260,7 @@ def ransac_lines(inRas, outRas, sigma=3, binwidth=40):
 
 def meshgrid(inRaster, outShp, gridHeight=1, gridWidth=1):
 
-    #TODO - make alternating intervals make it rotational
+    #TODO - make alternating intervals and make it rotational
     
     
     # make a mask for non-zero vals for our mesh
