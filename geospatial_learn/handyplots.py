@@ -21,7 +21,6 @@ import matplotlib.pyplot as plt
 
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix,jaccard_score, f1_score
 from sklearn.metrics import precision_recall_fscore_support as prf
-from geospatial_learn import data
 import scikitplot as skplt
 
 import seaborn as sns

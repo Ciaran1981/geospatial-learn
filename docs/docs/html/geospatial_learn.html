@@ -1,0 +1,1660 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>geospatial_learn package &mdash; geospatial-learn 0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="geospatial_learn" href="modules.html" />
+    <link rel="prev" title="Quickstart" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> geospatial-learn
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">geospatial_learn package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-raster">geospatial_learn.raster module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#description">Description</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-learning">geospatial_learn.learning module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Description</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-shape">geospatial_learn.shape module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Description</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-utilities">geospatial_learn.utilities module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-geospatial_learn">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">geospatial_learn</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">geospatial_learn package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-raster">geospatial_learn.raster module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#description">Description</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-learning">geospatial_learn.learning module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Description</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-shape">geospatial_learn.shape module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id2">Description</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-utilities">geospatial_learn.utilities module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-geospatial_learn">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">geospatial-learn</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>geospatial_learn package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/geospatial_learn.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="geospatial-learn-package">
+<h1>geospatial_learn package<a class="headerlink" href="#geospatial-learn-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-raster">
+<span id="geospatial-learn-raster-module"></span><h2>geospatial_learn.raster module<a class="headerlink" href="#module-raster" title="Permalink to this headline">¶</a></h2>
+<p>The geodata module.</p>
+<div class="section" id="description">
+<h3>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h3>
+<p>A series of tools for the manipulation of geospatial imagery/rasters such as
+masking or raster algebraic type functions and the conversion of Sentinel 2
+data to gdal compatible formats.</p>
+<dl class="function">
+<dt id="raster.array2raster">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">array2raster</code><span class="sig-paren">(</span><em class="sig-param">array</em>, <em class="sig-param">bands</em>, <em class="sig-param">inRaster</em>, <em class="sig-param">outRas</em>, <em class="sig-param">dtype</em>, <em class="sig-param">FMT=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.array2raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save a raster from a numpy array using the geoinfo from another.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>array</strong> (<em>np array</em>) – a numpy array.</p></li>
+<li><p><strong>bands</strong> (<em>int</em>) – the no of bands.</p></li>
+<li><p><strong>inRaster</strong> (<em>string</em>) – the path of a raster.</p></li>
+<li><p><strong>outRas</strong> (<em>string</em>) – the path of the output raster.</p></li>
+<li><p><strong>dtype</strong> (<em>int</em>) – though you need to know what the number represents!
+a GDAL datatype (see the GDAL website) e.g gdal.GDT_Int32</p></li>
+<li><p><strong>FMT</strong> (<em>string</em>) – (optional) a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.batch_translate">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">batch_translate</code><span class="sig-paren">(</span><em class="sig-param">folder</em>, <em class="sig-param">wildcard</em>, <em class="sig-param">FMT=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.batch_translate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using the gdal python API, this function translates the format of files
+to commonly used formats</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>folder</strong> (<em>string</em>) – the folder containing the rasters to be translated</p></li>
+<li><p><strong>wildcard</strong> (<em>string</em>) – the format wildcard to search for e.g. ‘.tif’</p></li>
+<li><p><strong>FMT</strong> (<em>string (optional)</em>) – a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.calc_ndvi">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">calc_ndvi</code><span class="sig-paren">(</span><em class="sig-param">inputIm</em>, <em class="sig-param">outputIm</em>, <em class="sig-param">bandsList</em>, <em class="sig-param">blocksize=256</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">dtype=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.calc_ndvi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a copy of an image with an ndvi band added</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputIm</strong> (<em>string</em>) – the granule folder</p></li>
+<li><p><strong>bands</strong> (<em>list</em>) – a list of band indicies to be used, eg - [3,4] for Sent2 data</p></li>
+<li><p><strong>FMT</strong> (<em>string</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</p></li>
+<li><p><strong>blocksize</strong> (<em>int</em>) – the chunk of raster read in &amp; write out</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.clip_raster">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">clip_raster</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">inShape</em>, <em class="sig-param">outRas</em>, <em class="sig-param">nodata_value=None</em>, <em class="sig-param">blocksize=None</em>, <em class="sig-param">blockmode=True</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.clip_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clip a raster</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRas</strong> (<em>string</em>) – the input image</p></li>
+<li><p><strong>outPoly</strong> (<em>string</em>) – the input polygon file path</p></li>
+<li><p><strong>outRas</strong> (<em>string (optional)</em>) – the clipped raster</p></li>
+<li><p><strong>nodata_value</strong> (<em>numerical (optional)</em>) – self explanatory</p></li>
+<li><p><strong>blocksize</strong> (<em>int (optional)</em>) – the square chunk processed at any one time</p></li>
+<li><p><strong>blockmode</strong> (<em>bool (optional)</em>) – whether the raster will be clipped entirely in memory or by chunck</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.color_raster">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">color_raster</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">color_file</em>, <em class="sig-param">output_file</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.color_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a txt colorfile and make a RGB image from a grayscale one</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRas</strong> (<em>string</em>) – Path to input raster (single band greyscale)</p></li>
+<li><p><strong>color_file</strong> (<em>string</em>) – Path to output colorfile.txt</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.combine_scene">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">combine_scene</code><span class="sig-paren">(</span><em class="sig-param">scl</em>, <em class="sig-param">c_scn</em>, <em class="sig-param">blocksize=256</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.combine_scene" title="Permalink to this definition">¶</a></dt>
+<dd><p>combine another scene classification with the sen2cor one</p>
+<dl class="simple">
+<dt>scl<span class="classifier">string</span></dt><dd><p>the sen2cor one</p>
+</dd>
+<dt>c_scn<span class="classifier">string</span></dt><dd><p>the independently derived one - this will be modified</p>
+</dd>
+<dt>blocksize<span class="classifier">string</span></dt><dd><p>chunck to process</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.hist_match">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">hist_match</code><span class="sig-paren">(</span><em class="sig-param">inputImage</em>, <em class="sig-param">templateImage</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.hist_match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust the pixel values of a grayscale image such that its histogram
+matches that of a target image.</p>
+<p>Writes to the inputImage dataset so that it matches</p>
+<p>As the entire band histogram is required this can become memory
+intensive with big rasters eg 10 x 10k+</p>
+<p>Inspire by/adapted from something on stack on image processing - credit to
+that author</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputImage</strong> (<em>string</em>) – image to transform; the histogram is computed over the flattened array</p></li>
+<li><p><strong>templateImage</strong> (<em>string</em>) – template image can have different dimensions to source</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.jp2_translate">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">jp2_translate</code><span class="sig-paren">(</span><em class="sig-param">folder</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">mode='L1C'</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.jp2_translate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Translate all files from S2 download to a useable format</p>
+<p>Default FMT is GTiff (leave blank), for .img FMT=’HFA’, for .vrt FMT=’VRT’</p>
+<p>If you posses a gdal compiled with the corrext openjpg support use that</p>
+<p>This function might be useful if you wish to retain seperate rasters,
+but the use of stack_S2 is recommended</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>folder</strong> (<em>string</em>) – S2 granule dir</p></li>
+<li><p><strong>mode</strong> (<em>string</em>) – ‘L2A’ , ‘20’, ‘10’, L1C (default)</p></li>
+<li><p><strong>FMT</strong> (<em>string (optional)</em>) – a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.jp2_translate_batch">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">jp2_translate_batch</code><span class="sig-paren">(</span><em class="sig-param">mainFolder</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">mode=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.jp2_translate_batch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Batch version of jp2translate</p>
+<p>Perhaps only useful for the old tile format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mainFolder</strong> (<em>string</em>) – the path to S2 tile folder to process</p></li>
+<li><p><strong>FMT</strong> (<em>string</em>) – a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA</p></li>
+<li><p><strong>mode</strong> (<em>string (optional)</em>) – ‘L2A’ , ‘20’, ‘10’, L1C (default)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.mask_raster">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">mask_raster</code><span class="sig-paren">(</span><em class="sig-param">inputIm</em>, <em class="sig-param">mval</em>, <em class="sig-param">overwrite=True</em>, <em class="sig-param">outputIm=None</em>, <em class="sig-param">blocksize=None</em>, <em class="sig-param">FMT=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.mask_raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a numpy masking operation on a raster where all values
+corresponding to  mask value are retained - does this in blocks for
+efficiency on larger rasters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputIm</strong> (<em>string</em>) – the input raster</p></li>
+<li><p><strong>mval</strong> (<em>int</em>) – the mask value eg 1, 2 etc</p></li>
+<li><p><strong>FMT</strong> (<em>string</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</p></li>
+<li><p><strong>outputIm</strong> (<em>string (optional)</em>) – optionally write a separate output image, if None, will
+mask the input</p></li>
+<li><p><strong>blocksize</strong> (<em>int</em>) – the chunk of raster to read in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A string of the output file path</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.mask_raster_multi">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">mask_raster_multi</code><span class="sig-paren">(</span><em class="sig-param">inputIm</em>, <em class="sig-param">mval=1</em>, <em class="sig-param">outval=None</em>, <em class="sig-param">mask=None</em>, <em class="sig-param">blocksize=256</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">dtype=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.mask_raster_multi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a numpy masking operation on a raster where all values
+corresponding to  mask value are retained - does this in blocks for
+efficiency on larger rasters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputIm</strong> (<em>string</em>) – the granule folder</p></li>
+<li><p><strong>mval</strong> (<em>int</em>) – the masking value that delineates pixels to be kept</p></li>
+<li><p><strong>outval</strong> (<em>numerical dtype eg int, float</em>) – the areas removed will be written to this value default is 0</p></li>
+<li><p><strong>mask</strong> (<em>string</em>) – the mask raster to be used (optional)</p></li>
+<li><p><strong>FMT</strong> (<em>string</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</p></li>
+<li><p><strong>mode</strong> (<em>string</em>) – None &gt; 10m data, ‘20’ &gt;20m</p></li>
+<li><p><strong>blocksize</strong> (<em>int</em>) – the chunk of raster read in &amp; write out</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.multi_temp_filter">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">multi_temp_filter</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outRas</em>, <em class="sig-param">bands=None</em>, <em class="sig-param">windowSize=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.multi_temp_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>The multi temp filter for radar data as outlined &amp; published by
+Quegan et al, Uni of Sheffield</p>
+<p>This is only suitable for small images, as it holds intermediate data in memory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRas</strong> (<em>string</em>) – the input raster</p></li>
+<li><p><strong>outRas</strong> (<em>string</em>) – the output raster</p></li>
+<li><p><strong>blocksize</strong> (<em>int</em>) – the chunck processed</p></li>
+<li><p><strong>windowsize</strong> (<em>int</em>) – the filter window size</p></li>
+<li><p><strong>FMT</strong> (<em>string</em>) – gdal compatible (optional) defaults is tif</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.multi_temp_filter_block">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">multi_temp_filter_block</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outRas</em>, <em class="sig-param">bands=None</em>, <em class="sig-param">blocksize=256</em>, <em class="sig-param">windowsize=7</em>, <em class="sig-param">FMT=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.multi_temp_filter_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multi temporal filter implementation for radar data</p>
+<p>See Quegan et al., for paper</p>
+<p>Requires an installation of OTB</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRas</strong> (<em>string</em>) – the input raster</p></li>
+<li><p><strong>outRas</strong> (<em>string</em>) – the output raster</p></li>
+<li><p><strong>blocksize</strong> (<em>int</em>) – the chunck processed</p></li>
+<li><p><strong>windowsize</strong> (<em>int</em>) – the filter window size</p></li>
+<li><p><strong>FMT</strong> (<em>string</em>) – gdal compatible (optional) defaults is tif</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.polygonize">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">polygonize</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outPoly</em>, <em class="sig-param">outField=None</em>, <em class="sig-param">mask=True</em>, <em class="sig-param">band=1</em>, <em class="sig-param">filetype='ESRI Shapefile'</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.polygonize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lifted straight from the cookbook and gdal func docs.</p>
+<p><a class="reference external" href="http://pcjericks.github.io/py-gdalogr-cookbook">http://pcjericks.github.io/py-gdalogr-cookbook</a></p>
+<p>Very slow!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>inRas</strong> (<em>string</em>) – the input image</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>outPoly<span class="classifier">string</span></dt><dd><p>the output polygon file path</p>
+</dd>
+<dt>outField<span class="classifier">string (optional)</span></dt><dd><p>the name of the field containing burnded values</p>
+</dd>
+<dt>mask<span class="classifier">bool (optional)</span></dt><dd><p>use the input raster as a mask</p>
+</dd>
+<dt>band<span class="classifier">int</span></dt><dd><p>the input raster band</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.remove_cloud_S2">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">remove_cloud_S2</code><span class="sig-paren">(</span><em class="sig-param">inputIm</em>, <em class="sig-param">sceneIm</em>, <em class="sig-param">blocksize=256</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">min_size=4</em>, <em class="sig-param">dist=1</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.remove_cloud_S2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove cloud using the a scene classification</p>
+<p>This saves back to the input raster by default</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputIm</strong> (<em>string</em>) – the input image</p></li>
+<li><p><strong>sceneIm</strong> (<em>string</em>) – the scenemap to use as a mask for removing cloud
+It is assumed the scene map consists of 1 shadow, 2 cloud, 3 land, 4 water</p></li>
+<li><p><strong>FMT</strong> (<em>string</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</p></li>
+<li><p><strong>min_size</strong> (<em>int</em>) – size in pixels to retain of cloud mask</p></li>
+<li><p><strong>blocksize</strong> (<em>int</em>) – the square chunk processed at any one time</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.remove_cloud_S2_stk">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">remove_cloud_S2_stk</code><span class="sig-paren">(</span><em class="sig-param">inputIm</em>, <em class="sig-param">sceneIm1</em>, <em class="sig-param">sceneIm2=None</em>, <em class="sig-param">baseIm=None</em>, <em class="sig-param">blocksize=256</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">max_size=10</em>, <em class="sig-param">dist=1</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.remove_cloud_S2_stk" title="Permalink to this definition">¶</a></dt>
+<dd><p>remove cloud using the the c_utils scene classification
+the KEA format is recommended, .tif is the default,</p>
+<p>no need to add the file extension this is done automatically</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputIm</strong> (<em>string</em>) – the input image</p></li>
+<li><p><strong>sceneIm1, 2</strong> (<em>string</em>) – the classification rasters used to mask out the areas in</p></li>
+<li><p><strong>the input image</strong></p></li>
+<li><p><strong>baseIm</strong> (<em>string</em>) – Another multiband raster of same size extent as the inputIm
+where the baseIm image values are used rather than simply converting
+to zero (in the use case of 2 sceneIm classifications)</p></li>
+<li><p><strong>Returns</strong></p></li>
+<li><p><strong>———–</strong></p></li>
+<li><p><strong>nowt</strong></p></li>
+<li><p><strong>Notes</strong></p></li>
+<li><p><strong>———–</strong></p></li>
+<li><p><strong>Useful if you have a base image whic is a cloudless composite, which</strong></p></li>
+<li><p><strong>you intend to replace with the current image for the next round of</strong></p></li>
+<li><p><strong>classification/ change detection</strong></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.rgb_ind">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">rgb_ind</code><span class="sig-paren">(</span><em class="sig-param">inputIm</em>, <em class="sig-param">outputIm</em>, <em class="sig-param">blocksize=256</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">dtype=5</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.rgb_ind" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a copy of an image with an ndvi band added</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputIm</strong> (<em>string</em>) – the input rgb image</p></li>
+<li><p><strong>outputIm</strong> (<em>string</em>) – the output image</p></li>
+<li><p><strong>FMT</strong> (<em>string</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</p></li>
+<li><p><strong>blocksize</strong> (<em>int</em>) – the chunk of raster read in &amp; write out</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.stack_S2">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">stack_S2</code><span class="sig-paren">(</span><em class="sig-param">granule</em>, <em class="sig-param">inFMT='jp2'</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">mode=None</em>, <em class="sig-param">old_order=False</em>, <em class="sig-param">blocksize=2048</em>, <em class="sig-param">overwrite=True</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.stack_S2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stacks S2 bands downloaded from ESA site</p>
+<p>Can translate directly from jp2 format (this is recommended and is
+default).</p>
+<p>If you possess gdal 2.1 with jp2k support then alternatively use
+gdal_translate</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>granule</strong> (<em>string</em>) – the granule folder</p></li>
+<li><p><strong>inFMT</strong> (<em>string (optional)</em>) – the format of the bands will likely be jp2</p></li>
+<li><p><strong>FMT</strong> (<em>string (optional)</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</p></li>
+<li><p><strong>mode</strong> (<em>string (optional)</em>) – None, ‘10’  ‘20’</p></li>
+<li><p><strong>old_order</strong> (<em>bool (optional)</em>) – this function used to order the 20m imagery 2,3,4,5,6,7,11,12,8a
+if false ordered like this 2,3,4,5,6,7,8a,11,12</p></li>
+<li><p><strong>blocksize</strong> (<em>int (optional)</em>) – the chunk of jp2 to read in - glymur seems to work fastest with 2048</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A string of the output file path</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.stack_ras">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">stack_ras</code><span class="sig-paren">(</span><em class="sig-param">rasterList</em>, <em class="sig-param">outFile</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.stack_ras" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stack some rasters for change classification</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rasterList</strong> (<em>string</em>) – the input image</p></li>
+<li><p><strong>outFile</strong> (<em>string</em>) – the output file path including file extension</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.stat_comp">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">stat_comp</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outMap</em>, <em class="sig-param">bandList=None</em>, <em class="sig-param">stat='percentile'</em>, <em class="sig-param">q=95</em>, <em class="sig-param">blocksize=256</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">dtype=6</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.stat_comp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate depth wise stat on a multi band raster with selected or all bands</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRas</strong> (<em>string</em>) – input Raster</p></li>
+<li><p><strong>outMap</strong> (<em>string</em>) – the output raster calculated</p></li>
+<li><p><strong>stat</strong> (<em>string</em>) – the statisitc to be calculated make sure there
+are no nans as nan percentile is far too slow</p></li>
+<li><p><strong>blocksize</strong> (<em>int</em>) – the chunck processed</p></li>
+<li><p><strong>q</strong> (<em>int</em>) – the ith percentile if percentile is the stat used</p></li>
+<li><p><strong>FMT</strong> (<em>string</em>) – gdal compatible (optional) defaults is tif</p></li>
+<li><p><strong>dtype</strong> (<em>string</em>) – gdal datatype (default gdal.GDT_Int32)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.temporal_comp">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">temporal_comp</code><span class="sig-paren">(</span><em class="sig-param">fileList</em>, <em class="sig-param">outMap</em>, <em class="sig-param">stat='percentile'</em>, <em class="sig-param">q=95</em>, <em class="sig-param">folder=None</em>, <em class="sig-param">blocksize=None</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">dtype=5</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.temporal_comp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul>
+<li><p><strong>FileList</strong> (<em>list of strings</em>) – the files to be inputed, if None a folder must be specified</p></li>
+<li><p><strong>outMap</strong> (<em>string</em>) –      the output raster calculated</p>
+<dl class="simple">
+<dt>stat<span class="classifier">string</span></dt><dd><p>the statisitc to be calculated</p>
+</dd>
+</dl>
+</li>
+<li><p><strong>blocksize</strong> (<em>int</em>) – the chunck processed</p></li>
+<li><p><strong>q</strong> (<em>int</em>) – the ith percentile if percentile is the stat used</p></li>
+<li><p><strong>FMT</strong> (<em>string</em>) – gdal compatible (optional) defaults is tif</p></li>
+<li><p><strong>dtype</strong> (<em>string</em>) – gdal datatype (default gdal.GDT_Int32)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="raster.tile_rasters">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">tile_rasters</code><span class="sig-paren">(</span><em class="sig-param">inImage</em>, <em class="sig-param">outputImage</em>, <em class="sig-param">tilesize</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.tile_rasters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split a large raster into smaller ones</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inImage</strong> (<em>string</em>) – the path to input raster</p></li>
+<li><p><strong>outputImage</strong> (<em>string</em>) – the path to the output image</p></li>
+<li><p><strong>tilesize</strong> (<em>int</em>) – the side of a square tile</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-learning">
+<span id="geospatial-learn-learning-module"></span><h2>geospatial_learn.learning module<a class="headerlink" href="#module-learning" title="Permalink to this headline">¶</a></h2>
+<p>the learning module</p>
+<div class="section" id="id1">
+<h3>Description<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>The learning module set of functions provide a framework to optimise and classify
+EO data for both per pixel or object properties</p>
+<p>Performance notes:
+This was tested on an i7 intel with 16gb of ram, so with large images/arrays
+of stats this will inevitably be slower - especially with a more standard machine.</p>
+<dl class="function">
+<dt id="learning.RF_oob_opt">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">RF_oob_opt</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">X_train</em>, <em class="sig-param">min_est</em>, <em class="sig-param">max_est</em>, <em class="sig-param">step</em>, <em class="sig-param">regress=False</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.RF_oob_opt" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function uses the oob score to find the best parameters.</p>
+<p>This cannot be parallelized due to the warm start bootstrapping, so is
+potentially slower than the other cross val in the create_model function</p>
+<p>This function is based on an example from the sklearn site</p>
+<p>This function plots a graph diplaying the oob rate</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>string (.gz)</em>) – path to model to be saved</p></li>
+<li><p><strong>X_train</strong> (<em>np array</em>) – numpy array of training data where the 1st column is labels</p></li>
+<li><p><strong>min_est</strong> (<em>int</em>) – min no of trees</p></li>
+<li><p><strong>max_est</strong> (<em>int</em>) – max no of trees</p></li>
+<li><p><strong>step</strong> (<em>int</em>) – the step at which no of trees is increased</p></li>
+<li><p><strong>regress</strong> (<em>bool</em>) – boolean where if True it is a regressor</p></li>
+<li><p><strong>Returns</strong> (<em>tuple of np arrays</em>)</p></li>
+<li><p><strong>———————–</strong></p></li>
+<li><p><strong>error rate, best estimator</strong></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.classify_object">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_object</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">inShape</em>, <em class="sig-param">attributes</em>, <em class="sig-param">field_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_object" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classify a polygon/point file attributes (‘object based’) using an sklearn
+model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>string</em>) – path to input model</p></li>
+<li><p><strong>inShape</strong> (<em>string</em>) – input shapefile path (must be .shp for now….)</p></li>
+<li><p><strong>attributes</strong> (<em>list of stings</em>) – list of attributes names</p></li>
+<li><p><strong>field_name</strong> (<em>string</em>) – name of classified label field (optional)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.classify_pixel">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_pixel</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">inputDir</em>, <em class="sig-param">bands</em>, <em class="sig-param">outMap</em>, <em class="sig-param">probMap</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_pixel" title="Permalink to this definition">¶</a></dt>
+<dd><p>A function to classify an image using a pre-saved model - assumes
+a folder of tiled rasters for memory management - classify_pixel_block is
+recommended instead of this function</p>
+<p>Parameters</p>
+<dl class="simple">
+<dt>model<span class="classifier">sklearn model</span></dt><dd><p>a path to a scikit learn model that has been saved</p>
+</dd>
+<dt>inputDir<span class="classifier">string</span></dt><dd><p>a folder with images to be classified</p>
+</dd>
+<dt>bands<span class="classifier">int</span></dt><dd><p>the no of image bands eg 8</p>
+</dd>
+<dt>outMap<span class="classifier">string</span></dt><dd><p>path to output image excluding the file format ‘pathto/mymap’</p>
+</dd>
+<dt>probMap<span class="classifier">string</span></dt><dd><p>path to output prob image excluding the file format ‘pathto/mymap’</p>
+</dd>
+<dt>FMT<span class="classifier">string</span></dt><dd><p>optional parameter - gdal readable fmt</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.classify_pixel_bloc">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_pixel_bloc</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">inputImage</em>, <em class="sig-param">bands</em>, <em class="sig-param">outMap</em>, <em class="sig-param">blocksize=None</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">ndvi=None</em>, <em class="sig-param">dtype=5</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_pixel_bloc" title="Permalink to this definition">¶</a></dt>
+<dd><p>A block processing classifier for large rasters, supports KEA, HFA, &amp; Gtiff
+formats. KEA is recommended, Gtiff is the default</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>sklearn model</em>) – a path to a scikit learn model that has been saved</p></li>
+<li><p><strong>inputImage</strong> (<em>string</em>) – path to image including the file fmt ‘Myimage.tif’</p></li>
+<li><p><strong>bands</strong> (<em>band</em>) – the no of image bands eg 8</p></li>
+<li><p><strong>outMap</strong> (<em>string</em>) – path to output image excluding the file format ‘pathto/mymap’</p></li>
+<li><p><strong>FMT</strong> (<em>string</em>) – optional parameter - gdal readable fmt</p></li>
+<li><p><strong>blocksize</strong> (<em>int (optional)</em>) – size of raster chunck in pixels 256 tends to be quickest
+if you put None it will read size from gdal (this doesn’t always pay off!)</p></li>
+<li><p><strong>dtype</strong> (<em>int (optional - gdal syntax gdal.GDT_Int32)</em>) – a gdal dataype - default is int32</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Block processing is sequential, but quite a few sklearn models are parallel
+so that has been prioritised rather than raster IO</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.create_model">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param">X_train</em>, <em class="sig-param">outModel</em>, <em class="sig-param">clf='svc'</em>, <em class="sig-param">random=False</em>, <em class="sig-param">cv=6</em>, <em class="sig-param">cores=-1</em>, <em class="sig-param">strat=True</em>, <em class="sig-param">regress=False</em>, <em class="sig-param">params=None</em>, <em class="sig-param">scoring=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Brute force or random model creating using scikit learn. Either use the
+default params in this function or enter your own (recommended - see sklearn)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_train</strong> (<em>np array</em>) – numpy array of training data where the 1st column is labels</p></li>
+<li><p><strong>outModel</strong> (<em>string</em>) – the output model path which is a gz file</p></li>
+<li><p><strong>clf</strong> (<em>string</em>) – an sklearn or xgb classifier/regressor
+logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb</p></li>
+<li><p><strong>random</strong> (<em>bool</em>) – if True, a random param search</p></li>
+<li><p><strong>cv</strong> (<em>int</em>) – no of folds</p></li>
+<li><p><strong>cores</strong> (<em>int or -1 (default)</em>) – the no of parallel jobs</p></li>
+<li><p><strong>strat</strong> (<em>bool</em>) – a stratified grid search</p></li>
+<li><p><strong>regress</strong> (<em>bool</em>) – a regression model if True, a classifier if False</p></li>
+<li><p><strong>params</strong> (<em>a dict of model params (see scikit learn)</em>) – enter your own params dict rather than the range provided</p></li>
+<li><p><strong>scoring</strong> (<em>string</em>) – a suitable sklearn scoring type (see notes)</p></li>
+</ul>
+</dd>
+</dl>
+<blockquote>
+<div><p>There are more sophisticated ways to tune a model, this greedily
+searches everything but can be computationally costly. Fine tuning
+in a more measured way is likely better. There are numerous books,
+guides etc…
+E.g. with gb- first tune no of trees for gb, then learning rate, then
+tree specific</p>
+</div></blockquote>
+<blockquote>
+<div><p>From my own experience and reading around</p>
+<p>sklearn svms tend to be not great on large training sets and are
+slower with these (i have tried on HPCs and they time out on multi fits)</p>
+<p>sklearn ‘gb’ is very slow to train, though quick to predict</p>
+<p>xgb is much faster, but rather different in algorithmic detail -
+ie won’t produce same results as sklearn…</p>
+<p>xgb also uses the sklearn wrapper params which differ from those in
+xgb docs, hence they are commented next to the area of code</p>
+<p>Scoring types - there are a lot - some of which won’t work for
+multi-class, regression etc - see the sklearn docs!</p>
+<p>‘accuracy’, ‘adjusted_rand_score’, ‘average_precision’, ‘f1’,
+‘f1_macro’, ‘f1_micro’, ‘f1_samples’, ‘f1_weighted’, ‘neg_log_loss’,
+‘neg_mean_absolute_error’, ‘neg_mean_squared_error’,
+‘neg_median_absolute_error’, ‘precision’, ‘precision_macro’,
+‘precision_micro’, ‘precision_samples’, ‘precision_weighted’,
+‘r2’, ‘recall’, ‘recall_macro’, ‘recall_micro’, ‘recall_samples’,
+‘recall_weighted’, ‘roc_auc’</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.create_model_tpot">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model_tpot</code><span class="sig-paren">(</span><em class="sig-param">X_train</em>, <em class="sig-param">outModel</em>, <em class="sig-param">cv=6</em>, <em class="sig-param">cores=-1</em>, <em class="sig-param">regress=False</em>, <em class="sig-param">params=None</em>, <em class="sig-param">scoring=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model_tpot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a model using the tpot library where genetic algorithms
+are used to optimise pipline and params.</p>
+<p>This also supports xgboost incidentally</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_train</strong> (<em>np array</em>) – numpy array of training data where the 1st column is labels</p></li>
+<li><p><strong>outModel</strong> (<em>string</em>) – the output model path (which is a .py file)
+from which to run the pipeline</p></li>
+<li><p><strong>cv</strong> (<em>int</em>) – no of folds</p></li>
+<li><p><strong>cores</strong> (<em>int or -1 (default)</em>) – the no of parallel jobs</p></li>
+<li><p><strong>strat</strong> (<em>bool</em>) – a stratified grid search</p></li>
+<li><p><strong>regress</strong> (<em>bool</em>) – a regression model if True, a classifier if False</p></li>
+<li><p><strong>params</strong> (<em>a dict of model params (see tpot)</em>) – enter your own params dict rather than the range provided</p></li>
+<li><p><strong>scoring</strong> (<em>string</em>) – a suitable sklearn scoring type (see notes)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.get_training">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">get_training</code><span class="sig-paren">(</span><em class="sig-param">inShape</em>, <em class="sig-param">inRas</em>, <em class="sig-param">bands</em>, <em class="sig-param">field</em>, <em class="sig-param">outFile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect training as an np array for use with create model function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inShape</strong> (<em>string</em>) – the input shapefile - must be esri .shp at present</p></li>
+<li><p><strong>inRas</strong> (<em>string</em>) – the input raster from which the training is extracted</p></li>
+<li><p><strong>bands</strong> (<em>int</em>) – no of bands</p></li>
+<li><p><strong>field</strong> (<em>string</em>) – the attribute field containing the training labels</p></li>
+<li><p><strong>outFile</strong> (<em>string (optional)</em>) – path to the training file saved as joblib format (eg - ‘training.gz’)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A tuple containing</em></p></li>
+<li><p><em>-np array of training data</em></p></li>
+<li><p><em>-list of polygons with invalid geometry that were not collected</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.get_training_point">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">get_training_point</code><span class="sig-paren">(</span><em class="sig-param">inShape</em>, <em class="sig-param">inRas</em>, <em class="sig-param">bands</em>, <em class="sig-param">field</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training_point" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Collect training as a np array for use with create model function using</dt><dd><p>point data</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inShape</strong> (<em>string</em>) – the input shapefile - must be esri .shp at present</p></li>
+<li><p><strong>inRas</strong> (<em>string</em>) – the input raster from which the training is extracted</p></li>
+<li><p><strong>bands</strong> (<em>int</em>) – no of bands</p></li>
+<li><p><strong>field</strong> (<em>string</em>) – the attribute field containing the training labels</p></li>
+<li><p><strong>outFile</strong> (<em>string (optional)</em>) – path to the training file saved as joblib format (eg - ‘training.gz’)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A tuple containing</em></p></li>
+<li><p><em>-np array of training data</em></p></li>
+<li><p><em>-list of polygons with invalid geometry that were not collected</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p>UNFINISHED DO NOT USE</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.get_training_shp">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">get_training_shp</code><span class="sig-paren">(</span><em class="sig-param">inShape</em>, <em class="sig-param">label_field</em>, <em class="sig-param">feat_fields</em>, <em class="sig-param">outFile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training_shp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect training from a shapefile attribute table. Used for object-based
+classification (typically).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inShape</strong> (<em>string</em>) – the input shapefile - must be esri .shp at present</p></li>
+<li><p><strong>label_field</strong> (<em>string</em>) – the field name for the class labels</p></li>
+<li><p><strong>feat_fields</strong> (<em>list</em>) – the field names of the feature data</p></li>
+<li><p><strong>outFile</strong> (<em>string (optional)</em>) – path to training data to be saved (.gz)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>training data as a dataframe, first column is labels, rest are features</em></p></li>
+<li><p><em>list of reject features</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.plot_feature_importances">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">plot_feature_importances</code><span class="sig-paren">(</span><em class="sig-param">modelPth</em>, <em class="sig-param">featureNames</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.plot_feature_importances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the feature importances of an ensemble classifier</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>modelPth</strong> (<em>string</em>) – A sklearn model path</p></li>
+<li><p><strong>featureNames</strong> (<em>list of strings</em>) – a list of feature names</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.prob_pixel_bloc">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">prob_pixel_bloc</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">inputImage</em>, <em class="sig-param">bands</em>, <em class="sig-param">outMap</em>, <em class="sig-param">classes</em>, <em class="sig-param">blocksize=None</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">one_class=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.prob_pixel_bloc" title="Permalink to this definition">¶</a></dt>
+<dd><p>A block processing classifier for large rasters that produces a probability,
+output.</p>
+<p>Supports KEA, HFA, &amp; Gtiff formats -KEA is recommended, Gtiff is the default</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>string</em>) – a path to a scikit learn model that has been saved</p></li>
+<li><p><strong>inputImage</strong> (<em>string</em>) – path to image including the file fmt ‘Myimage.tif’</p></li>
+<li><p><strong>bands</strong> (<em>int</em>) – the no of image bands eg 8</p></li>
+<li><p><strong>outMap</strong> (<em>string</em>) – path to output image excluding the file format ‘pathto/mymap’</p></li>
+<li><p><strong>classes</strong> (<em>int</em>) – no of classes</p></li>
+<li><p><strong>blocksize</strong> (<em>int (optional)</em>) – size of raster chunck 256 tends to be quickest if you put None it
+will read size from gdal (this doesn’t always pay off!)</p></li>
+<li><p><strong>FMT</strong> (<em>string</em>) – optional parameter - gdal readable fmt eg ‘Gtiff’</p></li>
+<li><p><strong>one_class</strong> (<em>int</em>) – choose a single class to produce output prob raster</p></li>
+</ul>
+</dd>
+</dl>
+<p>Block processing is sequential, but quite a few sklearn models are parallel
+so that has been prioritised rather than raster IO</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learning.rmse_vector_lyr">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">rmse_vector_lyr</code><span class="sig-paren">(</span><em class="sig-param">inShape</em>, <em class="sig-param">attributes</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.rmse_vector_lyr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using sklearn get the rmse of 2 vector attributes
+(the actual and predicted of course in the order [‘actual’, ‘pred’])</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inShape</strong> (<em>string</em>) – the input vector of OGR type</p></li>
+<li><p><strong>attributes</strong> (<em>list</em>) – a list of strings denoting the attributes</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-shape">
+<span id="geospatial-learn-shape-module"></span><h2>geospatial_learn.shape module<a class="headerlink" href="#module-shape" title="Permalink to this headline">¶</a></h2>
+<p>The shape module.</p>
+<div class="section" id="id2">
+<h3>Description<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>This module contains various functions for the writing of data in OGR vector
+formats. The functions are mainly concerned with writing geometric or pixel based attributes, with the view to them being classified in the learning module</p>
+<dl class="function">
+<dt id="shape.hough2line">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">hough2line</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">edge='canny'</em>, <em class="sig-param">sigma=2</em>, <em class="sig-param">low_t=None</em>, <em class="sig-param">hi_t=None</em>, <em class="sig-param">n_orient=6</em>, <em class="sig-param">hArray=True</em>, <em class="sig-param">vArray=True</em>, <em class="sig-param">prob=False</em>, <em class="sig-param">line_length=100</em>, <em class="sig-param">line_gap=200</em>, <em class="sig-param">valrange=1</em>, <em class="sig-param">interval=360</em>, <em class="sig-param">band=2</em>, <em class="sig-param">min_area=None</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.hough2line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detect and write Hough lines to a line shapefile</p>
+<p>There are optionally two input arrays on the to keep line detection clean eg 2 orientations,
+such as vertical and horizontal</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRaster</strong> (<em>string</em>) – path to an input raster from which the geo-reffing is obtained</p></li>
+<li><p><strong>outShp</strong> (<em>string</em>) – path to the output line shapefile a corresponding polygon will also be written to disk</p></li>
+<li><p><strong>edge</strong> (<em>string</em>) – the edge detection method - either phase congruency or canny
+phase is default.</p></li>
+<li><p><strong>sigma</strong> (<em>int</em>) – the size of stdv defining the gaussian envelope if using canny edge
+a unitless value</p></li>
+<li><p><strong>n_orient</strong> (<em>int</em>) – the number of orientations used if using phase congruency edge</p></li>
+<li><p><strong>vArray</strong> (<em>bool</em>) – whether to detect lines on approx vert axis</p></li>
+<li><p><strong>hArray</strong> (<em>bool</em>) – whether to detect lines on approx horz axis</p></li>
+<li><p><strong>low_t</strong> – the low hysteresis threshold
+the secondary low gradient threshold permitted if connected to
+a high threshold pixel</p></li>
+<li><p><strong>hi_t</strong> – the high hysteresis threshold.
+the principal gradient threshold from which the low values are permitted
+provided they are connected to pixels of this one</p></li>
+<li><p><strong>prob</strong> (<em>bool</em>) – Whether to use a probabalistic hough - default is false</p></li>
+<li><p><strong>line_length</strong> (<em>int</em>) – If using prob hough the min. line length threshold</p></li>
+<li><p><strong>line_gap</strong> (<em>int</em>) – If using prob hough the min. line gap threshold</p></li>
+<li><p><strong>val_range</strong> (<em>int</em>) – The + - range around the orientation automatically chosen</p></li>
+<li><p><strong>interval</strong> (<em>int</em>) – The no of intervals of the range of values tested if using auto</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.meshgrid">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">meshgrid</code><span class="sig-paren">(</span><em class="sig-param">inRaster</em>, <em class="sig-param">outShp</em>, <em class="sig-param">gridHeight=1</em>, <em class="sig-param">gridWidth=1</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.meshgrid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="shape.ms_snake">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">ms_snake</code><span class="sig-paren">(</span><em class="sig-param">inShp</em>, <em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">band=2</em>, <em class="sig-param">buf1=0</em>, <em class="sig-param">buf2=0</em>, <em class="sig-param">algo='ACWE'</em>, <em class="sig-param">nodata_value=0</em>, <em class="sig-param">iterations=200</em>, <em class="sig-param">smoothing=1</em>, <em class="sig-param">lambda1=1</em>, <em class="sig-param">lambda2=1</em>, <em class="sig-param">threshold='auto'</em>, <em class="sig-param">balloon=-1</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.ms_snake" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deform a polygon using active contours on the values of an underlying raster.</p>
+<p>This uses morphsnakes and explanations are from there.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
+<li><p><strong>algo</strong> (<em>string</em>) – either “GAC” (geodesic active contours) or the default “ACWE” (active contours without edges)</p></li>
+<li><p><strong>buf1</strong> (<em>int</em>) – the buffer if any in map units for the bounding box of the poly which
+extracts underlying pixel values.</p></li>
+<li><p><strong>buf2</strong> (<em>int</em>) – the buffer if any in map units for the expansion or contraction
+of the poly which will initialise the active contour.
+This is here as you may wish to adjust the init polygon so it does not
+converge on a adjacent one or undesired area.</p></li>
+<li><p><strong>nodata_value</strong> (<em>numerical</em>) – If used the no data val of the raster</p></li>
+<li><p><strong>iterations</strong> (<em>uint</em>) – Number of iterations to run.</p></li>
+<li><p><strong>smoothing</strong> (<em>uint, optional</em>) – Number of times the smoothing operator is applied per iteration.
+Reasonable values are around 1-4. Larger values lead to smoother
+segmentations.</p></li>
+<li><p><strong>lambda1</strong> (<em>float, optional</em>) – Weight parameter for the outer region. If <cite>lambda1</cite> is larger than
+<cite>lambda2</cite>, the outer region will contain a larger range of values than
+the inner region.</p></li>
+<li><p><strong>lambda2</strong> (<em>float, optional</em>) – Weight parameter for the inner region. If <cite>lambda2</cite> is larger than
+<cite>lambda1</cite>, the inner region will contain a larger range of values than
+the outer region.</p></li>
+<li><p><strong>threshold</strong> (<em>float, optional</em>) – Areas of the image with a value smaller than this threshold will be
+considered borders. The evolution of the contour will stop in this
+areas.</p></li>
+<li><p><strong>balloon</strong> (<em>float, optional</em>) – Balloon force to guide the contour in non-informative areas of the
+image, i.e., areas where the gradient of the image is too small to push
+the contour towards a border. A negative value will shrink the contour,
+while a positive value will expand the contour in these areas. Setting
+this to zero will disable the balloon force.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.polygonize">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">polygonize</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outPoly</em>, <em class="sig-param">outField=None</em>, <em class="sig-param">mask=True</em>, <em class="sig-param">band=1</em>, <em class="sig-param">filetype='ESRI Shapefile'</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.polygonize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lifted straight from the cookbook and gdal func docs.</p>
+<p><a class="reference external" href="http://pcjericks.github.io/py-gdalogr-cookbook">http://pcjericks.github.io/py-gdalogr-cookbook</a></p>
+<p>Very slow!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>inRas</strong> (<em>string</em>) – the input image</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>outPoly<span class="classifier">string</span></dt><dd><p>the output polygon file path</p>
+</dd>
+<dt>outField<span class="classifier">string (optional)</span></dt><dd><p>the name of the field containing burnded values</p>
+</dd>
+<dt>mask<span class="classifier">bool (optional)</span></dt><dd><p>use the input raster as a mask</p>
+</dd>
+<dt>band<span class="classifier">int</span></dt><dd><p>the input raster band</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.ransac_lines">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">ransac_lines</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outRas</em>, <em class="sig-param">sigma=3</em>, <em class="sig-param">row=True</em>, <em class="sig-param">col=True</em>, <em class="sig-param">binwidth=40</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.ransac_lines" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="shape.shape_props">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">shape_props</code><span class="sig-paren">(</span><em class="sig-param">inShape</em>, <em class="sig-param">prop</em>, <em class="sig-param">inRas=None</em>, <em class="sig-param">label_field='ID'</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.shape_props" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate various geometric properties of a set of polygons
+Output will be relative to geographic units where relevant, but normalised where not (eg Eccentricity)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>inShape</strong> (<em>string</em>) – input shape file path</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>inRas<span class="classifier">string</span></dt><dd><p>a raster to get the correct dimensions from (optional), required for
+scikit-image props</p>
+</dd>
+<dt>prop<span class="classifier">string</span></dt><dd><p>Scikit image regionprops prop
+(see <a class="reference external" href="http://scikit-image.org/docs/dev/api/skimage.measure.html">http://scikit-image.org/docs/dev/api/skimage.measure.html</a>)</p>
+</dd>
+</dl>
+<p>OGR is used to generate most of these as it is faster but the string
+keys are same as scikit-image see notes for which require raster</p>
+<p class="rubric">Notes</p>
+<p>Only shape file needed (OGR / shapely / numpy based)</p>
+<p>‘MajorAxisLength’, ‘MinorAxisLength’, Area’, ‘Eccentricity’, ‘Solidity’,
+‘Extent’: ‘Extent’, ‘Perimeter’: ‘Perim’</p>
+<p>Raster required</p>
+<dl class="simple">
+<dt>‘Orientation’ and the remainder of props calcualble with scikit-image. These</dt><dd><p>process a bit slower than the above ones</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.shp2gj">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">shp2gj</code><span class="sig-paren">(</span><em class="sig-param">inShape</em>, <em class="sig-param">outJson</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.shp2gj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a geojson/json to a shapefile</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>inShape</strong> (<em>string</em>) – input shapefile</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>outJson<span class="classifier">string</span></dt><dd><p>output geojson</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Credit to person who posted this on the pyshp site</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.snake">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">snake</code><span class="sig-paren">(</span><em class="sig-param">inShp</em>, <em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">band=1</em>, <em class="sig-param">buf=1</em>, <em class="sig-param">nodata_value=0</em>, <em class="sig-param">boundary='fixed'</em>, <em class="sig-param">alpha=0.1</em>, <em class="sig-param">beta=30.0</em>, <em class="sig-param">w_line=0</em>, <em class="sig-param">w_edge=0</em>, <em class="sig-param">gamma=0.01</em>, <em class="sig-param">max_iterations=2500</em>, <em class="sig-param">smooth=True</em>, <em class="sig-param">eq=False</em>, <em class="sig-param">rgb=False</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.snake" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deform a line using active contours based on the values of an underlying</p>
+<p>raster - based on skimage at present so</p>
+<p>not quick!</p>
+<p class="rubric">Notes</p>
+<p>Param explanations for snake/active contour from scikit-image api</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
+<li><p><strong>buf</strong> (<em>int</em>) – the buffer area to include for the snake deformation</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – Snake length shape parameter. Higher values makes snake contract faster.</p></li>
+<li><p><strong>beta</strong> (<em>float</em>) – Snake smoothness shape parameter. Higher values makes snake smoother.</p></li>
+<li><p><strong>w_line</strong> (<em>float</em>) – Controls attraction to brightness. Use negative values to attract toward dark regions.</p></li>
+<li><p><strong>w_edge</strong> (<em>float</em>) – Controls attraction to edges. Use negative values to repel snake from edges.</p></li>
+<li><p><strong>gamma</strong> (<em>float</em>) – Explicit time stepping parameter.</p></li>
+<li><p><strong>max_iterations</strong> (<em>int</em>) – No of iterations to evolve snake</p></li>
+<li><p><strong>boundary</strong> (<em>string</em>) – Scikit-image text:
+Boundary conditions for the contour. Can be one of ‘periodic’,
+‘free’, ‘fixed’, ‘free-fixed’, or ‘fixed-free’.
+‘periodic’ attaches the two ends of the snake, ‘fixed’
+holds the end-points in place,
+and ‘free’ allows free movement of the ends.
+‘fixed’ and ‘free’ can be combined by parsing ‘fixed-free’,
+‘free-fixed’. Parsing ‘fixed-fixed’ or ‘free-free’
+yields same behaviour as ‘fixed’ and ‘free’, respectively.</p></li>
+<li><p><strong>nodata_value</strong> (<em>numerical</em>) – If used the no data val of the raster</p></li>
+<li><p><strong>rgb</strong> (<em>bool</em>) – read in bands 1-3 assuming them to be RGB</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.texture_stats">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">texture_stats</code><span class="sig-paren">(</span><em class="sig-param">vector_path</em>, <em class="sig-param">raster_path</em>, <em class="sig-param">band</em>, <em class="sig-param">gprop='contrast'</em>, <em class="sig-param">offset=2</em>, <em class="sig-param">angle=0</em>, <em class="sig-param">write_stat=None</em>, <em class="sig-param">nodata_value=0</em>, <em class="sig-param">mean=False</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.texture_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate and optionally write texture stats for an OGR compatible polygon
+based on underlying raster values</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul>
+<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>raster_path</strong> (<em>string</em>) – input raster path</p></li>
+<li><p><strong>gprop</strong> (<em>string</em>) – a skimage gclm property
+entropy, contrast, dissimilarity, homogeneity, ASM, energy,
+correlation</p></li>
+<li><p><strong>offset</strong> (<em>int</em>) – distance in pixels to measure - minimum of 2!!!</p></li>
+<li><p><strong>angle</strong> (<em>int</em>) – angle in degrees from pixel (int)</p>
+<p>135  90    45
+   |    /</p>
+<blockquote>
+<div><p>c    -  0</p>
+</div></blockquote>
+</li>
+<li><p><strong>mean</strong> (<em>bool</em>) – take the mean of all offsets</p></li>
+<li><p><strong>Important to note that the results will be unreliable for glcm</strong></p></li>
+<li><p><strong>texture features if seg is true as non-masked values will be zero or</strong></p></li>
+<li><p><strong>some weird no data and will affect results</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Important</p>
+<p>The texture of the bounding box is at present the “relible” measure</p>
+<p>Using the segment only results in potentially spurious results due to the
+scikit-image algorithm measuring texture over zero/nodata to number pixels
+(e.g 0&gt;54). The segment part will be developed in due course to overcome
+this issue</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.thresh_seg">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">thresh_seg</code><span class="sig-paren">(</span><em class="sig-param">inShp</em>, <em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">band</em>, <em class="sig-param">buf=0</em>, <em class="sig-param">algo='otsu'</em>, <em class="sig-param">min_area=4</em>, <em class="sig-param">nodata_value=0</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.thresh_seg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use an image processing technique to threshold foreground and background in a polygon segment.</p>
+<p>This default is otsu’s method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
+<li><p><strong>algo</strong> (<em>string</em>) – ‘otsu’, niblack, sauvola</p></li>
+<li><p><strong>nodata_value</strong> (<em>numerical</em>) – If used the no data val of the raster</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.write_text_field">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">write_text_field</code><span class="sig-paren">(</span><em class="sig-param">inShape</em>, <em class="sig-param">fieldName</em>, <em class="sig-param">attribute</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.write_text_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a string to a ogr vector file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inShape</strong> (<em>string</em>) – input OGR vecotr file</p></li>
+<li><p><strong>fieldName</strong> (<em>string</em>) – name of field being written</p></li>
+<li><p><strong>attribute</strong> (<em>string</em>) – ‘text to enter in each entry of column’</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.zonal_rgb_idx">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_rgb_idx</code><span class="sig-paren">(</span><em class="sig-param">vector_path</em>, <em class="sig-param">raster_path</em>, <em class="sig-param">nodata_value=0</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_rgb_idx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate RGB-based indicies per segment/AOI</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>nodata_value</strong> (<em>numerical</em>) – If used the no data val of the raster</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.zonal_stats">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_stats</code><span class="sig-paren">(</span><em class="sig-param">vector_path</em>, <em class="sig-param">raster_path</em>, <em class="sig-param">band</em>, <em class="sig-param">bandname</em>, <em class="sig-param">stat='mean'</em>, <em class="sig-param">write_stat=None</em>, <em class="sig-param">nodata_value=0</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate zonal stats for an OGR polygon file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
+<li><p><strong>bandname</strong> (<em>string</em>) – eg - blue</p></li>
+<li><p><strong>stat</strong> (<em>string</em>) – string of a stat to calculate, if omitted it will be ‘mean’
+others: ‘mode’, ‘min’,’mean’,’max’, ‘std’,’ sum’, ‘count’,’var’,
+skew’, ‘kurt (osis)’</p></li>
+<li><p><strong>write_stat</strong> (<em>bool (optional)</em>) – If True, stat will be written to OGR file, if false, dataframe
+only returned (bool)</p></li>
+<li><p><strong>nodata_value</strong> (<em>numerical</em>) – If used the no data val of the raster</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="shape.zonal_stats_all">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_stats_all</code><span class="sig-paren">(</span><em class="sig-param">vector_path, raster_path, bandnames, statList=['mean', 'min', 'max', 'median', 'std', 'var', 'skew', 'kurt']</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_stats_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate zonal stats for an OGR polygon file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
+<li><p><strong>bandnames</strong> (<em>list</em>) – eg - [‘b’,’g’,’r’,’nir’]</p></li>
+<li><p><strong>nodata_value</strong> (<em>numerical</em>) – If used the no data val of the raster</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-utilities">
+<span id="geospatial-learn-utilities-module"></span><h2>geospatial_learn.utilities module<a class="headerlink" href="#module-utilities" title="Permalink to this headline">¶</a></h2>
+<p>Created on Thu Sep  8 22:35:39 2016
+&#64;author: Ciaran Robb
+The utilities module - things here don’t have an exact theme or home yet so
+may eventually move elsewhere
+Aberytswyth Uni
+Wales</p>
+<p>If you use code to publish work cite/acknowledge me and authors of libs etc as
+appropriate</p>
+<dl class="function">
+<dt id="utilities.accum_gabor">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">accum_gabor</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outRas=None</em>, <em class="sig-param">size=(9</em>, <em class="sig-param">9)</em>, <em class="sig-param">stdv=1</em>, <em class="sig-param">no_angles=16</em>, <em class="sig-param">wave_length=3</em>, <em class="sig-param">eccen=1</em>, <em class="sig-param">phase_off=0</em>, <em class="sig-param">pltgrid=(4</em>, <em class="sig-param">4)</em>, <em class="sig-param">blockproc=False</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.accum_gabor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process with custom gabor filters and output an raster containing each
+kernel output as a band</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRas</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>outRas</strong> (<em>string</em>) – output raster</p></li>
+<li><p><strong>size</strong> (<em>tuple</em>) – size of in gabor kernel in pixels (ksize)</p></li>
+<li><p><strong>stdv</strong> (<em>int</em>) – size of stdv / of of gabor kernel (sigma/stdv)</p></li>
+<li><p><strong>no_angles</strong> (<em>int</em>) – number of angles  in gabor kernel (theta)</p></li>
+<li><p><strong>wave_length</strong> (<em>int</em>) – width of stripe in gabor kernel (lambda/wavelength)</p></li>
+<li><p><strong>phase_off</strong> (<em>int</em>) – the phase offset of the kernel</p></li>
+<li><p><strong>eccen</strong> (<em>int</em>) – the elipticity of the kernel when = 1 the gaussian envelope is circular</p></li>
+<li><p><strong>blocproc</strong> (<em>bool</em>) – whether to process in chunks - necessary for very large images!</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.colorscale">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">colorscale</code><span class="sig-paren">(</span><em class="sig-param">seg</em>, <em class="sig-param">prop</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.colorscale" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="utilities.combine_hough_seg">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">combine_hough_seg</code><span class="sig-paren">(</span><em class="sig-param">inRas1</em>, <em class="sig-param">inRas2</em>, <em class="sig-param">outRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">min_area=None</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.combine_hough_seg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="utilities.get_corners">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">get_corners</code><span class="sig-paren">(</span><em class="sig-param">bboxes</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.get_corners" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get corners of bounding boxes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>bboxes</strong> (<em>numpy.ndarray</em>) – Numpy array containing bounding boxes of shape <cite>N X 4</cite> where N is the
+number of bounding boxes and the bounding boxes are represented in the
+format <cite>x1 y1 x2 y2</cite></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Numpy array of shape <cite>N x 8</cite> containing N bounding boxes each described by their
+corner co-ordinates <cite>x1 y1 x2 y2 x3 y3 x4 y4</cite></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.get_enclosing_box">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">get_enclosing_box</code><span class="sig-paren">(</span><em class="sig-param">corners</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.get_enclosing_box" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an enclosing box for ratated corners of a bounding box</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>corners</strong> (<em>numpy.ndarray</em>) – Numpy array of shape <cite>N x 8</cite> containing N bounding boxes each described by their
+corner co-ordinates <cite>x1 y1 x2 y2 x3 y3 x4 y4</cite></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Numpy array containing enclosing bounding boxes of shape <cite>N X 4</cite> where N is the
+number of bounding boxes and the bounding boxes are represented in the
+format <cite>x1 y1 x2 y2</cite></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.image_thresh">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">image_thresh</code><span class="sig-paren">(</span><em class="sig-param">image</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.image_thresh" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="utilities.iou_score">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">iou_score</code><span class="sig-paren">(</span><em class="sig-param">inSeg</em>, <em class="sig-param">trueSeg</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.iou_score" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="utilities.iter_ransac">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">iter_ransac</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">sigma=3</em>, <em class="sig-param">no_iter=10</em>, <em class="sig-param">order='col'</em>, <em class="sig-param">mxt=2500</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.iter_ransac" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="utilities.min_bound_rectangle">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">min_bound_rectangle</code><span class="sig-paren">(</span><em class="sig-param">points</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.min_bound_rectangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the smallest bounding rectangle for a set of points.
+Returns a set of points representing the corners of the bounding box.
+:Parameters: <strong>points</strong> (<em>list</em>) – An nx2 iterable of points</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>an nx2 list of coordinates</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.ms_toposnakes">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ms_toposnakes</code><span class="sig-paren">(</span><em class="sig-param">inSeg</em>, <em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">iterations=100</em>, <em class="sig-param">algo='GAC'</em>, <em class="sig-param">band=2</em>, <em class="sig-param">sigma=4</em>, <em class="sig-param">smooth=1</em>, <em class="sig-param">lambda1=1</em>, <em class="sig-param">lambda2=1</em>, <em class="sig-param">threshold='auto'</em>, <em class="sig-param">balloon=-1</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ms_toposnakes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Topology preserveing morphsnakes (kind of!) using an approximation of the
+homotopic skeleton to prevent merging of blobs</p>
+<p>This uses morphsnakes and explanations are from there.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inSeg</strong> (<em>string</em>) – input segmentation raster</p></li>
+<li><p><strong>raster_path</strong> (<em>string</em>) – input raster whose pixel vals will be used</p></li>
+<li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
+<li><p><strong>algo</strong> (<em>string</em>) – either “GAC” (geodesic active contours) or “ACWE” (active contours without edges)</p></li>
+<li><p><strong>sigma</strong> (<em>the size of stdv defining the gaussian envelope if using canny edge</em>) – a unitless value</p></li>
+<li><p><strong>iterations</strong> (<em>uint</em>) – Number of iterations to run.</p></li>
+<li><p><strong>smooth</strong> (<em>uint, optional</em>) – Number of times the smoothing operator is applied per iteration.
+Reasonable values are around 1-4. Larger values lead to smoother
+segmentations.</p></li>
+<li><p><strong>lambda1</strong> (<em>float, optional</em>) – Weight parameter for the outer region. If <cite>lambda1</cite> is larger than
+<cite>lambda2</cite>, the outer region will contain a larger range of values than
+the inner region.</p></li>
+<li><p><strong>lambda2</strong> (<em>float, optional</em>) – Weight parameter for the inner region. If <cite>lambda2</cite> is larger than
+<cite>lambda1</cite>, the inner region will contain a larger range of values than
+the outer region.</p></li>
+<li><p><strong>threshold</strong> (<em>float, optional</em>) – Areas of the image with a value smaller than this threshold will be
+considered borders. The evolution of the contour will stop in this
+areas.</p></li>
+<li><p><strong>balloon</strong> (<em>float, optional</em>) – Balloon force to guide the contour in non-informative areas of the
+image, i.e., areas where the gradient of the image is too small to push
+the contour towards a border. A negative value will shrink the contour,
+while a positive value will expand the contour in these areas. Setting
+this to zero will disable the balloon force.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.otbMeanshift">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">otbMeanshift</code><span class="sig-paren">(</span><em class="sig-param">inputImage</em>, <em class="sig-param">radius</em>, <em class="sig-param">rangeF</em>, <em class="sig-param">minSize</em>, <em class="sig-param">outShape</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.otbMeanshift" title="Permalink to this definition">¶</a></dt>
+<dd><p>OTB meanshift by calling the otb command line
+Written for convenience and due to otb python api being rather verbose</p>
+<p>There is a maximum size for the .shp format otb doesn’t seem to
+want to move beyond (2gb), so enormous rasters may need to be sub
+divided</p>
+<p>You will need to install OTB etc seperately</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputImage</strong> (<em>string</em>) – the input image</p></li>
+<li><p><strong>radius</strong> (<em>int</em>) – the kernel radius</p></li>
+<li><p><strong>rangeF</strong> (<em>int</em>) – the kernel range</p></li>
+<li><p><strong>minSize</strong> (<em>int</em>) – minimum segment size</p></li>
+<li><p><strong>outShape</strong> (<em>string</em>) – the ouput shapefile</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.raster2array">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">raster2array</code><span class="sig-paren">(</span><em class="sig-param">inRas, bands=[1]</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.raster2array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a raster and return an array, either single or multiband</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRas</strong> (<em>string</em>) – input  raster</p></li>
+<li><p><strong>bands</strong> (<em>list</em>) – a list of bands to return in the array</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.rotate_box">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">rotate_box</code><span class="sig-paren">(</span><em class="sig-param">corners</em>, <em class="sig-param">angle</em>, <em class="sig-param">cx</em>, <em class="sig-param">cy</em>, <em class="sig-param">h</em>, <em class="sig-param">w</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.rotate_box" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate the bounding box.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>corners</strong> (<em>numpy.ndarray</em>) – Numpy array of shape <cite>N x 8</cite> containing N bounding boxes each described by their
+corner co-ordinates <cite>x1 y1 x2 y2 x3 y3 x4 y4</cite></p></li>
+<li><p><strong>angle</strong> (<em>float</em>) – angle by which the image is to be rotated</p></li>
+<li><p><strong>cx</strong> (<em>int</em>) – x coordinate of the center of image (about which the box will be rotated)</p></li>
+<li><p><strong>cy</strong> (<em>int</em>) – y coordinate of the center of image (about which the box will be rotated)</p></li>
+<li><p><strong>h</strong> (<em>int</em>) – height of the image</p></li>
+<li><p><strong>w</strong> (<em>int</em>) – width of the image</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Numpy array of shape <cite>N x 8</cite> containing N rotated bounding boxes each described by their
+corner co-ordinates <cite>x1 y1 x2 y2 x3 y3 x4 y4</cite></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.rotate_im">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">rotate_im</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">angle</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.rotate_im" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate the image.</p>
+<p>Rotate the image such that the rotated image is enclosed inside the tightest
+rectangle. The area not occupied by the pixels of the original image is colored
+black.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> (<em>numpy.ndarray</em>) – numpy image</p></li>
+<li><p><strong>angle</strong> (<em>float</em>) – angle by which the image is to be rotated</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Rotated Image</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.spinim">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">spinim</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">img</em>, <em class="sig-param">bboxes</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.spinim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="utilities.temp_match">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">temp_match</code><span class="sig-paren">(</span><em class="sig-param">vector_path</em>, <em class="sig-param">raster_path</em>, <em class="sig-param">band</em>, <em class="sig-param">nodata_value=0</em>, <em class="sig-param">ind=None</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.temp_match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Based on polygons return template matched images</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
+<li><p><strong>nodata_value</strong> (<em>numerical</em>) – If used the no data val of the raster</p></li>
+<li><p><strong>ind</strong> (<em>int</em>) – The feature ID to use - if used this will use one feature and rotate it 90 for the second</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of template match arrays same size as input</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.test_gabor">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">test_gabor</code><span class="sig-paren">(</span><em class="sig-param">im</em>, <em class="sig-param">size=9</em>, <em class="sig-param">freq=0.1</em>, <em class="sig-param">angle=None</em>, <em class="sig-param">funct='cos'</em>, <em class="sig-param">plot=True</em>, <em class="sig-param">smooth=True</em>, <em class="sig-param">interp='none'</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.test_gabor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process image with gabor filter bank of specified orientation or derived from
+image positive values bounding box - implemented from numpy with more intuitive
+params</p>
+<p>This is the numpy based one</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRas</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>size</strong> (<em>int</em>) – size of in gabor kernel in pixels (ksize)</p></li>
+<li><p><strong>freq</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>angles: int</dt><dd><p>number of angles  in gabor kernel (theta)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.test_gabor_cv2">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">test_gabor_cv2</code><span class="sig-paren">(</span><em class="sig-param">im</em>, <em class="sig-param">size=9</em>, <em class="sig-param">stdv=1</em>, <em class="sig-param">angle=None</em>, <em class="sig-param">wave_length=3</em>, <em class="sig-param">eccen=1</em>, <em class="sig-param">phase_off=0</em>, <em class="sig-param">plot=True</em>, <em class="sig-param">smooth=True</em>, <em class="sig-param">interp='none'</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.test_gabor_cv2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process image with gabor filter bank of specified orientation or derived from
+image positive values bounding box</p>
+<p>This is the open cv based one</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRas</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>size</strong> (<em>int</em>) – size of in gabor kernel in pixels (ksize)</p></li>
+<li><p><strong>stdv</strong> (<em>int</em>) – stdv / of of gabor kernel (sigma/stdv)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>angles: int</dt><dd><p>number of angles  in gabor kernel (theta)</p>
+</dd>
+<dt>wave_length: int</dt><dd><p>width of stripe in gabor kernel (lambda/wavelength)
+optional best to leave none and hence same as size</p>
+</dd>
+<dt>phase_off: int</dt><dd><p>the phase offset of the kernel</p>
+</dd>
+<dt>eccen: int</dt><dd><p>the elipticity of the kernel when = 1 the gaussian envelope is circular (gamma)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.visual_callback_2d">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">visual_callback_2d</code><span class="sig-paren">(</span><em class="sig-param">background</em>, <em class="sig-param">fig=None</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.visual_callback_2d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a callback than can be passed as the argument <cite>iter_callback</cite>
+of <cite>morphological_geodesic_active_contour</cite> and
+<cite>morphological_chan_vese</cite> for visualizing the evolution
+of the levelsets. Only works for 2D images.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>background</strong> (<em>(M, N) array</em>) – Image to be plotted as the background of the visual evolution.</p></li>
+<li><p><strong>fig</strong> (<em>matplotlib.figure.Figure</em>) – Figure where results will be drawn. If not given, a new figure
+will be created.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>callback</strong> – A function that receives a levelset and updates the current plot
+accordingly. This can be passed as the <cite>iter_callback</cite> argument of
+<cite>morphological_geodesic_active_contour</cite> and
+<cite>morphological_chan_vese</cite>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Python function</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-geospatial_learn">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-geospatial_learn" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="modules.html" class="btn btn-neutral float-right" title="geospatial_learn" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Ciaran Robb
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
