@@ -8,9 +8,9 @@ Welcome to geospatial-learn's documentation!
 
 geospatial-learn is a Python module for using scikit-learn and xgb models with geo-spatial data, chiefly raster and vector formats.
 
-The module also contains various fuctionality for manipulating raster and vector data as well as some utilities aimed at processing Sentinel 2 data.
+The module also contains various fuctionality for manipulating raster and vector data.
 
-The aim is to produce convenient, minimal commands for putting together geo-spatial processing chains using machine learning libs. Development will aim to expand the variety of libs/algorithms available for machine learning beyond the current complement.
+The aim is to produce convenient, minimal commands for putting together geo-spatial processing chains using raster, vector and some machine learning libs. Development will aim to expand the variety of libs/algorithms available for machine learning beyond the current complement.
 
 Contents
 ^^^^^^^^
