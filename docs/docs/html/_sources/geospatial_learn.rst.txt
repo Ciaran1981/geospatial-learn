@@ -7,7 +7,7 @@ Submodules
 geospatial_learn.raster module
 -------------------------------
 
-.. automodule:: raster
+.. automodule:: geodata
     :members:
     :undoc-members:
     :show-inheritance:
