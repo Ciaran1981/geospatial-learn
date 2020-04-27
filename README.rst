@@ -5,11 +5,13 @@
 geospatial-learn
 ============
 
-geospatial-learn is a Python module for using scikit-learn and xgb models with geo-spatial data, chiefly raster and vector formats. 
+Geospatial-learn is a Python module for raster and vector manipulation and using scikit-learn and xgb models with  the aformentioned geo-spatial data. The aim is to produce convenient, minimal commands for putting together geo-spatial processing chains and using machine learning (ML) libs. Development will aim to expand the variety of libs/algorithms available for machine learning beyond the current complement. The name is a play-on of scikit-learn, though I really ought to think of something better. The functions are mainly a result of my own research area of remote sensing and image processing but cover some fairly typical processing tasks.
 
-The module also contains various fuctionality for manipulating raster and vector data as well as some utilities aimed at processing Sentinel 2 data.
+- There is a 'raster' module for (you guessed it) raster/image processing. 
 
-The aim is to produce convenient, minimal commands for putting together geo-spatial processing chains using machine learning libs. Development will aim to expand the variety of libs/algorithms available for machine learning beyond the current complement.  
+- There is a 'shape' module for vector processing which is mainly based around extracting image properties and writing them to a vector format. Functions include zonal stats, glcm-based texture etc as well further manipulation of lines and polygons using things like active contours.
+
+- The 'learning' module is for applying creating ML models and applying them to raster and vector data. This is all based around Sklearn, xgboost and t-pot.    
 
 
 Dependencies

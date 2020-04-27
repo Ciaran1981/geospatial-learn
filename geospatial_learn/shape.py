@@ -2421,8 +2421,6 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1, filetype="
     Lifted straight from the cookbook and gdal func docs.
 
     http://pcjericks.github.io/py-gdalogr-cookbook
-    
-    Very slow!
 
     Parameters
     -----------   
