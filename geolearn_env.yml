@@ -10,7 +10,6 @@ dependencies:
   - gdal
   - scikit-image
   - scikit-learn
-  - pytest
   - git
   - pandas
   - imageio
@@ -27,7 +26,6 @@ dependencies:
   - more-itertools
   - psutil
   - shapely
-  - tenacity
   - tpot
   - glymur
   - xgboost
@@ -38,17 +36,12 @@ dependencies:
   - urbanaccess
 
   - pip:
-    - pyzbar
-    - pysolar
-    - mapboxgl
-    - git+https://github.com/smarnach/pyexiftool.git#egg=pyexiftoolpy
-    - imageio-ffmpeg
-    - open3d
     - git+https://github.com/Ciaran1981/geospatial-learn#egg=geospatial-learnpy
     - xmltodict
-    - sentinelhub==0.1.7
-    - planet
     - simpledbf
+    - scikitplot
+    - phasepack
+    - mahotas
 
 
 

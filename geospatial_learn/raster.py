@@ -126,7 +126,50 @@ def array2raster(array, bands, inRaster, outRas, dtype, FMT=None):
         dataset.FlushCache()  # Write to disk.
         dataset=None
         #print('Raster written to disk')
+        
+def raster2array(inRas, bands=[1]):
+    
+    """
+    Read a raster and return an array, either single or multiband
 
+    
+    Parameters
+    ----------
+    
+    inRas: string
+                  input  raster
+        
+    bands: list
+                  a list of bands to return in the array
+    
+    """
+    rds = gdal.Open(inRas)
+   
+   
+    if len(bands) ==1:
+        # then we needn't bother with all the crap below
+        inArray = rds.GetRasterBand(bands[0]).ReadAsArray()
+        
+    else:
+        #   The nump and gdal dtype (ints)
+        #   {"uint8": 1,"int8": 1,"uint16": 2,"int16": 3,"uint32": 4,"int32": 5,
+        #    "float32": 6, "float64": 7, "complex64": 10, "complex128": 11}
+        
+        # a numpy gdal conversion dict - this seems a bit long-winded
+        dtypes = {"1": np.uint8, "2": np.uint16,
+              "3": np.int16, "4": np.uint32,"5": np.int32,
+              "6": np.float32,"7": np.float64,"10": np.complex64,
+              "11": np.complex128}
+        rdsDtype = rds.GetRasterBand(1).DataType
+        inDt = dtypes[str(rdsDtype)]
+        
+        inArray = np.zeros((rds.RasterYSize, rds.RasterXSize, len(bands)), dtype=inDt) 
+        for band in bands:  
+            rA = rds.GetRasterBand(band).ReadAsArray()
+            inArray[:, :, band-1]=rA
+   
+   
+    return inArray
 
 def tile_rasters(inImage, outputImage, tilesize): 
     
