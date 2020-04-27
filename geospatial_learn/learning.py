@@ -46,13 +46,13 @@ from sklearn.externals import joblib
 from sklearn import metrics
 import joblib as jb
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-from geospatial_learn.geodata import array2raster
+from geospatial_learn.raster import array2raster
 from geospatial_learn.shape import _bbox_to_pixel_offsets#, zonal_stats
 from scipy.stats import randint as sp_randint
 from scipy.stats import expon
 from tpot import TPOTClassifier, TPOTRegressor
 import warnings
-from geospatial_learn.geodata import _copy_dataset_config
+from geospatial_learn.raster import _copy_dataset_config
 
 import pandas as pd
 import simpledbf
