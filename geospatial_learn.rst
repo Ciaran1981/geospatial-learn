@@ -4,15 +4,7 @@ geospatial\_learn package
 Submodules
 ----------
 
-geospatial\_learn\.data module
-------------------------------
-
-.. automodule:: geospatial_learn.data
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-geospatial\_learn\.geodata module
+geospatial\_learn\.raster module
 ---------------------------------
 
 .. automodule:: geospatial_learn.geodata
