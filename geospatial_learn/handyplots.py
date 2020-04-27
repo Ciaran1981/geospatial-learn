@@ -17,19 +17,19 @@ appropriate
 
 import numpy as np
 
-import matplotlib
 import matplotlib.pyplot as plt
 
-from skimage.segmentation import mark_boundaries
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix,jaccard_score, f1_score
+from sklearn.metrics import precision_recall_fscore_support as prf
 from geospatial_learn import data
-
+import scikitplot as skplt
 
 import seaborn as sns
 
 import pandas as pd
 
-def plot_classif_report(predVals, trueVals, colmap=plt.cm.Spectral_r):
+def plot_classif_report(trueVals, predVals, labels=None, target_names=None,
+                        colmap=plt.cm.Spectral_r):
     
     """
     Plot a classification report
@@ -51,13 +51,14 @@ def plot_classif_report(predVals, trueVals, colmap=plt.cm.Spectral_r):
     The confusion matrix and a plot
     """
     
-    clf_report = classification_report(trueVals, predVals, output_dict=True)
+    clf_report = classification_report(trueVals, predVals, labels=labels,
+                                       target_names=target_names, output_dict=True)
     
+    dF = pd.DataFrame(clf_report).iloc[:-1, :].T
 
-    sns.heatmap(pd.DataFrame(clf_report).iloc[:-1, :].T, annot=True,
-                cmap=colmap)
+    sns.heatmap(dF, annot=True, cmap=colmap)
     
-    return clf_report
+    return dF
 
 
 def _plt_heatmap(values, xlabel, ylabel, xticklabels, yticklabels, 
@@ -121,34 +122,36 @@ def plt_confmat(trueVals, predVals, cmap = plt.cm.gray, fmt="%d"):
     labels = np.unique(trueVals)
     # the above heatmap function is used to create the plot
     
+    skplt.metrics.plot_confusion_matrix(trueVals, predVals, normalize=True)
+    
     conf = confusion_matrix(trueVals, predVals)
                       
     
-    ax = plt.gca()
-    # to be used for confusion matrix
-
-    ax.invert_yaxis()
-    #ax.set_anchor('NW')
-    #ax.invert_yaxis()
-    # plot the mean cross-validation scores
-    img = ax.pcolor(conf, cmap=cmap, vmin=None, vmax=None)
-    img.update_scalarmappable()
-    ax.set_xlabel('True')
-    ax.set_ylabel('Predicted')
-    ax.set_xticks(np.arange(len(labels)) + .5)
-    ax.set_yticks(np.arange(len(labels)) + .5)
-    ax.set_xticklabels(labels)
-    ax.set_yticklabels(labels)
-
-    ax.set_aspect(1)
-
-    for p, color, value in zip(img.get_paths(), img.get_facecolors(), img.get_array()):
-        x, y = p.vertices[:-2, :].mean(0)
-        if np.mean(color[:3]) > 0.5:
-            c = 'k'
-        else:
-            c = 'w'
-        ax.text(x, y, fmt % value, color=c, ha="center", va="center")
+#    ax = plt.gca()
+#    # to be used for confusion matrix
+#
+#    ax.invert_yaxis()
+#    #ax.set_anchor('NW')
+#    #ax.invert_yaxis()
+#    # plot the mean cross-validation scores
+#    img = ax.pcolor(conf, cmap=cmap, vmin=None, vmax=None)
+#    img.update_scalarmappable()
+#    ax.set_xlabel('True')
+#    ax.set_ylabel('Predicted')
+#    ax.set_xticks(np.arange(len(labels)) + .5)
+#    ax.set_yticks(np.arange(len(labels)) + .5)
+#    ax.set_xticklabels(labels)
+#    ax.set_yticklabels(labels)
+#
+#    ax.set_aspect(1)
+#
+#    for p, color, value in zip(img.get_paths(), img.get_facecolors(), img.get_array()):
+#        x, y = p.vertices[:-2, :].mean(0)
+#        if np.mean(color[:3]) > 0.5:
+#            c = 'k'
+#        else:
+#            c = 'w'
+#        ax.text(x, y, fmt % value, color=c, ha="center", va="center")
     
     return
     conf

@@ -143,22 +143,6 @@ The model is created in the same way as the image based method outlined earlier 
    classify_object(model, segShp, attributes, field_name='ClassRf')
  
 
-Sentinel 2 data
----------------
-
-The following code will stack a set of Sentinel 2 (S2) bands into a single raster. The code uses the module 'geodata', which has a range of functions for manipulating raster data.
-I have used a genuine S2 path here hence the extreme length of the string!
-
-The function automatically names the stacked raster and saves it in the granule folder. 
-
-
-.. code-block:: python
-
-   from geospatial_learn import geodata
-
-   path = '/path/to/S2A_MSIL1C_20161223T075332_N0204_R135_T36MYE_20161223T080853/S2A_MSIL2A_20161223T075332_N0204_R135_T36MYE_20161223T080853.SAFE/GRANULE/L2A_T36MYE_A007854_20161223T080853/'	
-
-   outputPth = geodata.stack_S2(path)
 
 
 

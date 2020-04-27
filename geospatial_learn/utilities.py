@@ -2,6 +2,8 @@
 """
 Created on Thu Sep  8 22:35:39 2016
 @author: Ciaran Robb
+The utilities module - things here don't have an exact theme or home yet so
+may eventually move elsewhere
 Aberytswyth Uni
 Wales
 
@@ -120,7 +122,7 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='GAC', band=2,
                   balloon=-1):
     
     """
-    Topology preserveing morphsnakes (kind of!) using an apprximation of the
+    Topology preserveing morphsnakes (kind of!) using an approximation of the
     homotopic skeleton to prevent merging of blobs
     
     
@@ -139,8 +141,10 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='GAC', band=2,
            an integer val eg - 2
 
     algo: string
-           either "GAC" (geodesic active contours) or the default "ACWE" (active contours without edges)
-
+           either "GAC" (geodesic active contours) or "ACWE" (active contours without edges)
+           
+    sigma: the size of stdv defining the gaussian envelope if using canny edge
+              a unitless value
 
     iterations: uint
         Number of iterations to run.
@@ -1004,7 +1008,7 @@ def accum_gabor(inRas, outRas=None, size=(9,9), stdv=1, no_angles=16, wave_lengt
            size of in gabor kernel in pixels (ksize)
         
     stdv: int
-           stdv / of of gabor kernel (sigma/stdv)
+           size of stdv / of of gabor kernel (sigma/stdv)
     
     no_angles: int
            number of angles  in gabor kernel (theta)
@@ -1591,3 +1595,72 @@ def spinim(self, img, bboxes):
     bboxes = clip_box(bboxes, [0,0,w, h], 0.25)
 
     return img, bboxes
+
+def otbMeanshift(inputImage, radius, rangeF, minSize, outShape):
+    """ 
+    OTB meanshift by calling the otb command line
+    Written for convenience and due to otb python api being rather verbose 
+    
+    Notes:
+    -----------        
+    There is a maximum size for the .shp format otb doesn't seem to
+    want to move beyond (2gb), so enormous rasters may need to be sub
+    divided
+        
+    You will need to install OTB etc seperately
+                
+        
+    Parameters
+    -----------    
+     
+    inputImage : string
+                 the input image 
+        
+    radius : int
+             the kernel radius
+        
+    rangeF : int
+             the kernel range
+        
+    minSize : int
+              minimum segment size
+        
+    outShape : string
+               the ouput shapefile
+
+    
+    """
+    # Yes it is possible to do this with the otb python api, but it is way more
+    # verbose, hence using the command line
+    # the long winded version is greyed out as takes far too long to process
+    print('segmenting image.... could be a little while!')
+#    cmd1 = ('otbcli_MeanShiftSmoothing -in '+inputImage+ '
+#            '-fout MeanShift_FilterOutput.tif -foutpos '
+#            'MeanShift_SpatialOutput.tif -spatialr 16 -ranger 16 ' 
+#            '-thres 0.1 -maxiter 100')
+#    cmd2 = ('otbcli_LSMSSegmentation -in smooth.tif -inpos position.tif ' 
+#            '-out segmentation.tif -ranger '+rangeF+' -spatialr '+radius+' 
+#            ' -minsize '+minSize+'
+#            ' -tilesizex 500 -tilesizey 500')
+#    cmd3 = ('otbcli_LSMSSmallRegionsMerging -in smooth.tif '
+#            '-inseg segmentation.tif -out merged.tif -minsize 20'
+#            '-tilesizex 500 -tilesizey 500')
+#    cmd4 = ('otbcli_LSMSVectorization -in avions.tif -inseg merged.tif '
+#            '-out vector.shp -tilesizex 500 -tilesizey 500')
+            
+    cmd1 = ['otbcli_Segmentation', '-in', str(inputImage), '-filter meanshift',
+            '-filter.meanshift.spatialr', str(radius),
+            '-filter.meanshift.ranger', str(rangeF), 
+            '-filter.meanshift.minsize', str(minSize), '-mode', 'vector',
+            '-mode.vector.out', outShape]
+    cmd1out = subprocess.check_output(cmd1)
+    print(cmd1out)
+#    print('filtering done')
+#    os.system(cmd2)
+#    print('raster seg done')
+#    os.system(cmd3)
+#    print('region merge done')
+#    os.system(cmd4)
+    print('vectorisation done - process complete - phew!')
+#    output = subprocess.Popen([cmd], stdout=subprocess.PIPE).communicate()[0]
+#    print(output)

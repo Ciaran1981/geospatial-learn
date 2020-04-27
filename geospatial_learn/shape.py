@@ -32,7 +32,7 @@ import pandas as pd
 from skimage.segmentation import active_contour#, find_boundaries
 #from shapely.affinity import affine_transform, rotate
 import morphsnakes as ms
-from geospatial_learn.geodata import _copy_dataset_config, polygonize, array2raster
+from geospatial_learn.raster import _copy_dataset_config, polygonize, array2raster
 import warnings
 from skimage.measure import LineModelND, ransac
 from skimage.filters import gaussian
@@ -41,7 +41,7 @@ from skimage.filters import threshold_otsu, threshold_niblack, threshold_sauvola
 from skimage.transform import hough_line, hough_line_peaks
 from skimage.draw import line
 from skimage.transform import probabilistic_hough_line as phl
-from skimage.io import imread
+#from skimage.io import imread
 from skimage.feature import canny
 from skimage.morphology import remove_small_objects, remove_small_holes, medial_axis, skeletonize
 from skimage.util import img_as_float, invert
@@ -1263,7 +1263,7 @@ def snake(inShp, inRas, outShp, band=1, buf=1, nodata_value=0,
     vds = None    
         
 def ms_snake(inShp, inRas, outShp, band=2, buf1=0, buf2=0, algo="ACWE", nodata_value=0,
-          iterations=200,  smoothing=3, lambda1=1, lambda2=1, threshold='auto', 
+          iterations=200,  smoothing=1, lambda1=1, lambda2=1, threshold='auto', 
           balloon=-1):
     
     """ 
@@ -1687,8 +1687,8 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):#, mk=
         # here we obtain y extrema in our arbitrary coord system
         y0, y1 = (dist - origin * np.cos(angle)) / np.sin(angle)
         
-        # shapely used to get the geom and intersection in our arbitrary
-        # coordinate system
+        # shapely used to get the geom 
+        
         linestr = LineString([[origin[0], y0], [origin[1], y1]])
         
         # just in case this has not been done
@@ -1927,7 +1927,8 @@ def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None,
               phase is default.
         
         sigma: int
-              the number of stdv's defining the gaussian envelope if using canny edge
+              the size of stdv defining the gaussian envelope if using canny edge
+              a unitless value
         
         n_orient: int
               the number of orientations used if using phase congruency edge
@@ -2414,7 +2415,58 @@ def meshgrid(inRaster, outShp, gridHeight=1, gridWidth=1):
     outDataSource.SyncToDisk()
     outDataSource = None
 
+def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1, filetype="ESRI Shapefile"):
+    
+    """ 
+    Lifted straight from the cookbook and gdal func docs.
 
+    http://pcjericks.github.io/py-gdalogr-cookbook
+    
+    Very slow!
+
+    Parameters
+    -----------   
+      
+    inRas : string
+            the input image 
+    
+        
+    outPoly : string
+              the output polygon file path 
+        
+    outField : string (optional)
+             the name of the field containing burnded values
+
+    mask : bool (optional)
+            use the input raster as a mask
+
+    band : int
+           the input raster band
+            
+    """    
+    
+    #TODO investigate ways of speeding this up   
+    # My goodness this is SO SLOW - it's just the gdal function that's slow
+    # nowt else
+    options = []
+    src_ds = gdal.Open(inRas)
+    if src_ds is None:
+        print('Unable to open %s' % inRas)
+        sys.exit(1)
+    
+    try:
+        srcband = src_ds.GetRasterBand(band)
+    except RuntimeError as e:
+        # for example, try GetRasterBand(10)
+        print('Band ( %i ) not found')
+        print(e)
+        sys.exit(1)
+    if mask == True:
+        maskband = src_ds.GetRasterBand(band)
+        options.append('-mask')
+    else:
+        mask = False
+        maskband = None
 
 #def line2poly(inShp, outShp):
 #    
