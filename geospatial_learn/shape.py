@@ -1851,7 +1851,7 @@ def _non_max_suppression(img, D):
     
     return Z
 
-def _do_phasecong(tempIm,  low_t, hi_t, norient=6):#, skel='medial'):
+def _do_phasecong(tempIm,  low_t=0, hi_t=0, norient=6, nscale=6, sigma=2):#, skel='medial'):
     """
     process phase congruency on an image returning vars for hough2line
     A subfunction used in hough2line. 
@@ -1859,7 +1859,7 @@ def _do_phasecong(tempIm,  low_t, hi_t, norient=6):#, skel='medial'):
     At present skeletonising the result with the medial axis, though a better
     solution for final edges is needed ultimately
     """
-    ph = phasecong(tempIm, norient=norient)
+    ph = phasecong(tempIm, norient=norient, nscale=nscale, k=sigma)
 
     re = exposure.rescale_intensity(ph[0], out_range='uint8')
     
@@ -1902,7 +1902,7 @@ def _do_phasecong(tempIm,  low_t, hi_t, norient=6):#, skel='medial'):
 #    return vArray, hArray
 
 def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None, 
-               hi_t=None, n_orient=6, hArray=True, vArray=True,
+               hi_t=None, n_orient=6, n_scale=5, hArray=True, vArray=True,
                prob=False, line_length=100,
                line_gap=200, valrange=1, interval=360, band=2,
                min_area=None):
@@ -1927,12 +1927,15 @@ def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None,
               phase is default.
         
         sigma: int
-              the size of stdv defining the gaussian envelope if using canny edge
-              a unitless value
+              the size of stdv defining the gaussian envelope if using canny edge or phase 
+              a unitless value 
         
         n_orient: int
               the number of orientations used if using phase congruency edge
-              
+        
+        n_scale: int
+              the number of scales used if using phase congruency edge
+                            
         vArray: bool
               whether to detect lines on approx vert axis
               
@@ -2043,7 +2046,8 @@ def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None,
             
 
         if edge == 'phase':
-            ph = _do_phasecong(tempIm,  low_t, hi_t, norient=6)
+            ph = _do_phasecong(tempIm, low_t, hi_t, norient=n_orient, 
+                               nscale=n_scale, sigma=sigma)
             
             ph[perim==1]=0
             
