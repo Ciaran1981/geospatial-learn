@@ -47,6 +47,9 @@ import scipy.ndimage as nd
 from morphsnakes import morphological_geodesic_active_contour as gac
 from morphsnakes import morphological_chan_vese as mcv
 from morphsnakes import inverse_gaussian_gradient
+from multisnakes import MorphACWE, MorphGAC
+from multisnakes import multi_snakes as msn
+
 #import multiprocessing as mp
 gdal.UseExceptions()
 ogr.UseExceptions()
@@ -117,13 +120,15 @@ def raster2array(inRas, bands=[1]):
    
     return inArray
 
-def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='GAC', band=2,
+def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
                   sigma=4, smooth=1, lambda1=1, lambda2=1, threshold='auto', 
                   balloon=-1):
     
     """
-    Topology preserveing morphsnakes (kind of!) using an approximation of the
-    homotopic skeleton to prevent merging of blobs
+    Topology preserveing morphsnakes, recently updated to include
+    fork of Jirka Borovec version - credit to him!
+    
+
     
     
     This uses morphsnakes and explanations are from there.
@@ -198,45 +203,54 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='GAC', band=2,
 #    cnt.pop(0)
 #    levelsets = [seg==s for s in cnt]
 #    
-    iters = np.arange(iterations)
+#    iters = np.arange(iterations)
     
-    orig = seg>0
-    
-    # An approximation of the morphsnake turbopixel idea where the blobs
+#    orig = seg>0
+#    
+    # An implementation of the morphsnake turbopixel idea where the blobs
     # are prevented from merging by the skeleton of the background image which
     # is updated at every iteration - downside is that we always have a pixel gap
-    # TODO rectify pixel gap issue
+    # TODO rectify pixel gap issue - my slower version now comm'd out!
     
     if algo=='GAC':
-        
-        gimg = inverse_gaussian_gradient(img,sigma=4)
-        
-        for i in tqdm(iters):          
-            # get the skeleton of the background of the prev seg
-            inv = invert(orig)
-            sk = skeletonize(inv)
-            bw = gac(gimg, iterations=1, init_level_set=orig, smoothing=smooth,
-                     threshold=threshold)
-            # approximation of homotopic skel in paper 
-            # we still have endpoint issue at times but it is not bad...
-            bw[sk==1]=0
-            # why do this? I think seg=bw will result in a pointer....
-            orig = np.zeros_like(bw, dtype=np.bool)
-            orig[bw==1]=1
-            del inv, sk
+
+        # class-based
+        mseg = msn.MultiMorphSnakes(img, seg, MorphGAC, 
+                               dict(smoothing=smooth, threshold=threshold,
+                                    balloon=balloon))
+        mseg.run(iterations)
+# the old one     using an approximation of the
+#    homotopic skeleton to prevent merging of blobs       
+#        for i in tqdm(iters):          
+#            # get the skeleton of the background of the prev seg
+#            inv = invert(orig)
+#            sk = skeletonize(inv)
+#            bw = gac(gimg, iterations=1, init_level_set=orig, smoothing=smooth,
+#                     threshold=threshold)
+#            # approximation of homotopic skel in paper 
+#            # we still have endpoint issue at times but it is not bad...
+#            bw[sk==1]=0
+#            # why do this? I think seg=bw will result in a pointer....
+#            orig = np.zeros_like(bw, dtype=np.bool)
+#            orig[bw==1]=1
+#            del inv, sk
             
     else:
+        mseg = msn.MultiMorphSnakes(img, seg, MorphACWE, 
+                               dict(smoothing=smooth, lambda1=lambda1,
+                                    lambda2=lambda2))
+        mseg.run(iterations)
         
-        for i in tqdm(iters):
-            inv = invert(orig)
-            sk = skeletonize(inv)            
-            bw = mcv(img, iterations=1,init_level_set=orig, smoothing=smooth, lambda1=1,
-                lambda2=1)
-            bw[sk==1]=0
-            # why do this? I think seg=bw will result in a pointer....
-            orig = np.zeros_like(bw, dtype=np.bool)
-            orig[bw==1]=1
-            del inv, sk
+#        for i in tqdm(iters):
+#            inv = invert(orig)
+#            sk = skeletonize(inv)            
+#            bw = mcv(img, iterations=1,init_level_set=orig, smoothing=smooth, lambda1=1,
+#                lambda2=1)
+#            bw[sk==1]=0
+#            # why do this? I think seg=bw will result in a pointer....
+#            orig = np.zeros_like(bw, dtype=np.bool)
+#            orig[bw==1]=1
+#            del inv, sk
    
 # original way which was too slow....       
 # Evolve each level set a few iterations (1 in this case, it can be also 2 or 3…)
@@ -245,12 +259,14 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='GAC', band=2,
 #                               smoothing=1, lambda1=1, lambda2=1) for ls in levelsets]
 #            levelsets = _fix_overlapping_levelsets(levelsets)
     
-    newseg, _ = nd.label(bw)
+#    newseg, _ = nd.label(bw)
     
 #    for idx,l in enumerate(levelsets):
 #        newseg[l>0]=cnt[idx]
+        
+    outSeg = mseg.levelset
     
-    array2raster(newseg, 1, inSeg, inSeg[:-4]+'tsnake.tif', gdal.GDT_Int32)
+    array2raster(outSeg, 1, inSeg, inSeg[:-4]+'tsnake.tif', gdal.GDT_Int32)
     
     
     
