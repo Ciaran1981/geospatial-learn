@@ -120,15 +120,197 @@ def raster2array(inRas, bands=[1]):
    
     return inArray
 
+
+    
+    
+    
 def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
                   sigma=4, smooth=1, lambda1=1, lambda2=1, threshold='auto', 
                   balloon=-1):
     
     """
-    Topology preserveing morphsnakes, recently updated to include
-    fork of Jirka Borovec version - credit to him!
+    Topology preserveing morphsnakes, implemented in python/numpy exclusively 
+    by C.Robb
+    
+    This uses morphsnakes and explanations are from there.
+    
+    Parameters
+    ----------
+    
+    inSeg: string
+                  input segmentation raster
+        
+    raster_path: string
+                  input raster whose pixel vals will be used
+
+    band: int
+           an integer val eg - 2
+
+    algo: string
+           either "GAC" (geodesic active contours) or "ACWE" (active contours without edges)
+           
+    sigma: the size of stdv defining the gaussian envelope if using canny edge
+              a unitless value
+
+    iterations: uint
+        Number of iterations to run.
+        
+    smooth : uint, optional
+    
+        Number of times the smoothing operator is applied per iteration.
+        Reasonable values are around 1-4. Larger values lead to smoother
+        segmentations.
+    
+    lambda1: float, optional
+    
+        Weight parameter for the outer region. If `lambda1` is larger than
+        `lambda2`, the outer region will contain a larger range of values than
+        the inner region.
+        
+    lambda2: float, optional
+    
+        Weight parameter for the inner region. If `lambda2` is larger than
+        `lambda1`, the inner region will contain a larger range of values than
+        the outer region.
+    
+    threshold: float, optional
+    
+        Areas of the image with a value smaller than this threshold will be
+        considered borders. The evolution of the contour will stop in this
+        areas.
+        
+    balloon: float, optional
+    
+        Balloon force to guide the contour in non-informative areas of the
+        image, i.e., areas where the gradient of the image is too small to push
+        the contour towards a border. A negative value will shrink the contour,
+        while a positive value will expand the contour in these areas. Setting
+        this to zero will disable the balloon force.
+        
+    """    
+
+
+    rds1 = gdal.Open(inRas)
+    img = rds1.GetRasterBand(band).ReadAsArray()
+    
+    rds2 = gdal.Open(inSeg)
+    seg = rds2.GetRasterBand(1).ReadAsArray()
+    
+    img = np.float32(img)
+    img[img==0]=np.nan
+    
+    cnt = list(np.unique(seg))
+    
+    cnt.pop(0)
+    levelsets = [seg==s for s in cnt]
+    
+    iters = np.arange(iterations)
+    
+    orig = seg>0
+#    
+    # An implementation of the morphsnake turbopixel idea where the blobs
+    # are prevented from merging by the skeleton of the background image which
+    # is updated at every iteration - downside is that we always have a pixel gap
+    # TODO rectify pixel gap issue - my slower version now comm'd out!
+    
+    if algo=='GAC':
+        
+        gimg = inverse_gaussian_gradient(img)
+
+
+# the old one     using an approximation of the
+#    homotopic skeleton to prevent merging of blobs       
+        for i in tqdm(iters):          
+            # get the skeleton of the background of the prev seg
+            inv = invert(orig)
+            sk = skeletonize(inv)
+            bw = gac(gimg, iterations=1, init_level_set=orig, smoothing=smooth,
+                     threshold=threshold)
+            # approximation of homotopic skel in paper 
+            # we still have endpoint issue at times but it is not bad...
+            bw[sk==1]=0
+            # why do this? I think seg=bw will result in a pointer....
+            orig = np.zeros_like(bw, dtype=np.bool)
+            orig[bw==1]=1
+            del inv, sk
+            
+    else:
+
+        for i in tqdm(iters):
+            inv = invert(orig)
+            sk = skeletonize(inv)            
+            bw = mcv(img, iterations=1,init_level_set=orig, smoothing=smooth, lambda1=1,
+                lambda2=1)
+            bw[sk==1]=0
+            # why do this? I think seg=bw will result in a pointer....
+            orig = np.zeros_like(bw, dtype=np.bool)
+            orig[bw==1]=1
+            del inv, sk
+   
+# original way which was too slow....       
+# Evolve each level set a few iterations (1 in this case, it can be also 2 or 3…)
+#            levelsets = [mcv(img, iterations=1,
+#                               init_level_set=ls,
+#                               smoothing=1, lambda1=1, lambda2=1) for ls in levelsets]
+#            levelsets = _fix_overlapping_levelsets(levelsets)
+    
+    newseg, _ = nd.label(bw)
+    
+    for idx,l in enumerate(levelsets):
+        newseg[l>0]=cnt[idx]
+        
+
+    
+    array2raster(newseg, 1, inSeg, inSeg[:-4]+'tsnake.tif', gdal.GDT_Int32)
+    
+    
+    
+    polygonize(inSeg[:-4]+'tsnake.tif', outShp, outField=None,  mask = True, band = 1)    
     
 
+def combine_hough_seg(inRas1, inRas2, outRas, outShp, min_area=None):
+    
+    
+    rds1 = gdal.Open(inRas1, gdal.GA_ReadOnly)
+
+    rb1 = rds1.GetRasterBand(1).ReadAsArray()
+    
+    rds2 = gdal.Open(inRas2, gdal.GA_ReadOnly)
+
+    rb2 = rds2.GetRasterBand(1).ReadAsArray()
+    
+    rgt = rds1.GetGeoTransform()
+        
+    pixel_res = rgt[1]
+    
+    oot = rb1*rb2
+    
+    sg, _ = nd.label(oot)
+    
+    if min_area != None:
+        min_final = np.round(min_area/(pixel_res*pixel_res))
+        
+        if min_final <= 0:
+            min_final=4
+        
+        remove_small_objects(sg, min_size=min_final, in_place=True)
+    
+    
+    array2raster(sg, 1, inRas1, outRas,  gdal.GDT_Int32)
+    
+    
+    polygonize(outRas, outShp, outField=None,  mask = True, band = 1)
+    
+def ms_toposnakes2(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
+                  sigma=4, smooth=1, lambda1=1, lambda2=1, threshold='auto', 
+                  balloon=-1):
+    
+    """
+    Topology preserveing morphsnakes, implmented by Jirka Borovec version 
+    with C++/cython elements- credit to him!
+    
+    This may be quicker but is memory intensive so large images will likely fill RAM,
+    in that event use ms_toposnakes
     
     
     This uses morphsnakes and explanations are from there.
@@ -195,22 +377,6 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
     rds2 = gdal.Open(inSeg)
     seg = rds2.GetRasterBand(1).ReadAsArray()
     
-    #img = np.float32(img)
-    #img[img==0]=np.nan
-#    
-#    cnt = list(np.unique(seg))
-#    
-#    cnt.pop(0)
-#    levelsets = [seg==s for s in cnt]
-#    
-#    iters = np.arange(iterations)
-    
-#    orig = seg>0
-#    
-    # An implementation of the morphsnake turbopixel idea where the blobs
-    # are prevented from merging by the skeleton of the background image which
-    # is updated at every iteration - downside is that we always have a pixel gap
-    # TODO rectify pixel gap issue - my slower version now comm'd out!
     
     if algo=='GAC':
 
@@ -219,21 +385,7 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
                                dict(smoothing=smooth, threshold=threshold,
                                     balloon=balloon))
         mseg.run(iterations)
-# the old one     using an approximation of the
-#    homotopic skeleton to prevent merging of blobs       
-#        for i in tqdm(iters):          
-#            # get the skeleton of the background of the prev seg
-#            inv = invert(orig)
-#            sk = skeletonize(inv)
-#            bw = gac(gimg, iterations=1, init_level_set=orig, smoothing=smooth,
-#                     threshold=threshold)
-#            # approximation of homotopic skel in paper 
-#            # we still have endpoint issue at times but it is not bad...
-#            bw[sk==1]=0
-#            # why do this? I think seg=bw will result in a pointer....
-#            orig = np.zeros_like(bw, dtype=np.bool)
-#            orig[bw==1]=1
-#            del inv, sk
+
             
     else:
         mseg = msn.MultiMorphSnakes(img, seg, MorphACWE, 
@@ -241,28 +393,6 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
                                     lambda2=lambda2))
         mseg.run(iterations)
         
-#        for i in tqdm(iters):
-#            inv = invert(orig)
-#            sk = skeletonize(inv)            
-#            bw = mcv(img, iterations=1,init_level_set=orig, smoothing=smooth, lambda1=1,
-#                lambda2=1)
-#            bw[sk==1]=0
-#            # why do this? I think seg=bw will result in a pointer....
-#            orig = np.zeros_like(bw, dtype=np.bool)
-#            orig[bw==1]=1
-#            del inv, sk
-   
-# original way which was too slow....       
-# Evolve each level set a few iterations (1 in this case, it can be also 2 or 3…)
-#            levelsets = [mcv(img, iterations=1,
-#                               init_level_set=ls,
-#                               smoothing=1, lambda1=1, lambda2=1) for ls in levelsets]
-#            levelsets = _fix_overlapping_levelsets(levelsets)
-    
-#    newseg, _ = nd.label(bw)
-    
-#    for idx,l in enumerate(levelsets):
-#        newseg[l>0]=cnt[idx]
         
     outSeg = mseg.levelset
     
@@ -271,43 +401,6 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
     
     
     polygonize(inSeg[:-4]+'tsnake.tif', outShp, outField=None,  mask = True, band = 1)
-    
-    
-
-def combine_hough_seg(inRas1, inRas2, outRas, outShp, min_area=None):
-    
-    
-    rds1 = gdal.Open(inRas1, gdal.GA_ReadOnly)
-
-    rb1 = rds1.GetRasterBand(1).ReadAsArray()
-    
-    rds2 = gdal.Open(inRas2, gdal.GA_ReadOnly)
-
-    rb2 = rds2.GetRasterBand(1).ReadAsArray()
-    
-    rgt = rds1.GetGeoTransform()
-        
-    pixel_res = rgt[1]
-    
-    oot = rb1*rb2
-    
-    sg, _ = nd.label(oot)
-    
-    if min_area != None:
-        min_final = np.round(min_area/(pixel_res*pixel_res))
-        
-        if min_final <= 0:
-            min_final=4
-        
-        remove_small_objects(sg, min_size=min_final, in_place=True)
-    
-    
-    array2raster(sg, 1, inRas1, outRas,  gdal.GDT_Int32)
-    
-    
-    polygonize(outRas, outShp, outField=None,  mask = True, band = 1)
-    
-
 
     
 def visual_callback_2d(background, fig=None):
@@ -1162,19 +1255,13 @@ def image_thresh(image):
 
 def colorscale(seg, prop):
     
-    props = regionprops(seg)
-    
-    labels = np.unique(seg)
+    props = regionprops(np.int32(seg))
     propIm = np.zeros_like(seg, dtype=np.float64) 
-    for label in labels:
-        if label==0:
-            continue
-        propval=props[label-1][prop] 
-        propIm[seg==label]=propval
+    
+    for p in props:
+        propIm[np.where(seg==p.label)]=p[prop]
     
     return propIm
-
-
 
 def rotate_im(image, angle):
     """Rotate the image.

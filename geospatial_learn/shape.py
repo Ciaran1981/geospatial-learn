@@ -32,7 +32,7 @@ import pandas as pd
 from skimage.segmentation import active_contour#, find_boundaries
 #from shapely.affinity import affine_transform, rotate
 import morphsnakes as ms
-from geospatial_learn.raster import _copy_dataset_config, polygonize, array2raster
+from geospatial_learn.raster import _copy_dataset_config, polygonize, array2raster, raster2array
 import warnings
 from skimage.measure import LineModelND, ransac
 from skimage.filters import gaussian
@@ -52,6 +52,7 @@ from shapely.affinity import rotate
 from math import ceil
 from phasepack.phasecong import phasecong
 import mahotas as mh
+import cv2
 #from centerline.geometry import Centerline
 
 matplotlib.use('Qt5Agg')
@@ -1655,7 +1656,9 @@ def thresh_seg(inShp, inRas, outShp, band, buf=0, algo='otsu',
     
 def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):#, mk=None):
     
-    tested_angles = np.linspace(angl - np.radians(valrange), angl + np.radians(valrange))
+    
+    tested_angles = np.linspace(angl - np.deg2rad(valrange), 
+                                angl + np.deg2rad(valrange), num=interval)
 
     hh, htheta, hd = hough_line(inArray, theta=tested_angles)
     origin = np.array((0, inArray.shape[1]))
@@ -1719,14 +1722,16 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):#, mk=
         
         cc, rr = line(x1, y1, x2, y2)
         
-        
-        
+        # is the line tightly constrained to the desired angle?
+#        test = np.zeros_like(outArray)
+#        test[rr, cc]=1
+#        props = regionprops(test*1)
+#        orient = props[0]['Orientation']
+#        if orient >= angl-valrange and orient <= angl+valrange:
         outArray[rr, cc]=1
-        
-
         outSnk = []
 
-        
+    
         snList = np.arange(len(rr))
         
         for s in snList:
@@ -1736,19 +1741,24 @@ def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):#, mk=
             yout = (y * rgt[5]) + rgt[3]
             
             outSnk.append([xout, yout])
-                    
         snakeLine2 = LineString(outSnk)
 
-        
+    
         geomOut = ogr.CreateGeometryFromWkt(snakeLine2.wkt)
-        
+    
         featureDefn = outLayer.GetLayerDefn()
         feature = ogr.Feature(featureDefn)
-        
+    
         feature.SetGeometry(geomOut)
         feature.SetField("id", 1)
         outLayer.CreateFeature(feature)
         feature = None
+#        else:
+#            continue
+    
+       
+                    
+        
 
     return outArray
 
@@ -1904,7 +1914,7 @@ def _do_phasecong(tempIm,  low_t=0, hi_t=0, norient=6, nscale=6, sigma=2):#, ske
 def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None, 
                hi_t=None, n_orient=6, n_scale=5, hArray=True, vArray=True,
                prob=False, line_length=100,
-               line_gap=200, valrange=1, interval=360, band=2,
+               line_gap=200, valrange=1, interval=50, band=2,
                min_area=None):
     
         """ 
@@ -2120,7 +2130,178 @@ def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None,
         
         polygonize(segRas, outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
 
+def cv_hough2line(inRas, outShp, edge='canny', sigma=2, low_t=0, 
+               hi_t=0, n_orient=6, n_scale=5, increment=180, thresh=100, min_theta=None, bounds=1,
+                  max_theta=None, min_area=None):
+    
+    img = cv2.imread(inRas) 
+     
+    gray = raster2array(inRas, bands=[2])
+    
+    bw = gray > 0
+    
+    inDataset = gdal.Open(inRas, gdal.GA_ReadOnly)
 
+#        rb = inRas.GetRasterBand(band)
+    rgt = inDataset.GetGeoTransform()
+    
+    pixel_res = rgt[1]
+        
+   
+    props = regionprops(bw*1)
+    orient = props[0]['Orientation']
+    
+    # we will need these.....
+    perim = mh.bwperim(bw)
+
+    
+    bw[perim==1]=0
+
+    # if the the binary box is pointing negatively along maj axis
+#   
+    if min_theta == None:
+        if orient < 0:
+            orient += np.pi
+        
+        if orient < np.pi:
+            angleD = np.pi - orient
+            angleV = angleD - np.deg2rad(90)
+        else:
+        # if the the binary box is pointing positively along maj axis
+            angleD = np.pi + orient
+            angleV = angleD + np.deg2rad(90)
+        angles = np.array([angleD, angleV])
+        
+    
+     
+    if edge == 'phase':
+            edges = _do_phasecong(gray, low_t, hi_t, norient=n_orient, 
+                               nscale=n_scale, sigma=sigma)
+            
+            edges[perim==1]=0
+            
+           
+    else: 
+        # else it is canny
+        # We must have a float to get rid of  zero to nonzero image 
+        # boundary, otherwise huff will only detect the non-zero boundary
+        inIm = gray.astype(np.float32)
+        inIm[inIm==0]=np.nan 
+    
+        edges = canny(inIm, sigma=sigma, low_threshold=low_t,
+                           high_threshold=hi_t)
+        
+ 
+      
+    # This returns an array of r and theta values 
+    lines1 = cv2.HoughLines(np.uint8(edges),1, np.pi/increment, thresh, min_theta=angles.min()-np.deg2rad(bounds), 
+                           max_theta=angles.min()+np.deg2rad(bounds)) 
+    
+      
+    # The below for loop runs till r and theta values  
+    # are in the range of the 2d array 
+    for l in tqdm(lines1): 
+        
+        # Right so unlike the cv docs we actually have to do this!!! 
+        # see for i in lines:
+        #        print(i) 
+        # as to why
+        r = l[0][0]
+        theta = l[0][1]
+        # Stores the value of cos(theta) in a 
+        a = np.cos(theta) 
+      
+        # Stores the value of sin(theta) in b 
+        b = np.sin(theta) 
+          
+        # x0 stores the value rcos(theta) 
+        x0 = a*r 
+          
+        # y0 stores the value rsin(theta) 
+        y0 = b*r 
+          
+        # x1 stores the rounded off value of (rcos(theta)-1000sin(theta)) 
+        x1 = int(x0 + 1000*(-b)) 
+          
+        # y1 stores the rounded off value of (rsin(theta)+1000cos(theta)) 
+        y1 = int(y0 + 1000*(a)) 
+      
+        # x2 stores the rounded off value of (rcos(theta)+1000sin(theta)) 
+        x2 = int(x0 - 1000*(-b)) 
+          
+        # y2 stores the rounded off value of (rsin(theta)-1000cos(theta)) 
+        y2 = int(y0 - 1000*(a)) 
+          
+        # cv2.line draws a line in img from the point(x1,y1) to (x2,y2). 
+        # (0,0,255) denotes the colour of the line to be  
+        #drawn. In this case, it is red.  
+        cv2.line(img,(x1,y1), (x2,y2), (0,0,255),1)
+    
+    lines2 = cv2.HoughLines(np.uint8(edges),1, np.pi/increment, thresh, min_theta=angles.max()-np.deg2rad(bounds), 
+                           max_theta=angles.max()+np.deg2rad(bounds)) 
+    for l in tqdm(lines2): 
+        
+        # Right so unlike the cv docs we actually have to do this!!! 
+        # see for i in lines:
+        #        print(i) 
+        # as to why
+        r = l[0][0]
+        theta = l[0][1]
+        # Stores the value of cos(theta) in a 
+        a = np.cos(theta) 
+      
+        # Stores the value of sin(theta) in b 
+        b = np.sin(theta) 
+          
+        # x0 stores the value rcos(theta) 
+        x0 = a*r 
+          
+        # y0 stores the value rsin(theta) 
+        y0 = b*r 
+          
+        # x1 stores the rounded off value of (rcos(theta)-1000sin(theta)) 
+        x1 = int(x0 + 1000*(-b)) 
+          
+        # y1 stores the rounded off value of (rsin(theta)+1000cos(theta)) 
+        y1 = int(y0 + 1000*(a)) 
+      
+        # x2 stores the rounded off value of (rcos(theta)+1000sin(theta)) 
+        x2 = int(x0 - 1000*(-b)) 
+          
+        # y2 stores the rounded off value of (rsin(theta)-1000cos(theta)) 
+        y2 = int(y0 - 1000*(a)) 
+          
+        # cv2.line draws a line in img from the point(x1,y1) to (x2,y2). 
+        # (0,0,255) denotes the colour of the line to be  
+        #drawn. In this case, it is red.  
+        cv2.line(img,(x1,y1), (x2,y2), (0,0,255),1) 
+        
+    #minLineLength = 5
+    #maxLineGap = 10
+    #linesP = cv2.HoughLinesP(np.uint8(edges),1,np.pi/180,50,minLineLength,maxLineGap)
+    #for i in linesP:
+    #    l = i[0]
+    #    cv2.line(img, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv2.LINE_AA)
+    
+    #cv2.imwrite('houghlines5.jpg',img)
+    
+    
+    oot= img[:,:,2]==255
+    oot[perim==1]=1
+ 
+
+    inv = np.invert(oot)
+    inv[bw==0]=0
+    if min_area != None:
+        min_final = np.round(min_area/(pixel_res*pixel_res))
+        if min_final <= 0:
+            min_final=4
+        remove_small_objects(inv, min_size=min_final, in_place=True)
+    sg, _ = nd.label(inv)
+    segRas=outShp[:-3]+"seg.tif"
+    array2raster(sg, 1, inRas, segRas,  gdal.GDT_Int32)
+    del img, inv
+    polygonize(segRas, outShp, outField='DN',  mask = True, band = 1)        
 
 
 def _do_ransac(inArray, order='col'):
