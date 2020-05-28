@@ -4,8 +4,7 @@ Created on Thu Sep  8 22:35:39 2016
 @author: Ciaran Robb
 The utilities module - things here don't have an exact theme or home yet so
 may eventually move elsewhere
-Aberytswyth Uni
-Wales
+
 
 If you use code to publish work cite/acknowledge me and authors of libs etc as 
 appropriate 
@@ -37,30 +36,56 @@ from scipy.ndimage import gaussian_filter
 from skimage.transform import rescale
 from skimage.feature import canny
 from skimage.measure import LineModelND, ransac
+from skimage.segmentation import relabel_sequential
 #from skimage.draw import line
-from warnings import warn
-from scipy.interpolate import RectBivariateSpline
+#from warnings import warn
+#from scipy.interpolate import RectBivariateSpline
 from skimage.util import img_as_float, invert
-from skimage.filters import sobel
-from skimage.morphology import remove_small_objects, remove_small_holes, medial_axis, skeletonize
+from skimage.morphology import dilation, remove_small_objects, remove_small_holes, medial_axis, skeletonize, binary_dilation, selem
 import scipy.ndimage as nd
+from skimage.feature import peak_local_max
 from morphsnakes import morphological_geodesic_active_contour as gac
 from morphsnakes import morphological_chan_vese as mcv
 from morphsnakes import inverse_gaussian_gradient
 from multisnakes import MorphACWE, MorphGAC
 from multisnakes import multi_snakes as msn
+import mahotas as mh
+
+from skimage.filters import sobel
+from skimage.future import graph
 
 #import multiprocessing as mp
 gdal.UseExceptions()
 ogr.UseExceptions()
 
 
-
-def iou_score(inSeg, trueSeg):
-    # The Intersection over Union (IoU) metric, also referred to as the Jaccard index
-    intersection = np.logical_and(trueVals, predVals)
-    union = np.logical_or(trueVals, predVals)
-    iou_score = np.sum(intersection) / np.sum(union)
+def _skelprune(edge):
+    
+    #pinched from stack until I get the cython one to work
+    s = np.uint8(edge > 0)
+    count = 0
+    i = 0
+    while count != np.sum(s):
+        # non-zero pixel count
+        count = np.sum(s)
+        # examine 3x3 neighborhood of each pixel
+        filt = cv2.boxFilter(s, -1, (3, 3), normalize=False)
+        # if the center pixel of 3x3 neighborhood is zero, we are not interested in it
+        s = s*filt
+        # now we have pixels where the center pixel of 3x3 neighborhood is non-zero
+        # if a pixels' 8-connectivity is less than 2 we can remove it
+        # threshold is 3 here because the boxfilter also counted the center pixel
+        s[s < 3] = 0
+        # set max pixel value to 1
+        s[s > 0] = 1
+        i = i + 1
+        return s
+#
+#def iou_score(inSeg, trueSeg):
+#    # The Intersection over Union (IoU) metric, also referred to as the Jaccard index
+#    intersection = np.logical_and(trueVals, predVals)
+#    union = np.logical_or(trueVals, predVals)
+#    iou_score = np.sum(intersection) / np.sum(union)
 
 
 
@@ -125,7 +150,7 @@ def raster2array(inRas, bands=[1]):
     
     
 def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
-                  sigma=4, smooth=1, lambda1=1, lambda2=1, threshold='auto', 
+                  sigma=4, alpha=100, smooth=1, lambda1=1, lambda2=1, threshold='auto', 
                   balloon=-1):
     
     """
@@ -196,13 +221,11 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
     rds2 = gdal.Open(inSeg)
     seg = rds2.GetRasterBand(1).ReadAsArray()
     
-    img = np.float32(img)
-    img[img==0]=np.nan
+    # Don't convert 0 to nan or it won't work
     
     cnt = list(np.unique(seg))
     
     cnt.pop(0)
-    levelsets = [seg==s for s in cnt]
     
     iters = np.arange(iterations)
     
@@ -211,14 +234,15 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
     # An implementation of the morphsnake turbopixel idea where the blobs
     # are prevented from merging by the skeleton of the background image which
     # is updated at every iteration - downside is that we always have a pixel gap
-    # TODO rectify pixel gap issue - my slower version now comm'd out!
+    # TODO rectify pixel gap issue 
+
     
     if algo=='GAC':
         
-        gimg = inverse_gaussian_gradient(img)
+        gimg = inverse_gaussian_gradient(img, sigma=sigma, alpha=alpha)
 
 
-# the old one     using an approximation of the
+#  using an approximation of the
 #    homotopic skeleton to prevent merging of blobs       
         for i in tqdm(iters):          
             # get the skeleton of the background of the prev seg
@@ -247,17 +271,11 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
             orig[bw==1]=1
             del inv, sk
    
-# original way which was too slow....       
-# Evolve each level set a few iterations (1 in this case, it can be also 2 or 3…)
-#            levelsets = [mcv(img, iterations=1,
-#                               init_level_set=ls,
-#                               smoothing=1, lambda1=1, lambda2=1) for ls in levelsets]
-#            levelsets = _fix_overlapping_levelsets(levelsets)
+
     
     newseg, _ = nd.label(bw)
     
-    for idx,l in enumerate(levelsets):
-        newseg[l>0]=cnt[idx]
+
         
 
     
@@ -266,6 +284,288 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
     
     
     polygonize(inSeg[:-4]+'tsnake.tif', outShp, outField=None,  mask = True, band = 1)    
+
+def ms_toposeg(inRas, outShp, iterations=100, algo='ACWE', band=2, dist=30,
+                se=3, usemin=False, imtype=None, useedge=True, merge=False,
+                close=True, sigma=4, 
+                hi_t=None, low_t=None, init=4,
+                smooth=1, lambda1=1, lambda2=1, threshold='auto', 
+                balloon=1):
+    
+    """
+    Topology preserveing segmentation, implemented in python/nump inspired by 
+    ms_topo and morphsnakes
+    
+    This uses morphsnakes level sets to make the segments and param explanations are mainly 
+    from there.
+    
+    Parameters
+    ----------
+    
+    inSeg: string
+                  input segmentation raster
+        
+    raster_path: string
+                  input raster whose pixel vals will be used
+
+    band: int
+           an integer val eg - 2
+
+    algo: string
+           either "GAC" (geodesic active contours) or "ACWE" (active contours without edges)
+           
+    sigma: the size of stdv defining the gaussian envelope if using canny edge
+              a unitless value
+
+    iterations: uint
+        Number of iterations to run.
+        
+    smooth : uint, optional
+    
+        Number of times the smoothing operator is applied per iteration.
+        Reasonable values are around 1-4. Larger values lead to smoother
+        segmentations.
+    
+    lambda1: float, optional
+    
+        Weight parameter for the outer region. If `lambda1` is larger than
+        `lambda2`, the outer region will contain a larger range of values than
+        the inner region.
+        
+    lambda2: float, optional
+    
+        Weight parameter for the inner region. If `lambda2` is larger than
+        `lambda1`, the inner region will contain a larger range of values than
+        the outer region.
+    
+    threshold: float, optional
+    
+        Areas of the image with a value smaller than this threshold will be
+        considered borders. The evolution of the contour will stop in this
+        areas.
+        
+    balloon: float, optional
+    
+        Balloon force to guide the contour in non-informative areas of the
+        image, i.e., areas where the gradient of the image is too small to push
+        the contour towards a border. A negative value will shrink the contour,
+        while a positive value will expand the contour in these areas. Setting
+        this to zero will disable the balloon force.
+        
+    """    
+
+    
+    
+    
+    rds1 = gdal.Open(inRas)
+    img = rds1.GetRasterBand(band).ReadAsArray()
+    
+    img = np.float32(img)
+    img[img==0]=np.nan
+       
+    maxIm = peak_local_max(img, min_distance=dist, indices=False)
+    
+    if useedge == True:
+        #in case vals are ndvi or something
+        imre = exposure.rescale_intensity(img, out_range='uint8')
+        edge = canny(imre, sigma=sigma, low_threshold=low_t,
+                               high_threshold=hi_t)
+        edge = _skelprune(edge)
+        
+    if usemin == True:
+        minIm = peak_local_max(invert(img), min_distance=dist, indices=False)
+            
+
+
+    ste = selem.square(se)
+    dilated = binary_dilation(maxIm, selem=ste)
+    seg, _ = ndi.label(dilated)
+    cnt = list(np.unique(seg))
+    
+    cnt.pop(0)
+    #levelsets = [seg==s for s in cnt]
+    
+    iters = np.arange(iterations)
+    
+    orig = seg>0
+#TODO - get fuse burner algo in this
+    
+    if algo=='GAC':
+        
+        gimg = inverse_gaussian_gradient(img)
+
+
+  
+        for i in tqdm(iters):          
+            # get the skeleton of the background of the prev seg
+            inv = invert(orig)
+            sk = skeletonize(inv)
+            sk = _skelprune(sk)
+            bw = gac(gimg, iterations=1, init_level_set=orig, smoothing=smooth,
+                     threshold=threshold)
+            # approximation of homotopic skel in paper 
+            # we still have endpoint issue at times but it is not bad...
+            bw[sk==1]=0
+            if useedge == True:
+                bw[edge==1]=0
+            # why do this? I think seg=bw will result in a pointer....
+            orig = np.zeros_like(bw, dtype=np.bool)
+            orig[bw==1]=1
+            del inv, sk
+            
+    else:
+        # let it run for a bit to avoid over seg
+        if init != None:
+            initBw = orig
+            orig = mcv(img, iterations=init,init_level_set=initBw, 
+                       smoothing=smooth, lambda1=1,
+                lambda2=1)
+            orig = orig>0
+
+        for i in tqdm(iters):
+            inv = invert(orig)
+            
+            sk = skeletonize(inv) 
+            sk = _skelprune(sk)
+            bw = mcv(img, iterations=1,init_level_set=orig, smoothing=smooth, lambda1=1,
+                lambda2=1)
+            bw[sk==1]=0
+            if useedge == True:
+                bw[edge==1]=0
+            # why do this? I think seg=bw will result in a pointer....
+            orig = np.zeros_like(bw, dtype=np.bool)
+            orig[bw==1]=1
+
+            del inv, sk
+            
+    if usemin==True:
+        
+        
+        
+        dilated = binary_dilation(minIm, selem=ste)
+        seg, _ = ndi.label(dilated)
+        cnt = list(np.unique(seg))
+    
+        cnt.pop(0)        
+        iters = np.arange(iterations)    
+        orig = seg>0                
+        e2 = mh.bwperim(bw)
+        edge[e2==1]=1
+
+        
+        if init != None:
+            initBw = orig
+            orig = mcv(img, iterations=init,init_level_set=initBw, 
+                       smoothing=smooth, lambda1=1,
+                lambda2=1)
+            orig = orig>0
+        
+        for i in tqdm(iters):
+                inv = invert(orig)
+                sk = skeletonize(inv) 
+                sk = _skelprune(sk)
+                bw2 = mcv(img, iterations=1,init_level_set=orig, smoothing=smooth, lambda1=1,
+                    lambda2=1)
+                bw2[sk==1]=0
+                if useedge == True:
+                    bw2[edge==1]=0
+                # why do this? I think seg=bw will result in a pointer....
+                orig = np.zeros_like(bw2, dtype=np.bool)
+                orig[bw2==1]=1
+    
+                del inv, sk
+#    remove_small_objects(bw, min_size=3, in_place=True)
+        bw[bw2==1]=1        
+        newseg, _ = nd.label(bw)        
+            
+    else:
+        newseg, _ = nd.label(bw)
+        
+    if close==True:
+        ste2 = selem.square(3)
+        newseg = dilation(newseg, ste2)
+        newseg+=1
+        newseg, _, _ = relabel_sequential(newseg)
+#        newseg, _ = nd.label(newseg)
+    
+#    for idx,l in enumerate(levelsets):
+#        newseg[l>0]=cnt[idx]
+            
+    array2raster(newseg, 1, inRas, outShp[:-4]+'.tif', gdal.GDT_Int32)
+    
+    
+    
+    polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1) 
+
+def _weight_boundary(graph, src, dst, n):
+    """
+    Handle merging of nodes of a region boundary region adjacency graph.
+
+    This function computes the `"weight"` and the count `"count"`
+    attributes of the edge between `n` and the node formed after
+    merging `src` and `dst`.
+
+
+    Parameters
+    ----------
+    graph : RAG
+        The graph under consideration.
+    src, dst : int
+        The vertices in `graph` to be merged.
+    n : int
+        A neighbor of `src` or `dst` or both.
+
+    Returns
+    -------
+    data : dict
+        A dictionary with the "weight" and "count" attributes to be
+        assigned for the merged node.
+
+    """
+    default = {'weight': 0.0, 'count': 0}
+
+    count_src = graph[src].get(n, default)['count']
+    count_dst = graph[dst].get(n, default)['count']
+
+    weight_src = graph[src].get(n, default)['weight']
+    weight_dst = graph[dst].get(n, default)['weight']
+
+    count = count_src + count_dst
+    return {
+        'count': count,
+        'weight': (count_src * weight_src + count_dst * weight_dst)/count
+    }
+
+
+def _merge_boundary(graph, src, dst):
+    """Call back called before merging 2 nodes.
+
+    In this case we don't need to do any computation here.
+    """
+    pass
+
+def ragmerge(inSeg, inRas, outShp, band, thresh=0.02):
+    
+    img = raster2array(inRas, bands=[band])
+    
+    seg = raster2array(inSeg, bands=[1])
+    
+    
+    edges = sobel(img)
+    
+    g = graph.rag_boundary(seg, edges)
+    
+    newseg = graph.merge_hierarchical(seg, g, thresh=thresh, rag_copy=False,
+                                       in_place_merge=True,
+                                       merge_func=_merge_boundary,
+                                       weight_func=_weight_boundary)
+    
+    array2raster(newseg, 1, inSeg, outShp[:-4]+'.tif', gdal.GDT_Int32)
+    
+    
+    
+    polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1) 
+    
     
 
 def combine_hough_seg(inRas1, inRas2, outRas, outShp, min_area=None):
@@ -309,8 +609,8 @@ def ms_toposnakes2(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
     Topology preserveing morphsnakes, implmented by Jirka Borovec version 
     with C++/cython elements- credit to him!
     
-    This may be quicker but is memory intensive so large images will likely fill RAM,
-    in that event use ms_toposnakes
+    This is memory intensive so large images will likely fill RAM and produces
+    similar resuts to ms_toposnakes
     
     
     This uses morphsnakes and explanations are from there.

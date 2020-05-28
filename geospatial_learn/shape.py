@@ -32,7 +32,7 @@ import pandas as pd
 from skimage.segmentation import active_contour#, find_boundaries
 #from shapely.affinity import affine_transform, rotate
 import morphsnakes as ms
-from geospatial_learn.raster import _copy_dataset_config, polygonize, array2raster, raster2array
+from geospatial_learn.raster import _copy_dataset_config,  array2raster, raster2array, polygonize
 import warnings
 from skimage.measure import LineModelND, ransac
 from skimage.filters import gaussian
@@ -1275,12 +1275,14 @@ def ms_snake(inShp, inRas, outShp, band=2, buf1=0, buf2=0, algo="ACWE", nodata_v
     Parameters
     ----------
     
-    vector_path: string
+    inShp: string
                   input shapefile
         
-    raster_path: string
+    inRas: string
                   input raster
-
+    outShp: string
+                  output shapefile
+        
     band: int
            an integer val eg - 2
 
@@ -1450,11 +1452,13 @@ def ms_snake(inShp, inRas, outShp, band=2, buf1=0, buf2=0, algo="ACWE", nodata_v
                                    init_level_set=rv_array,
                                    smoothing=smoothing, lambda1=lambda1,
                                    lambda2=lambda2)
-        elif algo == "GAC":
+        if algo == "GAC":
             gimg = ms.inverse_gaussian_gradient(src_array)
             bw = ms.morphological_geodesic_active_contour(gimg, iterations, rv_array,
                                              smoothing=smoothing, threshold=threshold,
                                              balloon=balloon)
+
+        
         segoot = np.int32(bw)
         segoot*=int(label)+1
         
@@ -1487,7 +1491,7 @@ def ms_snake(inShp, inRas, outShp, band=2, buf1=0, buf2=0, algo="ACWE", nodata_v
     vds = None
     
     # This is a hacky solution for now really, but it works well enough!
-    polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1)    
+    polygonize(outShp[:-4]+'.tif', outShp, outField='id',  mask = True, band = 1)    
 
 def thresh_seg(inShp, inRas, outShp, band, buf=0, algo='otsu',
                min_area=4, nodata_value=0):
@@ -2600,56 +2604,7 @@ def meshgrid(inRaster, outShp, gridHeight=1, gridWidth=1):
     outDataSource.SyncToDisk()
     outDataSource = None
 
-def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1, filetype="ESRI Shapefile"):
-    
-    """ 
-    Lifted straight from the cookbook and gdal func docs.
 
-    http://pcjericks.github.io/py-gdalogr-cookbook
-
-    Parameters
-    -----------   
-      
-    inRas : string
-            the input image 
-    
-        
-    outPoly : string
-              the output polygon file path 
-        
-    outField : string (optional)
-             the name of the field containing burnded values
-
-    mask : bool (optional)
-            use the input raster as a mask
-
-    band : int
-           the input raster band
-            
-    """    
-    
-    #TODO investigate ways of speeding this up   
-    # My goodness this is SO SLOW - it's just the gdal function that's slow
-    # nowt else
-    options = []
-    src_ds = gdal.Open(inRas)
-    if src_ds is None:
-        print('Unable to open %s' % inRas)
-        sys.exit(1)
-    
-    try:
-        srcband = src_ds.GetRasterBand(band)
-    except RuntimeError as e:
-        # for example, try GetRasterBand(10)
-        print('Band ( %i ) not found')
-        print(e)
-        sys.exit(1)
-    if mask == True:
-        maskband = src_ds.GetRasterBand(band)
-        options.append('-mask')
-    else:
-        mask = False
-        maskband = None
 
 #def line2poly(inShp, outShp):
 #    
