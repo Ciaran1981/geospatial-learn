@@ -214,7 +214,7 @@ def tile_rasters(inImage, outputImage, tilesize):
     exit_codes = [p.wait() for p in procList]
             #print(i)
 
-def batch_translate(folder, wildcard, FMT=None):
+def batch_translate(folder, wildcard, FMT='Gtiff'):
     """ 
     Using the gdal python API, this function translates the format of files
     to commonly used formats
@@ -243,7 +243,7 @@ def batch_translate(folder, wildcard, FMT=None):
     if FMT == 'Gtiff':
         fmt = '.tif'    
         
-    fileList = glob2.glob(path.join(folder,'**', '**','*', wildcard))
+    fileList = glob2.glob(path.join(folder,'*'+wildcard))
     outList = list()
     files = np.arange(len(fileList))
     

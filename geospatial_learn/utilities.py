@@ -374,25 +374,36 @@ def ms_toposeg(inRas, outShp, iterations=100, algo='ACWE', band=2, dist=30,
         
     if usemin == True:
         minIm = peak_local_max(invert(img), min_distance=dist, indices=False)
-            
-
-
-    ste = selem.square(se)
-    dilated = binary_dilation(maxIm, selem=ste)
-    seg, _ = ndi.label(dilated)
-    cnt = list(np.unique(seg))
-    
-    cnt.pop(0)
-    #levelsets = [seg==s for s in cnt]
-    
-    iters = np.arange(iterations)
-    
-    orig = seg>0
+        
+    if algo=='ACWE':
+        ste = selem.square(se)
+        dilated = binary_dilation(maxIm, selem=ste)
+        seg, _ = ndi.label(dilated)
+        cnt = list(np.unique(seg))
+        
+        cnt.pop(0)
+        #levelsets = [seg==s for s in cnt]
+        
+        iters = np.arange(iterations)
+        
+        orig = seg>0
 #TODO - get fuse burner algo in this
     
     if algo=='GAC':
         
+        ste = selem.square(se)
         gimg = inverse_gaussian_gradient(img)
+        maxIm = peak_local_max(gimg, min_distance=dist, indices=False)
+        dilated = binary_dilation(maxIm, selem=ste)
+        seg, _ = ndi.label(dilated)
+        cnt = list(np.unique(seg))
+    
+        cnt.pop(0)
+        #levelsets = [seg==s for s in cnt]
+        
+        iters = np.arange(iterations)
+    
+        orig = seg>0
 
 
   
@@ -412,6 +423,47 @@ def ms_toposeg(inRas, outShp, iterations=100, algo='ACWE', band=2, dist=30,
             orig = np.zeros_like(bw, dtype=np.bool)
             orig[bw==1]=1
             del inv, sk
+            
+        if usemin==True:
+            
+            minIm = peak_local_max(invert(gimg), min_distance=dist, indices=False)           
+            dilated = binary_dilation(minIm, selem=ste)
+            seg, _ = ndi.label(dilated)
+            cnt = list(np.unique(seg))
+        
+            cnt.pop(0)        
+            iters = np.arange(iterations)    
+            orig = seg>0                
+            e2 = mh.bwperim(bw)
+            edge[e2==1]=1
+    
+            
+            if init != None:
+                initBw = orig
+                orig = mcv(img, iterations=init,init_level_set=initBw, 
+                           smoothing=smooth, lambda1=1,
+                    lambda2=1)
+                orig = orig>0
+            
+            for i in tqdm(iters):
+                    inv = invert(orig)
+                    sk = skeletonize(inv) 
+                    sk = _skelprune(sk)
+                    bw2 = mcv(img, iterations=1,init_level_set=orig, smoothing=smooth, lambda1=1,
+                        lambda2=1)
+                    bw2[sk==1]=0
+                    if useedge == True:
+                        bw2[edge==1]=0
+                    # why do this? I think seg=bw will result in a pointer....
+                    orig = np.zeros_like(bw2, dtype=np.bool)
+                    orig[bw2==1]=1
+        
+                    del inv, sk
+
+            bw[bw2==1]=1        
+            newseg, _ = nd.label(bw)  
+            
+
             
     else:
         # let it run for a bit to avoid over seg
@@ -438,48 +490,51 @@ def ms_toposeg(inRas, outShp, iterations=100, algo='ACWE', band=2, dist=30,
 
             del inv, sk
             
-    if usemin==True:
-        
-        
-        
-        dilated = binary_dilation(minIm, selem=ste)
-        seg, _ = ndi.label(dilated)
-        cnt = list(np.unique(seg))
-    
-        cnt.pop(0)        
-        iters = np.arange(iterations)    
-        orig = seg>0                
-        e2 = mh.bwperim(bw)
-        edge[e2==1]=1
-
-        
-        if init != None:
-            initBw = orig
-            orig = mcv(img, iterations=init,init_level_set=initBw, 
-                       smoothing=smooth, lambda1=1,
-                lambda2=1)
-            orig = orig>0
-        
-        for i in tqdm(iters):
-                inv = invert(orig)
-                sk = skeletonize(inv) 
-                sk = _skelprune(sk)
-                bw2 = mcv(img, iterations=1,init_level_set=orig, smoothing=smooth, lambda1=1,
-                    lambda2=1)
-                bw2[sk==1]=0
-                if useedge == True:
-                    bw2[edge==1]=0
-                # why do this? I think seg=bw will result in a pointer....
-                orig = np.zeros_like(bw2, dtype=np.bool)
-                orig[bw2==1]=1
-    
-                del inv, sk
-#    remove_small_objects(bw, min_size=3, in_place=True)
-        bw[bw2==1]=1        
-        newseg, _ = nd.label(bw)        
+     
             
-    else:
-        newseg, _ = nd.label(bw)
+            
+        if usemin==True:
+            
+            
+            
+            dilated = binary_dilation(minIm, selem=ste)
+            seg, _ = ndi.label(dilated)
+            cnt = list(np.unique(seg))
+        
+            cnt.pop(0)        
+            iters = np.arange(iterations)    
+            orig = seg>0                
+            e2 = mh.bwperim(bw)
+            edge[e2==1]=1
+    
+            
+            if init != None:
+                initBw = orig
+                orig = mcv(img, iterations=init,init_level_set=initBw, 
+                           smoothing=smooth, lambda1=1,
+                    lambda2=1)
+                orig = orig>0
+            
+            for i in tqdm(iters):
+                    inv = invert(orig)
+                    sk = skeletonize(inv) 
+                    sk = _skelprune(sk)
+                    bw2 = mcv(img, iterations=1,init_level_set=orig, smoothing=smooth, lambda1=1,
+                        lambda2=1)
+                    bw2[sk==1]=0
+                    if useedge == True:
+                        bw2[edge==1]=0
+                    # why do this? I think seg=bw will result in a pointer....
+                    orig = np.zeros_like(bw2, dtype=np.bool)
+                    orig[bw2==1]=1
+        
+                    del inv, sk
+#    remove_small_objects(bw, min_size=3, in_place=True)
+            bw[bw2==1]=1        
+            newseg, _ = nd.label(bw)        
+                
+        else:
+            newseg, _ = nd.label(bw)
         
     if close==True:
         ste2 = selem.square(3)
