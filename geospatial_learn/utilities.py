@@ -286,9 +286,8 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
     polygonize(inSeg[:-4]+'tsnake.tif', outShp, outField=None,  mask = True, band = 1)    
 
 def ms_toposeg(inRas, outShp, iterations=100, algo='ACWE', band=2, dist=30,
-                se=3, usemin=False, imtype=None, useedge=True, merge=False,
-                close=True, sigma=4, 
-                hi_t=None, low_t=None, init=4,
+                se=3, usemin=False, imtype=None, useedge=True, burnedge=False,
+                merge=False,close=True, sigma=4, hi_t=None, low_t=None, init=4,
                 smooth=1, lambda1=1, lambda2=1, threshold='auto', 
                 balloon=1):
     
@@ -371,6 +370,8 @@ def ms_toposeg(inRas, outShp, iterations=100, algo='ACWE', band=2, dist=30,
         edge = canny(imre, sigma=sigma, low_threshold=low_t,
                                high_threshold=hi_t)
         edge = _skelprune(edge)
+    if burnedge==True:
+        img[edge==1]=0
         
     if usemin == True:
         minIm = peak_local_max(invert(img), min_distance=dist, indices=False)
@@ -417,7 +418,7 @@ def ms_toposeg(inRas, outShp, iterations=100, algo='ACWE', band=2, dist=30,
             # approximation of homotopic skel in paper 
             # we still have endpoint issue at times but it is not bad...
             bw[sk==1]=0
-            if useedge == True:
+            if useedge == True and burnedge == False:
                 bw[edge==1]=0
             # why do this? I think seg=bw will result in a pointer....
             orig = np.zeros_like(bw, dtype=np.bool)
@@ -452,7 +453,7 @@ def ms_toposeg(inRas, outShp, iterations=100, algo='ACWE', band=2, dist=30,
                     bw2 = mcv(img, iterations=1,init_level_set=orig, smoothing=smooth, lambda1=1,
                         lambda2=1)
                     bw2[sk==1]=0
-                    if useedge == True:
+                    if useedge == True and burnedge == False:
                         bw2[edge==1]=0
                     # why do this? I think seg=bw will result in a pointer....
                     orig = np.zeros_like(bw2, dtype=np.bool)
@@ -482,7 +483,7 @@ def ms_toposeg(inRas, outShp, iterations=100, algo='ACWE', band=2, dist=30,
             bw = mcv(img, iterations=1,init_level_set=orig, smoothing=smooth, lambda1=1,
                 lambda2=1)
             bw[sk==1]=0
-            if useedge == True:
+            if useedge == True and burnedge == False:
                 bw[edge==1]=0
             # why do this? I think seg=bw will result in a pointer....
             orig = np.zeros_like(bw, dtype=np.bool)
@@ -522,7 +523,7 @@ def ms_toposeg(inRas, outShp, iterations=100, algo='ACWE', band=2, dist=30,
                     bw2 = mcv(img, iterations=1,init_level_set=orig, smoothing=smooth, lambda1=1,
                         lambda2=1)
                     bw2[sk==1]=0
-                    if useedge == True:
+                    if useedge == True and burnedge == False:
                         bw2[edge==1]=0
                     # why do this? I think seg=bw will result in a pointer....
                     orig = np.zeros_like(bw2, dtype=np.bool)

@@ -17,7 +17,7 @@ appropriate
 
 import numpy as np
 
-import matplotlib.pyplot as plt
+
 
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix,jaccard_score, f1_score
 from sklearn.metrics import precision_recall_fscore_support as prf
@@ -26,9 +26,9 @@ import scikitplot as skplt
 import seaborn as sns
 
 import pandas as pd
-
+import matplotlib.pyplot as plt
 def plot_classif_report(trueVals, predVals, labels=None, target_names=None,
-                        colmap=plt.cm.Spectral_r):
+                        colmap=plt.cm.Spectral_r, save=None):
     
     """
     Plot a classification report
@@ -52,10 +52,33 @@ def plot_classif_report(trueVals, predVals, labels=None, target_names=None,
     
     clf_report = classification_report(trueVals, predVals, labels=labels,
                                        target_names=target_names, output_dict=True)
-    
-    dF = pd.DataFrame(clf_report).iloc[:-1, :].T
 
-    sns.heatmap(dF, annot=True, cmap=colmap)
+    dF = pd.DataFrame(clf_report).iloc[:-1, :].T
+    
+    cbVl = dF.values
+    mn = np.round(cbVl.min(), decimals=2)
+    mx= np.round(cbVl.max(), decimals=2)
+    del cbVl
+    
+    
+    
+    f, ax = plt.subplots(figsize=(10, 10))
+    
+    splot = sns.heatmap(dF, annot=True, linewidths=.5, fmt='.2f', cmap=colmap,
+                        ax=ax, vmin=mn, 
+                        vmax=mx, annot_kws={"size": 20})
+    
+    cbar = ax.collections[0].colorbar
+    cbar.set_ticks([mn, mx])
+    cbar.set_ticklabels([str(mn), str(mx)])
+    
+    
+
+    
+    if save != None:
+    
+        fig = splot.get_figure()
+        fig.savefig(save) 
     
     return dF
 

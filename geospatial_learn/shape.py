@@ -1915,10 +1915,10 @@ def _do_phasecong(tempIm,  low_t=0, hi_t=0, norient=6, nscale=6, sigma=2):#, ske
 #    hArray = orientIm[h]>=hT     
 #    return vArray, hArray
 
-def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None, 
-               hi_t=None, n_orient=6, n_scale=5, hArray=True, vArray=True,
+def hough2line(inRas, outShp, edge='canny', sigma=2, 
+               thresh=None, ratio=2, n_orient=6, n_scale=5, hArray=True, vArray=True,
                prob=False, line_length=100,
-               line_gap=200, valrange=1, interval=50, band=2,
+               line_gap=200, valrange=1, interval=10, band=2,
                min_area=None):
     
         """ 
@@ -2057,7 +2057,8 @@ def hough2line(inRas, outShp, edge='canny', sigma=2, low_t=None,
         
 
         
-            
+        hi_t = thresh
+        low_t = np.round((thresh / ratio), decimals=1)
 
         if edge == 'phase':
             ph = _do_phasecong(tempIm, low_t, hi_t, norient=n_orient, 
@@ -2198,7 +2199,8 @@ def cv_hough2line(inRas, outShp, edge='canny', sigma=2, low_t=0,
  
       
     # This returns an array of r and theta values 
-    lines1 = cv2.HoughLines(np.uint8(edges),1, np.pi/increment, thresh, min_theta=angles.min()-np.deg2rad(bounds), 
+    lines1 = cv2.HoughLines(np.uint8(edges),1, np.pi/increment, thresh,
+                            min_theta=angles.min()-np.deg2rad(bounds), 
                            max_theta=angles.min()+np.deg2rad(bounds)) 
     
       
@@ -2225,23 +2227,24 @@ def cv_hough2line(inRas, outShp, edge='canny', sigma=2, low_t=0,
         y0 = b*r 
           
         # x1 stores the rounded off value of (rcos(theta)-1000sin(theta)) 
-        x1 = int(x0 + 1000*(-b)) 
+        x1 = int(x0 + img.shape[1]*(-b)) 
           
         # y1 stores the rounded off value of (rsin(theta)+1000cos(theta)) 
-        y1 = int(y0 + 1000*(a)) 
+        y1 = int(y0 + img.shape[0]*(a)) 
       
         # x2 stores the rounded off value of (rcos(theta)+1000sin(theta)) 
-        x2 = int(x0 - 1000*(-b)) 
+        x2 = int(x0 - img.shape[0]*(-b)) 
           
         # y2 stores the rounded off value of (rsin(theta)-1000cos(theta)) 
-        y2 = int(y0 - 1000*(a)) 
+        y2 = int(y0 - img.shape[0]*(a)) 
           
         # cv2.line draws a line in img from the point(x1,y1) to (x2,y2). 
         # (0,0,255) denotes the colour of the line to be  
         #drawn. In this case, it is red.  
         cv2.line(img,(x1,y1), (x2,y2), (0,0,255),1)
     
-    lines2 = cv2.HoughLines(np.uint8(edges),1, np.pi/increment, thresh, min_theta=angles.max()-np.deg2rad(bounds), 
+    lines2 = cv2.HoughLines(np.uint8(edges),1, np.pi/increment, thresh,
+                            min_theta=angles.max()-np.deg2rad(bounds), 
                            max_theta=angles.max()+np.deg2rad(bounds)) 
     for l in tqdm(lines2): 
         
@@ -2264,16 +2267,20 @@ def cv_hough2line(inRas, outShp, edge='canny', sigma=2, low_t=0,
         y0 = b*r 
           
         # x1 stores the rounded off value of (rcos(theta)-1000sin(theta)) 
-        x1 = int(x0 + 1000*(-b)) 
+        
+        
+        
+        
+        x1 = int(x0 + img.shape[1]*(-b)) 
           
         # y1 stores the rounded off value of (rsin(theta)+1000cos(theta)) 
-        y1 = int(y0 + 1000*(a)) 
+        y1 = int(y0 + img.shape[0]*(a)) 
       
         # x2 stores the rounded off value of (rcos(theta)+1000sin(theta)) 
-        x2 = int(x0 - 1000*(-b)) 
+        x2 = int(x0 - img.shape[1]*(-b)) 
           
         # y2 stores the rounded off value of (rsin(theta)-1000cos(theta)) 
-        y2 = int(y0 - 1000*(a)) 
+        y2 = int(y0 - img.shape[0]*(a)) 
           
         # cv2.line draws a line in img from the point(x1,y1) to (x2,y2). 
         # (0,0,255) denotes the colour of the line to be  
