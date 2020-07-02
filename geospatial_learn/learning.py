@@ -8,11 +8,6 @@ Description
 The learning module set of functions provide a framework to optimise and classify
 EO data for both per pixel or object properties
 
-
-Performance notes:
-This was tested on an i7 intel with 16gb of ram, so with large images/arrays 
-of stats this will inevitably be slower - especially with a more standard machine.
-
 """
 
 # This must go first or it causes the error:

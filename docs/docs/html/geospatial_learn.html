@@ -223,7 +223,7 @@ a GDAL datatype (see the GDAL website) e.g gdal.GDT_Int32</p></li>
 
 <dl class="function">
 <dt id="raster.batch_translate">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">batch_translate</code><span class="sig-paren">(</span><em class="sig-param">folder</em>, <em class="sig-param">wildcard</em>, <em class="sig-param">FMT=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.batch_translate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">batch_translate</code><span class="sig-paren">(</span><em class="sig-param">folder</em>, <em class="sig-param">wildcard</em>, <em class="sig-param">FMT='Gtiff'</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.batch_translate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Using the gdal python API, this function translates the format of files
 to commonly used formats</p>
 <dl class="field-list simple">
@@ -648,9 +648,6 @@ are no nans as nan percentile is far too slow</p></li>
 <h3>Description<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>The learning module set of functions provide a framework to optimise and classify
 EO data for both per pixel or object properties</p>
-<p>Performance notes:
-This was tested on an i7 intel with 16gb of ram, so with large images/arrays
-of stats this will inevitably be slower - especially with a more standard machine.</p>
 <dl class="function">
 <dt id="learning.RF_oob_opt">
 <code class="sig-prename descclassname">learning.</code><code class="sig-name descname">RF_oob_opt</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">X_train</em>, <em class="sig-param">min_est</em>, <em class="sig-param">max_est</em>, <em class="sig-param">step</em>, <em class="sig-param">regress=False</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.RF_oob_opt" title="Permalink to this definition">¶</a></dt>
@@ -956,40 +953,6 @@ so that has been prioritised rather than raster IO</p>
 <p>This module contains various functions for the writing of data in OGR vector
 formats. The functions are mainly concerned with writing geometric or pixel based attributes, with the view to them being classified in the learning module</p>
 <dl class="function">
-<dt id="shape.hough2line">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">hough2line</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">edge='canny'</em>, <em class="sig-param">sigma=2</em>, <em class="sig-param">low_t=None</em>, <em class="sig-param">hi_t=None</em>, <em class="sig-param">n_orient=6</em>, <em class="sig-param">hArray=True</em>, <em class="sig-param">vArray=True</em>, <em class="sig-param">prob=False</em>, <em class="sig-param">line_length=100</em>, <em class="sig-param">line_gap=200</em>, <em class="sig-param">valrange=1</em>, <em class="sig-param">interval=360</em>, <em class="sig-param">band=2</em>, <em class="sig-param">min_area=None</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.hough2line" title="Permalink to this definition">¶</a></dt>
-<dd><p>Detect and write Hough lines to a line shapefile</p>
-<p>There are optionally two input arrays on the to keep line detection clean eg 2 orientations,
-such as vertical and horizontal</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>inRaster</strong> (<em>string</em>) – path to an input raster from which the geo-reffing is obtained</p></li>
-<li><p><strong>outShp</strong> (<em>string</em>) – path to the output line shapefile a corresponding polygon will also be written to disk</p></li>
-<li><p><strong>edge</strong> (<em>string</em>) – the edge detection method - either phase congruency or canny
-phase is default.</p></li>
-<li><p><strong>sigma</strong> (<em>int</em>) – the size of stdv defining the gaussian envelope if using canny edge
-a unitless value</p></li>
-<li><p><strong>n_orient</strong> (<em>int</em>) – the number of orientations used if using phase congruency edge</p></li>
-<li><p><strong>vArray</strong> (<em>bool</em>) – whether to detect lines on approx vert axis</p></li>
-<li><p><strong>hArray</strong> (<em>bool</em>) – whether to detect lines on approx horz axis</p></li>
-<li><p><strong>low_t</strong> – the low hysteresis threshold
-the secondary low gradient threshold permitted if connected to
-a high threshold pixel</p></li>
-<li><p><strong>hi_t</strong> – the high hysteresis threshold.
-the principal gradient threshold from which the low values are permitted
-provided they are connected to pixels of this one</p></li>
-<li><p><strong>prob</strong> (<em>bool</em>) – Whether to use a probabalistic hough - default is false</p></li>
-<li><p><strong>line_length</strong> (<em>int</em>) – If using prob hough the min. line length threshold</p></li>
-<li><p><strong>line_gap</strong> (<em>int</em>) – If using prob hough the min. line gap threshold</p></li>
-<li><p><strong>val_range</strong> (<em>int</em>) – The + - range around the orientation automatically chosen</p></li>
-<li><p><strong>interval</strong> (<em>int</em>) – The no of intervals of the range of values tested if using auto</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
 <dt id="shape.meshgrid">
 <code class="sig-prename descclassname">shape.</code><code class="sig-name descname">meshgrid</code><span class="sig-paren">(</span><em class="sig-param">inRaster</em>, <em class="sig-param">outShp</em>, <em class="sig-param">gridHeight=1</em>, <em class="sig-param">gridWidth=1</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.meshgrid" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -1002,8 +965,9 @@ provided they are connected to pixels of this one</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
-<li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>inShp</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>inRas</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>outShp</strong> (<em>string</em>) – output shapefile</p></li>
 <li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
 <li><p><strong>algo</strong> (<em>string</em>) – either “GAC” (geodesic active contours) or the default “ACWE” (active contours without edges)</p></li>
 <li><p><strong>buf1</strong> (<em>int</em>) – the buffer if any in map units for the bounding box of the poly which
@@ -1032,28 +996,6 @@ the contour towards a border. A negative value will shrink the contour,
 while a positive value will expand the contour in these areas. Setting
 this to zero will disable the balloon force.</p></li>
 </ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="shape.polygonize">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">polygonize</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outPoly</em>, <em class="sig-param">outField=None</em>, <em class="sig-param">mask=True</em>, <em class="sig-param">band=1</em>, <em class="sig-param">filetype='ESRI Shapefile'</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.polygonize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Lifted straight from the cookbook and gdal func docs.</p>
-<p><a class="reference external" href="http://pcjericks.github.io/py-gdalogr-cookbook">http://pcjericks.github.io/py-gdalogr-cookbook</a></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>inRas</strong> (<em>string</em>) – the input image</p>
-</dd>
-</dl>
-<dl class="simple">
-<dt>outPoly<span class="classifier">string</span></dt><dd><p>the output polygon file path</p>
-</dd>
-<dt>outField<span class="classifier">string (optional)</span></dt><dd><p>the name of the field containing burnded values</p>
-</dd>
-<dt>mask<span class="classifier">bool (optional)</span></dt><dd><p>use the input raster as a mask</p>
-</dd>
-<dt>band<span class="classifier">int</span></dt><dd><p>the input raster band</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1279,9 +1221,7 @@ only returned (bool)</p></li>
 <p>Created on Thu Sep  8 22:35:39 2016
 &#64;author: Ciaran Robb
 The utilities module - things here don’t have an exact theme or home yet so
-may eventually move elsewhere
-Aberytswyth Uni
-Wales</p>
+may eventually move elsewhere</p>
 <p>If you use code to publish work cite/acknowledge me and authors of libs etc as
 appropriate</p>
 <dl class="function">
@@ -1357,13 +1297,13 @@ format <cite>x1 y1 x2 y2</cite></p>
 </dd></dl>
 
 <dl class="function">
-<dt id="utilities.image_thresh">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">image_thresh</code><span class="sig-paren">(</span><em class="sig-param">image</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.image_thresh" title="Permalink to this definition">¶</a></dt>
+<dt id="utilities.hough2line">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">hough2line</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">edge='canny'</em>, <em class="sig-param">sigma=2</em>, <em class="sig-param">thresh=None</em>, <em class="sig-param">ratio=2</em>, <em class="sig-param">n_orient=6</em>, <em class="sig-param">n_scale=5</em>, <em class="sig-param">hArray=True</em>, <em class="sig-param">vArray=True</em>, <em class="sig-param">prob=False</em>, <em class="sig-param">line_length=100</em>, <em class="sig-param">line_gap=200</em>, <em class="sig-param">valrange=1</em>, <em class="sig-param">interval=10</em>, <em class="sig-param">band=2</em>, <em class="sig-param">min_area=None</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.hough2line" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
-<dt id="utilities.iou_score">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">iou_score</code><span class="sig-paren">(</span><em class="sig-param">inSeg</em>, <em class="sig-param">trueSeg</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.iou_score" title="Permalink to this definition">¶</a></dt>
+<dt id="utilities.image_thresh">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">image_thresh</code><span class="sig-paren">(</span><em class="sig-param">image</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.image_thresh" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -1388,10 +1328,87 @@ Returns a set of points representing the corners of the bounding box.
 </dd></dl>
 
 <dl class="function">
+<dt id="utilities.ms_toposeg">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ms_toposeg</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">iterations=100</em>, <em class="sig-param">algo='ACWE'</em>, <em class="sig-param">band=2</em>, <em class="sig-param">dist=30</em>, <em class="sig-param">se=3</em>, <em class="sig-param">usemin=False</em>, <em class="sig-param">imtype=None</em>, <em class="sig-param">useedge=True</em>, <em class="sig-param">burnedge=False</em>, <em class="sig-param">merge=False</em>, <em class="sig-param">close=True</em>, <em class="sig-param">sigma=4</em>, <em class="sig-param">hi_t=None</em>, <em class="sig-param">low_t=None</em>, <em class="sig-param">init=4</em>, <em class="sig-param">smooth=1</em>, <em class="sig-param">lambda1=1</em>, <em class="sig-param">lambda2=1</em>, <em class="sig-param">threshold='auto'</em>, <em class="sig-param">balloon=1</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ms_toposeg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Topology preserveing segmentation, implemented in python/nump inspired by
+ms_topo and morphsnakes</p>
+<p>This uses morphsnakes level sets to make the segments and param explanations are mainly
+from there.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inSeg</strong> (<em>string</em>) – input segmentation raster</p></li>
+<li><p><strong>raster_path</strong> (<em>string</em>) – input raster whose pixel vals will be used</p></li>
+<li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
+<li><p><strong>algo</strong> (<em>string</em>) – either “GAC” (geodesic active contours) or “ACWE” (active contours without edges)</p></li>
+<li><p><strong>sigma</strong> (<em>the size of stdv defining the gaussian envelope if using canny edge</em>) – a unitless value</p></li>
+<li><p><strong>iterations</strong> (<em>uint</em>) – Number of iterations to run.</p></li>
+<li><p><strong>smooth</strong> (<em>uint, optional</em>) – Number of times the smoothing operator is applied per iteration.
+Reasonable values are around 1-4. Larger values lead to smoother
+segmentations.</p></li>
+<li><p><strong>lambda1</strong> (<em>float, optional</em>) – Weight parameter for the outer region. If <cite>lambda1</cite> is larger than
+<cite>lambda2</cite>, the outer region will contain a larger range of values than
+the inner region.</p></li>
+<li><p><strong>lambda2</strong> (<em>float, optional</em>) – Weight parameter for the inner region. If <cite>lambda2</cite> is larger than
+<cite>lambda1</cite>, the inner region will contain a larger range of values than
+the outer region.</p></li>
+<li><p><strong>threshold</strong> (<em>float, optional</em>) – Areas of the image with a value smaller than this threshold will be
+considered borders. The evolution of the contour will stop in this
+areas.</p></li>
+<li><p><strong>balloon</strong> (<em>float, optional</em>) – Balloon force to guide the contour in non-informative areas of the
+image, i.e., areas where the gradient of the image is too small to push
+the contour towards a border. A negative value will shrink the contour,
+while a positive value will expand the contour in these areas. Setting
+this to zero will disable the balloon force.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="utilities.ms_toposnakes">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ms_toposnakes</code><span class="sig-paren">(</span><em class="sig-param">inSeg</em>, <em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">iterations=100</em>, <em class="sig-param">algo='GAC'</em>, <em class="sig-param">band=2</em>, <em class="sig-param">sigma=4</em>, <em class="sig-param">smooth=1</em>, <em class="sig-param">lambda1=1</em>, <em class="sig-param">lambda2=1</em>, <em class="sig-param">threshold='auto'</em>, <em class="sig-param">balloon=-1</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ms_toposnakes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Topology preserveing morphsnakes (kind of!) using an approximation of the
-homotopic skeleton to prevent merging of blobs</p>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ms_toposnakes</code><span class="sig-paren">(</span><em class="sig-param">inSeg</em>, <em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">iterations=100</em>, <em class="sig-param">algo='ACWE'</em>, <em class="sig-param">band=2</em>, <em class="sig-param">sigma=4</em>, <em class="sig-param">alpha=100</em>, <em class="sig-param">smooth=1</em>, <em class="sig-param">lambda1=1</em>, <em class="sig-param">lambda2=1</em>, <em class="sig-param">threshold='auto'</em>, <em class="sig-param">balloon=-1</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ms_toposnakes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Topology preserveing morphsnakes, implemented in python/numpy exclusively
+by C.Robb</p>
+<p>This uses morphsnakes and explanations are from there.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inSeg</strong> (<em>string</em>) – input segmentation raster</p></li>
+<li><p><strong>raster_path</strong> (<em>string</em>) – input raster whose pixel vals will be used</p></li>
+<li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
+<li><p><strong>algo</strong> (<em>string</em>) – either “GAC” (geodesic active contours) or “ACWE” (active contours without edges)</p></li>
+<li><p><strong>sigma</strong> (<em>the size of stdv defining the gaussian envelope if using canny edge</em>) – a unitless value</p></li>
+<li><p><strong>iterations</strong> (<em>uint</em>) – Number of iterations to run.</p></li>
+<li><p><strong>smooth</strong> (<em>uint, optional</em>) – Number of times the smoothing operator is applied per iteration.
+Reasonable values are around 1-4. Larger values lead to smoother
+segmentations.</p></li>
+<li><p><strong>lambda1</strong> (<em>float, optional</em>) – Weight parameter for the outer region. If <cite>lambda1</cite> is larger than
+<cite>lambda2</cite>, the outer region will contain a larger range of values than
+the inner region.</p></li>
+<li><p><strong>lambda2</strong> (<em>float, optional</em>) – Weight parameter for the inner region. If <cite>lambda2</cite> is larger than
+<cite>lambda1</cite>, the inner region will contain a larger range of values than
+the outer region.</p></li>
+<li><p><strong>threshold</strong> (<em>float, optional</em>) – Areas of the image with a value smaller than this threshold will be
+considered borders. The evolution of the contour will stop in this
+areas.</p></li>
+<li><p><strong>balloon</strong> (<em>float, optional</em>) – Balloon force to guide the contour in non-informative areas of the
+image, i.e., areas where the gradient of the image is too small to push
+the contour towards a border. A negative value will shrink the contour,
+while a positive value will expand the contour in these areas. Setting
+this to zero will disable the balloon force.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.ms_toposnakes2">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ms_toposnakes2</code><span class="sig-paren">(</span><em class="sig-param">inSeg</em>, <em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">iterations=100</em>, <em class="sig-param">algo='ACWE'</em>, <em class="sig-param">band=2</em>, <em class="sig-param">sigma=4</em>, <em class="sig-param">smooth=1</em>, <em class="sig-param">lambda1=1</em>, <em class="sig-param">lambda2=1</em>, <em class="sig-param">threshold='auto'</em>, <em class="sig-param">balloon=-1</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ms_toposnakes2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Topology preserveing morphsnakes, implmented by Jirka Borovec version
+with C++/cython elements- credit to him!</p>
+<p>This is memory intensive so large images will likely fill RAM and produces
+similar resuts to ms_toposnakes</p>
 <p>This uses morphsnakes and explanations are from there.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1445,6 +1462,11 @@ divided</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="function">
+<dt id="utilities.ragmerge">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ragmerge</code><span class="sig-paren">(</span><em class="sig-param">inSeg</em>, <em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">band</em>, <em class="sig-param">thresh=0.02</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ragmerge" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="function">
 <dt id="utilities.raster2array">

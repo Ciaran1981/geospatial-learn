@@ -1915,67 +1915,13 @@ def _do_phasecong(tempIm,  low_t=0, hi_t=0, norient=6, nscale=6, sigma=2):#, ske
 #    hArray = orientIm[h]>=hT     
 #    return vArray, hArray
 
-def hough2line(inRas, outShp, edge='canny', sigma=2, 
+def _hough2line(inRas, outShp, edge='canny', sigma=2, 
                thresh=None, ratio=2, n_orient=6, n_scale=5, hArray=True, vArray=True,
                prob=False, line_length=100,
                line_gap=200, valrange=1, interval=10, band=2,
                min_area=None):
     
-        """ 
-        Detect and write Hough lines to a line shapefile
-        
-        There are optionally two input arrays on the to keep line detection clean eg 2 orientations,
-        such as vertical and horizontal
-        
-        Parameters
-        ----------
-        
-        inRaster: string
-               path to an input raster from which the geo-reffing is obtained
-    
-        outShp: string
-               path to the output line shapefile a corresponding polygon will also be written to disk
-        
-        edge: string
-              the edge detection method - either phase congruency or canny
-              phase is default.
-        
-        sigma: int
-              the size of stdv defining the gaussian envelope if using canny edge or phase 
-              a unitless value 
-        
-        n_orient: int
-              the number of orientations used if using phase congruency edge
-        
-        n_scale: int
-              the number of scales used if using phase congruency edge
-                            
-        vArray: bool
-              whether to detect lines on approx vert axis
-              
-        hArray: bool
-              whether to detect lines on approx horz axis             
-        low_t: 
-              the low hysteresis threshold
-              the secondary low gradient threshold permitted if connected to 
-              a high threshold pixel
-        hi_t: 
-              the high hysteresis threshold.
-              the principal gradient threshold from which the low values are permitted 
-              provided they are connected to pixels of this one
-                                       
-        prob: bool
-               Whether to use a probabalistic hough - default is false
-             
-        line_length: int
-               If using prob hough the min. line length threshold        
-        line_gap: int
-               If using prob hough the min. line gap threshold
-        val_range: int
-               The + - range around the orientation automatically chosen  
-        interval: int
-               The no of intervals of the range of values tested if using auto  
-        """         
+
         #TODO this is FAR too long
         inDataset = gdal.Open(inRas, gdal.GA_ReadOnly)
 
@@ -2135,7 +2081,7 @@ def hough2line(inRas, outShp, edge='canny', sigma=2,
         
         polygonize(segRas, outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
 
-def cv_hough2line(inRas, outShp, edge='canny', sigma=2, low_t=0, 
+def _cv_hough2line(inRas, outShp, edge='canny', sigma=2, low_t=0, 
                hi_t=0, n_orient=6, n_scale=5, increment=180, thresh=100, min_theta=None, bounds=1,
                   max_theta=None, min_area=None):
     
