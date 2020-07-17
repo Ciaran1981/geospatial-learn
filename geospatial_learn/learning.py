@@ -51,6 +51,9 @@ from geospatial_learn.raster import _copy_dataset_config
 
 import pandas as pd
 import simpledbf
+from plyfile import PlyData
+from pyntcloud import PyntCloud
+import open3d as o3d
 
 
 gdal.UseExceptions()
@@ -1439,140 +1442,121 @@ def get_training(inShape, inRas, bands, field, outFile = None):
     
     return outData, rejects
 
+def ply_features(incld, outcld=None):
     
-def get_training_point(inShape, inRas, bands, field):
-    """ Collect training as a np array for use with create model function using 
-          point data
-          
-    Parameters
-    --------------
+    """ 
+    Calculate point cloud features and write to file
+    
+    
+    Parameters 
+    ----------- 
+    
+    incld: string
+              the input point cloud
         
-    inShape : string
-              the input shapefile - must be esri .shp at present
+    outcld: string
+               the output point cloud
+         
+
+    """  
+    
+    pcd = PyntCloud.from_file(incld)
+    #o3d.io.read_point_cloud(incld)
+
+    #pcd.estimate_normals()
+    
+    #cloud = PyntCloud.from_instance("open3d", 
+
+
+    pProps =['anisotropy', "curvature", "eigenentropy", "eigen_sum", "linearity",
+             "omnivariance", "planarity", "sphericity"]#, "inclination_deg",
+            # "inclination_rad", "orientation_deg", "orientation_rad"]
+    #, "HueSaturationValue",#"RelativeLuminance"," RGBIntensity"]
+
+    k_neighbors = pcd.get_neighbors(k=30)
+    eigenvalues = pcd.add_scalar_field("eigen_values", k_neighbors=k_neighbors)
+
+    [pcd.add_scalar_field(p, ev=eigenvalues) for p in pProps]
+    
+    if outcld == None:
+        pcd.to_file(incld)
+    else:
+        pcd.to_file(outcld)
+
+def get_training_ply(incld, label_field="scalar_label", outFile=None):
+    
+    """ 
+    Get training from a point cloud
+    
+    
+    Parameters 
+    ----------- 
+    
+    incld: string
+              the input point cloud
+    
+    label_field: string
+              the name of the field representing the training points which must
+              be positive integers
+                
+    outFile: string
+               path to training array to be saved as .gz via joblib
+         
+
+    """  
+    # TODO Clean up lack of loops funcs to do stuff
+    # classify ply TODO also
+    # convert Open3D.o3d.geometry to necessary vars
+    pcd = o3d.io.read_point_cloud(incld)
+    xyz = np.asarray(pcd.points)
+    cols = np.asarray(pcd.colors)
+    norms = np.asarray(pcd.normals)
+    pf = PlyData.read(incld)
+    
+#    pProps =['anisotropy', 'curvature', "eigenentropy", "eigen_sum",
+#             "linearity", "omnivariance", "planarity", "sphericity"]
+    
+    # doesn't matter if this is a float
+    label = np.array(pf.elements[0].data['scalar_label'], dtype='float64')
+    a = np.array(pf.elements[0].data['anisotropy(26)'], dtype='float64')
+    c = np.array(pf.elements[0].data["curvature(26)"], dtype='float64')
+    et = np.array(pf.elements[0].data["eigenentropy(26)"], dtype='float64')
+    es = np.array(pf.elements[0].data["eigen_sum(26)"], dtype='float64')
+    l = np.array(pf.elements[0].data["linearity(26)"], dtype='float64')
+    om = np.array(pf.elements[0].data["linearity(26)"], dtype='float64') 
+    pl = np.array(pf.elements[0].data["omnivariance(26)"], dtype='float64')
+    sp = np.array(pf.elements[0].data["sphericity(26)"], dtype='float64')
+
+    label.shape = (label.shape[0], 1)
+    a.shape=(label.shape[0], 1)
+    c.shape=(label.shape[0], 1)
+    et.shape=(label.shape[0], 1)
+    es.shape=(label.shape[0], 1)
+    l.shape=(label.shape[0], 1)
+    om.shape=(label.shape[0], 1)
+    pl.shape=(label.shape[0], 1)
+    sp.shape=(label.shape[0], 1)
+    
+    final = np.hstack((label, xyz, cols, norms, a, c, et, es, l, om, pl, sp))
+    
+    # all these could be dumped now
+    del xyz, cols, norms, pf,  a, c, et, es, l, om, pl, sp
+    
+    # prep for sklearn
+    X_train = final[final[:,0] >= 0]
         
-    inRas : string
-            the input raster from which the training is extracted
-        
-    bands : int
-            no of bands
-        
-    field : string
-            the attribute field containing the training labels
+    # Remove non-finite values
+    X_train = X_train[np.isfinite(X_train).all(axis=1)]
     
-    outFile : string (optional)
-              path to the training file saved as joblib format (eg - 'training.gz')
+    # y labels
+    #y_train = X_train[:,0] 
     
-    Returns
-    ---------------------
+    if outFile != None:
+        jb.dump(X_train, outFile, compress=2)
     
-    A tuple containing:
-    -np array of training data
-    -list of polygons with invalid geometry that were not collected 
+    return X_train
+    
 
-    
-    UNFINISHED DO NOT USE
-    
-    
-    """
-    #t0 = time()
-    outData = list()
-    print('Loading & prepping data')    
-    raster = gdal.Open(inRas)
-    shp = ogr.Open(inShape)
-    lyr = shp.GetLayer()
-    labels = np.arange(lyr.GetFeatureCount())
-    rb = raster.GetRasterBand(1)
-    rgt = raster.GetGeoTransform()
-    mem_drv = ogr.GetDriverByName('Memory')
-    driver = gdal.GetDriverByName('MEM')  
-    rejects = []     
-    
-    print('getting points')
-    for label in tqdm(labels):
-        #print(label)
-        feat = lyr.GetFeature(label)
-        if feat == None:
-            print('no geometry for feature '+str(label))
-            continue
-        iD = feat.GetField(field)
-        geom = feat.GetGeometryRef()
-        mx,my=geom.GetX(), geom.GetY()  #coord in map units
-
-        #Convert from map to pixel coordinates.
-        #Only works for geotransforms with no rotation.
-        px = int((mx - gt[0]) / gt[1]) #x pixel
-        py = int((my - gt[3]) / gt[5]) #y pixel
-    
-        structval=rb.ReadRaster(px, py,1,1,buf_type=gdal.GDT_UInt16) #Assumes 16 bit int aka 'short'
-        intval = struct.unpack('h' , structval) #use the 'short' format code (2 bytes) not int (4 bytes)
-    
-        print(intval[0])
-        # Get raster georeference info
-            
-#        src_offset = bbox_to_pixel_offsets(rgt, geom)
-#        
-#        
-#        # calculate new geotransform of the feature subset
-#        new_gt = (
-#        (rgt[0] + (src_offset[0] * rgt[1])),
-#        rgt[1],
-#        0.0,
-#        (rgt[3] + (src_offset[1] * rgt[5])),
-#        0.0,
-#        rgt[5])
-            
-            
-        # Create a temporary vector layer in memory
-        mem_ds = mem_drv.CreateDataSource('out')
-        mem_layer = mem_ds.CreateLayer('poly', None, ogr.wkbPolygon)
-        mem_layer.CreateFeature(feat.Clone())
-
-        # Rasterize it
-        rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
-        rvds.SetGeoTransform(new_gt)
-        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
-        rv_array = rvds.ReadAsArray()
-        
-        # Mask the source data array with our current feature
-        # we take the logical_not to flip 0<->1 to get the correct mask effect
-        # we also mask out nodata values explictly
-            
-
-        
-        
-        rb = raster.GetRasterBand(1)
-        src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
-                           src_offset[3])
-        if np.shape(src_array) is ():
-            rejects.append(label)
-            continue
-        # Read raster as arrays
-        for band in range(1,bands+1): 
-            
-            rb = raster.GetRasterBand(band)
-            src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
-                               src_offset[3])
-            if src_array is None:
-                src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
-                                           src_offset[3])
-
-            masked = np.ma.MaskedArray(src_array, 
-                                       mask=np.logical_or(src_array == 0,
-                                                          np.logical_not(rv_array)))
-            
-
-            datafinal = masked.flatten()
-
-            if band == 1:
-                X = np.zeros(shape = (datafinal.shape[0], bands+1))
-            X[:,0] = iD
-            
-            X[:,band] = datafinal
-        #print(label,fieldval,xcount, ycount)   
-        outData.append(X)
-    outData = np.asarray(outData)
-    outData = np.concatenate(outData).astype(None)
-    return outData, rejects
     
     
 def rmse_vector_lyr(inShape, attributes):
