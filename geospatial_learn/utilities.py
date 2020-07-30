@@ -1017,6 +1017,47 @@ def temp_match(vector_path, raster_path, band, nodata_value=0, ind=None):
     
     return outList
 
+def imangle(im):
+    
+    """
+    Determine the orientation of non-zero vals in an image
+    ---------- 
+    
+    im : np array
+               input image
+    Returns
+    -------
+    
+    axes : tuple
+              orientations of each side and binary array
+    
+    """
+    
+    # if the the binary box is pointing negatively along maj axis
+    bw = im > 0
+    props = regionprops(bw*1)
+    orient = props[0]['Orientation']
+        
+        # we will need these.....
+    perim = mh.bwperim(bw)
+    #        bkgrnd = invert(bw)
+        
+        
+    bw[perim==1]=0
+    if orient < 0:
+        orient += np.pi
+    
+    if orient < np.pi:
+        axis1 = np.pi - orient
+        axis2 = axis1 - np.deg2rad(90)
+    else:
+    # if the the binary box is pointing positively along maj axis
+        axis1 = np.pi + orient
+        axis2 = axis1 + np.deg2rad(90)
+        
+    return (axis1, axis2, bw)
+
+
 def test_gabor(im, size=9,  freq=0.1, angle=None, funct='cos', plot=True, 
                   smooth=True, interp='none'):
     """ 
