@@ -1,7 +1,7 @@
 
 # -*- coding: utf-8 -*-
 """
-The geodata module. 
+The raster module. 
 
 Description
 -----------

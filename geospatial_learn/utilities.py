@@ -32,7 +32,7 @@ from skimage import color
 #import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import ImageGrid
 from scipy.ndimage import gaussian_filter
-
+from phasepack.phasecong import phasecong
 from skimage.transform import rescale
 from skimage.feature import canny
 from skimage.measure import LineModelND, ransac
@@ -625,7 +625,7 @@ def ragmerge(inSeg, inRas, outShp, band, thresh=0.02):
     
     
 
-def combine_hough_seg(inRas1, inRas2, outRas, outShp, min_area=None):
+def combine_grid(inRas1, inRas2, outRas, outShp, min_area=None):
     
     
     rds1 = gdal.Open(inRas1, gdal.GA_ReadOnly)
@@ -884,7 +884,69 @@ def iter_ransac(image, sigma=3, no_iter=10, order = 'col', mxt=2500):
     
     return outArray
 
+def _non_max_suppression(img, D):
+    M, N = img.shape
+    Z = np.zeros((M,N), dtype=np.int32)
+    angle = D * 180. / np.pi
+    angle[angle < 0] += 180
+
+    
+    for i in range(1,M-1):
+        for j in range(1,N-1):
+            try:
+                q = 255
+                r = 255
+                
+               #angle 0
+                if (0 <= angle[i,j] < 22.5) or (157.5 <= angle[i,j] <= 180):
+                    q = img[i, j+1]
+                    r = img[i, j-1]
+                #angle 45
+                elif (22.5 <= angle[i,j] < 67.5):
+                    q = img[i+1, j-1]
+                    r = img[i-1, j+1]
+                #angle 90
+                elif (67.5 <= angle[i,j] < 112.5):
+                    q = img[i+1, j]
+                    r = img[i-1, j]
+                #angle 135
+                elif (112.5 <= angle[i,j] < 157.5):
+                    q = img[i-1, j-1]
+                    r = img[i+1, j+1]
+
+                if (img[i,j] >= q) and (img[i,j] >= r):
+                    Z[i,j] = img[i,j]
+                else:
+                    Z[i,j] = 0
+
+            except IndexError as e:
+                pass
+    
+    return Z
         
+def do_phasecong(tempIm,  low_t=0, hi_t=0, norient=6, nscale=6, sigma=2):#, skel='medial'):
+    """
+    process phase congruency on an image 
+
+
+    """
+    ph = phasecong(tempIm, norient=norient, nscale=nscale, k=sigma)
+
+    re = exposure.rescale_intensity(ph[0], out_range='uint8')
+    
+    nonmax = _non_max_suppression(re, ph[3])
+    
+    hyst = apply_hysteresis_threshold(nonmax, low_t, hi_t)
+    
+    hyst[tempIm==0]=0
+    
+#    if skel == 'medial':
+#        skel = medial_axis(hyst)
+#    else:
+#        skel = skeletonize(hyst)
+#    
+    
+    return hyst
 
 def temp_match(vector_path, raster_path, band, nodata_value=0, ind=None):
     
@@ -1651,228 +1713,6 @@ def image_thresh(image):
         name='thresholded', colormap='magenta', blending='additive'
     )
 
-def hough2line(inRas, outShp, edge='canny', sigma=2, 
-               thresh=None, ratio=2, n_orient=6, n_scale=5, hArray=True, vArray=True,
-               prob=False, line_length=100,
-               line_gap=200, valrange=1, interval=10, band=2,
-               min_area=None):
-    
-#        """ 
-#        Detect and write Hough lines to a line shapefile
-#        
-#        There are optionally two input arrays on the to keep line detection clean eg 2 orientations,
-#        such as vertical and horizontal
-#        
-#        Parameters
-#        ----------
-#        
-#        inRaster: string
-#               path to an input raster from which the geo-reffing is obtained
-#    
-#        outShp: string
-#               path to the output line shapefile a corresponding polygon will also be written to disk
-#        
-#        edge: string
-#              the edge detection method - either phase congruency or canny
-#              phase is default.
-#        
-#        sigma: int
-#              the size of stdv defining the gaussian envelope if using canny edge or phase 
-#              a unitless value 
-#        
-#        n_orient: int
-#              the number of orientations used if using phase congruency edge
-#        
-#        n_scale: int
-#              the number of scales used if using phase congruency edge
-#                            
-#        vArray: bool
-#              whether to detect lines on approx vert axis
-#              
-#        hArray: bool
-#              whether to detect lines on approx horz axis             
-#        low_t: 
-#              the low hysteresis threshold
-#              the secondary low gradient threshold permitted if connected to 
-#              a high threshold pixel
-#        hi_t: 
-#              the high hysteresis threshold.
-#              the principal gradient threshold from which the low values are permitted 
-#              provided they are connected to pixels of this one
-#                                       
-#        prob: bool
-#               Whether to use a probabalistic hough - default is false
-#             
-#        line_length: int
-#               If using prob hough the min. line length threshold        
-#        line_gap: int
-#               If using prob hough the min. line gap threshold
-#        val_range: int
-#               The + - range around the orientation automatically chosen  
-#        interval: int
-#               The no of intervals of the range of values tested if using auto  
-#        """         
-        #TODO this is FAR too long
-        inDataset = gdal.Open(inRas, gdal.GA_ReadOnly)
-
-#        rb = inRas.GetRasterBand(band)
-        rgt = inDataset.GetGeoTransform()
-        
-        pixel_res = rgt[1]
-        
-        ref = inDataset.GetSpatialRef()
-        
-        outShapefile = outShp
-        outDriver = ogr.GetDriverByName("ESRI Shapefile")
-        
-        # Remove output shapefile if it already exists
-        if os.path.exists(outShapefile):
-            outDriver.DeleteDataSource(outShapefile)
-        
-        # get the spatial ref
-#        ref = vlyr.GetSpatialRef()
-        
-        # Create the output shapefile
-        outDataSource = outDriver.CreateDataSource(outShapefile)
-        outLayer = outDataSource.CreateLayer("OutLyr", geom_type=ogr.wkbMultiLineString,
-                                         srs=ref)
-    
-        
-        # Add an ID field
-        idField = ogr.FieldDefn("id", ogr.OFTInteger)
-        outLayer.CreateField(idField)
-        
-        empty = np.zeros((inDataset.RasterYSize, inDataset.RasterXSize), dtype=np.bool)
-        
-        #because I am thick
-        #Degrees (°) 	Radians (rad) 	Radians (rad)
-        #0° 	0 rad 	0 rad
-        #30° 	π/6 rad 	0.5235987756 rad
-        #45° 	π/4 rad 	0.7853981634 rad
-        #60° 	π/3 rad 	1.0471975512 rad
-        #90° 	π/2 rad 	1.5707963268 rad
-        #120° 	2π/3 rad 	2.0943951024 rad
-        #135° 	3π/4 rad 	2.3561944902 rad
-        #150° 	5π/6 rad 	2.6179938780 rad
-        #180° 	π rad 	3.1415926536 rad
-        #270° 	3π/2 rad 	4.7123889804 rad
-        #360° 	2π rad 	6.2831853072 rad
-
-            
-        tempIm = inDataset.GetRasterBand(band).ReadAsArray()
-        bw = tempIm > 0
-        
-        bwRas = inRas[:-4]+'bw.tif'
-        #maskShp = inRaster[:-4]+'bwmask.shp'
-        
-        #polygonize(bwRas, maskShp, outField=None,  mask = True, band = 1)   
-        props = regionprops(bw*1)
-        orient = props[0]['Orientation']
-        
-        # we will need these.....
-        perim = mh.bwperim(bw)
-#        bkgrnd = invert(bw)
-        
-        
-        bw[perim==1]=0
-        array2raster(bw, 1, inRas, bwRas,  gdal.GDT_Byte)
-        
-
-        # if the the binary box is pointing negatively along maj axis
-        
-        if orient < 0:
-            orient += np.pi
-        
-        if orient < np.pi:
-            angleD = np.pi - orient
-            angleV = angleD - np.deg2rad(90)
-        else:
-        # if the the binary box is pointing positively along maj axis
-            angleD = np.pi + orient
-            angleV = angleD + np.deg2rad(90)
-        
-
-        
-        hi_t = thresh
-        if hi_t >=1.0:
-            low_t = np.round((thresh / ratio), decimals=1)
-        else:
-            low_t = thresh / ratio
-
-        if edge == 'phase':
-            ph = _do_phasecong(tempIm, low_t, hi_t, norient=n_orient, 
-                               nscale=n_scale, sigma=sigma)
-            
-            ph[perim==1]=0
-            
-            if hArray is True:
-                vArray = ph
-            if hArray is True:
-                hArray = ph
-            del ph
-           
-        else: 
-            # else it is canny
-            # We must have a float to get rid of  zero to nonzero image 
-            # boundary, otherwise huff will only detect the non-zero boundary
-            inIm = tempIm.astype(np.float32)
-            inIm[inIm==0]=np.nan 
-        
-            if hArray is True:
-                hArray = canny(inIm, sigma=sigma, low_threshold=low_t,
-                               high_threshold=hi_t)
-            if vArray is True:    
-                vArray = canny(inIm, sigma=sigma, low_threshold=low_t,
-                               high_threshold=hi_t)
-            del inIm
-                                  
-        
-        if prob is False:
-            """
-            Standard Hough ##############################################################
-            """
-            if hasattr(vArray, 'shape'):
-                
-                empty =_std_huff(vArray, empty, outLayer, angleV, valrange, interval, rgt)#, mk=bwRas)
-            if hasattr(hArray, 'shape'):
-                empty =_std_huff(hArray, empty, outLayer, angleD, valrange, interval, rgt)#, mk=bwRas)
-           
-        
-        else:
-            """
-            Prob Hough ##############################################################
-            """
-            
-            if hasattr(vArray, 'shape'):
-                empty =_phl_huff(vArray, empty, outLayer, angleV, valrange,
-                                 interval, rgt, line_length, line_gap)
-            if hasattr(hArray, 'shape'):
-                empty =_phl_huff(hArray, empty, outLayer, angleD, valrange,
-                                 interval, rgt, line_length, line_gap)
-            
-            
-                
-        
-        outDataSource.SyncToDisk()
-          
-        outDataSource=None
-        
-        if prob is True:
-            array2raster(empty, 1, inRas, outShp[:-3]+"tif",  gdal.GDT_Int32)
-        else:
-            inv = np.invert(empty)
-            inv[tempIm==0]=0
-            if min_area != None:
-                min_final = np.round(min_area/(pixel_res*pixel_res))
-                if min_final <= 0:
-                    min_final=4
-                remove_small_objects(inv, min_size=min_final, in_place=True)
-            #sg, _ = nd.label(inv)
-            segRas=outShp[:-3]+"seg.tif"
-            array2raster(inv, 1, inRas, segRas,  gdal.GDT_Int32)
-            del tempIm, inv
-        
-        polygonize(segRas, outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
 
 def colorscale(seg, prop):
     

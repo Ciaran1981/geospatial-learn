@@ -13,7 +13,7 @@ Geospatial-learn is a Python module for raster and vector manipulation and using
 
 - The 'learning' module is for applying creating ML models and applying them to raster and vector data. This is all based around sklearn, xgboost and t-pot. 
 
-- The 'handyplots' module contains a few simple functions that may be useful e.g. plot a classifcation report, confusiona matrix etc.    
+- The 'handyplots' module contains a few simple functions that may be useful e.g. plot a classifcation report, confusion matrix etc.    
 
 
 - The 'utils' module is full of stuff which is yet to be given a home that makes sense and may not all be doc'd - take a look...

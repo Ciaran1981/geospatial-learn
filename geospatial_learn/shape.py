@@ -23,7 +23,7 @@ import  ogr, osr
 from tqdm import tqdm
 import numpy as np
 from scipy.stats.mstats import mode
-from geospatial_learn.utilities import min_bound_rectangle
+from geospatial_learn.utilities import min_bound_rectangle, do_phasecong
 from shapely.wkt import loads
 from shapely.geometry import Polygon, box, LineString, Point, LinearRing
 from pandas import DataFrame
@@ -38,8 +38,6 @@ from skimage.measure import LineModelND, ransac
 from skimage.filters import gaussian
 from skimage import exposure
 from skimage.filters import threshold_otsu, threshold_niblack, threshold_sauvola, apply_hysteresis_threshold
-from skimage.transform import hough_line, hough_line_peaks
-from skimage.draw import line
 from skimage.transform import probabilistic_hough_line as phl
 #from skimage.io import imread
 from skimage.feature import canny
@@ -50,7 +48,6 @@ import matplotlib
 from shapely.affinity import rotate
 #from geospatial_learn.geodata import rasterize
 from math import ceil
-from phasepack.phasecong import phasecong
 import mahotas as mh
 import cv2
 #from centerline.geometry import Centerline
@@ -321,7 +318,7 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
                 datamask[datamask>0]=iD
                 #bwmask = np.zeros_like(dataraster)
                 Props = regionprops(datamask)
-                if len(Props) is 0:
+                if len(Props) == 0:
                     continue
                 stat = Props[0][prop]
                 #print(label)
@@ -1658,160 +1655,7 @@ def thresh_seg(inShp, inRas, outShp, band, buf=0, algo='otsu',
     # This is a hacky solution for now really, but it works well enough!
     polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1)    
     
-def _std_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt):#, mk=None):
-    
-    
-    tested_angles = np.linspace(angl - np.deg2rad(valrange), 
-                                angl + np.deg2rad(valrange), num=interval)
 
-    hh, htheta, hd = hough_line(inArray, theta=tested_angles)
-    origin = np.array((0, inArray.shape[1]))
-    
-    
-    #empty = np.zeros_like(inArray, dtype=np.bool)
-    
-    height, width = inArray.shape
-    
-    bbox = box(width, height, 0, 0)
-    
-    #angl - np.radians(valrange), angl + np.radians(valrange)
-    
-    # opencv is simpler but dont get it yet
-    #lines = cv2.HoughLines(re, 1, 150, None, 0, 0)
-    
-#    msk = ogr.Open(mk)
-#    msklyr = msk.GetLayer(0)
-#    mskFeat = msklyr.GetFeature(0)
-#    geom = mskFeat.GetGeometryRef()
-#    wkt=geom.ExportToWkt()
-#    poly = loads(wkt)
-#    bw = imread(mk)
-
-                    
-                    # Here we adapt the skimage loop to draw a bw line into the image
-    for _, angle, dist in tqdm(zip(*hough_line_peaks(hh, htheta, hd))):
-    
-        # here we obtain y extrema in our arbitrary coord system
-        y0, y1 = (dist - origin * np.cos(angle)) / np.sin(angle)
-        
-        # shapely used to get the geom 
-        
-        linestr = LineString([[origin[0], y0], [origin[1], y1]])
-        
-        # just in case this has not been done
-        #rotated = rotate(linestr, 90, origin='centroid')
-        
-        # here for readability visual query
-        # shapely in-built converts to np via np.array(inter)
-        #inter = bbox.intersection(linestr)
-        
-        in_coord= np.array(bbox.intersection(linestr).coords)
-        
-        coord = np.around(in_coord)
-        
-        # for readability just now
-        x1 = int(coord[0][0])
-        y1 = int(coord[0][1]) 
-        x2 = int(coord[1][0])
-        y2 = int(coord[1][1])
-        
-        if y1 == height:
-            y1 = height-1
-        if y2 == height:
-            y2 = height-1
-        if x1 == width:
-            x1 = width-1
-        if x2 == width:
-            x2 = width-1
-        
-        cc, rr = line(x1, y1, x2, y2)
-        
-        # is the line tightly constrained to the desired angle?
-#        test = np.zeros_like(outArray)
-#        test[rr, cc]=1
-#        props = regionprops(test*1)
-#        orient = props[0]['Orientation']
-#        if orient >= angl-valrange and orient <= angl+valrange:
-        outArray[rr, cc]=1
-        outSnk = []
-
-    
-        snList = np.arange(len(rr))
-        
-        for s in snList:
-            y = rr[s]
-            x = cc[s]
-            xout = (x * rgt[1]) + rgt[0]
-            yout = (y * rgt[5]) + rgt[3]
-            
-            outSnk.append([xout, yout])
-        snakeLine2 = LineString(outSnk)
-
-    
-        geomOut = ogr.CreateGeometryFromWkt(snakeLine2.wkt)
-    
-        featureDefn = outLayer.GetLayerDefn()
-        feature = ogr.Feature(featureDefn)
-    
-        feature.SetGeometry(geomOut)
-        feature.SetField("id", 1)
-        outLayer.CreateFeature(feature)
-        feature = None
-#        else:
-#            continue
-    
-       
-                    
-        
-
-    return outArray
-
-
-def _phl_huff(inArray, outArray, outLayer, angl, valrange, interval, rgt, 
-              line_length, line_gap, mask=None):
-    
-    tested_angles = np.linspace(angl - np.radians(valrange),
-                                angl + np.radians(valrange), num=interval)
-    huff = phl(inArray, line_length=line_length, line_gap=line_gap, 
-                           theta=tested_angles)
-    
-    for linez in huff:
-    
-        # jeez that is ugly as feck
-        x1 = linez[0][0]
-        y1 = linez[0][1]
-        x2 = linez[1][0]
-        y2 = linez[1][1]
-        rr, cc = line(y1, x1, y2, x2)
-
-        outArray[rr, cc]=1
-        
-
-        
-        outSnk = []
-            
-        snList = np.arange(len(cc))
-        
-        for s in snList:
-            x = cc[s]
-            y = rr[s]
-            xout = (x * rgt[1]) + rgt[0]
-            yout = (y * rgt[5]) + rgt[3]
-            
-            outSnk.append([xout, yout])
-        
-        snakeLine2 = LineString(outSnk)
-        
-        
-        geomOut = ogr.CreateGeometryFromWkt(snakeLine2.wkt)
-        
-        featureDefn = outLayer.GetLayerDefn()
-        feature = ogr.Feature(featureDefn)
-        
-        feature.SetGeometry(geomOut)
-        feature.SetField("id", 1)
-        outLayer.CreateFeature(feature)
-    return outArray
 
 from numpy.lib.stride_tricks import as_strided as ast
 
@@ -1825,71 +1669,7 @@ def _block_view(A, block=(3, 3)):
     strides= (block[0]* A.strides[0], block[1]* A.strides[1])+ A.strides
     return ast(A, shape= shape, strides= strides)
 
-def _non_max_suppression(img, D):
-    M, N = img.shape
-    Z = np.zeros((M,N), dtype=np.int32)
-    angle = D * 180. / np.pi
-    angle[angle < 0] += 180
 
-    
-    for i in range(1,M-1):
-        for j in range(1,N-1):
-            try:
-                q = 255
-                r = 255
-                
-               #angle 0
-                if (0 <= angle[i,j] < 22.5) or (157.5 <= angle[i,j] <= 180):
-                    q = img[i, j+1]
-                    r = img[i, j-1]
-                #angle 45
-                elif (22.5 <= angle[i,j] < 67.5):
-                    q = img[i+1, j-1]
-                    r = img[i-1, j+1]
-                #angle 90
-                elif (67.5 <= angle[i,j] < 112.5):
-                    q = img[i+1, j]
-                    r = img[i-1, j]
-                #angle 135
-                elif (112.5 <= angle[i,j] < 157.5):
-                    q = img[i-1, j-1]
-                    r = img[i+1, j+1]
-
-                if (img[i,j] >= q) and (img[i,j] >= r):
-                    Z[i,j] = img[i,j]
-                else:
-                    Z[i,j] = 0
-
-            except IndexError as e:
-                pass
-    
-    return Z
-
-def _do_phasecong(tempIm,  low_t=0, hi_t=0, norient=6, nscale=6, sigma=2):#, skel='medial'):
-    """
-    process phase congruency on an image returning vars for hough2line
-    A subfunction used in hough2line. 
-    
-    At present skeletonising the result with the medial axis, though a better
-    solution for final edges is needed ultimately
-    """
-    ph = phasecong(tempIm, norient=norient, nscale=nscale, k=sigma)
-
-    re = exposure.rescale_intensity(ph[0], out_range='uint8')
-    
-    nonmax = _non_max_suppression(re, ph[3])
-    
-    hyst = apply_hysteresis_threshold(nonmax, low_t, hi_t)
-    
-    hyst[tempIm==0]=0
-    
-#    if skel == 'medial':
-#        skel = medial_axis(hyst)
-#    else:
-#        skel = skeletonize(hyst)
-#    
-    
-    return hyst
 #    orientIm = ph[4]
 #    anglez = np.array([p * (np.pi / 6) for p in range(1,7)])
 #    
@@ -1915,171 +1695,7 @@ def _do_phasecong(tempIm,  low_t=0, hi_t=0, norient=6, nscale=6, sigma=2):#, ske
 #    hArray = orientIm[h]>=hT     
 #    return vArray, hArray
 
-def _hough2line(inRas, outShp, edge='canny', sigma=2, 
-               thresh=None, ratio=2, n_orient=6, n_scale=5, hArray=True, vArray=True,
-               prob=False, line_length=100,
-               line_gap=200, valrange=1, interval=10, band=2,
-               min_area=None):
-    
 
-        #TODO this is FAR too long
-        inDataset = gdal.Open(inRas, gdal.GA_ReadOnly)
-
-#        rb = inRas.GetRasterBand(band)
-        rgt = inDataset.GetGeoTransform()
-        
-        pixel_res = rgt[1]
-        
-        ref = inDataset.GetSpatialRef()
-        
-        outShapefile = outShp
-        outDriver = ogr.GetDriverByName("ESRI Shapefile")
-        
-        # Remove output shapefile if it already exists
-        if os.path.exists(outShapefile):
-            outDriver.DeleteDataSource(outShapefile)
-        
-        # get the spatial ref
-#        ref = vlyr.GetSpatialRef()
-        
-        # Create the output shapefile
-        outDataSource = outDriver.CreateDataSource(outShapefile)
-        outLayer = outDataSource.CreateLayer("OutLyr", geom_type=ogr.wkbMultiLineString,
-                                         srs=ref)
-    
-        
-        # Add an ID field
-        idField = ogr.FieldDefn("id", ogr.OFTInteger)
-        outLayer.CreateField(idField)
-        
-        empty = np.zeros((inDataset.RasterYSize, inDataset.RasterXSize), dtype=np.bool)
-        
-        #because I am thick
-        #Degrees (°) 	Radians (rad) 	Radians (rad)
-        #0° 	0 rad 	0 rad
-        #30° 	π/6 rad 	0.5235987756 rad
-        #45° 	π/4 rad 	0.7853981634 rad
-        #60° 	π/3 rad 	1.0471975512 rad
-        #90° 	π/2 rad 	1.5707963268 rad
-        #120° 	2π/3 rad 	2.0943951024 rad
-        #135° 	3π/4 rad 	2.3561944902 rad
-        #150° 	5π/6 rad 	2.6179938780 rad
-        #180° 	π rad 	3.1415926536 rad
-        #270° 	3π/2 rad 	4.7123889804 rad
-        #360° 	2π rad 	6.2831853072 rad
-
-            
-        tempIm = inDataset.GetRasterBand(band).ReadAsArray()
-        bw = tempIm > 0
-        
-        bwRas = inRas[:-4]+'bw.tif'
-        #maskShp = inRaster[:-4]+'bwmask.shp'
-        
-        #polygonize(bwRas, maskShp, outField=None,  mask = True, band = 1)   
-        props = regionprops(bw*1)
-        orient = props[0]['Orientation']
-        
-        # we will need these.....
-        perim = mh.bwperim(bw)
-#        bkgrnd = invert(bw)
-        
-        
-        bw[perim==1]=0
-        array2raster(bw, 1, inRas, bwRas,  gdal.GDT_Byte)
-        
-
-        # if the the binary box is pointing negatively along maj axis
-        
-        if orient < 0:
-            orient += np.pi
-        
-        if orient < np.pi:
-            angleD = np.pi - orient
-            angleV = angleD - np.deg2rad(90)
-        else:
-        # if the the binary box is pointing positively along maj axis
-            angleD = np.pi + orient
-            angleV = angleD + np.deg2rad(90)
-        
-
-        
-        hi_t = thresh
-        low_t = np.round((thresh / ratio), decimals=1)
-
-        if edge == 'phase':
-            ph = _do_phasecong(tempIm, low_t, hi_t, norient=n_orient, 
-                               nscale=n_scale, sigma=sigma)
-            
-            ph[perim==1]=0
-            
-            if hArray is True:
-                vArray = ph
-            if hArray is True:
-                hArray = ph
-            del ph
-           
-        else: 
-            # else it is canny
-            # We must have a float to get rid of  zero to nonzero image 
-            # boundary, otherwise huff will only detect the non-zero boundary
-            inIm = tempIm.astype(np.float32)
-            inIm[inIm==0]=np.nan 
-        
-            if hArray is True:
-                hArray = canny(inIm, sigma=sigma, low_threshold=low_t,
-                               high_threshold=hi_t)
-            if vArray is True:    
-                vArray = canny(inIm, sigma=sigma, low_threshold=low_t,
-                               high_threshold=hi_t)
-            del inIm
-                                  
-        
-        if prob is False:
-            """
-            Standard Hough ##############################################################
-            """
-            if hasattr(vArray, 'shape'):
-                
-                empty =_std_huff(vArray, empty, outLayer, angleV, valrange, interval, rgt)#, mk=bwRas)
-            if hasattr(hArray, 'shape'):
-                empty =_std_huff(hArray, empty, outLayer, angleD, valrange, interval, rgt)#, mk=bwRas)
-           
-        
-        else:
-            """
-            Prob Hough ##############################################################
-            """
-            
-            if hasattr(vArray, 'shape'):
-                empty =_phl_huff(vArray, empty, outLayer, angleV, valrange,
-                                 interval, rgt, line_length, line_gap)
-            if hasattr(hArray, 'shape'):
-                empty =_phl_huff(hArray, empty, outLayer, angleD, valrange,
-                                 interval, rgt, line_length, line_gap)
-            
-            
-                
-        
-        outDataSource.SyncToDisk()
-          
-        outDataSource=None
-        
-        if prob is True:
-            array2raster(empty, 1, inRas, outShp[:-3]+"tif",  gdal.GDT_Int32)
-        else:
-            inv = np.invert(empty)
-            inv[tempIm==0]=0
-            if min_area != None:
-                min_final = np.round(min_area/(pixel_res*pixel_res))
-                if min_final <= 0:
-                    min_final=4
-                remove_small_objects(inv, min_size=min_final, in_place=True)
-            #sg, _ = nd.label(inv)
-            segRas=outShp[:-3]+"seg.tif"
-            array2raster(inv, 1, inRas, segRas,  gdal.GDT_Int32)
-            del tempIm, inv
-        
-        polygonize(segRas, outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
 
 def _cv_hough2line(inRas, outShp, edge='canny', sigma=2, low_t=0, 
                hi_t=0, n_orient=6, n_scale=5, increment=180, thresh=100, min_theta=None, bounds=1,
@@ -2126,7 +1742,7 @@ def _cv_hough2line(inRas, outShp, edge='canny', sigma=2, low_t=0,
     
      
     if edge == 'phase':
-            edges = _do_phasecong(gray, low_t, hi_t, norient=n_orient, 
+            edges = do_phasecong(gray, low_t, hi_t, norient=n_orient, 
                                nscale=n_scale, sigma=sigma)
             
             edges[perim==1]=0
