@@ -96,4 +96,4 @@ Citation
 
 If you use geospatial-learn in a scientific publication, citations would be appreciated 
 
-Ciaran. (2017). Ciaran1981/geospatial-learn: Geospatial-learn 0.3 release (Version v0.3). Zenodo. http://doi.org/10.5281/zenodo.3968431
+Robb. (2017). Ciaran1981/geospatial-learn: Geospatial-learn 0.3 release (Version v0.3). Zenodo. http://doi.org/10.5281/zenodo.3968431
