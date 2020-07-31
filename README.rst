@@ -2,6 +2,9 @@
 
 .. |Python38| image:: https://img.shields.io/badge/python-3.8-blue.svg
 
+.. image:: https://zenodo.org/badge/101751668.svg
+   :target: https://zenodo.org/badge/latestdoi/101751668
+
 geospatial-learn
 ============
 
