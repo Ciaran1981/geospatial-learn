@@ -96,4 +96,4 @@ Citation
 
 If you use geospatial-learn in a scientific publication, citations would be appreciated 
 
-Robb, C. (2017). Geospatial learn. Retrieved from https://github.com/Ciaran1981/geospatial-learn%0Ahttps://ciaran1981.github.io/geospatial-learn/docs/html/index.html
+Ciaran. (2017, January 31). Ciaran1981/geospatial-learn: Geospatial-learn 0.3 release (Version v0.3). Zenodo. http://doi.org/10.5281/zenodo.3968431
