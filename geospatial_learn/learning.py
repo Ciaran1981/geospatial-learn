@@ -51,7 +51,7 @@ from geospatial_learn.raster import _copy_dataset_config
 
 import pandas as pd
 import simpledbf
-from plyfile import PlyData
+from plyfile import PlyData, PlyProperty, PlyListProperty
 from pyntcloud import PyntCloud
 import open3d as o3d
 
@@ -1442,7 +1442,7 @@ def get_training(inShape, inRas, bands, field, outFile = None):
     
     return outData, rejects
 
-def ply_features(incld, outcld=None):
+def ply_features(incld, outcld=None, k=30):
     
     """ 
     Calculate point cloud features and write to file
@@ -1473,7 +1473,7 @@ def ply_features(incld, outcld=None):
             # "inclination_rad", "orientation_deg", "orientation_rad"]
     #, "HueSaturationValue",#"RelativeLuminance"," RGBIntensity"]
 
-    k_neighbors = pcd.get_neighbors(k=30)
+    k_neighbors = pcd.get_neighbors(k=k)
     eigenvalues = pcd.add_scalar_field("eigen_values", k_neighbors=k_neighbors)
 
     [pcd.add_scalar_field(p, ev=eigenvalues) for p in pProps]
@@ -1501,31 +1501,38 @@ def get_training_ply(incld, label_field="scalar_label", outFile=None):
                 
     outFile: string
                path to training array to be saved as .gz via joblib
-         
+    Returns
+    -------
+    
+    np array of training where first column is labels
 
     """  
     # TODO Clean up lack of loops funcs to do stuff
     # classify ply TODO also
     # convert Open3D.o3d.geometry to necessary vars
     pcd = o3d.io.read_point_cloud(incld)
-    xyz = np.asarray(pcd.points)
+    #xyz = np.asarray(pcd.points) # not useful
     cols = np.asarray(pcd.colors)
     norms = np.asarray(pcd.normals)
     pf = PlyData.read(incld)
     
 #    pProps =['anisotropy', 'curvature', "eigenentropy", "eigen_sum",
 #             "linearity", "omnivariance", "planarity", "sphericity"]
-    
+   
+    #TODO this is a mess - was being lazy must tidy this
     # doesn't matter if this is a float
-    label = np.array(pf.elements[0].data['scalar_label'], dtype='float64')
-    a = np.array(pf.elements[0].data['anisotropy(26)'], dtype='float64')
-    c = np.array(pf.elements[0].data["curvature(26)"], dtype='float64')
-    et = np.array(pf.elements[0].data["eigenentropy(26)"], dtype='float64')
-    es = np.array(pf.elements[0].data["eigen_sum(26)"], dtype='float64')
-    l = np.array(pf.elements[0].data["linearity(26)"], dtype='float64')
-    om = np.array(pf.elements[0].data["linearity(26)"], dtype='float64') 
-    pl = np.array(pf.elements[0].data["omnivariance(26)"], dtype='float64')
-    sp = np.array(pf.elements[0].data["sphericity(26)"], dtype='float64')
+    label = np.array(pf.elements[0].data[label_field], dtype='float64')
+    a = np.array(pf.elements[0].data['anisotropy(31)'], dtype='float64')
+    c = np.array(pf.elements[0].data["curvature(31)"], dtype='float64')
+#    e1 = np.array(pf.elements[0].data["e1(31)"], dtype='float64')
+#    e2 = np.array(pf.elements[0].data["e2(31)"], dtype='float64')
+#    e3 = np.array(pf.elements[0].data["e3(31)"], dtype='float64')
+    et = np.array(pf.elements[0].data["eigenentropy(31)"], dtype='float64')
+    es = np.array(pf.elements[0].data["eigen_sum(31)"], dtype='float64')
+    pl = np.array(pf.elements[0].data["planarity(31)"], dtype='float64')
+    l = np.array(pf.elements[0].data["linearity(31)"], dtype='float64') 
+    om = np.array(pf.elements[0].data["omnivariance(31)"], dtype='float64')
+    sp = np.array(pf.elements[0].data["sphericity(31)"], dtype='float64')
 
     label.shape = (label.shape[0], 1)
     a.shape=(label.shape[0], 1)
@@ -1537,10 +1544,10 @@ def get_training_ply(incld, label_field="scalar_label", outFile=None):
     pl.shape=(label.shape[0], 1)
     sp.shape=(label.shape[0], 1)
     
-    final = np.hstack((label, xyz, cols, norms, a, c, et, es, l, om, pl, sp))
+    final = np.hstack((label, cols, norms, a, c, et, es, l, pl, om,  sp))
     
     # all these could be dumped now
-    del xyz, cols, norms, pf,  a, c, et, es, l, om, pl, sp
+    del cols, norms, pf,  a, c, et, es, l, om, pl, sp
     
     # prep for sklearn
     X_train = final[final[:,0] >= 0]
@@ -1557,7 +1564,115 @@ def get_training_ply(incld, label_field="scalar_label", outFile=None):
     return X_train
     
 
+def classify_ply(incld, inModel, class_field='scalar_class',
+                 outcld=None):
     
+    """ 
+    Classify a point cloud (ply format)
+    
+    
+    Parameters 
+    ----------- 
+    
+    incld: string
+              the input point cloud
+    
+                
+    class_field: string
+               the name of the field that the results will be written to
+               this must already exist! Create in CldComp. or cgal
+    
+    outcld: string
+               path to a new ply to write if not writing to the input one
+
+    """  
+    
+    
+    
+    
+    pf = PlyData.read(incld)
+    
+#    pProps =['anisotropy', 'curvature', "eigenentropy", "eigen_sum",
+#             "linearity", "omnivariance", "planarity", "sphericity"]
+   
+    #TODO this is a mess - was being lazy must tidy this
+    # doesn't matter if this is a float
+    
+#    data_type_relation = [
+#    ('int8', 'i1'),('char', 'i1'),('uint8', 'u1'), ('uchar', 'b1'),('uchar', 'u1'),
+#    ('int16', 'i2'),('short', 'i2'),('uint16', 'u2'),('ushort', 'u2'),('int32', 'i4'),
+#    ('int', 'i4'), ('uint32', 'u4'),('uint', 'u4'),('float32', 'f4'),('float', 'f4'),
+#    ('float64', 'f8'),('double', 'f8')]
+#    
+#    data_types = dict(data_type_relation)
+#    _data_type_reverse = dict((b, a) for (a, b) in _data_type_relation)
+        
+        
+#    x = np.array(pf.elements[0].data['x'], dtype='float64')
+#    y = np.array(pf.elements[0].data['y'], dtype='float64')
+#    z = np.array(pf.elements[0].data['z'], dtype='float64')
+    nx = np.array(pf.elements[0].data['nx'], dtype='float64')
+    ny = np.array(pf.elements[0].data['ny'], dtype='float64')
+    nz = np.array(pf.elements[0].data['nz'], dtype='float64')
+#    e1 = np.array(pf.elements[0].data["e1(31)"], dtype='float64')
+#    e2 = np.array(pf.elements[0].data["e2(31)"], dtype='float64')
+#    e3 = np.array(pf.elements[0].data["e3(31)"], dtype='float64')
+    r = np.array(pf.elements[0].data['red'], dtype='float64')
+    g = np.array(pf.elements[0].data['green'], dtype='float64')
+    b = np.array(pf.elements[0].data['blue'], dtype='float64')
+    a = np.array(pf.elements[0].data['anisotropy(31)'], dtype='float64')
+    c = np.array(pf.elements[0].data["curvature(31)"], dtype='float64')
+    et = np.array(pf.elements[0].data["eigenentropy(31)"], dtype='float64')
+    es = np.array(pf.elements[0].data["eigen_sum(31)"], dtype='float64')
+    l = np.array(pf.elements[0].data["linearity(31)"], dtype='float64')
+    pl = np.array(pf.elements[0].data["planarity(31)"], dtype='float64')
+    om = np.array(pf.elements[0].data["omnivariance(31)"], dtype='float64')
+    sp = np.array(pf.elements[0].data["sphericity(31)"], dtype='float64')
+  
+#    # Now back to the task in hand
+   
+#    x.shape=(a.shape[0], 1)
+#    y.shape=(a.shape[0], 1)
+#    z.shape=(a.shape[0], 1)
+    nx.shape=(a.shape[0], 1)
+    ny.shape=(a.shape[0], 1)
+    nz.shape=(a.shape[0], 1)
+    r.shape=(a.shape[0], 1)
+    g.shape=(a.shape[0], 1)
+    b.shape=(a.shape[0], 1)
+    a.shape=(a.shape[0], 1)
+    c.shape=(a.shape[0], 1)
+    et.shape=(a.shape[0], 1)
+    es.shape=(a.shape[0], 1)
+    l.shape=(a.shape[0], 1)
+    om.shape=(a.shape[0], 1)
+    pl.shape=(a.shape[0], 1)
+    sp.shape=(a.shape[0], 1)
+#    
+    X = np.hstack((r,g,b, nx,ny,nz, a, c, et, es, l, pl, om,  sp))
+    
+    # all these could be dumped now
+    del r,g,b, nx, ny, nz, a, c, et, es, l, om, pl, sp
+    
+    
+    X[np.where(np.isnan(X))]=0
+    X = X[np.isfinite(X).all(axis=1)]
+
+    print('Classifying')
+
+    model1 = joblib.load(inModel)
+    predictClass = model1.predict(X)
+#
+    pf.elements[0].data[class_field]=predictClass
+    
+    if outcld != None:
+    
+        pf.write(outcld)
+    else:
+        pf.write(incld)
+
+
+
     
 def rmse_vector_lyr(inShape, attributes):
 
@@ -1596,4 +1711,100 @@ def rmse_vector_lyr(inShape, attributes):
     
     error = np.sqrt(metrics.mean_squared_error(true, pred))
     
-    return error    
+    return error
+
+
+
+# crap from classif point for ref##############################################
+#label = np.array(pf.elements[0].data[train], dtype='float64')
+
+# This ply lib is alright but writing I/O is extremely verbose
+# Purgatorial stuff
+# TODO Jeez tidy this too
+    
+    
+    
+#    pps = [PlyProperty('x', 'float'), PlyProperty('y', 'float'), 
+#                                         PlyProperty('z', 'float'), 
+#                                         PlyProperty('nx', 'float'), 
+#                                         PlyProperty('ny', 'float'), 
+#                                         PlyProperty('nz', 'float'), 
+#                                         PlyProperty('training', 'int'),
+#                                         PlyProperty('label', 'int'), 
+#                                         PlyProperty('red', 'uchar'), 
+#                                         PlyProperty('green', 'uchar'), 
+#                                         PlyProperty('blue', 'uchar'), 
+#                                         PlyProperty('e1(31)', 'float'), 
+#                                         PlyProperty('e2(31)', 'float'), 
+#                                         PlyProperty('e3(31)', 'float'), 
+#                                         PlyProperty('anisotropy(31)', 'float'), 
+#                                         PlyProperty('curvature(31)', 'float'), 
+#                                         PlyProperty('eigenentropy(31)', 'float'), 
+#                                         PlyProperty('eigen_sum(31)', 'float'), 
+#                                         PlyProperty('linearity(31)', 'float'), 
+#                                         PlyProperty('omnivariance(31)', 'float'), 
+#                                         PlyProperty('planarity(31)', 'float'), 
+#                                         PlyProperty('sphericity(31)', 'float'),
+#                                         PlyProperty(train_label, 'int'),
+#                                         PlyProperty(outclass, 'int')]
+#    
+#    pfn = PlyElement(['vertex'], pps, pf.elements[0].count)
+#    
+
+#    pfn = pf['vertex']
+#    pfn.properties=()
+#    
+#    props = ['x', 'y', 'z', 'nx', 'ny', 'nz', 'red', 'green', 'blue','e1','e2', 'e3',
+#             'anisotropy', 'curvature', "eigenentropy", "eigen_sum","linearity", 
+#     "omnivariance", "planarity", "sphericity", train_label, outclass]
+#    
+#    pfn.data.dtype.names = props
+#    
+#    
+#    
+#    
+#
+#    
+#    plist = PlyListProperty('float', 'uchar', 'int')
+#    #PlyElement('vertex',
+#    
+#    pfn.properties = (plist, (PlyProperty('x', 'float'),
+#                                 PlyProperty('y', 'float'),
+#                                 PlyProperty('z', 'float'),
+#                                 PlyProperty('nx', 'float'),
+#                                 PlyProperty('ny', 'float'),
+#                                 PlyProperty('nz', 'float'), 
+#                                 PlyProperty('red', 'uchar'),
+#                                 PlyProperty('green', 'uchar'),
+#                                 PlyProperty('blue', 'uchar'),
+#                                 PlyProperty('e1(31)', 'float'),
+#                                 PlyProperty('e2(31)', 'float'),
+#                                 PlyProperty('e3(31)', 'float'),
+#                                 PlyProperty('anisotropy(31)', 'float'),
+#                                 PlyProperty('curvature(31)', 'float'),
+#                                 PlyProperty('eigen_sum(31)', 'float'),
+#                                 PlyProperty('linearity(31)', 'float'),
+#                                 PlyProperty('omnivariance(31)', 'float'),
+#                                 PlyProperty('planarity(31)', 'float'),
+#                                 PlyProperty('sphericity(31)', 'float'),
+#                                 PlyProperty(train_label, 'int'),
+#                                 PlyProperty(outclass, 'int')))
+#    
+#    
+#    pfn.elements[0].data['x'] = x
+#    pfn.elements[0].data['y'] = y
+#    pfn.elements[0].data['z'] = z
+#    pfn.elements[0].data['nx'] = nx
+#    pfn.elements[0].data['ny'] = ny
+#    pfn.elements[0].data['nz'] = nz
+#    pfn.elements[0].data['red'] = r
+#    pfn.elements[0].data['green'] = g
+#    pfn.elements[0].data['blue'] = b
+#    pfn.elements[0].data['anisotropy(31)'] = a
+#    pfn.elements[0].data["curvature(31)"] = c
+#    pfn.elements[0].data["eigenentropy(31)"] = et
+#    pfn.elements[0].data["eigen_sum(31)"] = es
+#    pfn.elements[0].data["linearity(31)"] = l
+#    pfn.elements[0].data["planarity(31)"]  = pl
+#    pfn.elements[0].data["omnivariance(31)"] = om
+#    pfn.elements[0].data["sphericity(31)"] =sp    
