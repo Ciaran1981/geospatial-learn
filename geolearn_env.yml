@@ -1,7 +1,7 @@
 name: geospatial_learnexp
 channels:
   - conda-forge
-  - open3d-admin open3d 
+#  - open3d-admin open3d 
   - anaconda
 dependencies:
   - python=3
@@ -15,6 +15,8 @@ dependencies:
   - scikit-learn
   - git
   - pandas
+  - tensorflow-gpu 
+  - keras-gpu
   - imageio
   - ipywidgets
   - nb_conda
@@ -38,12 +40,11 @@ dependencies:
   - sqlalchemy
   - urbanaccess
   - pyntcloud
-  - open3d
-  - tensorflow-gpu 
-  - keras-gpu
+#  - open3d
+
 
   - pip:
-    #- git+https://github.com/Ciaran1981/geospatial-learn#egg=geospatial-learnpy
+    - git+https://github.com/Ciaran1981/geospatial-learn#egg=geospatial-learnpy
     - git@github.com:Ciaran1981/morph-snakes#egg=morph-snakespy
     - xmltodict
     - simpledbf
