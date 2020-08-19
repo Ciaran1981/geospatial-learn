@@ -50,7 +50,7 @@ from morphsnakes import inverse_gaussian_gradient
 from multisnakes import MorphACWE, MorphGAC
 from multisnakes import multi_snakes as msn
 import mahotas as mh
-
+from plyfile import PlyData, PlyProperty#, PlyListProperty
 from skimage.filters import sobel
 from skimage.future import graph
 
@@ -59,6 +59,115 @@ from skimage.future import graph
 gdal.UseExceptions()
 ogr.UseExceptions()
 
+
+
+def fixply(incloud, outcloud, field='scalar_label'): 
+    
+    
+    
+    # The labels should be contiguous ie -1,0,1,2,3 - counting from zero
+    
+    pf = PlyData.read(incloud)
+    
+    ar = np.array(pf.elements[0].data[field])
+
+    # after cloud compare there are often spurious vales like -2564
+    
+    # do the nan to num in place 
+    ar = np.nan_to_num(ar, nan=-1)
+    
+
+    ar[ar<-1]=-1
+    
+    ar = np.int32(ar)
+    
+#    ar[ar==1]=0
+#
+#    ar[ar==2]=1
+#
+#    ar[ar==3]=2
+#
+#    ar[ar==4]=3
+    
+    # All this modifies the original data
+    new = pf['vertex']
+    new.properties = ()
+    new.data.dtype.names = ['x', 'y', 'z', 
+                            'red', 'green', 'blue',
+                            'nx', 'ny', 'nz',  'label']
+    new.properties = (PlyProperty('x', 'double'),
+                       PlyProperty('y', 'double'), 
+                       PlyProperty('z', 'double'), 
+                       PlyProperty('red', 'uchar'), 
+                       PlyProperty('green', 'uchar'), 
+                       PlyProperty('blue', 'uchar'), 
+                       PlyProperty('nx', 'double'), 
+                       PlyProperty('ny', 'double'), 
+                       PlyProperty('nz', 'double'), 
+                       PlyProperty('label', 'int'))
+    
+    pf.elements[0].data['label']=ar
+    
+    
+    
+    
+    pf.write(outcloud)
+
+def wipe_ply_field(incloud, outcloud, tfield='training' ,field='label'): 
+    
+    
+    
+    # The labels should be contiguous ie -1,0,1,2,3 - counting from zero
+    
+    pf = PlyData.read(incloud)
+    
+    ar = np.array(pf.elements[0].data[field])
+
+    # after cloud compare there are often spurious vales like -2564
+    
+    # do the nan to num in place 
+    #ar = np.nan_to_num(ar, nan=-1)
+    
+    
+
+    #ar[ar<-1]=-1
+    
+    ar = np.int32(ar)
+    ar[ar>=0]=-1
+    
+    
+#    ar[ar==1]=0
+#
+#    ar[ar==2]=1
+#
+#    ar[ar==3]=2
+#
+#    ar[ar==4]=3
+    
+    # All this modifies the original data
+    new = pf['vertex']
+    new.properties = ()
+    new.data.dtype.names = ['x', 'y', 'z', tfield, field,
+                            'red', 'green', 'blue',
+                            'nx', 'ny', 'nz']
+    new.properties = (PlyProperty('x', 'double'),
+                       PlyProperty('y', 'double'), 
+                       PlyProperty('z', 'double'), 
+                       PlyProperty(tfield, 'int'),
+                       PlyProperty(field, 'int'),
+                       PlyProperty('red', 'uchar'), 
+                       PlyProperty('green', 'uchar'), 
+                       PlyProperty('blue', 'uchar'), 
+                       PlyProperty('nx', 'double'), 
+                       PlyProperty('ny', 'double'), 
+                       PlyProperty('nz', 'double'))
+    
+    pf.elements[0].data['label']=ar
+    
+    
+    
+    
+    pf.write(outcloud)
 
 def _skelprune(edge):
     

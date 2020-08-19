@@ -41,6 +41,7 @@ from sklearn.externals import joblib
 from sklearn import metrics
 import joblib as jb
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from sklearn.preprocessing import LabelEncoder
 from geospatial_learn.raster import array2raster
 from geospatial_learn.shape import _bbox_to_pixel_offsets#, zonal_stats
 from scipy.stats import randint as sp_randint
@@ -55,7 +56,20 @@ from plyfile import PlyData, PlyProperty, PlyListProperty
 from pyntcloud import PyntCloud
 import open3d as o3d
 
+# may be bugged see - I'm getting same issue
+#https://stackoverflow.com/questions/41881220/keras-predict-always-output-same-value-in-multi-classification
+from keras.models import Sequential
+#from keras.layers import Dense, Activation
+from keras.utils import to_categorical
+from keras.models import load_model
+# if still not working try:
+from keras.layers.core import Dense, Dropout, Flatten, Activation
+# Dont know equiv for #from keras.models import Sequential
+# Must find this....
+#from keras.layers.convolutional import Conv2D, MaxPooling2D, SeparableConv2D
+from keras.wrappers.scikit_learn import KerasClassifier
 
+import os
 gdal.UseExceptions()
 ogr.UseExceptions()
 
@@ -160,11 +174,13 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
               numpy array of training data where the 1st column is labels
     
     outModel : string
-               the output model path which is a gz file
+               the output model path which is a gz file UNLESS using KERAS,
+               then it is an h5 file
     
     clf : string
           an sklearn or xgb classifier/regressor 
-          logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb
+          logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb,
+          keras also available as a very limited option - will do 
     
     random : bool
              if True, a random param search
@@ -255,8 +271,59 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
     elif scoring is None and regress is True:    
         scoring = 'r2'
     # Choose the classifier type
-    # TODO this has become rather messy and inefficient - need to make it more 
+    # TODO this has become rather messy (understatement)
+    # and inefficient - need to make it more 
     # elegant
+    no_classes = len(np.unique(y_train))
+    if clf == 'keras':
+        def kmodel(no_classes):
+            mdl = Sequential()
+        # The input_dim must be the same as the number of image 
+        # bands used for the classification (i.e., 10)
+            mdl.add(Dense(32, activation='relu', input_dim=bands))
+            mdl.add(Dense(16, activation='relu'))
+            mdl.add(Dense(8,  activation='relu'))
+            mdl.add(Dense(32, activation='relu'))
+        # The final layer of the network must use softmax activation and 
+        # the size must be the same as the number of classes 
+       
+            mdl.add(Dense(no_classes, activation='softmax'))
+            mdl.compile(optimizer='rmsprop', loss='categorical_crossentropy', 
+                        metrics=['accuracy'])
+            return mdl
+    
+        # the keras func uses .max() to ascertain the no of classes rather than unique
+        # STUPID! 
+        
+        md = kmodel(no_classes)
+        model = KerasClassifier(build_fn=md, verbose=0)
+        # evaluate using 10-fold cross validation
+        encoder = LabelEncoder()
+        encoder.fit(y_train)
+        encoded_Y = encoder.transform(y_train)
+        
+        
+        if params is None:
+            
+            epochs = [10, 20, 50]
+            batches = [5, 10, 20]
+            param_grid = dict(epochs=epochs, batch_size=batches)
+            
+        grid = GridSearchCV(model, param_grid=param_grid, 
+                                    cv=StratifiedKFold(cv), n_jobs=cores,
+                                    scoring=scoring, verbose=2)
+        #results = cross_val_score(model, X, Y, cv=kfold)
+        #print(results.mean())
+        
+        #train_labels = to_categorical(y_train-1, num_classes=no_classes)
+        
+        grid.fit(X_train, encoded_Y)
+        
+        joblib.dump(grid.best_estimator_, outModel)
+#        model.fit(X_train, train_labels, validation_split=0.2, epochs=20)
+#        #joblib.dump(mdl, outModel) 
+#        model.save(outModel)
+        
     if clf == 'erf':
          RF_clf = ExtraTreesClassifier(n_jobs=cores)
          if random==True:
@@ -686,7 +753,7 @@ def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
     min_estimators = min_est
     max_estimators = max_est
     
-    for label, clf in tqdm(ensemble_clfs):
+    for label, clf in ensemble_clfs:
         for i in tqdm(range(min_estimators, max_estimators + 1, step)):
             clf.set_params(n_estimators=i)
             clf.fit(X_train, y_train)
@@ -870,8 +937,8 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     Parameters
     ------------------
         
-    model : sklearn model
-            a path to a scikit learn model that has been saved 
+    model : sklearn model / keras model
+            a path to a model that has been saved 
     
     inputImage : string
                  path to image including the file fmt 'Myimage.tif'
@@ -940,8 +1007,10 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     # TODO 2- thread or parallelise block/line processing
     # Pressumably writing to different parts of raster should be ok....
     
-    
-    model1 = joblib.load(model)
+    if os.path.splitext[1] == ".h5":
+        model1 = load_model(model)
+    else:  
+        model1 = joblib.load(model)
     if blocksizeY==1:
         rows = np.arange(cols, dtype=np.int)                
         for row in tqdm(rows):
@@ -1446,6 +1515,8 @@ def ply_features(incld, outcld=None, k=30):
     
     """ 
     Calculate point cloud features and write to file
+    
+    Currently memory intensive due to using pyntcloud....
     
     
     Parameters 
