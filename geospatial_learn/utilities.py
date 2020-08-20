@@ -47,8 +47,8 @@ from skimage.feature import peak_local_max
 from morphsnakes import morphological_geodesic_active_contour as gac
 from morphsnakes import morphological_chan_vese as mcv
 from morphsnakes import inverse_gaussian_gradient
-from multisnakes import MorphACWE, MorphGAC
-from multisnakes import multi_snakes as msn
+#from multisnakes import MorphACWE, MorphGAC
+#from multisnakes import multi_snakes as msn
 import mahotas as mh
 from plyfile import PlyData, PlyProperty#, PlyListProperty
 from skimage.filters import sobel

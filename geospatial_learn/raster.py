@@ -15,7 +15,6 @@ import gdal, ogr,  osr
 import os
 import numpy as np
 import glob2
-#from geospatial_learn.data import _get_S2_geoinfo
 from geospatial_learn.gdal_merge import _merge
 import tempfile
 import glymur
@@ -266,6 +265,160 @@ def batch_translate(folder, wildcard, FMT='Gtiff'):
         src_ds = None
         #print(outList[file]+' done')
 
+def _bbox_to_pixel_offsets(rgt, geom):
+    
+    """ 
+    Internal function to get pixel geo-locations of bbox of a polygon
+    
+    Parameters
+    ----------
+    
+    rgt : array
+          List of points defining polygon (?)
+          
+    geom : shapely.geometry
+           Structure defining geometry
+    
+    Returns
+    -------
+    int
+       x offset
+           
+    int
+       y offset
+           
+    xcount : int
+             rows of bounding box
+             
+    ycount : int
+             columns of bounding box
+    """
+    
+    xOrigin = rgt[0]
+    yOrigin = rgt[3]
+    pixelWidth = rgt[1]
+    pixelHeight = rgt[5]
+    ring = geom.GetGeometryRef(0)
+    numpoints = ring.GetPointCount()
+    pointsX = []; pointsY = []
+    
+    if (geom.GetGeometryName() == 'MULTIPOLYGON'):
+        count = 0
+        pointsX = []; pointsY = []
+        for polygon in geom:
+            geomInner = geom.GetGeometryRef(count)
+            ring = geomInner.GetGeometryRef(0)
+            numpoints = ring.GetPointCount()
+            for p in range(numpoints):
+                    lon, lat, z = ring.GetPoint(p)
+                    pointsX.append(lon)
+                    pointsY.append(lat)
+            count += 1
+    elif (geom.GetGeometryName() == 'POLYGON'):
+        ring = geom.GetGeometryRef(0)
+        numpoints = ring.GetPointCount()
+        pointsX = []; pointsY = []
+        for p in range(numpoints):
+                lon, lat, z = ring.GetPoint(p)
+                pointsX.append(lon)
+                pointsY.append(lat)
+            
+    xmin = min(pointsX)
+    xmax = max(pointsX)
+    ymin = min(pointsY)
+    ymax = max(pointsY)
+
+    # Specify offset and rows and columns to read
+    xoff = int((xmin - xOrigin)/pixelWidth)
+    yoff = int((yOrigin - ymax)/pixelWidth)
+    xcount = int((xmax - xmin)/pixelWidth)+1
+    ycount = int((ymax - ymin)/pixelWidth)+1
+
+    return (xoff, yoff, xcount, ycount)      
+       
+def mask_with_poly(vector_path, raster_path):
+    
+    """ 
+    Remove raster values inside a polygon and update the raster
+    
+    Parameters
+    ----------
+    
+    vector_path : string
+                  input shapefile
+        
+    raster_path : string
+                  input raster
+    """    
+    
+    rds = gdal.Open(raster_path, gdal.GA_Update)
+
+    rgt = rds.GetGeoTransform()
+    
+    bands = rds.RasterCount
+    
+    vds = ogr.Open(vector_path, 1)  
+
+    vlyr = vds.GetLayer(0)
+
+
+    mem_drv = ogr.GetDriverByName('Memory')
+    driver = gdal.GetDriverByName('MEM')
+
+    # Loop through vectors
+
+    feat = vlyr.GetNextFeature()
+    features = np.arange(vlyr.GetFeatureCount())
+
+    
+    for label in tqdm(features):
+
+        if feat is None:
+            continue
+        geom = feat.geometry()
+
+        src_offset = _bbox_to_pixel_offsets(rgt, geom)
+        
+          # calculate new geotransform of the feature subset
+        new_gt = (
+        (rgt[0] + (src_offset[0] * rgt[1])),
+        rgt[1],
+        0.0,
+        (rgt[3] + (src_offset[1] * rgt[5])),
+        0.0,
+        rgt[5])
+
+            
+        # Create a temporary vector layer in memory
+        mem_ds = mem_drv.CreateDataSource('out')
+        mem_layer = mem_ds.CreateLayer('poly', None, ogr.wkbPolygon)
+        mem_layer.CreateFeature(feat.Clone())
+
+        # Rasterize it
+
+        rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
+     
+        rvds.SetGeoTransform(new_gt)
+        rvds.SetProjection(rds.GetProjectionRef())
+        rvds.SetGeoTransform(new_gt)
+        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
+        rv_array = rvds.ReadAsArray()
+        
+        
+        
+        
+        for band in range(1, bands+1):
+            bnd = rds.GetRasterBand(band)
+            src_array = bnd.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                               src_offset[3])
+            src_array[rv_array>0]=0
+            bnd.WriteArray(src_array, src_offset[0], src_offset[1])
+            
+        rds.FlushCache()
+        
+
+    vds = None
+    rds = None
 def jp2_translate(folder, FMT=None, mode='L1C'):
     
     """ 
@@ -515,9 +668,9 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
 #    for file in noDirs:
     
     xml = glob2.glob(path.join(granule,'*MTI*.xml'))
-    if len(xml) is 0:
+    if len(xml) == 0:
         xml = glob2.glob(granule+'/*MTD*.xml')
-        if len(xml) is 0:
+        if len(xml) == 0:
             print('Error: \nXml metadata file does not exist ')
             sys.exit(1)
     
@@ -530,7 +683,7 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
     if mode == None:
         bands = 4
         fileList = glob2.glob(path.join(granule,'IMG_DATA', 'R10m','*MSI*.jp2'))
-        if len(fileList) is 0:
+        if len(fileList) == 0:
         # the following if is for S2 since format change
             fileList = glob2.glob(path.join(granule,'IMG_DATA/R10m/*B0*.jp2'))
         #        x_min = int(geoinfo['ulx10'])
@@ -552,7 +705,7 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
     if mode == '20':
         fileList = glob2.glob(path.join(granule,'IMG_DATA','R20m','*MSI*.jp2'))
         # the following if is for S2 since format change
-        if len(fileList) is 0:
+        if len(fileList) == 0:
             fileList = glob2.glob(path.join(granule,'IMG_DATA','R20m','*B*.jp2'))
         bands = len(fileList)
         #        x_min = int(geoinfo['ulx20'])

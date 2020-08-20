@@ -36,8 +36,8 @@ import numpy as np
 from sklearn.model_selection import StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier,RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import LogisticRegression, SGDClassifier
-
-from sklearn.externals import joblib
+import joblib
+#from sklearn.externals import joblib
 from sklearn import metrics
 import joblib as jb
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
@@ -54,21 +54,16 @@ import pandas as pd
 import simpledbf
 from plyfile import PlyData, PlyProperty, PlyListProperty
 from pyntcloud import PyntCloud
-import open3d as o3d
 
-# may be bugged see - I'm getting same issue
-#https://stackoverflow.com/questions/41881220/keras-predict-always-output-same-value-in-multi-classification
 from keras.models import Sequential
-#from keras.layers import Dense, Activation
-from keras.utils import to_categorical
-from keras.models import load_model
+
+from keras.models import load_model, save_model
 # if still not working try:
 from keras.layers.core import Dense, Dropout, Flatten, Activation
-# Dont know equiv for #from keras.models import Sequential
-# Must find this....
-#from keras.layers.convolutional import Conv2D, MaxPooling2D, SeparableConv2D
-from keras.wrappers.scikit_learn import KerasClassifier
 
+from keras.wrappers.scikit_learn import KerasClassifier
+import tensorflow as tf
+from keras.utils import multi_gpu_model
 import os
 gdal.UseExceptions()
 ogr.UseExceptions()
@@ -161,7 +156,8 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
 
 
 def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
-                 strat=True, regress=False, params = None, scoring=None):
+                 strat=True, regress=False, params = None, scoring=None, 
+                 ply=False, save=True):
     
     """
     Brute force or random model creating using scikit learn. Either use the
@@ -174,13 +170,18 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
               numpy array of training data where the 1st column is labels
     
     outModel : string
-               the output model path which is a gz file UNLESS using KERAS,
-               then it is an h5 file
+               the output model path which is a gz file, if using keras it is 
+               h5 
     
     clf : string
           an sklearn or xgb classifier/regressor 
           logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb,
-          keras also available as a very limited option - will do 
+          
+          keras nnt also available as a very limited option - the nnt is 
+          currently a dense sequential of 32, 16, 8, 32 - please inspect the
+          source. If using GPU, you will likely be limited to a sequential 
+          grid search as multi-core overloads the GPUs quick!
+          
     
     random : bool
              if True, a random param search
@@ -255,8 +256,9 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
     bands = X_train.shape[1]-1
     
     #X_train = X_train.transpose()
-    
-    X_train = X_train[X_train[:,0] != 0]
+    if ply == False:
+        
+        X_train = X_train[X_train[:,0] != 0]
     
      
     # Remove non-finite values
@@ -276,53 +278,69 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
     # elegant
     no_classes = len(np.unique(y_train))
     if clf == 'keras':
-        def kmodel(no_classes):
-            mdl = Sequential()
-        # The input_dim must be the same as the number of image 
-        # bands used for the classification (i.e., 10)
-            mdl.add(Dense(32, activation='relu', input_dim=bands))
-            mdl.add(Dense(16, activation='relu'))
-            mdl.add(Dense(8,  activation='relu'))
-            mdl.add(Dense(32, activation='relu'))
-        # The final layer of the network must use softmax activation and 
-        # the size must be the same as the number of classes 
-       
-            mdl.add(Dense(no_classes, activation='softmax'))
-            mdl.compile(optimizer='rmsprop', loss='categorical_crossentropy', 
+        
+        
+        kf = StratifiedKFold(cv, shuffle=True)
+        #Not currently workable
+#        if gpu > 1:
+#            
+#
+#
+#            def _create_nnt(no_classes=no_classes):
+#            	# create model - fixed at present
+#                tf.compat.v1.disable_eager_execution()
+#                with tf.device("/cpu:0"):
+#                    model = Sequential()
+#                    model.add(Dense(32, activation='relu', input_dim=bands))
+#                    model.add(Dense(16, activation='relu'))
+#                    model.add(Dense(8,  activation='relu'))
+#                    model.add(Dense(32, activation='relu'))
+#                    model.add(Dense(no_classes, activation='softmax'))
+#                    model.compile(optimizer='rmsprop', loss='categorical_crossentropy', 
+#                                metrics=['accuracy'])
+#                    model = multi_gpu_model(model, gpus=2)
+#                    model.compile(optimizer='rmsprop', loss='categorical_crossentropy', 
+#                                metrics=['accuracy'])
+#                    return model
+       # else:
+        def _create_nnt(no_classes=no_classes):
+    	# create model - fixed at present 
+        
+            model = Sequential()
+            model.add(Dense(32, activation='relu', input_dim=bands))
+            model.add(Dense(16, activation='relu'))
+            model.add(Dense(8,  activation='relu'))
+            model.add(Dense(32, activation='relu'))
+            model.add(Dense(no_classes, activation='softmax'))
+            model.compile(optimizer='rmsprop', loss='categorical_crossentropy', 
                         metrics=['accuracy'])
-            return mdl
-    
-        # the keras func uses .max() to ascertain the no of classes rather than unique
-        # STUPID! 
+            return model
         
-        md = kmodel(no_classes)
-        model = KerasClassifier(build_fn=md, verbose=0)
-        # evaluate using 10-fold cross validation
-        encoder = LabelEncoder()
-        encoder.fit(y_train)
-        encoded_Y = encoder.transform(y_train)
+        # the model
+        model = KerasClassifier(build_fn=_create_nnt, verbose=1)
+        # may require this to get both GPUs working
         
-        
+		# initialize the model
+
+        # define the grid search parameters
         if params is None:
-            
-            epochs = [10, 20, 50]
-            batches = [5, 10, 20]
-            param_grid = dict(epochs=epochs, batch_size=batches)
-            
-        grid = GridSearchCV(model, param_grid=param_grid, 
-                                    cv=StratifiedKFold(cv), n_jobs=cores,
-                                    scoring=scoring, verbose=2)
-        #results = cross_val_score(model, X, Y, cv=kfold)
-        #print(results.mean())
+            batch_size = [10, 20]#, 40]#, 60, 80, 100]
+            epochs = [10]#, 30]
+            param_grid = dict(batch_size=batch_size, epochs=epochs)
+        else:
+            param_grid = params
         
-        #train_labels = to_categorical(y_train-1, num_classes=no_classes)
+        # It is of vital importance here that the estimator model is passed
+        # like this otherwiae you get loky serialisation error
+        # Also, at present it has to work sequentially, otherwise it overloads
+        # the gpu
+        grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=1, 
+                            cv=kf, verbose=1)
         
-        grid.fit(X_train, encoded_Y)
+        grid.best_estimator_.model.save(outModel)
         
-        joblib.dump(grid.best_estimator_, outModel)
-#        model.fit(X_train, train_labels, validation_split=0.2, epochs=20)
-#        #joblib.dump(mdl, outModel) 
-#        model.save(outModel)
+
+        
         
     if clf == 'erf':
          RF_clf = ExtraTreesClassifier(n_jobs=cores)
@@ -363,7 +381,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
          grid.fit(X_train, y_train)
          joblib.dump(grid.best_estimator_, outModel) 
          
-    if clf is 'xgb' and regress is False:
+    if clf == 'xgb' and regress is False:
         xgb_clf = XGBClassifier()
         if params is None:
                 # This is based on the Tianqi Chen author of xgb
@@ -398,7 +416,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
                                 scoring=scoring, verbose=2)
         grid.fit(X_train, y_train)
         joblib.dump(grid.best_estimator_, outModel)
-    if clf is 'gb' and regress is False:
+    if clf == 'gb' and regress is False:
         # Key parameter here is max depth
         gb_clf = GradientBoostingClassifier()
         if params is None:
@@ -421,7 +439,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         grid.fit(X_train, y_train)
         joblib.dump(grid.best_estimator_, outModel) 
         
-    if clf is 'gb'  and regress is True:
+    if clf == 'gb'  and regress is True:
         gb_clf = GradientBoostingRegressor(n_jobs=cores)
         if params is None:
             param_grid = {"n_estimators": [500],
@@ -480,7 +498,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
          grid.fit(X_train, y_train)
          joblib.dump(grid.best_estimator_, outModel) 
          
-    if clf is 'rf' and regress is True:
+    if clf == 'rf' and regress is True:
         RF_clf = RandomForestRegressor(n_jobs = cores, random_state = 123)
         if params is None:
             param_grid ={"n_estimators": [500],
@@ -525,7 +543,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
                                     scoring=scoring, verbose=2)
         grid.fit(X_train, y_train)
         joblib.dump(grid.best_estimator_, outModel) 
-    if clf is 'linsvc' and regress is True:
+    if clf == 'linsvc' and regress is True:
         svm_clf = svm.LinearSVR()
         if params is None:
             param_grid = [{'C': [1, 10, 100, 1000]},
@@ -607,7 +625,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
                                 scoring=scoring, verbose=2)
         grid.fit(X_train, y_train)
         joblib.dump(grid.best_estimator_, outModel) 
-    if clf is 'nusvc' and regress is True:
+    if clf == 'nusvc' and regress is True:
          svm_clf = svm.NuSVR()
          param_grid = [{'nu':[0.25, 0.5, 0.75, 1],'gamma': [1e-3, 1e-4]}]
          grid = GridSearchCV(svm_clf, param_grid=param_grid, 
@@ -616,7 +634,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
          grid.fit(X_train, y_train)
          joblib.dump(grid.best_estimator_, outModel) 
              #print("done in %0.3fs" % (time() - t0))
-    if clf is 'logit':
+    if clf == 'logit':
         logit_clf = LogisticRegression()
         if params is None:
             param_grid = [{'C': [1, 10, 100, 1000], 'penalty': ['l1', 'l2', ],
@@ -630,7 +648,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         grid.fit(X_train, y_train)
         joblib.dump(grid.best_estimator_, outModel) 
         
-    if clf is 'sgd':
+    if clf == 'sgd':
         logit_clf = SGDClassifier()
         if params is None:
             param_grid = [{'loss' : ['hinge, log', 'modified_huber',
@@ -646,7 +664,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         grid.fit(X_train, y_train)
         joblib.dump(grid.best_estimator_, outModel) 
 
-    return [grid.cv_results_, grid.best_score_, grid.best_params_, grid.best_estimator_]
+    return [grid.best_estimator_, grid.cv_results_, grid.best_score_, grid.best_params_]
 #    print(grid.best_params_)
 #    print(grid.best_estimator_)
 #    print(grid.oob_score_)
@@ -1579,12 +1597,6 @@ def get_training_ply(incld, label_field="scalar_label", outFile=None):
 
     """  
     # TODO Clean up lack of loops funcs to do stuff
-    # classify ply TODO also
-    # convert Open3D.o3d.geometry to necessary vars
-    pcd = o3d.io.read_point_cloud(incld)
-    #xyz = np.asarray(pcd.points) # not useful
-    cols = np.asarray(pcd.colors)
-    norms = np.asarray(pcd.normals)
     pf = PlyData.read(incld)
     
 #    pProps =['anisotropy', 'curvature', "eigenentropy", "eigen_sum",
@@ -1593,20 +1605,32 @@ def get_training_ply(incld, label_field="scalar_label", outFile=None):
     #TODO this is a mess - was being lazy must tidy this
     # doesn't matter if this is a float
     label = np.array(pf.elements[0].data[label_field], dtype='float64')
-    a = np.array(pf.elements[0].data['anisotropy(31)'], dtype='float64')
-    c = np.array(pf.elements[0].data["curvature(31)"], dtype='float64')
+    r = np.array(pf.elements[0].data['red'], dtype='float64')
+    g = np.array(pf.elements[0].data['green'], dtype='float64')
+    b = np.array(pf.elements[0].data['blue'], dtype='float64')
+    nx = np.array(pf.elements[0].data['nx'], dtype='float64')
+    ny = np.array(pf.elements[0].data['ny'], dtype='float64')
+    nz = np.array(pf.elements[0].data['nz'], dtype='float64')
 #    e1 = np.array(pf.elements[0].data["e1(31)"], dtype='float64')
 #    e2 = np.array(pf.elements[0].data["e2(31)"], dtype='float64')
 #    e3 = np.array(pf.elements[0].data["e3(31)"], dtype='float64')
+    a = np.array(pf.elements[0].data['anisotropy(31)'], dtype='float64')
+    c = np.array(pf.elements[0].data["curvature(31)"], dtype='float64')
     et = np.array(pf.elements[0].data["eigenentropy(31)"], dtype='float64')
     es = np.array(pf.elements[0].data["eigen_sum(31)"], dtype='float64')
+    l = np.array(pf.elements[0].data["linearity(31)"], dtype='float64')
     pl = np.array(pf.elements[0].data["planarity(31)"], dtype='float64')
-    l = np.array(pf.elements[0].data["linearity(31)"], dtype='float64') 
     om = np.array(pf.elements[0].data["omnivariance(31)"], dtype='float64')
     sp = np.array(pf.elements[0].data["sphericity(31)"], dtype='float64')
 
     label.shape = (label.shape[0], 1)
     a.shape=(label.shape[0], 1)
+    r.shape=(label.shape[0], 1)
+    g.shape=(label.shape[0], 1)
+    b.shape=(label.shape[0], 1)
+    nx.shape=(label.shape[0], 1)
+    ny.shape=(label.shape[0], 1)
+    nz.shape=(label.shape[0], 1)
     c.shape=(label.shape[0], 1)
     et.shape=(label.shape[0], 1)
     es.shape=(label.shape[0], 1)
@@ -1615,10 +1639,10 @@ def get_training_ply(incld, label_field="scalar_label", outFile=None):
     pl.shape=(label.shape[0], 1)
     sp.shape=(label.shape[0], 1)
     
-    final = np.hstack((label, cols, norms, a, c, et, es, l, pl, om,  sp))
+    final = np.hstack((label, r,g,b, nx,ny,nz, a, c, et, es, l, pl, om,  sp))
     
     # all these could be dumped now
-    del cols, norms, pf,  a, c, et, es, l, om, pl, sp
+    del r,g,b, nx,ny,nz, pf,  a, c, et, es, l, om, pl, sp
     
     # prep for sklearn
     X_train = final[final[:,0] >= 0]
@@ -1730,10 +1754,17 @@ def classify_ply(incld, inModel, class_field='scalar_class',
     X = X[np.isfinite(X).all(axis=1)]
 
     print('Classifying')
-
-    model1 = joblib.load(inModel)
+    
+    if os.path.splitext[1] == ".h5":
+        model1 = load_model(model)
+    else:  
+        model1 = joblib.load(model)
+    
+    
     predictClass = model1.predict(X)
-#
+#    if keras == True:
+#        pf.elements[0].data[class_field] = np.argmax(predictClass, axis=1)
+#    else:
     pf.elements[0].data[class_field]=predictClass
     
     if outcld != None:

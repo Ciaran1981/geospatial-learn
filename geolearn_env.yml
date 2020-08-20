@@ -40,12 +40,11 @@ dependencies:
   - sqlalchemy
   - urbanaccess
   - pyntcloud
-#  - open3d
+  - napari
 
 
   - pip:
     - git+https://github.com/Ciaran1981/geospatial-learn#egg=geospatial-learnpy
-    - git@github.com:Ciaran1981/morph-snakes#egg=morph-snakespy
     - xmltodict
     - simpledbf
     - scikitplot
