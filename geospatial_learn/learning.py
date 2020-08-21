@@ -1755,10 +1755,10 @@ def classify_ply(incld, inModel, class_field='scalar_class',
 
     print('Classifying')
     
-    if os.path.splitext[1] == ".h5":
-        model1 = load_model(model)
+    if os.path.splitext(inModel)[1] == ".h5":
+        model1 = load_model(inModel)
     else:  
-        model1 = joblib.load(model)
+        model1 = joblib.load(inModel)
     
     
     predictClass = model1.predict(X)
