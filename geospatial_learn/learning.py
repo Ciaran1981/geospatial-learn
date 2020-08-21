@@ -324,7 +324,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
 
         # define the grid search parameters
         if params is None:
-            batch_size = [10, 20]#, 40]#, 60, 80, 100]
+            batch_size = [10, 20, 40]#, 60, 80, 100]
             epochs = [10]#, 30]
             param_grid = dict(batch_size=batch_size, epochs=epochs)
         else:
@@ -336,6 +336,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         # the gpu
         grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=1, 
                             cv=kf, verbose=1)
+        grid.fit(X_train, y_train)
         
         grid.best_estimator_.model.save(outModel)
         
