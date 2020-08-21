@@ -1744,14 +1744,13 @@ def classify_ply(incld, inModel, class_field='scalar_class',
     pl.shape=(a.shape[0], 1)
     sp.shape=(a.shape[0], 1)
     
-    tempShp = (a.shape[0], 1)
 #    
     X = np.hstack((r,g,b, nx,ny,nz, a, c, et, es, l, pl, om,  sp))
     
     # all these could be dumped now
-    del r,g,b, nx, ny, nz, a, c, et, es, l, om, pl, sp
+    del r,g,b, nx, ny, nz, a,  c, et, es, l, om, pl, sp
     
-    
+    # keep a for the shape
     X[np.where(np.isnan(X))]=0
     X = X[np.isfinite(X).all(axis=1)]
 
@@ -1760,7 +1759,8 @@ def classify_ply(incld, inModel, class_field='scalar_class',
     if os.path.splitext(inModel)[1] == ".h5":
         model1 = load_model(inModel)
         predictClass = model1.predict(X)
-        predictClass.shape =  tempShp
+        # get the class based on the location of highest prob
+        predictClass = np.argmax(predictClass,axis=1)
     else:  
         model1 = joblib.load(inModel)
         predictClass = model1.predict(X)
