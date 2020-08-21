@@ -751,7 +751,7 @@ def stack_S2(granule, inFMT = 'jp2', FMT = None, mode = None, old_order=False,
     #replaced by
 
     csCode = geoinfo['cs_code'].split()
-    if csCode[4][2] is 'S':
+    if csCode[4][2] == 'S':
         flag = 0
     else:
         flag = 1

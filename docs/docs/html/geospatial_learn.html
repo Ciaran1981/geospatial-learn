@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,27 +11,29 @@
   
 
   
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="geospatial_learn" href="modules.html" />
@@ -50,7 +51,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> geospatial-learn
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> geospatial-learn
           
 
           
@@ -77,6 +78,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -130,6 +132,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -168,7 +171,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>geospatial_learn package</li>
     
@@ -196,15 +199,15 @@
 </div>
 <div class="section" id="module-raster">
 <span id="geospatial-learn-raster-module"></span><h2>geospatial_learn.raster module<a class="headerlink" href="#module-raster" title="Permalink to this headline">¶</a></h2>
-<p>The geodata module.</p>
+<p>The raster module.</p>
 <div class="section" id="description">
 <h3>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h3>
 <p>A series of tools for the manipulation of geospatial imagery/rasters such as
 masking or raster algebraic type functions and the conversion of Sentinel 2
 data to gdal compatible formats.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="raster.array2raster">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">array2raster</code><span class="sig-paren">(</span><em class="sig-param">array</em>, <em class="sig-param">bands</em>, <em class="sig-param">inRaster</em>, <em class="sig-param">outRas</em>, <em class="sig-param">dtype</em>, <em class="sig-param">FMT=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.array2raster" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">array2raster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">array</span></em>, <em class="sig-param"><span class="n">bands</span></em>, <em class="sig-param"><span class="n">inRaster</span></em>, <em class="sig-param"><span class="n">outRas</span></em>, <em class="sig-param"><span class="n">dtype</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.array2raster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save a raster from a numpy array using the geoinfo from another.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -221,9 +224,9 @@ a GDAL datatype (see the GDAL website) e.g gdal.GDT_Int32</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.batch_translate">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">batch_translate</code><span class="sig-paren">(</span><em class="sig-param">folder</em>, <em class="sig-param">wildcard</em>, <em class="sig-param">FMT='Gtiff'</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.batch_translate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">batch_translate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">folder</span></em>, <em class="sig-param"><span class="n">wildcard</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">'Gtiff'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.batch_translate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Using the gdal python API, this function translates the format of files
 to commonly used formats</p>
 <dl class="field-list simple">
@@ -237,9 +240,9 @@ to commonly used formats</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.calc_ndvi">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">calc_ndvi</code><span class="sig-paren">(</span><em class="sig-param">inputIm</em>, <em class="sig-param">outputIm</em>, <em class="sig-param">bandsList</em>, <em class="sig-param">blocksize=256</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">dtype=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.calc_ndvi" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">calc_ndvi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputIm</span></em>, <em class="sig-param"><span class="n">outputIm</span></em>, <em class="sig-param"><span class="n">bandsList</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.calc_ndvi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a copy of an image with an ndvi band added</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -253,9 +256,9 @@ to commonly used formats</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.clip_raster">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">clip_raster</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">inShape</em>, <em class="sig-param">outRas</em>, <em class="sig-param">nodata_value=None</em>, <em class="sig-param">blocksize=None</em>, <em class="sig-param">blockmode=True</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.clip_raster" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">clip_raster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">outRas</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blockmode</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.clip_raster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clip a raster</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -271,9 +274,9 @@ to commonly used formats</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.color_raster">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">color_raster</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">color_file</em>, <em class="sig-param">output_file</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.color_raster" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">color_raster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">color_file</span></em>, <em class="sig-param"><span class="n">output_file</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.color_raster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a txt colorfile and make a RGB image from a grayscale one</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -285,9 +288,9 @@ to commonly used formats</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.combine_scene">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">combine_scene</code><span class="sig-paren">(</span><em class="sig-param">scl</em>, <em class="sig-param">c_scn</em>, <em class="sig-param">blocksize=256</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.combine_scene" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">combine_scene</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scl</span></em>, <em class="sig-param"><span class="n">c_scn</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.combine_scene" title="Permalink to this definition">¶</a></dt>
 <dd><p>combine another scene classification with the sen2cor one</p>
 <dl class="simple">
 <dt>scl<span class="classifier">string</span></dt><dd><p>the sen2cor one</p>
@@ -299,9 +302,9 @@ to commonly used formats</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.hist_match">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">hist_match</code><span class="sig-paren">(</span><em class="sig-param">inputImage</em>, <em class="sig-param">templateImage</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.hist_match" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">hist_match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputImage</span></em>, <em class="sig-param"><span class="n">templateImage</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.hist_match" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adjust the pixel values of a grayscale image such that its histogram
 matches that of a target image.</p>
 <p>Writes to the inputImage dataset so that it matches</p>
@@ -319,9 +322,9 @@ that author</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.jp2_translate">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">jp2_translate</code><span class="sig-paren">(</span><em class="sig-param">folder</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">mode='L1C'</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.jp2_translate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">jp2_translate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">folder</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'L1C'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.jp2_translate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Translate all files from S2 download to a useable format</p>
 <p>Default FMT is GTiff (leave blank), for .img FMT=’HFA’, for .vrt FMT=’VRT’</p>
 <p>If you posses a gdal compiled with the corrext openjpg support use that</p>
@@ -338,9 +341,9 @@ but the use of stack_S2 is recommended</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.jp2_translate_batch">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">jp2_translate_batch</code><span class="sig-paren">(</span><em class="sig-param">mainFolder</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">mode=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.jp2_translate_batch" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">jp2_translate_batch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mainFolder</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.jp2_translate_batch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Batch version of jp2translate</p>
 <p>Perhaps only useful for the old tile format</p>
 <dl class="field-list simple">
@@ -354,9 +357,9 @@ but the use of stack_S2 is recommended</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.mask_raster">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">mask_raster</code><span class="sig-paren">(</span><em class="sig-param">inputIm</em>, <em class="sig-param">mval</em>, <em class="sig-param">overwrite=True</em>, <em class="sig-param">outputIm=None</em>, <em class="sig-param">blocksize=None</em>, <em class="sig-param">FMT=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.mask_raster" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">mask_raster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputIm</span></em>, <em class="sig-param"><span class="n">mval</span></em>, <em class="sig-param"><span class="n">overwrite</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">outputIm</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.mask_raster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform a numpy masking operation on a raster where all values
 corresponding to  mask value are retained - does this in blocks for
 efficiency on larger rasters</p>
@@ -380,9 +383,9 @@ mask the input</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.mask_raster_multi">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">mask_raster_multi</code><span class="sig-paren">(</span><em class="sig-param">inputIm</em>, <em class="sig-param">mval=1</em>, <em class="sig-param">outval=None</em>, <em class="sig-param">mask=None</em>, <em class="sig-param">blocksize=256</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">dtype=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.mask_raster_multi" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">mask_raster_multi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputIm</span></em>, <em class="sig-param"><span class="n">mval</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">outval</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mask</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.mask_raster_multi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform a numpy masking operation on a raster where all values
 corresponding to  mask value are retained - does this in blocks for
 efficiency on larger rasters</p>
@@ -401,9 +404,23 @@ efficiency on larger rasters</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
+<dt id="raster.mask_with_poly">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">mask_with_poly</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vector_path</span></em>, <em class="sig-param"><span class="n">raster_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.mask_with_poly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove raster values inside a polygon and update the raster</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="raster.multi_temp_filter">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">multi_temp_filter</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outRas</em>, <em class="sig-param">bands=None</em>, <em class="sig-param">windowSize=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.multi_temp_filter" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">multi_temp_filter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outRas</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">windowSize</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.multi_temp_filter" title="Permalink to this definition">¶</a></dt>
 <dd><p>The multi temp filter for radar data as outlined &amp; published by
 Quegan et al, Uni of Sheffield</p>
 <p>This is only suitable for small images, as it holds intermediate data in memory</p>
@@ -420,9 +437,9 @@ Quegan et al, Uni of Sheffield</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.multi_temp_filter_block">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">multi_temp_filter_block</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outRas</em>, <em class="sig-param">bands=None</em>, <em class="sig-param">blocksize=256</em>, <em class="sig-param">windowsize=7</em>, <em class="sig-param">FMT=None</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.multi_temp_filter_block" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">multi_temp_filter_block</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outRas</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">windowsize</span><span class="o">=</span><span class="default_value">7</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.multi_temp_filter_block" title="Permalink to this definition">¶</a></dt>
 <dd><p>Multi temporal filter implementation for radar data</p>
 <p>See Quegan et al., for paper</p>
 <p>Requires an installation of OTB</p>
@@ -439,9 +456,9 @@ Quegan et al, Uni of Sheffield</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.polygonize">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">polygonize</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outPoly</em>, <em class="sig-param">outField=None</em>, <em class="sig-param">mask=True</em>, <em class="sig-param">band=1</em>, <em class="sig-param">filetype='ESRI Shapefile'</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.polygonize" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">polygonize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outPoly</span></em>, <em class="sig-param"><span class="n">outField</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mask</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">filetype</span><span class="o">=</span><span class="default_value">'ESRI Shapefile'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.polygonize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Lifted straight from the cookbook and gdal func docs.</p>
 <p><a class="reference external" href="http://pcjericks.github.io/py-gdalogr-cookbook">http://pcjericks.github.io/py-gdalogr-cookbook</a></p>
 <dl class="field-list simple">
@@ -461,9 +478,9 @@ Quegan et al, Uni of Sheffield</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.raster2array">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">raster2array</code><span class="sig-paren">(</span><em class="sig-param">inRas, bands=[1]</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.raster2array" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">raster2array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.raster2array" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read a raster and return an array, either single or multiband</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -475,9 +492,9 @@ Quegan et al, Uni of Sheffield</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.remove_cloud_S2">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">remove_cloud_S2</code><span class="sig-paren">(</span><em class="sig-param">inputIm</em>, <em class="sig-param">sceneIm</em>, <em class="sig-param">blocksize=256</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">min_size=4</em>, <em class="sig-param">dist=1</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.remove_cloud_S2" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">remove_cloud_S2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputIm</span></em>, <em class="sig-param"><span class="n">sceneIm</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">min_size</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">dist</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.remove_cloud_S2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove cloud using the a scene classification</p>
 <p>This saves back to the input raster by default</p>
 <dl class="field-list simple">
@@ -494,9 +511,9 @@ It is assumed the scene map consists of 1 shadow, 2 cloud, 3 land, 4 water</p></
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.remove_cloud_S2_stk">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">remove_cloud_S2_stk</code><span class="sig-paren">(</span><em class="sig-param">inputIm</em>, <em class="sig-param">sceneIm1</em>, <em class="sig-param">sceneIm2=None</em>, <em class="sig-param">baseIm=None</em>, <em class="sig-param">blocksize=256</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">max_size=10</em>, <em class="sig-param">dist=1</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.remove_cloud_S2_stk" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">remove_cloud_S2_stk</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputIm</span></em>, <em class="sig-param"><span class="n">sceneIm1</span></em>, <em class="sig-param"><span class="n">sceneIm2</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">baseIm</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_size</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">dist</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.remove_cloud_S2_stk" title="Permalink to this definition">¶</a></dt>
 <dd><p>remove cloud using the the c_utils scene classification
 the KEA format is recommended, .tif is the default,</p>
 <p>no need to add the file extension this is done automatically</p>
@@ -522,9 +539,9 @@ to zero (in the use case of 2 sceneIm classifications)</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.rgb_ind">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">rgb_ind</code><span class="sig-paren">(</span><em class="sig-param">inputIm</em>, <em class="sig-param">outputIm</em>, <em class="sig-param">blocksize=256</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">dtype=5</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.rgb_ind" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">rgb_ind</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputIm</span></em>, <em class="sig-param"><span class="n">outputIm</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.rgb_ind" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a copy of an image with an ndvi band added</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -538,9 +555,9 @@ to zero (in the use case of 2 sceneIm classifications)</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.stack_S2">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">stack_S2</code><span class="sig-paren">(</span><em class="sig-param">granule</em>, <em class="sig-param">inFMT='jp2'</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">mode=None</em>, <em class="sig-param">old_order=False</em>, <em class="sig-param">blocksize=2048</em>, <em class="sig-param">overwrite=True</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.stack_S2" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">stack_S2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">granule</span></em>, <em class="sig-param"><span class="n">inFMT</span><span class="o">=</span><span class="default_value">'jp2'</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">old_order</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">2048</span></em>, <em class="sig-param"><span class="n">overwrite</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.stack_S2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stacks S2 bands downloaded from ESA site</p>
 <p>Can translate directly from jp2 format (this is recommended and is
 default).</p>
@@ -567,9 +584,9 @@ if false ordered like this 2,3,4,5,6,7,8a,11,12</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.stack_ras">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">stack_ras</code><span class="sig-paren">(</span><em class="sig-param">rasterList</em>, <em class="sig-param">outFile</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.stack_ras" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">stack_ras</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rasterList</span></em>, <em class="sig-param"><span class="n">outFile</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.stack_ras" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stack some rasters for change classification</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -581,9 +598,9 @@ if false ordered like this 2,3,4,5,6,7,8a,11,12</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.stat_comp">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">stat_comp</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outMap</em>, <em class="sig-param">bandList=None</em>, <em class="sig-param">stat='percentile'</em>, <em class="sig-param">q=95</em>, <em class="sig-param">blocksize=256</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">dtype=6</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.stat_comp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">stat_comp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">bandList</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">stat</span><span class="o">=</span><span class="default_value">'percentile'</span></em>, <em class="sig-param"><span class="n">q</span><span class="o">=</span><span class="default_value">95</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">6</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.stat_comp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate depth wise stat on a multi band raster with selected or all bands</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -601,9 +618,9 @@ are no nans as nan percentile is far too slow</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.temporal_comp">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">temporal_comp</code><span class="sig-paren">(</span><em class="sig-param">fileList</em>, <em class="sig-param">outMap</em>, <em class="sig-param">stat='percentile'</em>, <em class="sig-param">q=95</em>, <em class="sig-param">folder=None</em>, <em class="sig-param">blocksize=None</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">dtype=5</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.temporal_comp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">temporal_comp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fileList</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">stat</span><span class="o">=</span><span class="default_value">'percentile'</span></em>, <em class="sig-param"><span class="n">q</span><span class="o">=</span><span class="default_value">95</span></em>, <em class="sig-param"><span class="n">folder</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.temporal_comp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
@@ -624,9 +641,9 @@ are no nans as nan percentile is far too slow</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="raster.tile_rasters">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">tile_rasters</code><span class="sig-paren">(</span><em class="sig-param">inImage</em>, <em class="sig-param">outputImage</em>, <em class="sig-param">tilesize</em><span class="sig-paren">)</span><a class="headerlink" href="#raster.tile_rasters" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">tile_rasters</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inImage</span></em>, <em class="sig-param"><span class="n">outputImage</span></em>, <em class="sig-param"><span class="n">tilesize</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.tile_rasters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Split a large raster into smaller ones</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -648,9 +665,9 @@ are no nans as nan percentile is far too slow</p></li>
 <h3>Description<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>The learning module set of functions provide a framework to optimise and classify
 EO data for both per pixel or object properties</p>
-<dl class="function">
+<dl class="py function">
 <dt id="learning.RF_oob_opt">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">RF_oob_opt</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">X_train</em>, <em class="sig-param">min_est</em>, <em class="sig-param">max_est</em>, <em class="sig-param">step</em>, <em class="sig-param">regress=False</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.RF_oob_opt" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">RF_oob_opt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">X_train</span></em>, <em class="sig-param"><span class="n">min_est</span></em>, <em class="sig-param"><span class="n">max_est</span></em>, <em class="sig-param"><span class="n">step</span></em>, <em class="sig-param"><span class="n">regress</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.RF_oob_opt" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function uses the oob score to find the best parameters.</p>
 <p>This cannot be parallelized due to the warm start bootstrapping, so is
 potentially slower than the other cross val in the create_model function</p>
@@ -673,9 +690,9 @@ potentially slower than the other cross val in the create_model function</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="learning.classify_object">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_object</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">inShape</em>, <em class="sig-param">attributes</em>, <em class="sig-param">field_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_object" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_object</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">attributes</span></em>, <em class="sig-param"><span class="n">field_name</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_object" title="Permalink to this definition">¶</a></dt>
 <dd><p>Classify a polygon/point file attributes (‘object based’) using an sklearn
 model</p>
 <dl class="field-list simple">
@@ -690,9 +707,9 @@ model</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="learning.classify_pixel">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_pixel</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">inputDir</em>, <em class="sig-param">bands</em>, <em class="sig-param">outMap</em>, <em class="sig-param">probMap</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_pixel" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_pixel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">inputDir</span></em>, <em class="sig-param"><span class="n">bands</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">probMap</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_pixel" title="Permalink to this definition">¶</a></dt>
 <dd><p>A function to classify an image using a pre-saved model - assumes
 a folder of tiled rasters for memory management - classify_pixel_block is
 recommended instead of this function</p>
@@ -713,15 +730,15 @@ recommended instead of this function</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="learning.classify_pixel_bloc">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_pixel_bloc</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">inputImage</em>, <em class="sig-param">bands</em>, <em class="sig-param">outMap</em>, <em class="sig-param">blocksize=None</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">ndvi=None</em>, <em class="sig-param">dtype=5</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_pixel_bloc" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_pixel_bloc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">inputImage</span></em>, <em class="sig-param"><span class="n">bands</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ndvi</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_pixel_bloc" title="Permalink to this definition">¶</a></dt>
 <dd><p>A block processing classifier for large rasters, supports KEA, HFA, &amp; Gtiff
 formats. KEA is recommended, Gtiff is the default</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>sklearn model</em>) – a path to a scikit learn model that has been saved</p></li>
+<li><p><strong>model</strong> (<em>sklearn model / keras model</em>) – a path to a model that has been saved</p></li>
 <li><p><strong>inputImage</strong> (<em>string</em>) – path to image including the file fmt ‘Myimage.tif’</p></li>
 <li><p><strong>bands</strong> (<em>band</em>) – the no of image bands eg 8</p></li>
 <li><p><strong>outMap</strong> (<em>string</em>) – path to output image excluding the file format ‘pathto/mymap’</p></li>
@@ -737,26 +754,59 @@ if you put None it will read size from gdal (this doesn’t always pay off!)</p>
 so that has been prioritised rather than raster IO</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="learning.create_model">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param">X_train</em>, <em class="sig-param">outModel</em>, <em class="sig-param">clf='svc'</em>, <em class="sig-param">random=False</em>, <em class="sig-param">cv=6</em>, <em class="sig-param">cores=-1</em>, <em class="sig-param">strat=True</em>, <em class="sig-param">regress=False</em>, <em class="sig-param">params=None</em>, <em class="sig-param">scoring=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model" title="Permalink to this definition">¶</a></dt>
-<dd><p>Brute force or random model creating using scikit learn. Either use the
-default params in this function or enter your own (recommended - see sklearn)</p>
+<dl class="py function">
+<dt id="learning.classify_ply">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_ply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">inModel</span></em>, <em class="sig-param"><span class="n">class_field</span><span class="o">=</span><span class="default_value">'scalar_class'</span></em>, <em class="sig-param"><span class="n">outcld</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_ply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classify a point cloud (ply format)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
+<dd class="field-odd"><p><strong>incld</strong> (<em>string</em>) – the input point cloud</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>class_field: string</dt><dd><p>the name of the field that the results will be written to
+this must already exist! Create in CldComp. or cgal</p>
+</dd>
+<dt>outcld: string</dt><dd><p>path to a new ply to write if not writing to the input one</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="learning.create_model">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_train</span></em>, <em class="sig-param"><span class="n">outModel</span></em>, <em class="sig-param"><span class="n">clf</span><span class="o">=</span><span class="default_value">'svc'</span></em>, <em class="sig-param"><span class="n">random</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">cv</span><span class="o">=</span><span class="default_value">6</span></em>, <em class="sig-param"><span class="n">cores</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">strat</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">regress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scoring</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ply</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">save</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Brute force or random model creating using scikit learn. Either use the
+default params in this function or enter your own (recommended - see sklearn)</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul>
 <li><p><strong>X_train</strong> (<em>np array</em>) – numpy array of training data where the 1st column is labels</p></li>
-<li><p><strong>outModel</strong> (<em>string</em>) – the output model path which is a gz file</p></li>
+<li><p><strong>outModel</strong> (<em>string</em>) – the output model path which is a gz file, if using keras it is
+h5</p></li>
 <li><p><strong>clf</strong> (<em>string</em>) – an sklearn or xgb classifier/regressor
-logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb</p></li>
-<li><p><strong>random</strong> (<em>bool</em>) – if True, a random param search</p></li>
-<li><p><strong>cv</strong> (<em>int</em>) – no of folds</p></li>
-<li><p><strong>cores</strong> (<em>int or -1 (default)</em>) – the no of parallel jobs</p></li>
-<li><p><strong>strat</strong> (<em>bool</em>) – a stratified grid search</p></li>
-<li><p><strong>regress</strong> (<em>bool</em>) – a regression model if True, a classifier if False</p></li>
-<li><p><strong>params</strong> (<em>a dict of model params (see scikit learn)</em>) – enter your own params dict rather than the range provided</p></li>
-<li><p><strong>scoring</strong> (<em>string</em>) – a suitable sklearn scoring type (see notes)</p></li>
+logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb,</p>
+<p>keras nnt also available as a very limited option - the nnt is
+currently a dense sequential of 32, 16, 8, 32 - please inspect the
+source. If using GPU, you will likely be limited to a sequential
+grid search as multi-core overloads the GPUs quick!</p>
+</li>
 </ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>random<span class="classifier">bool</span></dt><dd><p>if True, a random param search</p>
+</dd>
+<dt>cv<span class="classifier">int</span></dt><dd><p>no of folds</p>
+</dd>
+<dt>cores<span class="classifier">int or -1 (default)</span></dt><dd><p>the no of parallel jobs</p>
+</dd>
+<dt>strat<span class="classifier">bool</span></dt><dd><p>a stratified grid search</p>
+</dd>
+<dt>regress<span class="classifier">bool</span></dt><dd><p>a regression model if True, a classifier if False</p>
+</dd>
+<dt>params<span class="classifier">a dict of model params (see scikit learn)</span></dt><dd><p>enter your own params dict rather than the range provided</p>
+</dd>
+<dt>scoring<span class="classifier">string</span></dt><dd><p>a suitable sklearn scoring type (see notes)</p>
 </dd>
 </dl>
 <blockquote>
@@ -788,9 +838,9 @@ multi-class, regression etc - see the sklearn docs!</p>
 </div></blockquote>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="learning.create_model_tpot">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model_tpot</code><span class="sig-paren">(</span><em class="sig-param">X_train</em>, <em class="sig-param">outModel</em>, <em class="sig-param">cv=6</em>, <em class="sig-param">cores=-1</em>, <em class="sig-param">regress=False</em>, <em class="sig-param">params=None</em>, <em class="sig-param">scoring=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model_tpot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model_tpot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_train</span></em>, <em class="sig-param"><span class="n">outModel</span></em>, <em class="sig-param"><span class="n">cv</span><span class="o">=</span><span class="default_value">6</span></em>, <em class="sig-param"><span class="n">cores</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">regress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scoring</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model_tpot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a model using the tpot library where genetic algorithms
 are used to optimise pipline and params.</p>
 <p>This also supports xgboost incidentally</p>
@@ -811,9 +861,9 @@ from which to run the pipeline</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="learning.get_training">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">get_training</code><span class="sig-paren">(</span><em class="sig-param">inShape</em>, <em class="sig-param">inRas</em>, <em class="sig-param">bands</em>, <em class="sig-param">field</em>, <em class="sig-param">outFile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">get_training</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">bands</span></em>, <em class="sig-param"><span class="n">field</span></em>, <em class="sig-param"><span class="n">outFile</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training" title="Permalink to this definition">¶</a></dt>
 <dd><p>Collect training as an np array for use with create model function</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -836,38 +886,31 @@ from which to run the pipeline</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="learning.get_training_point">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">get_training_point</code><span class="sig-paren">(</span><em class="sig-param">inShape</em>, <em class="sig-param">inRas</em>, <em class="sig-param">bands</em>, <em class="sig-param">field</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training_point" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>Collect training as a np array for use with create model function using</dt><dd><p>point data</p>
-</dd>
-</dl>
+<dl class="py function">
+<dt id="learning.get_training_ply">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">get_training_ply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">label_field</span><span class="o">=</span><span class="default_value">'scalar_label'</span></em>, <em class="sig-param"><span class="n">outFile</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training_ply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get training from a point cloud</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>inShape</strong> (<em>string</em>) – the input shapefile - must be esri .shp at present</p></li>
-<li><p><strong>inRas</strong> (<em>string</em>) – the input raster from which the training is extracted</p></li>
-<li><p><strong>bands</strong> (<em>int</em>) – no of bands</p></li>
-<li><p><strong>field</strong> (<em>string</em>) – the attribute field containing the training labels</p></li>
-<li><p><strong>outFile</strong> (<em>string (optional)</em>) – path to the training file saved as joblib format (eg - ‘training.gz’)</p></li>
+<li><p><strong>incld</strong> (<em>string</em>) – the input point cloud</p></li>
+<li><p><strong>label_field</strong> (<em>string</em>) – the name of the field representing the training points which must
+be positive integers</p></li>
+<li><p><strong>outFile</strong> (<em>string</em>) – path to training array to be saved as .gz via joblib</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><em>A tuple containing</em></p></li>
-<li><p><em>-np array of training data</em></p></li>
-<li><p><em>-list of polygons with invalid geometry that were not collected</em></p></li>
-</ul>
-</p>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np array of training where first column is labels</p>
 </dd>
 </dl>
-<p>UNFINISHED DO NOT USE</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="learning.get_training_shp">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">get_training_shp</code><span class="sig-paren">(</span><em class="sig-param">inShape</em>, <em class="sig-param">label_field</em>, <em class="sig-param">feat_fields</em>, <em class="sig-param">outFile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training_shp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">get_training_shp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">label_field</span></em>, <em class="sig-param"><span class="n">feat_fields</span></em>, <em class="sig-param"><span class="n">outFile</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training_shp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Collect training from a shapefile attribute table. Used for object-based
 classification (typically).</p>
 <dl class="field-list simple">
@@ -889,9 +932,9 @@ classification (typically).</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="learning.plot_feature_importances">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">plot_feature_importances</code><span class="sig-paren">(</span><em class="sig-param">modelPth</em>, <em class="sig-param">featureNames</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.plot_feature_importances" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">plot_feature_importances</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">modelPth</span></em>, <em class="sig-param"><span class="n">featureNames</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.plot_feature_importances" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the feature importances of an ensemble classifier</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -903,9 +946,24 @@ classification (typically).</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
+<dt id="learning.ply_features">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">ply_features</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">outcld</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">k</span><span class="o">=</span><span class="default_value">30</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.ply_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate point cloud features and write to file</p>
+<p>Currently memory intensive due to using pyntcloud….</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>incld</strong> (<em>string</em>) – the input point cloud</p></li>
+<li><p><strong>outcld</strong> (<em>string</em>) – the output point cloud</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="learning.prob_pixel_bloc">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">prob_pixel_bloc</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">inputImage</em>, <em class="sig-param">bands</em>, <em class="sig-param">outMap</em>, <em class="sig-param">classes</em>, <em class="sig-param">blocksize=None</em>, <em class="sig-param">FMT=None</em>, <em class="sig-param">one_class=None</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.prob_pixel_bloc" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">prob_pixel_bloc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">inputImage</span></em>, <em class="sig-param"><span class="n">bands</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">classes</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">one_class</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.prob_pixel_bloc" title="Permalink to this definition">¶</a></dt>
 <dd><p>A block processing classifier for large rasters that produces a probability,
 output.</p>
 <p>Supports KEA, HFA, &amp; Gtiff formats -KEA is recommended, Gtiff is the default</p>
@@ -928,9 +986,9 @@ will read size from gdal (this doesn’t always pay off!)</p></li>
 so that has been prioritised rather than raster IO</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="learning.rmse_vector_lyr">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">rmse_vector_lyr</code><span class="sig-paren">(</span><em class="sig-param">inShape</em>, <em class="sig-param">attributes</em><span class="sig-paren">)</span><a class="headerlink" href="#learning.rmse_vector_lyr" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">rmse_vector_lyr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">attributes</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.rmse_vector_lyr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Using sklearn get the rmse of 2 vector attributes
 (the actual and predicted of course in the order [‘actual’, ‘pred’])</p>
 <dl class="field-list simple">
@@ -952,14 +1010,14 @@ so that has been prioritised rather than raster IO</p>
 <h3>Description<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <p>This module contains various functions for the writing of data in OGR vector
 formats. The functions are mainly concerned with writing geometric or pixel based attributes, with the view to them being classified in the learning module</p>
-<dl class="function">
+<dl class="py function">
 <dt id="shape.meshgrid">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">meshgrid</code><span class="sig-paren">(</span><em class="sig-param">inRaster</em>, <em class="sig-param">outShp</em>, <em class="sig-param">gridHeight=1</em>, <em class="sig-param">gridWidth=1</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.meshgrid" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">meshgrid</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRaster</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">gridHeight</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">gridWidth</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.meshgrid" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="shape.ms_snake">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">ms_snake</code><span class="sig-paren">(</span><em class="sig-param">inShp</em>, <em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">band=2</em>, <em class="sig-param">buf1=0</em>, <em class="sig-param">buf2=0</em>, <em class="sig-param">algo='ACWE'</em>, <em class="sig-param">nodata_value=0</em>, <em class="sig-param">iterations=200</em>, <em class="sig-param">smoothing=1</em>, <em class="sig-param">lambda1=1</em>, <em class="sig-param">lambda2=1</em>, <em class="sig-param">threshold='auto'</em>, <em class="sig-param">balloon=-1</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.ms_snake" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">ms_snake</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">buf1</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">buf2</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">algo</span><span class="o">=</span><span class="default_value">'ACWE'</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">iterations</span><span class="o">=</span><span class="default_value">200</span></em>, <em class="sig-param"><span class="n">smoothing</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">lambda1</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">lambda2</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">threshold</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">balloon</span><span class="o">=</span><span class="default_value">- 1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.ms_snake" title="Permalink to this definition">¶</a></dt>
 <dd><p>Deform a polygon using active contours on the values of an underlying raster.</p>
 <p>This uses morphsnakes and explanations are from there.</p>
 <dl class="field-list simple">
@@ -1000,14 +1058,14 @@ this to zero will disable the balloon force.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="shape.ransac_lines">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">ransac_lines</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outRas</em>, <em class="sig-param">sigma=3</em>, <em class="sig-param">row=True</em>, <em class="sig-param">col=True</em>, <em class="sig-param">binwidth=40</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.ransac_lines" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">ransac_lines</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outRas</span></em>, <em class="sig-param"><span class="n">sigma</span><span class="o">=</span><span class="default_value">3</span></em>, <em class="sig-param"><span class="n">row</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">col</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">binwidth</span><span class="o">=</span><span class="default_value">40</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.ransac_lines" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="shape.shape_props">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">shape_props</code><span class="sig-paren">(</span><em class="sig-param">inShape</em>, <em class="sig-param">prop</em>, <em class="sig-param">inRas=None</em>, <em class="sig-param">label_field='ID'</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.shape_props" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">shape_props</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">prop</span></em>, <em class="sig-param"><span class="n">inRas</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">label_field</span><span class="o">=</span><span class="default_value">'ID'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.shape_props" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate various geometric properties of a set of polygons
 Output will be relative to geographic units where relevant, but normalised where not (eg Eccentricity)</p>
 <dl class="field-list simple">
@@ -1036,9 +1094,9 @@ keys are same as scikit-image see notes for which require raster</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="shape.shp2gj">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">shp2gj</code><span class="sig-paren">(</span><em class="sig-param">inShape</em>, <em class="sig-param">outJson</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.shp2gj" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">shp2gj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">outJson</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.shp2gj" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts a geojson/json to a shapefile</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1053,9 +1111,9 @@ keys are same as scikit-image see notes for which require raster</p>
 <p>Credit to person who posted this on the pyshp site</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="shape.snake">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">snake</code><span class="sig-paren">(</span><em class="sig-param">inShp</em>, <em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">band=1</em>, <em class="sig-param">buf=1</em>, <em class="sig-param">nodata_value=0</em>, <em class="sig-param">boundary='fixed'</em>, <em class="sig-param">alpha=0.1</em>, <em class="sig-param">beta=30.0</em>, <em class="sig-param">w_line=0</em>, <em class="sig-param">w_edge=0</em>, <em class="sig-param">gamma=0.01</em>, <em class="sig-param">max_iterations=2500</em>, <em class="sig-param">smooth=True</em>, <em class="sig-param">eq=False</em>, <em class="sig-param">rgb=False</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.snake" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">snake</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">buf</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">boundary</span><span class="o">=</span><span class="default_value">'fixed'</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">beta</span><span class="o">=</span><span class="default_value">30.0</span></em>, <em class="sig-param"><span class="n">w_line</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">w_edge</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">gamma</span><span class="o">=</span><span class="default_value">0.01</span></em>, <em class="sig-param"><span class="n">max_iterations</span><span class="o">=</span><span class="default_value">2500</span></em>, <em class="sig-param"><span class="n">smooth</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">eq</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">rgb</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.snake" title="Permalink to this definition">¶</a></dt>
 <dd><p>Deform a line using active contours based on the values of an underlying</p>
 <p>raster - based on skimage at present so</p>
 <p>not quick!</p>
@@ -1090,9 +1148,9 @@ yields same behaviour as ‘fixed’ and ‘free’, respectively.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="shape.texture_stats">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">texture_stats</code><span class="sig-paren">(</span><em class="sig-param">vector_path</em>, <em class="sig-param">raster_path</em>, <em class="sig-param">band</em>, <em class="sig-param">gprop='contrast'</em>, <em class="sig-param">offset=2</em>, <em class="sig-param">angle=0</em>, <em class="sig-param">write_stat=None</em>, <em class="sig-param">nodata_value=0</em>, <em class="sig-param">mean=False</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.texture_stats" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">texture_stats</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vector_path</span></em>, <em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">gprop</span><span class="o">=</span><span class="default_value">'contrast'</span></em>, <em class="sig-param"><span class="n">offset</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">angle</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">write_stat</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">mean</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.texture_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate and optionally write texture stats for an OGR compatible polygon
 based on underlying raster values</p>
 <dl class="field-list">
@@ -1127,9 +1185,9 @@ scikit-image algorithm measuring texture over zero/nodata to number pixels
 this issue</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="shape.thresh_seg">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">thresh_seg</code><span class="sig-paren">(</span><em class="sig-param">inShp</em>, <em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">band</em>, <em class="sig-param">buf=0</em>, <em class="sig-param">algo='otsu'</em>, <em class="sig-param">min_area=4</em>, <em class="sig-param">nodata_value=0</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.thresh_seg" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">thresh_seg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">buf</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">algo</span><span class="o">=</span><span class="default_value">'otsu'</span></em>, <em class="sig-param"><span class="n">min_area</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.thresh_seg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use an image processing technique to threshold foreground and background in a polygon segment.</p>
 <p>This default is otsu’s method.</p>
 <dl class="field-list simple">
@@ -1145,9 +1203,9 @@ this issue</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="shape.write_text_field">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">write_text_field</code><span class="sig-paren">(</span><em class="sig-param">inShape</em>, <em class="sig-param">fieldName</em>, <em class="sig-param">attribute</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.write_text_field" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">write_text_field</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">fieldName</span></em>, <em class="sig-param"><span class="n">attribute</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.write_text_field" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write a string to a ogr vector file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1160,9 +1218,9 @@ this issue</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="shape.zonal_rgb_idx">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_rgb_idx</code><span class="sig-paren">(</span><em class="sig-param">vector_path</em>, <em class="sig-param">raster_path</em>, <em class="sig-param">nodata_value=0</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_rgb_idx" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_rgb_idx</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vector_path</span></em>, <em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_rgb_idx" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate RGB-based indicies per segment/AOI</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1175,9 +1233,9 @@ this issue</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="shape.zonal_stats">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_stats</code><span class="sig-paren">(</span><em class="sig-param">vector_path</em>, <em class="sig-param">raster_path</em>, <em class="sig-param">band</em>, <em class="sig-param">bandname</em>, <em class="sig-param">stat='mean'</em>, <em class="sig-param">write_stat=None</em>, <em class="sig-param">nodata_value=0</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_stats" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_stats</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vector_path</span></em>, <em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">bandname</span></em>, <em class="sig-param"><span class="n">stat</span><span class="o">=</span><span class="default_value">'mean'</span></em>, <em class="sig-param"><span class="n">write_stat</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate zonal stats for an OGR polygon file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1197,9 +1255,9 @@ only returned (bool)</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="shape.zonal_stats_all">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_stats_all</code><span class="sig-paren">(</span><em class="sig-param">vector_path, raster_path, bandnames, statList=['mean', 'min', 'max', 'median', 'std', 'var', 'skew', 'kurt']</em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_stats_all" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_stats_all</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vector_path</span></em>, <em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">bandnames</span></em>, <em class="sig-param"><span class="n">statList</span><span class="o">=</span><span class="default_value">['mean', 'min', 'max', 'median', 'std', 'var', 'skew', 'kurt']</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_stats_all" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate zonal stats for an OGR polygon file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1224,9 +1282,9 @@ The utilities module - things here don’t have an exact theme or home yet so
 may eventually move elsewhere</p>
 <p>If you use code to publish work cite/acknowledge me and authors of libs etc as
 appropriate</p>
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.accum_gabor">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">accum_gabor</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outRas=None</em>, <em class="sig-param">size=(9</em>, <em class="sig-param">9)</em>, <em class="sig-param">stdv=1</em>, <em class="sig-param">no_angles=16</em>, <em class="sig-param">wave_length=3</em>, <em class="sig-param">eccen=1</em>, <em class="sig-param">phase_off=0</em>, <em class="sig-param">pltgrid=(4</em>, <em class="sig-param">4)</em>, <em class="sig-param">blockproc=False</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.accum_gabor" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">accum_gabor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outRas</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">9, 9</span></em>, <em class="sig-param"><span class="n">stdv</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">no_angles</span><span class="o">=</span><span class="default_value">16</span></em>, <em class="sig-param"><span class="n">wave_length</span><span class="o">=</span><span class="default_value">3</span></em>, <em class="sig-param"><span class="n">eccen</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">phase_off</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">pltgrid</span><span class="o">=</span><span class="default_value">4, 4</span></em>, <em class="sig-param"><span class="n">blockproc</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.accum_gabor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Process with custom gabor filters and output an raster containing each
 kernel output as a band</p>
 <dl class="field-list simple">
@@ -1246,74 +1304,57 @@ kernel output as a band</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.colorscale">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">colorscale</code><span class="sig-paren">(</span><em class="sig-param">seg</em>, <em class="sig-param">prop</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.colorscale" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">colorscale</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">seg</span></em>, <em class="sig-param"><span class="n">prop</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.colorscale" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="utilities.combine_hough_seg">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">combine_hough_seg</code><span class="sig-paren">(</span><em class="sig-param">inRas1</em>, <em class="sig-param">inRas2</em>, <em class="sig-param">outRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">min_area=None</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.combine_hough_seg" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt id="utilities.combine_grid">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">combine_grid</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas1</span></em>, <em class="sig-param"><span class="n">inRas2</span></em>, <em class="sig-param"><span class="n">outRas</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">min_area</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.combine_grid" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="utilities.get_corners">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">get_corners</code><span class="sig-paren">(</span><em class="sig-param">bboxes</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.get_corners" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get corners of bounding boxes</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>bboxes</strong> (<em>numpy.ndarray</em>) – Numpy array containing bounding boxes of shape <cite>N X 4</cite> where N is the
-number of bounding boxes and the bounding boxes are represented in the
-format <cite>x1 y1 x2 y2</cite></p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Numpy array of shape <cite>N x 8</cite> containing N bounding boxes each described by their
-corner co-ordinates <cite>x1 y1 x2 y2 x3 y3 x4 y4</cite></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>numpy.ndarray</p>
-</dd>
-</dl>
+<dl class="py function">
+<dt id="utilities.do_phasecong">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">do_phasecong</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tempIm</span></em>, <em class="sig-param"><span class="n">low_t</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">hi_t</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">norient</span><span class="o">=</span><span class="default_value">6</span></em>, <em class="sig-param"><span class="n">nscale</span><span class="o">=</span><span class="default_value">6</span></em>, <em class="sig-param"><span class="n">sigma</span><span class="o">=</span><span class="default_value">2</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.do_phasecong" title="Permalink to this definition">¶</a></dt>
+<dd><p>process phase congruency on an image</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="utilities.get_enclosing_box">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">get_enclosing_box</code><span class="sig-paren">(</span><em class="sig-param">corners</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.get_enclosing_box" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get an enclosing box for ratated corners of a bounding box</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>corners</strong> (<em>numpy.ndarray</em>) – Numpy array of shape <cite>N x 8</cite> containing N bounding boxes each described by their
-corner co-ordinates <cite>x1 y1 x2 y2 x3 y3 x4 y4</cite></p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Numpy array containing enclosing bounding boxes of shape <cite>N X 4</cite> where N is the
-number of bounding boxes and the bounding boxes are represented in the
-format <cite>x1 y1 x2 y2</cite></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>numpy.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="utilities.hough2line">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">hough2line</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">edge='canny'</em>, <em class="sig-param">sigma=2</em>, <em class="sig-param">thresh=None</em>, <em class="sig-param">ratio=2</em>, <em class="sig-param">n_orient=6</em>, <em class="sig-param">n_scale=5</em>, <em class="sig-param">hArray=True</em>, <em class="sig-param">vArray=True</em>, <em class="sig-param">prob=False</em>, <em class="sig-param">line_length=100</em>, <em class="sig-param">line_gap=200</em>, <em class="sig-param">valrange=1</em>, <em class="sig-param">interval=10</em>, <em class="sig-param">band=2</em>, <em class="sig-param">min_area=None</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.hough2line" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt id="utilities.fixply">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">fixply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incloud</span></em>, <em class="sig-param"><span class="n">outcloud</span></em>, <em class="sig-param"><span class="n">field</span><span class="o">=</span><span class="default_value">'scalar_label'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.fixply" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.image_thresh">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">image_thresh</code><span class="sig-paren">(</span><em class="sig-param">image</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.image_thresh" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">image_thresh</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.image_thresh" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
+<dl class="py function">
+<dt id="utilities.imangle">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">imangle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">im</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.imangle" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>im<span class="classifier">np array</span></dt><dd><p>input image</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>axes</strong> – orientations of each side and binary array</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="utilities.iter_ransac">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">iter_ransac</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">sigma=3</em>, <em class="sig-param">no_iter=10</em>, <em class="sig-param">order='col'</em>, <em class="sig-param">mxt=2500</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.iter_ransac" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">iter_ransac</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span></em>, <em class="sig-param"><span class="n">sigma</span><span class="o">=</span><span class="default_value">3</span></em>, <em class="sig-param"><span class="n">no_iter</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">order</span><span class="o">=</span><span class="default_value">'col'</span></em>, <em class="sig-param"><span class="n">mxt</span><span class="o">=</span><span class="default_value">2500</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.iter_ransac" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.min_bound_rectangle">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">min_bound_rectangle</code><span class="sig-paren">(</span><em class="sig-param">points</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.min_bound_rectangle" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">min_bound_rectangle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">points</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.min_bound_rectangle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find the smallest bounding rectangle for a set of points.
 Returns a set of points representing the corners of the bounding box.
 :Parameters: <strong>points</strong> (<em>list</em>) – An nx2 iterable of points</p>
@@ -1327,9 +1368,9 @@ Returns a set of points representing the corners of the bounding box.
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.ms_toposeg">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ms_toposeg</code><span class="sig-paren">(</span><em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">iterations=100</em>, <em class="sig-param">algo='ACWE'</em>, <em class="sig-param">band=2</em>, <em class="sig-param">dist=30</em>, <em class="sig-param">se=3</em>, <em class="sig-param">usemin=False</em>, <em class="sig-param">imtype=None</em>, <em class="sig-param">useedge=True</em>, <em class="sig-param">burnedge=False</em>, <em class="sig-param">merge=False</em>, <em class="sig-param">close=True</em>, <em class="sig-param">sigma=4</em>, <em class="sig-param">hi_t=None</em>, <em class="sig-param">low_t=None</em>, <em class="sig-param">init=4</em>, <em class="sig-param">smooth=1</em>, <em class="sig-param">lambda1=1</em>, <em class="sig-param">lambda2=1</em>, <em class="sig-param">threshold='auto'</em>, <em class="sig-param">balloon=1</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ms_toposeg" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ms_toposeg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">iterations</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">algo</span><span class="o">=</span><span class="default_value">'ACWE'</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">dist</span><span class="o">=</span><span class="default_value">30</span></em>, <em class="sig-param"><span class="n">se</span><span class="o">=</span><span class="default_value">3</span></em>, <em class="sig-param"><span class="n">usemin</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">imtype</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">useedge</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">burnedge</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">merge</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">close</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">sigma</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">hi_t</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">low_t</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">init</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">smooth</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">lambda1</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">lambda2</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">threshold</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">balloon</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ms_toposeg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Topology preserveing segmentation, implemented in python/nump inspired by
 ms_topo and morphsnakes</p>
 <p>This uses morphsnakes level sets to make the segments and param explanations are mainly
@@ -1365,9 +1406,9 @@ this to zero will disable the balloon force.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.ms_toposnakes">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ms_toposnakes</code><span class="sig-paren">(</span><em class="sig-param">inSeg</em>, <em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">iterations=100</em>, <em class="sig-param">algo='ACWE'</em>, <em class="sig-param">band=2</em>, <em class="sig-param">sigma=4</em>, <em class="sig-param">alpha=100</em>, <em class="sig-param">smooth=1</em>, <em class="sig-param">lambda1=1</em>, <em class="sig-param">lambda2=1</em>, <em class="sig-param">threshold='auto'</em>, <em class="sig-param">balloon=-1</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ms_toposnakes" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ms_toposnakes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inSeg</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">iterations</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">algo</span><span class="o">=</span><span class="default_value">'ACWE'</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">sigma</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">smooth</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">lambda1</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">lambda2</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">threshold</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">balloon</span><span class="o">=</span><span class="default_value">- 1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ms_toposnakes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Topology preserveing morphsnakes, implemented in python/numpy exclusively
 by C.Robb</p>
 <p>This uses morphsnakes and explanations are from there.</p>
@@ -1402,9 +1443,9 @@ this to zero will disable the balloon force.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.ms_toposnakes2">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ms_toposnakes2</code><span class="sig-paren">(</span><em class="sig-param">inSeg</em>, <em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">iterations=100</em>, <em class="sig-param">algo='ACWE'</em>, <em class="sig-param">band=2</em>, <em class="sig-param">sigma=4</em>, <em class="sig-param">smooth=1</em>, <em class="sig-param">lambda1=1</em>, <em class="sig-param">lambda2=1</em>, <em class="sig-param">threshold='auto'</em>, <em class="sig-param">balloon=-1</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ms_toposnakes2" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ms_toposnakes2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inSeg</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">iterations</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">algo</span><span class="o">=</span><span class="default_value">'ACWE'</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">sigma</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">smooth</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">lambda1</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">lambda2</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">threshold</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">balloon</span><span class="o">=</span><span class="default_value">- 1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ms_toposnakes2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Topology preserveing morphsnakes, implmented by Jirka Borovec version
 with C++/cython elements- credit to him!</p>
 <p>This is memory intensive so large images will likely fill RAM and produces
@@ -1441,9 +1482,9 @@ this to zero will disable the balloon force.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.otbMeanshift">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">otbMeanshift</code><span class="sig-paren">(</span><em class="sig-param">inputImage</em>, <em class="sig-param">radius</em>, <em class="sig-param">rangeF</em>, <em class="sig-param">minSize</em>, <em class="sig-param">outShape</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.otbMeanshift" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">otbMeanshift</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputImage</span></em>, <em class="sig-param"><span class="n">radius</span></em>, <em class="sig-param"><span class="n">rangeF</span></em>, <em class="sig-param"><span class="n">minSize</span></em>, <em class="sig-param"><span class="n">outShape</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.otbMeanshift" title="Permalink to this definition">¶</a></dt>
 <dd><p>OTB meanshift by calling the otb command line
 Written for convenience and due to otb python api being rather verbose</p>
 <p>There is a maximum size for the .shp format otb doesn’t seem to
@@ -1463,14 +1504,14 @@ divided</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.ragmerge">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ragmerge</code><span class="sig-paren">(</span><em class="sig-param">inSeg</em>, <em class="sig-param">inRas</em>, <em class="sig-param">outShp</em>, <em class="sig-param">band</em>, <em class="sig-param">thresh=0.02</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ragmerge" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ragmerge</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inSeg</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">thresh</span><span class="o">=</span><span class="default_value">0.02</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ragmerge" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.raster2array">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">raster2array</code><span class="sig-paren">(</span><em class="sig-param">inRas, bands=[1]</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.raster2array" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">raster2array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.raster2array" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read a raster and return an array, either single or multiband</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1482,35 +1523,9 @@ divided</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="utilities.rotate_box">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">rotate_box</code><span class="sig-paren">(</span><em class="sig-param">corners</em>, <em class="sig-param">angle</em>, <em class="sig-param">cx</em>, <em class="sig-param">cy</em>, <em class="sig-param">h</em>, <em class="sig-param">w</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.rotate_box" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rotate the bounding box.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>corners</strong> (<em>numpy.ndarray</em>) – Numpy array of shape <cite>N x 8</cite> containing N bounding boxes each described by their
-corner co-ordinates <cite>x1 y1 x2 y2 x3 y3 x4 y4</cite></p></li>
-<li><p><strong>angle</strong> (<em>float</em>) – angle by which the image is to be rotated</p></li>
-<li><p><strong>cx</strong> (<em>int</em>) – x coordinate of the center of image (about which the box will be rotated)</p></li>
-<li><p><strong>cy</strong> (<em>int</em>) – y coordinate of the center of image (about which the box will be rotated)</p></li>
-<li><p><strong>h</strong> (<em>int</em>) – height of the image</p></li>
-<li><p><strong>w</strong> (<em>int</em>) – width of the image</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Numpy array of shape <cite>N x 8</cite> containing N rotated bounding boxes each described by their
-corner co-ordinates <cite>x1 y1 x2 y2 x3 y3 x4 y4</cite></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>numpy.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.rotate_im">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">rotate_im</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">angle</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.rotate_im" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">rotate_im</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span></em>, <em class="sig-param"><span class="n">angle</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.rotate_im" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rotate the image.</p>
 <p>Rotate the image such that the rotated image is enclosed inside the tightest
 rectangle. The area not occupied by the pixels of the original image is colored
@@ -1531,14 +1546,14 @@ black.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.spinim">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">spinim</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">img</em>, <em class="sig-param">bboxes</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.spinim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">spinim</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">img</span></em>, <em class="sig-param"><span class="n">bboxes</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.spinim" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.temp_match">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">temp_match</code><span class="sig-paren">(</span><em class="sig-param">vector_path</em>, <em class="sig-param">raster_path</em>, <em class="sig-param">band</em>, <em class="sig-param">nodata_value=0</em>, <em class="sig-param">ind=None</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.temp_match" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">temp_match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vector_path</span></em>, <em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">ind</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.temp_match" title="Permalink to this definition">¶</a></dt>
 <dd><p>Based on polygons return template matched images</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1559,9 +1574,9 @@ black.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.test_gabor">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">test_gabor</code><span class="sig-paren">(</span><em class="sig-param">im</em>, <em class="sig-param">size=9</em>, <em class="sig-param">freq=0.1</em>, <em class="sig-param">angle=None</em>, <em class="sig-param">funct='cos'</em>, <em class="sig-param">plot=True</em>, <em class="sig-param">smooth=True</em>, <em class="sig-param">interp='none'</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.test_gabor" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">test_gabor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">im</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">9</span></em>, <em class="sig-param"><span class="n">freq</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">angle</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">funct</span><span class="o">=</span><span class="default_value">'cos'</span></em>, <em class="sig-param"><span class="n">plot</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">smooth</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">interp</span><span class="o">=</span><span class="default_value">'none'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.test_gabor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Process image with gabor filter bank of specified orientation or derived from
 image positive values bounding box - implemented from numpy with more intuitive
 params</p>
@@ -1581,9 +1596,9 @@ params</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.test_gabor_cv2">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">test_gabor_cv2</code><span class="sig-paren">(</span><em class="sig-param">im</em>, <em class="sig-param">size=9</em>, <em class="sig-param">stdv=1</em>, <em class="sig-param">angle=None</em>, <em class="sig-param">wave_length=3</em>, <em class="sig-param">eccen=1</em>, <em class="sig-param">phase_off=0</em>, <em class="sig-param">plot=True</em>, <em class="sig-param">smooth=True</em>, <em class="sig-param">interp='none'</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.test_gabor_cv2" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">test_gabor_cv2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">im</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">9</span></em>, <em class="sig-param"><span class="n">stdv</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">angle</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">wave_length</span><span class="o">=</span><span class="default_value">3</span></em>, <em class="sig-param"><span class="n">eccen</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">phase_off</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">plot</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">smooth</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">interp</span><span class="o">=</span><span class="default_value">'none'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.test_gabor_cv2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Process image with gabor filter bank of specified orientation or derived from
 image positive values bounding box</p>
 <p>This is the open cv based one</p>
@@ -1609,9 +1624,9 @@ optional best to leave none and hence same as size</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="utilities.visual_callback_2d">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">visual_callback_2d</code><span class="sig-paren">(</span><em class="sig-param">background</em>, <em class="sig-param">fig=None</em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.visual_callback_2d" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">visual_callback_2d</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">background</span></em>, <em class="sig-param"><span class="n">fig</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.visual_callback_2d" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a callback than can be passed as the argument <cite>iter_callback</cite>
 of <cite>morphological_geodesic_active_contour</cite> and
 <cite>morphological_chan_vese</cite> for visualizing the evolution
@@ -1635,6 +1650,11 @@ accordingly. This can be passed as the <cite>iter_callback</cite> argument of
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt id="utilities.wipe_ply_field">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">wipe_ply_field</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incloud</span></em>, <em class="sig-param"><span class="n">outcloud</span></em>, <em class="sig-param"><span class="n">tfield</span><span class="o">=</span><span class="default_value">'training'</span></em>, <em class="sig-param"><span class="n">field</span><span class="o">=</span><span class="default_value">'label'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.wipe_ply_field" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 <div class="section" id="module-geospatial_learn">
@@ -1662,11 +1682,19 @@ accordingly. This can be passed as the <cite>iter_callback</cite> argument of
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2017, Ciaran Robb
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -1677,7 +1705,6 @@ accordingly. This can be passed as the <cite>iter_callback</cite> argument of
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

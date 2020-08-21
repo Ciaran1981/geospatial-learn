@@ -1493,7 +1493,7 @@ def get_training(inShape, inRas, bands, field, outFile = None):
         rb = raster.GetRasterBand(1)
         src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                            src_offset[3])
-        if np.shape(src_array) is ():
+        if np.shape(src_array) == ():
             rejects.append(label)
             continue
         # Read raster as arrays
