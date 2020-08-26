@@ -1530,7 +1530,7 @@ def get_training(inShape, inRas, bands, field, outFile = None):
     
     return outData, rejects
 
-def ply_features(incld, outcld=None, k=30):
+def ply_features(incld, outcld=None, k=[10,20,30]):
     
     """ 
     Calculate point cloud features and write to file
@@ -1546,7 +1546,9 @@ def ply_features(incld, outcld=None, k=30):
         
     outcld: string
                the output point cloud
-         
+    k: list
+              the no of neighbors to use when calculating the props
+              multiple is more effective
 
     """  
     
@@ -1563,17 +1565,21 @@ def ply_features(incld, outcld=None, k=30):
             # "inclination_rad", "orientation_deg", "orientation_rad"]
     #, "HueSaturationValue",#"RelativeLuminance"," RGBIntensity"]
 
-    k_neighbors = pcd.get_neighbors(k=k)
-    eigenvalues = pcd.add_scalar_field("eigen_values", k_neighbors=k_neighbors)
-
-    [pcd.add_scalar_field(p, ev=eigenvalues) for p in pProps]
+    
+    # iterate through neighborhood sizes to get a multiscale output
+    for i in k:
+        k_neighbors = pcd.get_neighbors(k=i)
+        eigenvalues = pcd.add_scalar_field("eigen_values", k_neighbors=k_neighbors)
+        [pcd.add_scalar_field(p, ev=eigenvalues) for p in pProps]
+        
     
     if outcld == None:
         pcd.to_file(incld)
     else:
         pcd.to_file(outcld)
 
-def get_training_ply(incld, label_field="scalar_label", rgb=True, outFile=None):
+def get_training_ply(incld, label_field="training", classif_field='label',
+                     rgb=True, outFile=None):
     
     """ 
     Get training from a point cloud
@@ -1588,6 +1594,10 @@ def get_training_ply(incld, label_field="scalar_label", rgb=True, outFile=None):
     label_field: string
               the name of the field representing the training points which must
               be positive integers
+              
+    classif_field: string
+              the name of the field that will be used for classification later
+              must be specified so it can be ignored
     rgb: bool
               whether there is rgb data to be included
               
@@ -1601,66 +1611,42 @@ def get_training_ply(incld, label_field="scalar_label", rgb=True, outFile=None):
 
     """  
     # TODO Clean up lack of loops funcs to do stuff
-    pf = PlyData.read(incld)
+    #pf = PlyData.read(incld)
+    
+    # This is neater and easier to work with than  plydata certainly!!
+    
+    pcd = PyntCloud.from_file(incld)
+    
+    dF = pcd.points
+    
+    ignore = ['x', 'y', 'scalar_ScanAngleRank',
+       'scalar_NumberOfReturns', 'scalar_ReturnNumber', 'scalar_GpsTime',
+       'scalar_PointSourceId', classif_field]
+    
+    # If any of the above list exists, cut them from the dF
+    for i in ignore:
+        try:
+            del dF[i]
+        except ValueError:
+                pass
     
 #    pProps =['anisotropy', 'curvature', "eigenentropy", "eigen_sum",
 #             "linearity", "omnivariance", "planarity", "sphericity"]
    
-    #TODO this is a mess - was being lazy must tidy this
-    # doesn't matter if this is a float
-    label = np.array(pf.elements[0].data[label_field], dtype='float64')
-    z = np.array(pf.elements[0].data['z'], dtype='float64')
-    if rgb == True:
-        r = np.array(pf.elements[0].data['red'], dtype='float64')
-        g = np.array(pf.elements[0].data['green'], dtype='float64')
-        b = np.array(pf.elements[0].data['blue'], dtype='float64')
-    else:
-        print('No rgb selected for processing')
-    nx = np.array(pf.elements[0].data['nx'], dtype='float64')
-    ny = np.array(pf.elements[0].data['ny'], dtype='float64')
-    nz = np.array(pf.elements[0].data['nz'], dtype='float64')
-#    e1 = np.array(pf.elements[0].data["e1(31)"], dtype='float64')
-#    e2 = np.array(pf.elements[0].data["e2(31)"], dtype='float64')
-#    e3 = np.array(pf.elements[0].data["e3(31)"], dtype='float64')
-    a = np.array(pf.elements[0].data['anisotropy(31)'], dtype='float64')
-    c = np.array(pf.elements[0].data["curvature(31)"], dtype='float64')
-    et = np.array(pf.elements[0].data["eigenentropy(31)"], dtype='float64')
-    es = np.array(pf.elements[0].data["eigen_sum(31)"], dtype='float64')
-    l = np.array(pf.elements[0].data["linearity(31)"], dtype='float64')
-    pl = np.array(pf.elements[0].data["planarity(31)"], dtype='float64')
-    om = np.array(pf.elements[0].data["omnivariance(31)"], dtype='float64')
-    sp = np.array(pf.elements[0].data["sphericity(31)"], dtype='float64')
-
-    label.shape = (label.shape[0], 1)
-    z.shape=(label.shape[0], 1)
-    a.shape=(label.shape[0], 1)
-    if rgb == True:
-        r.shape=(label.shape[0], 1)
-        g.shape=(label.shape[0], 1)
-        b.shape=(label.shape[0], 1)
-    nx.shape=(label.shape[0], 1)
-    ny.shape=(label.shape[0], 1)
-    nz.shape=(label.shape[0], 1)
-    c.shape=(label.shape[0], 1)
-    et.shape=(label.shape[0], 1)
-    es.shape=(label.shape[0], 1)
-    l.shape=(label.shape[0], 1)
-    om.shape=(label.shape[0], 1)
-    pl.shape=(label.shape[0], 1)
-    sp.shape=(label.shape[0], 1)
+    label = dF[label_field].to_numpy()
     
-    if rgb == True:
-        final = np.hstack((label,  r,g,b, z, nx,ny,nz, a, c, et, es, l, pl, om,  sp))
-        del r,g,b, nx, ny, nz, a,  c, et, es, l, om, pl, sp, z
-    else:
-        final = np.hstack((label, z, nx,ny,nz, a, c, et, es, l, pl, om,  sp))
-        del nx,ny,nz, pf,  a, c, et, es, l, om, pl, sp
-        
-    # all these could be dumped now
-   
+    del dF[label_field]
+    
+    features = dF.to_numpy()
+    
+    label.shape = (label.shape[0], 1)
+    
+    X_train = np.hstack((label, features))
+    
+    del features, dF, label
     
     # prep for sklearn
-    X_train = final[final[:,0] >= 0]
+    X_train = X_train[X_train[:,0] >= 0]
         
     # Remove non-finite values
     X_train = X_train[np.isfinite(X_train).all(axis=1)]
@@ -1674,8 +1660,8 @@ def get_training_ply(incld, label_field="scalar_label", rgb=True, outFile=None):
     return X_train
     
 
-def classify_ply(incld, inModel, class_field='scalar_class', rgb=True,
-                 outcld=None):
+def classify_ply(incld, inModel, train_field="training", class_field='label',
+                 rgb=True, outcld=None):
     
     """ 
     Classify a point cloud (ply format)
@@ -1691,6 +1677,9 @@ def classify_ply(incld, inModel, class_field='scalar_class', rgb=True,
     class_field: string
                the name of the field that the results will be written to
                this must already exist! Create in CldComp. or cgal
+    train_field: string
+              the name of the training label field so it can be ignored
+    
     rgb: bool
         whether there is rgb data to be included
                  
@@ -1700,81 +1689,29 @@ def classify_ply(incld, inModel, class_field='scalar_class', rgb=True,
     """  
     
     
-    
-    
     pf = PlyData.read(incld)
     
+    pcd = PyntCloud.from_file(incld)
+    
+    dF = pcd.points
+    
+
+    ignore = ['x', 'y', 'scalar_ScanAngleRank',
+       'scalar_NumberOfReturns', 'scalar_ReturnNumber', 'scalar_GpsTime',
+       'scalar_PointSourceId', class_field, train_field]
+    
+    # If any of the above list exists, cut them from the dF
+    for i in ignore:
+        try:
+            del dF[i]
+        except ValueError:
+                pass
 #    pProps =['anisotropy', 'curvature', "eigenentropy", "eigen_sum",
 #             "linearity", "omnivariance", "planarity", "sphericity"]
-   
-    #TODO this is a mess - was being lazy must tidy this
-    # doesn't matter if this is a float
+            
     
-#    data_type_relation = [
-#    ('int8', 'i1'),('char', 'i1'),('uint8', 'u1'), ('uchar', 'b1'),('uchar', 'u1'),
-#    ('int16', 'i2'),('short', 'i2'),('uint16', 'u2'),('ushort', 'u2'),('int32', 'i4'),
-#    ('int', 'i4'), ('uint32', 'u4'),('uint', 'u4'),('float32', 'f4'),('float', 'f4'),
-#    ('float64', 'f8'),('double', 'f8')]
-#    
-#    data_types = dict(data_type_relation)
-#    _data_type_reverse = dict((b, a) for (a, b) in _data_type_relation)
-        
-        
-#    x = np.array(pf.elements[0].data['x'], dtype='float64')
-#    y = np.array(pf.elements[0].data['y'], dtype='float64')
-    z = np.array(pf.elements[0].data['z'], dtype='float64')
-    nx = np.array(pf.elements[0].data['nx'], dtype='float64')
-    ny = np.array(pf.elements[0].data['ny'], dtype='float64')
-    nz = np.array(pf.elements[0].data['nz'], dtype='float64')
-#    e1 = np.array(pf.elements[0].data["e1(31)"], dtype='float64')
-#    e2 = np.array(pf.elements[0].data["e2(31)"], dtype='float64')
-#    e3 = np.array(pf.elements[0].data["e3(31)"], dtype='float64')
-    if rgb == True:
-        r = np.array(pf.elements[0].data['red'], dtype='float64')
-        g = np.array(pf.elements[0].data['green'], dtype='float64')
-        b = np.array(pf.elements[0].data['blue'], dtype='float64')
-    else:
-        print('No rgb selected for processing')
-    a = np.array(pf.elements[0].data['anisotropy(31)'], dtype='float64')
-    c = np.array(pf.elements[0].data["curvature(31)"], dtype='float64')
-    et = np.array(pf.elements[0].data["eigenentropy(31)"], dtype='float64')
-    es = np.array(pf.elements[0].data["eigen_sum(31)"], dtype='float64')
-    l = np.array(pf.elements[0].data["linearity(31)"], dtype='float64')
-    pl = np.array(pf.elements[0].data["planarity(31)"], dtype='float64')
-    om = np.array(pf.elements[0].data["omnivariance(31)"], dtype='float64')
-    sp = np.array(pf.elements[0].data["sphericity(31)"], dtype='float64')
-  
-#    # Now back to the task in hand
-   
-#    x.shape=(a.shape[0], 1)
-#    y.shape=(a.shape[0], 1)
-    z.shape=(a.shape[0], 1)
-    nx.shape=(a.shape[0], 1)
-    ny.shape=(a.shape[0], 1)
-    nz.shape=(a.shape[0], 1)
-    if rgb == True:
-        r.shape=(a.shape[0], 1)
-        g.shape=(a.shape[0], 1)
-        b.shape=(a.shape[0], 1)
-    a.shape=(a.shape[0], 1)
-    c.shape=(a.shape[0], 1)
-    et.shape=(a.shape[0], 1)
-    es.shape=(a.shape[0], 1)
-    l.shape=(a.shape[0], 1)
-    om.shape=(a.shape[0], 1)
-    pl.shape=(a.shape[0], 1)
-    sp.shape=(a.shape[0], 1)
+    X = dF.to_numpy()
     
-#    
-    if rgb == True:
-        X = np.hstack((r,g,b, z, nx,ny,nz, a, c, et, es, l, pl, om,  sp))
-        del r,g,b, nx, ny, nz, a,  c, et, es, l, om, pl, sp, z
-    else:
-        X = np.hstack((z, nx,ny,nz, a, c, et, es, l, pl, om,  sp))
-        del nx, ny, nz, a,  c, et, es, l, om, pl, sp, z
-    
-    # all these could be dumped now
-    del r,g,b, nx, ny, nz, a,  c, et, es, l, om, pl, sp, z
     
     # keep a for the shape
     X[np.where(np.isnan(X))]=0
@@ -1791,11 +1728,6 @@ def classify_ply(incld, inModel, class_field='scalar_class', rgb=True,
         model1 = joblib.load(inModel)
         predictClass = model1.predict(X)
     
-    
-    
-#    if keras == True:
-#        pf.elements[0].data[class_field] = np.argmax(predictClass, axis=1)
-#    else:
     pf.elements[0].data[class_field]=predictClass
     
     if outcld != None:
