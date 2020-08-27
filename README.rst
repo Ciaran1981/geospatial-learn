@@ -14,7 +14,7 @@ Geospatial-learn is a Python module for raster and vector manipulation and using
 
 - There is a 'shape' module for vector processing which is mainly based around extracting image properties and writing them to a vector format. Functions include zonal stats, glcm-based texture etc as well further manipulation of lines and polygons using things like active contours.
 
-- The 'learning' module is for applying creating ML models and applying them to raster and vector data. This is all based around sklearn, xgboost and t-pot. 
+- The 'learning' module is for applying creating ML models and applying them to raster, vector and point cloud data. This is all based around sklearn, xgboost, keras and t-pot. 
 
 - The 'handyplots' module contains a few simple functions that may be useful e.g. plot a classifcation report, confusion matrix etc.    
 
@@ -81,9 +81,7 @@ https://www.scipy.org/
 
 http://scikit-image.org/
 
-Submitting a Pull Request
-~~~~~~~~~~~~~~~~~~~~~~~~~
-available soon
+
 
 Project History
 ---------------
@@ -94,7 +92,7 @@ Geospatial-learn is written and maintained by Ciaran Robb. The functionality was
 Citation
 ~~~~~~~~
 
-If you use geospatial-learn in a scientific publication, citations would be appreciated 
+If you use geospatial-learn in a scientific publication, citations would be appreciated - click on the blue zenodo link at the top. 
 
 Robb, C. (2017). Ciaran1981/geospatial-learn: Geospatial-learn 0.3 release. Zenodo. https://doi.org/10.5281/ZENODO.3968431
 
