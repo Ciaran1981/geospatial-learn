@@ -1,8 +1,8 @@
-name: geospatial_learnexp
+name: geospatial_learn
 channels:
   - conda-forge
-#  - open3d-admin open3d 
   - anaconda
+
 dependencies:
   - python=3
   - pip
@@ -41,16 +41,18 @@ dependencies:
   - urbanaccess
   - pyntcloud
   - napari
+  - scikit-plot
 
 
   - pip:
     - git+https://github.com/Ciaran1981/geospatial-learn#egg=geospatial-learnpy
     - xmltodict
     - simpledbf
-    - scikitplot
     - phasepack
     - mahotas
     - plyfile
+    - SimpleCRF
+    - morphsnakes
 
 
 
