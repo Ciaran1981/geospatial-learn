@@ -163,55 +163,37 @@ def raster2array(inRas, bands=[1]):
         inDt = dtypes[str(rdsDtype)]
         
         inArray = np.zeros((rds.RasterYSize, rds.RasterXSize, len(bands)), dtype=inDt) 
-        for band in bands:  
+        for idx, band in enumerate(bands):  
             rA = rds.GetRasterBand(band).ReadAsArray()
-            inArray[:, :, band-1]=rA
+            inArray[:, :, idx]=rA
    
    
     return inArray
 
-def tile_rasters(inImage, outputImage, tilesize): 
+def tile_rasters(inRas, outDir, tilesize = ["256", "256"]): 
     
     """ 
     Split a large raster into smaller ones
     
     Parameters
     ----------        
-    inImage : string
+    inRas : string
               the path to input raster
     
-    outputImage : string
-                  the path to the output image
+    outDir : string
+                  the path to the output dir
     
-    tilesize : int
-               the side of a square tile
+    tilesize : list of str
+               the sides of a square tile ["256", "256"]
         
     """
     
 
-    inputImage = gdal.Open(inImage)
-    #outputImage = gdal.Open(inImage)
-    
-    inputImage = gdal.Open(inImage)
- 
-    width = inputImage.RasterXSize
-    height = inputImage.RasterYSize
-    
-    procList = []
+            
+    cmd = ["gdal_retile.py", inRas, "-ps", tilesize[0], tilesize[1], 
+                              "-targetDir", outDir]
+    subprocess.call(cmd)
 
-    for i in tqdm(range(0, width, tilesize)):
-        for j in range(0, height, tilesize):
-            w = min(i+tilesize, width) - i
-            h = min(j+tilesize, height) - j
-            
-            gdaltranString = ['gdal_translate', '-of', 'Gtiff', '-srcwin',
-                              str(i), str(j), str(w), str(h), inImage,
-                                 outputImage, str(i), str(j)]
-            p = subprocess.Popen(gdaltranString)
-            procList.append(p)
-            
-    exit_codes = [p.wait() for p in procList]
-            #print(i)
 
 def batch_translate(folder, wildcard, FMT='Gtiff'):
     """ 
@@ -367,11 +349,11 @@ def mask_with_poly(vector_path, raster_path):
 
     # Loop through vectors
 
-    feat = vlyr.GetNextFeature()
     features = np.arange(vlyr.GetFeatureCount())
 
     
     for label in tqdm(features):
+        feat = vlyr.GetNextFeature()
 
         if feat is None:
             continue
@@ -379,7 +361,7 @@ def mask_with_poly(vector_path, raster_path):
 
         src_offset = _bbox_to_pixel_offsets(rgt, geom)
         
-          # calculate new geotransform of the feature subset
+        # calculate new geotransform of the feature subset
         new_gt = (
         (rgt[0] + (src_offset[0] * rgt[1])),
         rgt[1],
@@ -405,8 +387,6 @@ def mask_with_poly(vector_path, raster_path):
         rv_array = rvds.ReadAsArray()
         
         
-        
-        
         for band in range(1, bands+1):
             bnd = rds.GetRasterBand(band)
             src_array = bnd.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
@@ -414,11 +394,12 @@ def mask_with_poly(vector_path, raster_path):
             src_array[rv_array>0]=0
             bnd.WriteArray(src_array, src_offset[0], src_offset[1])
             
-        rds.FlushCache()
+    rds.FlushCache()
         
 
     vds = None
     rds = None
+    
 def jp2_translate(folder, FMT=None, mode='L1C'):
     
     """ 

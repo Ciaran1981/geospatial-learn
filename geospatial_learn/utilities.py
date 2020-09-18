@@ -15,7 +15,6 @@ from scipy.spatial import ConvexHull
 #from scipy.ndimage.interpolation import rotate
 from skimage import exposure
 from scipy import ndimage as ndi
-import cv2
 import matplotlib.pyplot as plt
 from geospatial_learn.raster import _copy_dataset_config, polygonize, array2raster
 import gdal, ogr
@@ -169,33 +168,12 @@ def wipe_ply_field(incloud, outcloud, tfield='training' ,field='label'):
     
     pf.write(outcloud)
 
-def _skelprune(edge):
-    
-    #pinched from stack until I get the cython one to work
-    s = np.uint8(edge > 0)
-    count = 0
-    i = 0
-    while count != np.sum(s):
-        # non-zero pixel count
-        count = np.sum(s)
-        # examine 3x3 neighborhood of each pixel
-        filt = cv2.boxFilter(s, -1, (3, 3), normalize=False)
-        # if the center pixel of 3x3 neighborhood is zero, we are not interested in it
-        s = s*filt
-        # now we have pixels where the center pixel of 3x3 neighborhood is non-zero
-        # if a pixels' 8-connectivity is less than 2 we can remove it
-        # threshold is 3 here because the boxfilter also counted the center pixel
-        s[s < 3] = 0
-        # set max pixel value to 1
-        s[s > 0] = 1
-        i = i + 1
-        return s
 #
-#def iou_score(inSeg, trueSeg):
-#    # The Intersection over Union (IoU) metric, also referred to as the Jaccard index
-#    intersection = np.logical_and(trueVals, predVals)
-#    union = np.logical_or(trueVals, predVals)
-#    iou_score = np.sum(intersection) / np.sum(union)
+def iou_score(inSeg, trueSeg):
+    # The Intersection over Union (IoU) metric, also referred to as the Jaccard index
+    intersection = np.logical_and(trueVals, predVals)
+    union = np.logical_or(trueVals, predVals)
+    iou_score = np.sum(intersection) / np.sum(union)
 
 
 
@@ -767,106 +745,6 @@ def combine_grid(inRas1, inRas2, outRas, outShp, min_area=None):
     
     polygonize(outRas, outShp, outField=None,  mask = True, band = 1)
     
-def ms_toposnakes2(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
-                  sigma=4, smooth=1, lambda1=1, lambda2=1, threshold='auto', 
-                  balloon=-1):
-    
-    """
-    Topology preserveing morphsnakes, implmented by Jirka Borovec version 
-    with C++/cython elements- credit to him!
-    
-    This is memory intensive so large images will likely fill RAM and produces
-    similar resuts to ms_toposnakes
-    
-    
-    This uses morphsnakes and explanations are from there.
-    
-    Parameters
-    ----------
-    
-    inSeg: string
-                  input segmentation raster
-        
-    raster_path: string
-                  input raster whose pixel vals will be used
-
-    band: int
-           an integer val eg - 2
-
-    algo: string
-           either "GAC" (geodesic active contours) or "ACWE" (active contours without edges)
-           
-    sigma: the size of stdv defining the gaussian envelope if using canny edge
-              a unitless value
-
-    iterations: uint
-        Number of iterations to run.
-        
-    smooth : uint, optional
-    
-        Number of times the smoothing operator is applied per iteration.
-        Reasonable values are around 1-4. Larger values lead to smoother
-        segmentations.
-    
-    lambda1: float, optional
-    
-        Weight parameter for the outer region. If `lambda1` is larger than
-        `lambda2`, the outer region will contain a larger range of values than
-        the inner region.
-        
-    lambda2: float, optional
-    
-        Weight parameter for the inner region. If `lambda2` is larger than
-        `lambda1`, the inner region will contain a larger range of values than
-        the outer region.
-    
-    threshold: float, optional
-    
-        Areas of the image with a value smaller than this threshold will be
-        considered borders. The evolution of the contour will stop in this
-        areas.
-        
-    balloon: float, optional
-    
-        Balloon force to guide the contour in non-informative areas of the
-        image, i.e., areas where the gradient of the image is too small to push
-        the contour towards a border. A negative value will shrink the contour,
-        while a positive value will expand the contour in these areas. Setting
-        this to zero will disable the balloon force.
-        
-    """    
-
-
-    rds1 = gdal.Open(inRas)
-    img = rds1.GetRasterBand(band).ReadAsArray()
-    
-    rds2 = gdal.Open(inSeg)
-    seg = rds2.GetRasterBand(1).ReadAsArray()
-    
-    
-    if algo=='GAC':
-
-        # class-based
-        mseg = msn.MultiMorphSnakes(img, seg, MorphGAC, 
-                               dict(smoothing=smooth, threshold=threshold,
-                                    balloon=balloon))
-        mseg.run(iterations)
-
-            
-    else:
-        mseg = msn.MultiMorphSnakes(img, seg, MorphACWE, 
-                               dict(smoothing=smooth, lambda1=lambda1,
-                                    lambda2=lambda2))
-        mseg.run(iterations)
-        
-        
-    outSeg = mseg.levelset
-    
-    array2raster(outSeg, 1, inSeg, inSeg[:-4]+'tsnake.tif', gdal.GDT_Int32)
-    
-    
-    
-    polygonize(inSeg[:-4]+'tsnake.tif', outShp, outField=None,  mask = True, band = 1)
 
     
 def visual_callback_2d(background, fig=None):
@@ -1229,421 +1107,6 @@ def imangle(im):
     return (axis1, axis2, bw)
 
 
-def test_gabor(im, size=9,  freq=0.1, angle=None, funct='cos', plot=True, 
-                  smooth=True, interp='none'):
-    """ 
-    Process image with gabor filter bank of specified orientation or derived from
-    image positive values bounding box - implemented from numpy with more intuitive 
-    params 
-    
-    This is the numpy based one 
-    
-    Parameters
-    ----------
-    
-    inRas: string
-                  input raster
-
-    size: int
-           size of in gabor kernel in pixels (ksize)
-        
-    freq: float
-           
-           
-        
-    angles: int
-           number of angles  in gabor kernel (theta)
-
-
-    """  
-    
-    if funct == 'cos':
-        func = np.cos
-    if func == 'sin':
-        func = np.sin
-        
-    
-
-
-    def genGabor(sz, omega, theta, func=func, K=np.pi):
-        
-        sz = (sz,sz)
-        radius = (int(sz[0]/2.0), int(sz[1]/2.0))
-        [x, y] = np.meshgrid(range(-radius[0], radius[0]+1), range(-radius[1], radius[1]+1))
-    
-        x1 = x * np.cos(theta) + y * np.sin(theta)
-        y1 = -x * np.sin(theta) + y * np.cos(theta)
-        
-        gauss = omega**2 / (4*np.pi * K**2) * np.exp(- omega**2 / (8*K**2) * ( 4 * x1**2 + y1**2))
-
-        sinusoid = func(omega * x1) * np.exp(K**2 / 2)
-
-        gabor = gauss * sinusoid
-        return gabor
-    
-
-    
-    def deginrad(degree):
-        radiant = 2*np.pi/360 * degree
-        return radiant
-    
-    if hasattr(im, 'shape'):
-        img = im
-    else:
-        img = rgb2gray(io.imread(im))
-    
-    if smooth == True:
-        
-        img = gaussian_filter(img, 1)
-    
-    #TODO add a polygon argument to make it easier....
-    if angle == None:
-        # here we use the orientation to get the line of crops assuming the user has
-        # cropped it well
-        bw = img > 0
-        props = regionprops(bw*1)
-        orient = props[0]['Orientation']
-        angle = 90 - np.degrees(orient)
-
-    g = genGabor(size,  freq, np.radians(angle))
-           
-   
-    filtered_img = cv2.filter2D(img, cv2.CV_8UC3, g)
-    
-    theta2 = np.radians(angle+90)
-    
-    g2 = genGabor(size,  freq, theta2)
-
-    filtered_img2 = cv2.filter2D(img, cv2.CV_8UC3, g2)
-    
-    if plot == True:
-        fig=plt.figure()
-        fig.add_subplot(1, 4, 1)
-        plt.imshow(img)
-        fig.add_subplot(1, 4, 2)
-        plt.imshow(filtered_img)
-        fig.add_subplot(1, 4, 3)
-        plt.imshow(filtered_img2)
-        fig.add_subplot(1, 4, 4)
-        plt.imshow(g, interpolation=interp)
-    
-
-
-    return  filtered_img, filtered_img2   
-
-def test_gabor_cv2(im, size=9,  stdv=1, angle=None, wave_length=3, eccen=1,
-               phase_off=0, plot=True, smooth=True, interp='none'):
-    """ 
-    Process image with gabor filter bank of specified orientation or derived from
-    image positive values bounding box
-    
-    This is the open cv based one
-    
-    Parameters
-    ----------
-    
-    inRas: string
-                  input raster
-
-    size: int
-           size of in gabor kernel in pixels (ksize)
-        
-    stdv: int
-           stdv / of of gabor kernel (sigma/stdv)
-           
-        
-    angles: int
-           number of angles  in gabor kernel (theta)
-
-    wave_length: int
-           width of stripe in gabor kernel (lambda/wavelength)
-           optional best to leave none and hence same as size
-        
-    phase_off: int
-           the phase offset of the kernel      
-           
-    eccen: int
-          the elipticity of the kernel when = 1 the gaussian envelope is circular (gamma)
-
-    """  
-    
-        # ksize - size of gabor filter (n, n)
-    # sigma - standard deviation of the gaussian function
-    # theta - orientation of the normal to the parallel stripes
-    # lambda - wavelength of the sunusoidal factor wave_length
-    # gamma - spatial aspect ratio
-    # psi - phase offset
-    # ktype - type and range of values that each pixel in the gabor kernel can hold
-    
-
-    
-
-    def deginrad(degree):
-        radiant = 2*np.pi/360 * degree
-        return radiant
-    if hasattr(im, 'shape'):
-        img = im
-    else:
-        
-        img = rgb2gray(io.imread(im))
-    
-    if smooth == True:
-        
-        img = gaussian_filter(img, 1)
-    
-    #TODO add a polygon argument to make it easier....
-    if angle == None:
-        # here we use the orientation to get the line of crops assuming the user has
-        # cropped it well
-        bw = img > 0
-        props = regionprops(bw*1)
-        orient = props[0]['Orientation']
-        angle = 90 - np.degrees(orient)
-    
-    if wave_length==None:
-        wave_length = 3
-    
-#    if width2 == None:
-#        width2 = width
-#                  
-    theta = deginrad(angle)   # unit circle: left: -90 deg, right: 90 deg, straight: 0 deg
-    g_kernel = cv2.getGaborKernel((size, size), stdv, theta, wave_length, eccen, 
-                                  phase_off, ktype=cv2.CV_32F)
-    filtered_img = cv2.filter2D(img, cv2.CV_8UC3, g_kernel)
-    
-    theta2 = deginrad(angle+90)
-    g_kernel2 = cv2.getGaborKernel((size, size), stdv, theta2, wave_length, eccen, 
-                                  phase_off, ktype=cv2.CV_32F)
-    filtered_img2 = cv2.filter2D(img, cv2.CV_8UC3, g_kernel2)
-    
-    if plot == True:
-        fig=plt.figure()
-        fig.add_subplot(1, 4, 1)
-        plt.imshow(img)
-        fig.add_subplot(1, 4, 2)
-        plt.imshow(filtered_img)
-        fig.add_subplot(1, 4, 3)
-        plt.imshow(filtered_img2)
-        fig.add_subplot(1, 4, 4)
-        plt.imshow(g_kernel, interpolation=interp)
-    
-    #h, w = g_kernel.shape[:2]
-    #g_kernel = cv2.resize(g_kernel, (3*w, 3*h), interpolation=cv2.INTER_CUBIC)
-    #cv2.imshow('gabor kernel (resized)', g_kernel)
-    
-    
-    
-#    filtered_img[img==0]=0
-#    filtered_img2[img==0]=0
-
-    return  filtered_img, filtered_img2   
-
-
-def accum_gabor(inRas, outRas=None, size=(9,9), stdv=1, no_angles=16, wave_length=3, eccen=1,
-               phase_off=0, pltgrid=(4,4), blockproc=False):
-    
-    """ 
-    Process with custom gabor filters and output an raster containing each 
-    kernel output as a band
-    
-    
-    Parameters
-    ----------
-    
-    inRas: string
-                  input raster
-        
-    outRas: string
-                  output raster
-
-    size: tuple
-           size of in gabor kernel in pixels (ksize)
-        
-    stdv: int
-           size of stdv / of of gabor kernel (sigma/stdv)
-    
-    no_angles: int
-           number of angles  in gabor kernel (theta)
-
-    wave_length: int
-           width of stripe in gabor kernel (lambda/wavelength)  
-        
-    phase_off: int
-           the phase offset of the kernel      
-           
-    eccen: int
-          the elipticity of the kernel when = 1 the gaussian envelope is circular
-          
-    blocproc: bool
-          whether to process in chunks - necessary for very large images!
-    """  
-    
-    # ksize - size of gabor filter (n, n)
-    # sigma - standard deviation of the gaussian function
-    # theta - orientation of the normal to the parallel stripes
-    # lambda - wavelength of the sunusoidal factor
-    # gamma - spatial aspect ratio
-    # psi - phase offset
-    # ktype - type and range of values that each pixel in the gabor kernel can hold
-
-
-    """
-    Harmonic function consists of an imaginary sine function and a real cosine function. 
-    Spatial frequency is inversely proportional to the wavelength of the harmonic 
-    and to the standard deviation of a Gaussian kernel. 
-    The bandwidth is also inversely proportional to the standard deviation.
-    """
-    def compute_feats(image, kernels):
-        feats = np.zeros((len(kernels), 2), dtype=np.double)
-        for k, kernel in enumerate(kernels):
-            filtered = ndi.convolve(image, kernel, mode='wrap')
-            feats[k, 0] = filtered.mean()
-            feats[k, 1] = filtered.var()
-        return feats
-    
-     
-    def build_filters():
-         filters = []
-         
-         for theta in np.arange(0, np.pi, np.pi / no_angles):
-             kern = cv2.getGaborKernel(size, stdv, theta, wave_length, eccen, 
-                                  phase_off, ktype=cv2.CV_32F)
-             kern /= 1.5*kern.sum()
-             filters.append(kern)
-         return filters
-    
-    
-    thetaz = np.arange(0, np.pi, np.pi / no_angles)
-    degrees = np.rad2deg(thetaz)
-
-
-    def process(img, filters):
-
-        accum = np.zeros_like(img)
-        fmgList = []
-
-        for i, kern in enumerate(filters):
-             fimg = cv2.filter2D(img, cv2.CV_8UC3, kern)
-             fmgList.append(fimg)   
-             np.maximum(accum, fimg, accum)
-             
-        return accum, fmgList
-    
-    
-    def plot_it(fmgList, gFilters, pltgrid):
-        
-        """
-        plt a grid of images for gab filters and outputs
-
-        """
-       
-        
-        fig = plt.figure(figsize=(10., 10.))
-        grid = ImageGrid(fig, 111,  # similar to subplot(111)
-                         nrows_ncols=pltgrid,  # creates 2x2 grid of axes
-                         axes_pad=0.3, share_all=True,  # pad between axes in inch.
-                         )
-
-        for ax, im, d in zip(grid, fmgList, degrees):
-            # Iterating over the grid returns the Axes.            
-            ax.imshow(im)
-            ax.set_title(str(d)+' degrees')
-            
-            ax.set_axis_off()
-        
-        fig1 = plt.figure(figsize=(10., 10.))
-        grid1 = ImageGrid(fig1, 111,  # similar to subplot(111)
-                         nrows_ncols=pltgrid,  # creates 2x2 grid of axes
-                         axes_pad=0.3,  # pad between axes in inch.
-                         )
-
-        for ax1, im1, d1 in zip(grid1, gFilters, degrees):
-            # Iterating over the grid returns the Axes.            
-            ax1.imshow(im1)
-            ax1.set_title(str(d1)+' degrees')
-            ax1.set_axis_off()
-        
-        plt.show()
-        
-
-    gfilters = build_filters()  
-
-
-                  
-    inDataset = gdal.Open(inRas)
-    
-    if outRas != None:
-        outDataset = _copy_dataset_config(inDataset, outMap = outRas,
-                                         dtype = gdal.GDT_Byte, bands = no_angles)
-    band = inDataset.GetRasterBand(1)
-    cols = inDataset.RasterXSize
-    rows = inDataset.RasterYSize
-    
-    bands = inDataset.RasterCount
-    
-    if bands > 3:
-        bands = 3
-
-    blocksizeX = 256
-    blocksizeY = 256
-        
-    if blockproc == True and outRas != None:            
-        for i in tqdm(range(0, rows, blocksizeY)):
-                if i + blocksizeY < rows:
-                    numRows = blocksizeY
-                else:
-                    numRows = rows -i
-            
-                for j in range(0, cols, blocksizeX):
-                    if j + blocksizeX < cols:
-                        numCols = blocksizeX
-                    else:
-                        numCols = cols - j
-                    if bands == 1:
-                        band1 = inDataset.GetRasterBand(band)
-                        data = band1.ReadAsArray(j, i, numCols, numRows)                        
-                    else:
-                        data = np.zeros((blocksizeX,blocksizeX, bands))
-                                                
-                        for band in range(1,bands+1):
-                            band1 = inDataset.GetRasterBand(band)
-                            data[:,:,band-1] = band1.ReadAsArray(j, i, numCols, numRows)
-                        data = color.rgb2gray(data)
-                    
-                    _, fmgList = process(data, gfilters)
-                    
-# TODO                    # [:256, :256] this will pad it if block is  bigger.....but still getting edge effect - why?
-                    
-                    [outDataset.GetRasterBand(k+1).WriteArray(f
-                    , j,  i) for k, f in enumerate(fmgList)] 
-    
-                        
-        outDataset.FlushCache()
-        outDataset = None
-                
-   
-    
-    else:
-
-        img  = io.imread(inRas)
-        
-        if len(img.shape) >1:
-             img = rgb2gray(img)
-            
-            
-            
-        
-        gabber, fmgList = process(img, gfilters)
-        
-        plot_it(fmgList, gfilters, pltgrid)
-        
-        if outRas != None:
-        
-            [outDataset.GetRasterBand(k+1).WriteArray(f) for k, f in enumerate(fmgList)]
-            
-            array2raster(gabber, 1, inRas, outRas[:-4]+'_comp.tif', gdal.GDT_Int32)
-    return fmgList
-
 
 def min_bound_rectangle(points):
     """
@@ -1833,88 +1296,9 @@ def colorscale(seg, prop):
     
     return propIm
 
-def rotate_im(image, angle):
-    """Rotate the image.
-    
-    Rotate the image such that the rotated image is enclosed inside the tightest
-    rectangle. The area not occupied by the pixels of the original image is colored
-    black. 
-    
-    Parameters
-    ----------
-    
-    image : numpy.ndarray
-        numpy image
-    
-    angle : float
-        angle by which the image is to be rotated
-    
-    Returns
-    -------
-    
-    numpy.ndarray
-        Rotated Image
-    
-    """
-    # grab the dimensions of the image and then determine the
-    # centre
-    (h, w) = image.shape[:2]
-    (cX, cY) = (w // 2, h // 2)
-
-    # grab the rotation matrix (applying the negative of the
-    # angle to rotate clockwise), then grab the sine and cosine
-    # (i.e., the rotation components of the matrix)
-    M = cv2.getRotationMatrix2D((cX, cY), angle, 1.0)
-    cos = np.abs(M[0, 0])
-    sin = np.abs(M[0, 1])
-
-    # compute the new bounding dimensions of the image
-    nW = int((h * sin) + (w * cos))
-    nH = int((h * cos) + (w * sin))
-
-    # adjust the rotation matrix to take into account translation
-    M[0, 2] += (nW / 2) - cX
-    M[1, 2] += (nH / 2) - cY
-
-    # perform the actual rotation and return the image
-    image = cv2.warpAffine(image, M, (nW, nH))
-
-#    image = cv2.resize(image, (w,h))
-    return image
 
 
-def spinim(self, img, bboxes):
 
-    angle = random.uniform(*self.angle)
-
-    w,h = img.shape[1], img.shape[0]
-    cx, cy = w//2, h//2
-
-    img = rotate_im(img, angle)
-
-    corners = get_corners(bboxes)
-
-    corners = np.hstack((corners, bboxes[:,4:]))
-
-
-    corners[:,:8] = rotate_box(corners[:,:8], angle, cx, cy, h, w)
-
-    new_bbox = get_enclosing_box(corners)
-
-
-    scale_factor_x = img.shape[1] / w
-
-    scale_factor_y = img.shape[0] / h
-
-    img = cv2.resize(img, (w,h))
-
-    new_bbox[:,:4] /= [scale_factor_x, scale_factor_y, scale_factor_x, scale_factor_y] 
-
-    bboxes  = new_bbox
-
-    bboxes = clip_box(bboxes, [0,0,w, h], 0.25)
-
-    return img, bboxes
 
 def otbMeanshift(inputImage, radius, rangeF, minSize, outShape):
     """ 
@@ -1984,3 +1368,103 @@ def otbMeanshift(inputImage, radius, rangeF, minSize, outShape):
     print('vectorisation done - process complete - phew!')
 #    output = subprocess.Popen([cmd], stdout=subprocess.PIPE).communicate()[0]
 #    print(output)
+#def ms_toposnakes2(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
+#                  sigma=4, smooth=1, lambda1=1, lambda2=1, threshold='auto', 
+#                  balloon=-1):
+#    
+#    """
+#    Topology preserveing morphsnakes, implmented by Jirka Borovec version 
+#    with C++/cython elements- credit to him!
+#    
+#    This is memory intensive so large images will likely fill RAM and produces
+#    similar resuts to ms_toposnakes
+#    
+#    
+#    This uses morphsnakes and explanations are from there.
+#    
+#    Parameters
+#    ----------
+#    
+#    inSeg: string
+#                  input segmentation raster
+#        
+#    raster_path: string
+#                  input raster whose pixel vals will be used
+#
+#    band: int
+#           an integer val eg - 2
+#
+#    algo: string
+#           either "GAC" (geodesic active contours) or "ACWE" (active contours without edges)
+#           
+#    sigma: the size of stdv defining the gaussian envelope if using canny edge
+#              a unitless value
+#
+#    iterations: uint
+#        Number of iterations to run.
+#        
+#    smooth : uint, optional
+#    
+#        Number of times the smoothing operator is applied per iteration.
+#        Reasonable values are around 1-4. Larger values lead to smoother
+#        segmentations.
+#    
+#    lambda1: float, optional
+#    
+#        Weight parameter for the outer region. If `lambda1` is larger than
+#        `lambda2`, the outer region will contain a larger range of values than
+#        the inner region.
+#        
+#    lambda2: float, optional
+#    
+#        Weight parameter for the inner region. If `lambda2` is larger than
+#        `lambda1`, the inner region will contain a larger range of values than
+#        the outer region.
+#    
+#    threshold: float, optional
+#    
+#        Areas of the image with a value smaller than this threshold will be
+#        considered borders. The evolution of the contour will stop in this
+#        areas.
+#        
+#    balloon: float, optional
+#    
+#        Balloon force to guide the contour in non-informative areas of the
+#        image, i.e., areas where the gradient of the image is too small to push
+#        the contour towards a border. A negative value will shrink the contour,
+#        while a positive value will expand the contour in these areas. Setting
+#        this to zero will disable the balloon force.
+#        
+#    """    
+#
+#
+#    rds1 = gdal.Open(inRas)
+#    img = rds1.GetRasterBand(band).ReadAsArray()
+#    
+#    rds2 = gdal.Open(inSeg)
+#    seg = rds2.GetRasterBand(1).ReadAsArray()
+#    
+#    
+#    if algo=='GAC':
+#
+#        # class-based
+#        mseg = msn.MultiMorphSnakes(img, seg, MorphGAC, 
+#                               dict(smoothing=smooth, threshold=threshold,
+#                                    balloon=balloon))
+#        mseg.run(iterations)
+#
+#            
+#    else:
+#        mseg = msn.MultiMorphSnakes(img, seg, MorphACWE, 
+#                               dict(smoothing=smooth, lambda1=lambda1,
+#                                    lambda2=lambda2))
+#        mseg.run(iterations)
+#        
+#        
+#    outSeg = mseg.levelset
+#    
+#    array2raster(outSeg, 1, inSeg, inSeg[:-4]+'tsnake.tif', gdal.GDT_Int32)
+#    
+#    
+#    
+#    polygonize(inSeg[:-4]+'tsnake.tif', outShp, outField=None,  mask = True, band = 1)

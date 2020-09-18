@@ -1,22 +1,28 @@
 name: geospatial_learn
+
 channels:
+  - pytorch
   - conda-forge
   - anaconda
 
 dependencies:
   - python=3
   - pip
-  - opencv
   - numpy
+  - cudatoolkit=10.2
+  - pytorch
+  - torchvision
+  - tensorflow-gpu 
+  - keras-gpu
   - jupyter
   - matplotlib
+  - opencv
   - gdal
   - scikit-image
   - scikit-learn
   - git
   - pandas
-  - tensorflow-gpu 
-  - keras-gpu
+  - albumentations
   - imageio
   - ipywidgets
   - nb_conda
@@ -46,8 +52,11 @@ dependencies:
 
   - pip:
     - git+https://github.com/Ciaran1981/geospatial-learn#egg=geospatial-learnpy
+#    - ternausnet
+    - opencv-python
     - xmltodict
     - simpledbf
+    - pyfftw
     - phasepack
     - mahotas
     - plyfile

@@ -49,7 +49,6 @@ from shapely.affinity import rotate
 #from geospatial_learn.geodata import rasterize
 from math import ceil
 import mahotas as mh
-import cv2
 #from centerline.geometry import Centerline
 
 matplotlib.use('Qt5Agg')
