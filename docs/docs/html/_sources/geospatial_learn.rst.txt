@@ -36,6 +36,13 @@ geospatial_learn.utilities module
     :undoc-members:
     :show-inheritance:
 
+geospatial_learn.convnet module
+---------------------------------
+
+.. automodule:: convnet
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Module contents
 ---------------

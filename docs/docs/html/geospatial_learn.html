@@ -103,6 +103,10 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-utilities">geospatial_learn.utilities module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-convnet">geospatial_learn.convnet module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Description</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-geospatial_learn">Module contents</a></li>
 </ul>
 </li>
@@ -122,6 +126,10 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#module-utilities">geospatial_learn.utilities module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-convnet">geospatial_learn.convnet module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id3">Description</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#module-geospatial_learn">Module contents</a></li>
 </ul>
 </li>
@@ -1554,6 +1562,55 @@ accordingly. This can be passed as the <cite>iter_callback</cite> argument of
 <code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">wipe_ply_field</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incloud</span></em>, <em class="sig-param"><span class="n">outcloud</span></em>, <em class="sig-param"><span class="n">tfield</span><span class="o">=</span><span class="default_value">'training'</span></em>, <em class="sig-param"><span class="n">field</span><span class="o">=</span><span class="default_value">'label'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.wipe_ply_field" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+</div>
+<div class="section" id="module-convnet">
+<span id="geospatial-learn-convnet-module"></span><h2>geospatial_learn.convnet module<a class="headerlink" href="#module-convnet" title="Permalink to this headline">¶</a></h2>
+<p>The convnet module.</p>
+<div class="section" id="id3">
+<h3>Description<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>A module for using pytorch to classify EO data for semantic segmentation and
+object identification</p>
+<dl class="py function">
+<dt id="convnet.semantic_seg">
+<code class="sig-prename descclassname">convnet.</code><code class="sig-name descname">semantic_seg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mainDir</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">inLabel</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">plot</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1, 2, 3]</span></em>, <em class="sig-param"><span class="n">trainPercent</span><span class="o">=</span><span class="default_value">0.3</span></em>, <em class="sig-param"><span class="n">f1</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">unet</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">{'batch_size': 16, 'device': 'cuda', 'epochs': 50, 'lr': 0.001, 'model': 'UNet11', 'num_workers': 2}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#convnet.semantic_seg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Semantic Segmentation of EO-imagery - an early version things are to be
+changed in the near future</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mainDir</strong> (<em>string</em>) – the working directory where everything is done</p></li>
+<li><p><strong>model</strong> (<em>string</em>) – a choice of “unet, “fcn_resnet50”, “fcn_resnet101”,”deeplabv3_resnet50”
+“deeplabv3_resnet50”, “deeplabv3_resnet101”</p></li>
+<li><p><strong>inRas</strong> (<em>string</em>) – the input raster</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>inLabel: string</dt><dd><p>the input label raster - at present this the same size as the input
+raster with the class labels, though this will be improved</p>
+</dd>
+<dt>outMap: string</dt><dd><p>the output classification map</p>
+</dd>
+<dt>plot: bool</dt><dd><p>whether to plot intermediate data results eg visualise the image aug,
+test results etc.</p>
+</dd>
+<dt>bands: list of ints</dt><dd><p>the image bands to use</p>
+</dd>
+<dt>trainPercent:</dt><dd><p>the percentage of to use as training</p>
+</dd>
+<dt>f1: bool</dt><dd><p>whether to svae a classification report (will be a plot in working dir)</p>
+</dd>
+<dt>params: dict</dt><dd><p>the convnet model params</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This is an early version with some stuff to add/change eg</p>
+<p>The training and classification will be split into two functions</p>
+<p>Non intersecting training data to be done</p>
+<p>Image augmentations are to be made a param</p>
+</dd></dl>
+
+</div>
 </div>
 <div class="section" id="module-geospatial_learn">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-geospatial_learn" title="Permalink to this headline">¶</a></h2>
