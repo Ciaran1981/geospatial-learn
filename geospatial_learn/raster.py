@@ -19,11 +19,6 @@ from geospatial_learn.gdal_merge import _merge
 import tempfile
 import glymur
 from tqdm import tqdm
-#from skimage.util import pad
-
-#from skimage.segmentation import mark_boundaries
-#from skimage.io import imread
-#from scipy import misc
 import scipy.ndimage as nd
 from more_itertools import unique_everseen
 import subprocess

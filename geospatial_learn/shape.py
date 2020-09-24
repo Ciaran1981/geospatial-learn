@@ -64,11 +64,11 @@ def shp2gj(inShape, outJson):
     Parameters
     ----------
     
-    inShape : string
+    inShape: string
               input shapefile
     
 
-    outJson : string
+    outJson: string
               output geojson
     
     Notes
@@ -109,16 +109,16 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
     Parameters 
     ----------
     
-    inShape : string
+    inShape: string
               input shape file path
 
     
-    inRas : string
+    inRas: string
             a raster to get the correct dimensions from (optional), required for
             scikit-image props
         
     
-    prop : string
+    prop: string
            Scikit image regionprops prop 
            (see http://scikit-image.org/docs/dev/api/skimage.measure.html)
         
@@ -412,8 +412,53 @@ def _bbox_to_pixel_offsets(rgt, geom):
 #    return (x1, y1, xsize, ysize)
     return (xoff, yoff, xcount, ycount)        
 
+    
+def filter_shp(inShp, expression, outField, outLabel):
+    
+    """ 
+    Filter and index an OGR polygon file features by attribute
+    
+    Potentially useful for rule sets or prepping a subsiduary underlying
+    raster operation
+    
+    Parameters
+    ----------
+    
+    inShp : string
+                  input shapefile
+        
+    expression : string
+                  sql style expression e.g. "DN >= 168"
+    
+    outField : string
+                  the field in which the label will reside
+                  
+    outLabel : the label identifying the filtered features
+    """
+    
+    vds = ogr.Open(inShp, 1) 
 
-def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
+    lyr = vds.GetLayer(0)
+    
+    lyr.SetAttributeFilter(expression)
+    
+    feat = lyr.GetNextFeature()
+    features = np.arange(lyr.GetFeatureCount())
+    
+    lyr.CreateField(ogr.FieldDefn(outField, ogr.OFTInteger))
+    
+    for label in tqdm(features):
+        feat.SetField(outField, outLabel)
+        lyr.SetFeature(feat)
+        feat = lyr.GetNextFeature()
+        
+    lyr.SyncToDisk()
+
+    vds = None
+        
+
+
+def zonal_stats(inShp, inRas, band, bandname, stat = 'mean',
                 write_stat=None, nodata_value=0):
     
     """ 
@@ -422,10 +467,10 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     Parameters
     ----------
     
-    vector_path : string
+    inShp : string
                   input shapefile
         
-    raster_path : string
+    inRas : string
                   input raster
 
     band : int
@@ -449,7 +494,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     """    
     # Inspired by Matt Perry's excellent script
     
-    rds = gdal.Open(raster_path, gdal.GA_ReadOnly)
+    rds = gdal.Open(inRas, gdal.GA_ReadOnly)
     #assert(rds)
     rb = rds.GetRasterBand(band)
     rgt = rds.GetGeoTransform()
@@ -458,7 +503,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
         nodata_value = float(nodata_value)
         rb.SetNoDataValue(nodata_value)
 
-    vds = ogr.Open(vector_path, 1)  # TODO maybe open update if we want to write stats
+    vds = ogr.Open(inShp, 1)  # TODO maybe open update if we want to write stats
    #assert(vds)
     vlyr = vds.GetLayer(0)
     if write_stat != None:
@@ -567,7 +612,7 @@ def zonal_stats(vector_path, raster_path, band, bandname, stat = 'mean',
     if write_stat != None:
         return frame, rejects
     
-def zonal_stats_all(vector_path, raster_path, bandnames, 
+def zonal_stats_all(inShp, inRas, bandnames, 
                     statList = ['mean', 'min', 'max', 'median', 'std',
                                 'var', 'skew', 'kurt']):
     """ 
@@ -576,10 +621,10 @@ def zonal_stats_all(vector_path, raster_path, bandnames,
     Parameters
     ----------
     
-    vector_path : string
+    inShp : string
                   input shapefile
         
-    raster_path : string
+    inRas : string
                   input raster
 
     band : int
@@ -596,7 +641,7 @@ def zonal_stats_all(vector_path, raster_path, bandnames,
 # zonal stats
     for bnd,name in enumerate(bandnames):
     
-        [zonal_stats(vector_path, raster_path, bnd+1, name+st, stat=st, write_stat = True) for st in statList]
+        [zonal_stats(inShp, inRas, bnd+1, name+st, stat=st, write_stat = True) for st in statList]
 
 def _set_rgb_ind(feat, rv_array, src_offset, rds, nodata_value):
     
@@ -662,7 +707,7 @@ def _set_rgb_ind(feat, rv_array, src_offset, rds, nodata_value):
     feat.SetField('TGLmn',  float(tgl.mean()))
         
 
-def zonal_rgb_idx(vector_path, raster_path, nodata_value=0):
+def zonal_rgb_idx(inShp, inRas, nodata_value=0):
     
     """ 
     Calculate RGB-based indicies per segment/AOI
@@ -670,10 +715,10 @@ def zonal_rgb_idx(vector_path, raster_path, nodata_value=0):
     Parameters
     ----------
     
-    vector_path : string
+    inShp : string
                   input shapefile
         
-    raster_path : string
+    inRas : string
                   input raster
         
     nodata_value : numerical
@@ -682,7 +727,7 @@ def zonal_rgb_idx(vector_path, raster_path, nodata_value=0):
     """    
     #TODO ad other stat types - consider mask array for safety......
     
-    rds = gdal.Open(raster_path, gdal.GA_ReadOnly)
+    rds = gdal.Open(inRas, gdal.GA_ReadOnly)
     #assert(rds)
     rb = rds.GetRasterBand(1)
     rgt = rds.GetGeoTransform()
@@ -691,7 +736,7 @@ def zonal_rgb_idx(vector_path, raster_path, nodata_value=0):
         nodata_value = float(nodata_value)
         rb.SetNoDataValue(nodata_value)
 
-    vds = ogr.Open(vector_path, 1)  # TODO maybe open update if we want to write stats
+    vds = ogr.Open(inShp, 1)  # TODO maybe open update if we want to write stats
    #assert(vds)
     vlyr = vds.GetLayer(0)
     #if write_stat != None:
@@ -790,7 +835,7 @@ def write_text_field(inShape, fieldName, attribute):
 
     
 
-def texture_stats(vector_path, raster_path, band, gprop='contrast',
+def texture_stats(inShp, inRas, band, gprop='contrast',
                   offset=2,angle=0, write_stat=None, nodata_value=0, mean=False):
     
     """ 
@@ -800,10 +845,10 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast',
     
     Parameters
     ----------
-    vector_path : string
+    inShp : string
                   input shapefile 
         
-    raster_path : string 
+    inRas : string 
                   input raster path
         
     gprop : string
@@ -842,7 +887,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast',
     """    
 
     
-    rds = gdal.Open(raster_path, gdal.GA_ReadOnly)
+    rds = gdal.Open(inRas, gdal.GA_ReadOnly)
     #assert(rds)
     rb = rds.GetRasterBand(band)
     rgt = rds.GetGeoTransform()
@@ -851,7 +896,7 @@ def texture_stats(vector_path, raster_path, band, gprop='contrast',
         nodata_value = float(nodata_value)
         rb.SetNoDataValue(nodata_value)
 
-    vds = ogr.Open(vector_path, 1)  # TODO maybe open update if we want to write stats
+    vds = ogr.Open(inShp, 1)  # TODO maybe open update if we want to write stats
    #assert(vds)
     vlyr = vds.GetLayer(0)
     if write_stat != None:
@@ -991,10 +1036,10 @@ def snake(inShp, inRas, outShp, band=1, buf=1, nodata_value=0,
     ----------
     
     
-    vector_path: string
+    inShp: string
                   input shapefile
         
-    raster_path: string
+    inRas: string
                   input raster
 
     band: int
@@ -1370,9 +1415,9 @@ def ms_snake(inShp, inRas, outShp, band=2, buf1=0, buf2=0, algo="ACWE", nodata_v
     
 
 #    seg = np.zeros_like(rb.ReadAsArray())
-#    tempRas = vector_path[:-4]+'.tif'
+#    tempRas = inShp[:-4]+'.tif'
     
-#    rasterize(vector_path, raster_path, tempRas)
+#    rasterize(inShp, inRas, tempRas)
 #    sgbnd = gdal.Open(tempRas).GetRasterBand(1)
 #    seg = sgbnd.ReadAsArray()
 #    rejects = list()
@@ -1500,10 +1545,10 @@ def thresh_seg(inShp, inRas, outShp, band, buf=0, algo='otsu',
     Parameters
     ----------
     
-    vector_path : string
+    inShp : string
                   input shapefile
         
-    raster_path : string
+    inRas : string
                   input raster
 
     band : int

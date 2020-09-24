@@ -46,7 +46,11 @@ A summary of some functions can be found here:
 
 https://github.com/Ciaran1981/geospatial-learn/blob/master/docs/quickstart.rst
 
-This is currently a work in progress of course! 
+There are some jupyter-based workflows to be found here:
+
+https://github.com/Ciaran1981/geospatial-learn/tree/master/example_notebooks
+
+These are currently a work in progress of course! 
 
 Docs
 ----

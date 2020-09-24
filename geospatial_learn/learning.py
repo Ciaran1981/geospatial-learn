@@ -20,15 +20,11 @@ except ImportError:
     pass
     print('xgb not available')
 
-
-
 from tqdm import tqdm
 
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from collections import OrderedDict
-
-
 import glob
 from sklearn import svm
 import gdal, ogr#,osr
@@ -37,7 +33,6 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier,RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 import joblib
-#from sklearn.externals import joblib
 from sklearn import metrics
 import joblib as jb
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV

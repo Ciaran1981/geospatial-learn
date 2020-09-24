@@ -1025,6 +1025,24 @@ so that has been prioritised rather than raster IO</p>
 <p>This module contains various functions for the writing of data in OGR vector
 formats. The functions are mainly concerned with writing geometric or pixel based attributes, with the view to them being classified in the learning module</p>
 <dl class="py function">
+<dt id="shape.filter_shp">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">filter_shp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">expression</span></em>, <em class="sig-param"><span class="n">outField</span></em>, <em class="sig-param"><span class="n">outLabel</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.filter_shp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter and index an OGR polygon file features by attribute</p>
+<p>Potentially useful for rule sets or prepping a subsiduary underlying
+raster operation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inShp</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>expression</strong> (<em>string</em>) – sql style expression e.g. “DN &gt;= 168”</p></li>
+<li><p><strong>outField</strong> (<em>string</em>) – the field in which the label will reside</p></li>
+<li><p><strong>outLabel</strong> (<em>the label identifying the filtered features</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="shape.meshgrid">
 <code class="sig-prename descclassname">shape.</code><code class="sig-name descname">meshgrid</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRaster</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">gridHeight</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">gridWidth</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.meshgrid" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -1088,10 +1106,10 @@ Output will be relative to geographic units where relevant, but normalised where
 </dd>
 </dl>
 <dl class="simple">
-<dt>inRas<span class="classifier">string</span></dt><dd><p>a raster to get the correct dimensions from (optional), required for
+<dt>inRas: string</dt><dd><p>a raster to get the correct dimensions from (optional), required for
 scikit-image props</p>
 </dd>
-<dt>prop<span class="classifier">string</span></dt><dd><p>Scikit image regionprops prop
+<dt>prop: string</dt><dd><p>Scikit image regionprops prop
 (see <a class="reference external" href="http://scikit-image.org/docs/dev/api/skimage.measure.html">http://scikit-image.org/docs/dev/api/skimage.measure.html</a>)</p>
 </dd>
 </dl>
@@ -1118,7 +1136,7 @@ keys are same as scikit-image see notes for which require raster</p>
 </dd>
 </dl>
 <dl class="simple">
-<dt>outJson<span class="classifier">string</span></dt><dd><p>output geojson</p>
+<dt>outJson: string</dt><dd><p>output geojson</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -1136,8 +1154,8 @@ keys are same as scikit-image see notes for which require raster</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
-<li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>inShp</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>inRas</strong> (<em>string</em>) – input raster</p></li>
 <li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
 <li><p><strong>buf</strong> (<em>int</em>) – the buffer area to include for the snake deformation</p></li>
 <li><p><strong>alpha</strong> (<em>float</em>) – Snake length shape parameter. Higher values makes snake contract faster.</p></li>
@@ -1164,14 +1182,14 @@ yields same behaviour as ‘fixed’ and ‘free’, respectively.</p></li>
 
 <dl class="py function">
 <dt id="shape.texture_stats">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">texture_stats</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vector_path</span></em>, <em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">gprop</span><span class="o">=</span><span class="default_value">'contrast'</span></em>, <em class="sig-param"><span class="n">offset</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">angle</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">write_stat</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">mean</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.texture_stats" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">texture_stats</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">gprop</span><span class="o">=</span><span class="default_value">'contrast'</span></em>, <em class="sig-param"><span class="n">offset</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">angle</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">write_stat</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">mean</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.texture_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate and optionally write texture stats for an OGR compatible polygon
 based on underlying raster values</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul>
-<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
-<li><p><strong>raster_path</strong> (<em>string</em>) – input raster path</p></li>
+<li><p><strong>inShp</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>inRas</strong> (<em>string</em>) – input raster path</p></li>
 <li><p><strong>gprop</strong> (<em>string</em>) – a skimage gclm property
 entropy, contrast, dissimilarity, homogeneity, ASM, energy,
 correlation</p></li>
@@ -1207,8 +1225,8 @@ this issue</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
-<li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>inShp</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>inRas</strong> (<em>string</em>) – input raster</p></li>
 <li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
 <li><p><strong>algo</strong> (<em>string</em>) – ‘otsu’, niblack, sauvola</p></li>
 <li><p><strong>nodata_value</strong> (<em>numerical</em>) – If used the no data val of the raster</p></li>
@@ -1234,13 +1252,13 @@ this issue</p>
 
 <dl class="py function">
 <dt id="shape.zonal_rgb_idx">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_rgb_idx</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vector_path</span></em>, <em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_rgb_idx" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_rgb_idx</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_rgb_idx" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate RGB-based indicies per segment/AOI</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
-<li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>inShp</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>inRas</strong> (<em>string</em>) – input raster</p></li>
 <li><p><strong>nodata_value</strong> (<em>numerical</em>) – If used the no data val of the raster</p></li>
 </ul>
 </dd>
@@ -1249,13 +1267,13 @@ this issue</p>
 
 <dl class="py function">
 <dt id="shape.zonal_stats">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_stats</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vector_path</span></em>, <em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">bandname</span></em>, <em class="sig-param"><span class="n">stat</span><span class="o">=</span><span class="default_value">'mean'</span></em>, <em class="sig-param"><span class="n">write_stat</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_stats" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_stats</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">bandname</span></em>, <em class="sig-param"><span class="n">stat</span><span class="o">=</span><span class="default_value">'mean'</span></em>, <em class="sig-param"><span class="n">write_stat</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate zonal stats for an OGR polygon file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
-<li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>inShp</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>inRas</strong> (<em>string</em>) – input raster</p></li>
 <li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
 <li><p><strong>bandname</strong> (<em>string</em>) – eg - blue</p></li>
 <li><p><strong>stat</strong> (<em>string</em>) – string of a stat to calculate, if omitted it will be ‘mean’
@@ -1271,13 +1289,13 @@ only returned (bool)</p></li>
 
 <dl class="py function">
 <dt id="shape.zonal_stats_all">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_stats_all</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vector_path</span></em>, <em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">bandnames</span></em>, <em class="sig-param"><span class="n">statList</span><span class="o">=</span><span class="default_value">['mean', 'min', 'max', 'median', 'std', 'var', 'skew', 'kurt']</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_stats_all" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_stats_all</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">bandnames</span></em>, <em class="sig-param"><span class="n">statList</span><span class="o">=</span><span class="default_value">['mean', 'min', 'max', 'median', 'std', 'var', 'skew', 'kurt']</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_stats_all" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate zonal stats for an OGR polygon file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
-<li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>inShp</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>inRas</strong> (<em>string</em>) – input raster</p></li>
 <li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
 <li><p><strong>bandnames</strong> (<em>list</em>) – eg - [‘b’,’g’,’r’,’nir’]</p></li>
 <li><p><strong>nodata_value</strong> (<em>numerical</em>) – If used the no data val of the raster</p></li>
