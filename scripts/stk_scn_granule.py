@@ -11,29 +11,16 @@ LE1 7RH, UK
 If you use code to publish work cite/acknowledge me and authors of libs as 
 appropriate 
 """
-#Context hack for now
 
-#if __name__ == '__main__':
-#    import os, sys
-#    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from geospatial_learn import learning, geodata #shape #, handyplots, data 
+from geospatial_learn import learning, raster 
 import os
 import glob2
 import argparse
 import numpy as np
-#from datetime import datetime
-#import os
-#import gdal
 from more_itertools import unique_everseen
-#from tqdm import tqdm
-#from skimage.morphology import  remove_small_objects
-#from datetime import datetime
 from joblib import Parallel, delayed
-#import warnings
-#from sentinelsat.sentinel import SentinelAPI, get_coordinates
 import re
-#import json
 import subprocess
 from os import mkdir, path
 
@@ -91,12 +78,11 @@ cloudModel = args.scnmdl
 Create raster stacks of both the 10 & 20m imagery
 ###############################################################################
 """
-#print('stacking 10 & 20m bands')
-# Might this be better run in parallel from bash?
+
 
 def stk20(inRas):
     kwargs = {'mode':'20', 'blocksize': 2048}
-    stk = geodata.stack_S2(inRas, **kwargs)
+    stk = raster.stack_S2(inRas, **kwargs)
     return stk
 
 
@@ -116,7 +102,7 @@ for item in l2aList:
     paths.append(granuleSet[0])
 
 print('making base image')
-outBse = geodata.stack_S2(paths[0], blocksize = 2048)
+outBse = raster.stack_S2(paths[0], blocksize = 2048)
 
 outBse20 = stk20(paths[0])
 
@@ -128,16 +114,16 @@ ootBseScn10 = outBse[:-4]+'_10_scn'+'.tif'
 learning.classify_pixel_bloc(cloudModel, outBse20, 9, ootBseScn[:-4],
                              blocksize=256)
 
-sen_scnFile = geodata.jp2_translate(paths[0], FMT=None, mode='scene')
+sen_scnFile = raster.jp2_translate(paths[0], FMT=None, mode='scene')
 
-geodata.combine_scene(sen_scnFile, ootBseScn)
+raster.combine_scene(sen_scnFile, ootBseScn)
 
 res_cmd_bse = ['gdal_translate', '-outsize', '200%', '200%', '-of', 'GTiff',
                ootBseScn, ootBseScn10]
 subprocess.call(res_cmd_bse)
 
 
-geodata.remove_cloud_S2(outBse, ootBseScn, blocksize=256)
+raster.remove_cloud_S2(outBse, ootBseScn, blocksize=256)
 
 
 bscmd = ['gdal_translate', '-outsize', '100%', '100%', '-of', 'GTiff',
@@ -152,7 +138,7 @@ subprocess.call(bscmd)
 
 def stk20(inRas):
     kwargs = {'mode':'20', 'blocksize': 2048}
-    stk = geodata.stack_S2(inRas, **kwargs)
+    stk = raster.stack_S2(inRas, **kwargs)
     return stk
 
 
@@ -176,7 +162,7 @@ for item in cnms:
     paths = list()
     granuleSet = glob2.glob(l2aList+'/GRANULE/*/')
     #paths.append(granuleSet)
-    sclFile = geodata.jp2_translate(granuleSet[0], FMT=None, mode='scene')
+    sclFile = raster.jp2_translate(granuleSet[0], FMT=None, mode='scene')
 
          
     kwargList = [{'mode':None, 'blocksize': 2408},
@@ -184,7 +170,7 @@ for item in cnms:
     things = np.arange(len(kwargList)) 
     print('stacking 10 & 20m bands')            
     stkList10m = Parallel(n_jobs=-1,verbose=5)(delayed
-                         (geodata.stack_S2)(granuleSet[0],
+                         (raster.stack_S2)(granuleSet[0],
                           **kwargList[i]) for i in things)
     stkList20m = stkList10m[1]
 
@@ -230,18 +216,10 @@ for item in cnms:
     stuff = np.arange(len(stkList20m))
     
     
-#    for item in stuff:
-#        if os.path.exists(sceneRas20):
-#            print('scene map '+str(item)+' exists moving on')            
-#            continue
-#        elif os.path.exists(sceneRasList20[item]+'.tif') and item is len(stuff):
-#            print('scene map exists '+str(item)+' moving on')
-#            break       
-#        else:
     learning.classify_pixel_bloc(cloudModel, stkList20m, 9,
                                  sceneRas20[:-4], blocksize=256)
     
-    geodata.combine_scene(sclFile, sceneRas20)
+    raster.combine_scene(sclFile, sceneRas20)
         
         
     
@@ -258,24 +236,22 @@ for item in cnms:
     
     print('removing cloud')
 
-    geodata.remove_cloud_S2_stk(stkList10m, sceneRas10, 
+    raster.remove_cloud_S2_stk(stkList10m, sceneRas10, 
                                 baseIm=baseImage, dist=2, max_size=20)
         #print('matching histogram')
-        #geodata.hist_match(stkList10m[item], templateRas)
+        #raster.hist_match(stkList10m[item], templateRas)
         
     print('stacking base and new images')
 
 
 
-    geodata.stack_ras([baseImage, stkList10m], changeName)
+    raster.stack_ras([baseImage, stkList10m], changeName)
     
     subprocess.call(['rm', '-rf', baseImage])
 
     bWrite = ['gdal_translate', '-of', 'Gtiff', stkList10m,
               baseImage]
     subprocess.call(bWrite)
-
-    
 
 
     if clipShape != None:
@@ -284,11 +260,9 @@ for item in cnms:
     
         clipped = fld+file+'_clip.tif'
     
-        geodata.clip_raster(changeName, clipShape, clipped, 
+        raster.clip_raster(changeName, clipShape, clipped, 
                         nodata_value=0)
         print(file+'  clipped')
     else:
         print(file+' done')
-#    if args.mask is True:
-#        geodata.mask_raster_multi(clipped, mval=2, mask=maskRas)
-#        print(file+'masked, all done')
+

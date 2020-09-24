@@ -4,6 +4,7 @@
 Created on Fri Mar  3 10:34:56 2017
 
 Script for classifying change over a period of time with image pairs
+This assumes you have a sklearn-based model, folder organised via stk_sc_granule.py & a polygon to clip the scene to AOI
 author: Ciaran Robb
 Research Associate in Earth Observation
 Centre for Landscape and Climate Research (CLCR)
@@ -14,12 +15,9 @@ If you use code to publish work cite/acknowledge me and authors of libs as
 appropriate 
 """
 
-from geospatial_learn import learning, geodata,  shape #, handyplots, data 
+from geospatial_learn import learning, raster,  shape #, handyplots, data 
 import os
-#import glob2
 import argparse
-#import numpy as np
-#from datetime import datetime
 from os import  path
 import gdal
 from glob2 import glob
@@ -28,7 +26,7 @@ import subprocess
 
 
 gdal.UseExceptions()
-#ogr.UseExceptions()
+
 
 parser = argparse.ArgumentParser()
 
@@ -74,15 +72,9 @@ changeMaps = path.join(parentFolder, 'changeMaps')
 
 dirs = [scratch, stacks, baseDir, outputData, changeMaps]
 
-#for fld in dirs:
-#    if os.path.exists(fld):
-#        continue
-#    mkdir(fld)
-    
+
 tileId = args.granule_nm
 baseImage = path.join(baseDir, tileId+'.tif')
-
-
 
 
 clipShape = args.clpPoly
@@ -90,7 +82,6 @@ clipShape = args.clpPoly
 stackList = glob(stacks+'*clip*.tif')
 stackList.sort()
 
-#items = np.arange(len(stackList))
 
 for image in stackList:
     
@@ -104,10 +95,6 @@ for image in stackList:
        
 
     print('commencing change classification')
-    #    if os.path.exists(outMapList[item]+'.tif'):
-    #        print('change map '+str(item)+' exists moving on')
-    
-    #    else:
 
     learning.classify_pixel_bloc(modelPth, image, 8, outMap, 
                                  blocksize = 256, FMT='Gtiff')
@@ -116,21 +103,11 @@ for image in stackList:
     
 
     print('producing model probability map')
-    ##for item in items:
-    #    if os.path.exists(probMapList[item]+'.tif'):
-    #        print('probability map '+str(item)+' exists moving on')
-    #        pass
-    ##    elif os.path.exists(probMapList[item]+'.tif') and item is len(items):
-    ##        print('probability map '+str(item)+' exists moving on')
-    ##        pass
-    #    else:
+
 
     learning.prob_pixel_bloc(modelPth, image, 8, probMap,
                              7, blocksize=256, one_class =1)
     
-    
-    #==============================================================================
-    #==============================================================================
 
     print('sieving change map')
     
@@ -151,23 +128,14 @@ for image in stackList:
     print('producing deforest only raster')
     dF = outMap[:-4]+'_DF'
     
-    geodata.mask_raster(outMap+'.tif', 1, overwrite=False, 
+    raster.mask_raster(outMap+'.tif', 1, overwrite=False, 
                         outputIm = dF[:-4])
     
-    geodata.mask_raster(probMap+'.tif', 1, overwrite=False, 
+    raster.mask_raster(probMap+'.tif', 1, overwrite=False, 
                         outputIm = dF[:-4]+'_prob.tif')
     
        
-    #geodata.polygonize(deforestMap+'.tif', outDShp)
-    
-    # mask arg is required for speed
-    print('polygonising deforest map')
-    outDShp = dF+'.shp'
-    polyCmd = ['gdal_polygonize.py', '-mask', dF+'.tif',
-               dF+'.tif', '-f', "ESRI Shapefile", 
-                outDShp]
-
-    subprocess.call(polyCmd) 
+    raster.polygonize(deforestMap+'.tif', outDShp)
     
 
     fld, file = os.path.split(dF)    
@@ -176,12 +144,6 @@ for image in stackList:
     
     dateNew = int(date[6:8]+date[4:6]+date[2:4])
     
-    # TODO
-    # reinstate dateraster - wasn't working last time
-    #        geodata.mask_raster(dateRas, 1, overwrite=True)
-    #    else:
-    #        geodata.date_raster(dateRas, dF[item]+'.tif')    
-    # Here a load of zonal/shape stats are calculated
     
     shape.zonal_stats(outDShp, probMap+'.tif', 1, 'Prob', write_stat = True)
     shape.shape_props(outDShp,'Area', label_field = 'DN')
@@ -190,17 +152,16 @@ for image in stackList:
     shape.shape_props(outDShp,'MajorAxisLength', label_field = 'DN')
     shape.shape_props(outDShp,'MinorAxisLength', 
                       label_field = 'DN')
-    #shape.write_text_field(outDShp,'County', county)
     shape.write_text_field(outDShp,'Date', str(date))
            
     
         
-    print('producing json for database')
+#    print('producing json for database')
     
     
     
-    polyJscmd = ['ogr2ogr', '-f', '"Geojson"', 
+#    polyJscmd = ['ogr2ogr', '-f', '"Geojson"', 
                  json[:-4]+'.geojson', outDShp,
                  '-s_srs', 'EPSG:32736',  '-t_srs', 'EPSG:4326']
     
-    subprocess.call(polyJscmd) 
+#    subprocess.call(polyJscmd) 
