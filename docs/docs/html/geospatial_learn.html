@@ -643,14 +643,14 @@ are no nans as nan percentile is far too slow</p></li>
 
 <dl class="py function">
 <dt id="raster.tile_rasters">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">tile_rasters</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inImage</span></em>, <em class="sig-param"><span class="n">outputImage</span></em>, <em class="sig-param"><span class="n">tilesize</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.tile_rasters" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">tile_rasters</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outDir</span></em>, <em class="sig-param"><span class="n">tilesize</span><span class="o">=</span><span class="default_value">['256', '256']</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.tile_rasters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Split a large raster into smaller ones</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>inImage</strong> (<em>string</em>) – the path to input raster</p></li>
-<li><p><strong>outputImage</strong> (<em>string</em>) – the path to the output image</p></li>
-<li><p><strong>tilesize</strong> (<em>int</em>) – the side of a square tile</p></li>
+<li><p><strong>inRas</strong> (<em>string</em>) – the path to input raster</p></li>
+<li><p><strong>outDir</strong> (<em>string</em>) – the path to the output dir</p></li>
+<li><p><strong>tilesize</strong> (<em>list of str</em>) – the sides of a square tile [“256”, “256”]</p></li>
 </ul>
 </dd>
 </dl>
@@ -756,7 +756,7 @@ so that has been prioritised rather than raster IO</p>
 
 <dl class="py function">
 <dt id="learning.classify_ply">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_ply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">inModel</span></em>, <em class="sig-param"><span class="n">class_field</span><span class="o">=</span><span class="default_value">'scalar_class'</span></em>, <em class="sig-param"><span class="n">outcld</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_ply" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_ply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">inModel</span></em>, <em class="sig-param"><span class="n">train_field</span><span class="o">=</span><span class="default_value">'training'</span></em>, <em class="sig-param"><span class="n">class_field</span><span class="o">=</span><span class="default_value">'label'</span></em>, <em class="sig-param"><span class="n">rgb</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">outcld</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_ply" title="Permalink to this definition">¶</a></dt>
 <dd><p>Classify a point cloud (ply format)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -766,6 +766,10 @@ so that has been prioritised rather than raster IO</p>
 <dl class="simple">
 <dt>class_field: string</dt><dd><p>the name of the field that the results will be written to
 this must already exist! Create in CldComp. or cgal</p>
+</dd>
+<dt>train_field: string</dt><dd><p>the name of the training label field so it can be ignored</p>
+</dd>
+<dt>rgb: bool</dt><dd><p>whether there is rgb data to be included</p>
 </dd>
 <dt>outcld: string</dt><dd><p>path to a new ply to write if not writing to the input one</p>
 </dd>
@@ -888,7 +892,7 @@ from which to run the pipeline</p></li>
 
 <dl class="py function">
 <dt id="learning.get_training_ply">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">get_training_ply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">label_field</span><span class="o">=</span><span class="default_value">'scalar_label'</span></em>, <em class="sig-param"><span class="n">outFile</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training_ply" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">get_training_ply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">label_field</span><span class="o">=</span><span class="default_value">'training'</span></em>, <em class="sig-param"><span class="n">classif_field</span><span class="o">=</span><span class="default_value">'label'</span></em>, <em class="sig-param"><span class="n">rgb</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">outFile</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training_ply" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get training from a point cloud</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -896,14 +900,22 @@ from which to run the pipeline</p></li>
 <li><p><strong>incld</strong> (<em>string</em>) – the input point cloud</p></li>
 <li><p><strong>label_field</strong> (<em>string</em>) – the name of the field representing the training points which must
 be positive integers</p></li>
-<li><p><strong>outFile</strong> (<em>string</em>) – path to training array to be saved as .gz via joblib</p></li>
+<li><p><strong>classif_field</strong> (<em>string</em>) – the name of the field that will be used for classification later
+must be specified so it can be ignored</p></li>
+<li><p><strong>rgb</strong> (<em>bool</em>) – whether there is rgb data to be included</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+</dl>
+<dl class="simple">
+<dt>outFile: string</dt><dd><p>path to training array to be saved as .gz via joblib</p>
 </dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>np array of training where first column is labels</p>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>np array of training where first column is labels</p>
 </dd>
 </dl>
 </dd></dl>
@@ -948,7 +960,7 @@ classification (typically).</p>
 
 <dl class="py function">
 <dt id="learning.ply_features">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">ply_features</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">outcld</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">k</span><span class="o">=</span><span class="default_value">30</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.ply_features" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">ply_features</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">outcld</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">k</span><span class="o">=</span><span class="default_value">[10, 20, 30]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.ply_features" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate point cloud features and write to file</p>
 <p>Currently memory intensive due to using pyntcloud….</p>
 <dl class="field-list simple">
@@ -956,6 +968,8 @@ classification (typically).</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>incld</strong> (<em>string</em>) – the input point cloud</p></li>
 <li><p><strong>outcld</strong> (<em>string</em>) – the output point cloud</p></li>
+<li><p><strong>k</strong> (<em>list</em>) – the no of neighbors to use when calculating the props
+multiple is more effective</p></li>
 </ul>
 </dd>
 </dl>
@@ -1283,28 +1297,6 @@ may eventually move elsewhere</p>
 <p>If you use code to publish work cite/acknowledge me and authors of libs etc as
 appropriate</p>
 <dl class="py function">
-<dt id="utilities.accum_gabor">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">accum_gabor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outRas</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">9, 9</span></em>, <em class="sig-param"><span class="n">stdv</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">no_angles</span><span class="o">=</span><span class="default_value">16</span></em>, <em class="sig-param"><span class="n">wave_length</span><span class="o">=</span><span class="default_value">3</span></em>, <em class="sig-param"><span class="n">eccen</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">phase_off</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">pltgrid</span><span class="o">=</span><span class="default_value">4, 4</span></em>, <em class="sig-param"><span class="n">blockproc</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.accum_gabor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Process with custom gabor filters and output an raster containing each
-kernel output as a band</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>inRas</strong> (<em>string</em>) – input raster</p></li>
-<li><p><strong>outRas</strong> (<em>string</em>) – output raster</p></li>
-<li><p><strong>size</strong> (<em>tuple</em>) – size of in gabor kernel in pixels (ksize)</p></li>
-<li><p><strong>stdv</strong> (<em>int</em>) – size of stdv / of of gabor kernel (sigma/stdv)</p></li>
-<li><p><strong>no_angles</strong> (<em>int</em>) – number of angles  in gabor kernel (theta)</p></li>
-<li><p><strong>wave_length</strong> (<em>int</em>) – width of stripe in gabor kernel (lambda/wavelength)</p></li>
-<li><p><strong>phase_off</strong> (<em>int</em>) – the phase offset of the kernel</p></li>
-<li><p><strong>eccen</strong> (<em>int</em>) – the elipticity of the kernel when = 1 the gaussian envelope is circular</p></li>
-<li><p><strong>blocproc</strong> (<em>bool</em>) – whether to process in chunks - necessary for very large images!</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt id="utilities.colorscale">
 <code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">colorscale</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">seg</span></em>, <em class="sig-param"><span class="n">prop</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.colorscale" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -1346,6 +1338,11 @@ kernel output as a band</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt id="utilities.iou_score">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">iou_score</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inSeg</span></em>, <em class="sig-param"><span class="n">trueSeg</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.iou_score" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt id="utilities.iter_ransac">
@@ -1444,45 +1441,6 @@ this to zero will disable the balloon force.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="utilities.ms_toposnakes2">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ms_toposnakes2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inSeg</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">iterations</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">algo</span><span class="o">=</span><span class="default_value">'ACWE'</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">sigma</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">smooth</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">lambda1</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">lambda2</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">threshold</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">balloon</span><span class="o">=</span><span class="default_value">- 1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ms_toposnakes2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Topology preserveing morphsnakes, implmented by Jirka Borovec version
-with C++/cython elements- credit to him!</p>
-<p>This is memory intensive so large images will likely fill RAM and produces
-similar resuts to ms_toposnakes</p>
-<p>This uses morphsnakes and explanations are from there.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>inSeg</strong> (<em>string</em>) – input segmentation raster</p></li>
-<li><p><strong>raster_path</strong> (<em>string</em>) – input raster whose pixel vals will be used</p></li>
-<li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
-<li><p><strong>algo</strong> (<em>string</em>) – either “GAC” (geodesic active contours) or “ACWE” (active contours without edges)</p></li>
-<li><p><strong>sigma</strong> (<em>the size of stdv defining the gaussian envelope if using canny edge</em>) – a unitless value</p></li>
-<li><p><strong>iterations</strong> (<em>uint</em>) – Number of iterations to run.</p></li>
-<li><p><strong>smooth</strong> (<em>uint, optional</em>) – Number of times the smoothing operator is applied per iteration.
-Reasonable values are around 1-4. Larger values lead to smoother
-segmentations.</p></li>
-<li><p><strong>lambda1</strong> (<em>float, optional</em>) – Weight parameter for the outer region. If <cite>lambda1</cite> is larger than
-<cite>lambda2</cite>, the outer region will contain a larger range of values than
-the inner region.</p></li>
-<li><p><strong>lambda2</strong> (<em>float, optional</em>) – Weight parameter for the inner region. If <cite>lambda2</cite> is larger than
-<cite>lambda1</cite>, the inner region will contain a larger range of values than
-the outer region.</p></li>
-<li><p><strong>threshold</strong> (<em>float, optional</em>) – Areas of the image with a value smaller than this threshold will be
-considered borders. The evolution of the contour will stop in this
-areas.</p></li>
-<li><p><strong>balloon</strong> (<em>float, optional</em>) – Balloon force to guide the contour in non-informative areas of the
-image, i.e., areas where the gradient of the image is too small to push
-the contour towards a border. A negative value will shrink the contour,
-while a positive value will expand the contour in these areas. Setting
-this to zero will disable the balloon force.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt id="utilities.otbMeanshift">
 <code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">otbMeanshift</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputImage</span></em>, <em class="sig-param"><span class="n">radius</span></em>, <em class="sig-param"><span class="n">rangeF</span></em>, <em class="sig-param"><span class="n">minSize</span></em>, <em class="sig-param"><span class="n">outShape</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.otbMeanshift" title="Permalink to this definition">¶</a></dt>
 <dd><p>OTB meanshift by calling the otb command line
@@ -1524,34 +1482,6 @@ divided</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="utilities.rotate_im">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">rotate_im</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span></em>, <em class="sig-param"><span class="n">angle</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.rotate_im" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rotate the image.</p>
-<p>Rotate the image such that the rotated image is enclosed inside the tightest
-rectangle. The area not occupied by the pixels of the original image is colored
-black.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>image</strong> (<em>numpy.ndarray</em>) – numpy image</p></li>
-<li><p><strong>angle</strong> (<em>float</em>) – angle by which the image is to be rotated</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Rotated Image</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>numpy.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="utilities.spinim">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">spinim</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">img</span></em>, <em class="sig-param"><span class="n">bboxes</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.spinim" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
 <dt id="utilities.temp_match">
 <code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">temp_match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vector_path</span></em>, <em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">ind</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.temp_match" title="Permalink to this definition">¶</a></dt>
 <dd><p>Based on polygons return template matched images</p>
@@ -1570,56 +1500,6 @@ black.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>list of template match arrays same size as input</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="utilities.test_gabor">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">test_gabor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">im</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">9</span></em>, <em class="sig-param"><span class="n">freq</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">angle</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">funct</span><span class="o">=</span><span class="default_value">'cos'</span></em>, <em class="sig-param"><span class="n">plot</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">smooth</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">interp</span><span class="o">=</span><span class="default_value">'none'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.test_gabor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Process image with gabor filter bank of specified orientation or derived from
-image positive values bounding box - implemented from numpy with more intuitive
-params</p>
-<p>This is the numpy based one</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>inRas</strong> (<em>string</em>) – input raster</p></li>
-<li><p><strong>size</strong> (<em>int</em>) – size of in gabor kernel in pixels (ksize)</p></li>
-<li><p><strong>freq</strong> (<em>float</em>)</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="simple">
-<dt>angles: int</dt><dd><p>number of angles  in gabor kernel (theta)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="utilities.test_gabor_cv2">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">test_gabor_cv2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">im</span></em>, <em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">9</span></em>, <em class="sig-param"><span class="n">stdv</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">angle</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">wave_length</span><span class="o">=</span><span class="default_value">3</span></em>, <em class="sig-param"><span class="n">eccen</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">phase_off</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">plot</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">smooth</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">interp</span><span class="o">=</span><span class="default_value">'none'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.test_gabor_cv2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Process image with gabor filter bank of specified orientation or derived from
-image positive values bounding box</p>
-<p>This is the open cv based one</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>inRas</strong> (<em>string</em>) – input raster</p></li>
-<li><p><strong>size</strong> (<em>int</em>) – size of in gabor kernel in pixels (ksize)</p></li>
-<li><p><strong>stdv</strong> (<em>int</em>) – stdv / of of gabor kernel (sigma/stdv)</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="simple">
-<dt>angles: int</dt><dd><p>number of angles  in gabor kernel (theta)</p>
-</dd>
-<dt>wave_length: int</dt><dd><p>width of stripe in gabor kernel (lambda/wavelength)
-optional best to leave none and hence same as size</p>
-</dd>
-<dt>phase_off: int</dt><dd><p>the phase offset of the kernel</p>
-</dd>
-<dt>eccen: int</dt><dd><p>the elipticity of the kernel when = 1 the gaussian envelope is circular (gamma)</p>
 </dd>
 </dl>
 </dd></dl>
