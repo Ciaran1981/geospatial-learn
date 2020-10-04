@@ -134,8 +134,9 @@ for image in stackList:
     raster.mask_raster(probMap+'.tif', 1, overwrite=False, 
                         outputIm = dF[:-4]+'_prob.tif')
     
-       
-    raster.polygonize(deforestMap+'.tif', outDShp)
+    
+    outDShp = dF+'_DF.shp'
+    raster.polygonize(dF+'.tif', outDShp)
     
 
     fld, file = os.path.split(dF)    
@@ -160,8 +161,8 @@ for image in stackList:
     
     
     
-#    polyJscmd = ['ogr2ogr', '-f', '"Geojson"', 
-                 json[:-4]+'.geojson', outDShp,
-                 '-s_srs', 'EPSG:32736',  '-t_srs', 'EPSG:4326']
-    
+##    polyJscmd = ['ogr2ogr', '-f', '"Geojson"', 
+#                 json[:-4]+'.geojson', outDShp,
+#                 '-s_srs', 'EPSG:32736',  '-t_srs', 'EPSG:4326']
+#    
 #    subprocess.call(polyJscmd) 
