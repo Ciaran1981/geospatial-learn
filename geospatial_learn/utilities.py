@@ -53,7 +53,6 @@ from plyfile import PlyData, PlyProperty#, PlyListProperty
 from skimage.filters import sobel
 from skimage.future import graph
 #houghty chufty
-from geospatial_learn.utilities import imangle, do_phasecong
 from skimage.transform import hough_line, hough_line_peaks
 from shapely.geometry import box, LineString
 from skimage.draw import line
