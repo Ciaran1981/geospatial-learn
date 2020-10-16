@@ -27,27 +27,20 @@ matplotlib.use('Qt5Agg')
 import napari
 import dask.array as da
 from skimage.measure import regionprops
-from skimage import color
-#import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import ImageGrid
-from scipy.ndimage import gaussian_filter
 from phasepack.phasecong import phasecong
 from skimage.transform import rescale
 from skimage.feature import canny
 from skimage.measure import LineModelND, ransac
 from skimage.segmentation import relabel_sequential
-#from skimage.draw import line
-#from warnings import warn
-#from scipy.interpolate import RectBivariateSpline
-from skimage.util import img_as_float, invert
-from skimage.morphology import dilation, remove_small_objects, remove_small_holes, medial_axis, skeletonize, binary_dilation, selem
+
+from skimage.util import invert #, img_as_float
+from skimage.morphology import dilation, remove_small_objects, skeletonize, binary_dilation, selem
 import scipy.ndimage as nd
 from skimage.feature import peak_local_max
 from morphsnakes import morphological_geodesic_active_contour as gac
 from morphsnakes import morphological_chan_vese as mcv
 from morphsnakes import inverse_gaussian_gradient
-#from multisnakes import MorphACWE, MorphGAC
-#from multisnakes import multi_snakes as msn
+
 import mahotas as mh
 from plyfile import PlyData, PlyProperty#, PlyListProperty
 from skimage.filters import sobel
@@ -60,9 +53,6 @@ from skimage.draw import line
 gdal.UseExceptions()
 ogr.UseExceptions()
 
-
-gdal.UseExceptions()
-ogr.UseExceptions()
 
 def _std_huff(inArray, outArray,  angl, valrange, interval, rgt):
     
@@ -246,14 +236,6 @@ def fixply(incloud, outcloud, field='scalar_label'):
     
     ar = np.int32(ar)
     
-#    ar[ar==1]=0
-#
-#    ar[ar==2]=1
-#
-#    ar[ar==3]=2
-#
-#    ar[ar==4]=3
-    
     # All this modifies the original data
     new = pf['vertex']
     new.properties = ()
@@ -272,10 +254,7 @@ def fixply(incloud, outcloud, field='scalar_label'):
                        PlyProperty('label', 'int'))
     
     pf.elements[0].data['label']=ar
-    
-    
-    
-    
+             
     pf.write(outcloud)
 
 def wipe_ply_field(incloud, outcloud, tfield='training' ,field='label'): 
@@ -292,22 +271,12 @@ def wipe_ply_field(incloud, outcloud, tfield='training' ,field='label'):
     
     # do the nan to num in place 
     #ar = np.nan_to_num(ar, nan=-1)
-    
-    
 
     #ar[ar<-1]=-1
     
     ar = np.int32(ar)
     ar[ar>=0]=-1
     
-    
-#    ar[ar==1]=0
-#
-#    ar[ar==2]=1
-#
-#    ar[ar==3]=2
-#
-#    ar[ar==4]=3
     
     # All this modifies the original data
     new = pf['vertex']
@@ -333,14 +302,6 @@ def wipe_ply_field(incloud, outcloud, tfield='training' ,field='label'):
     
     
     pf.write(outcloud)
-
-#
-def iou_score(inSeg, trueSeg):
-    # The Intersection over Union (IoU) metric, also referred to as the Jaccard index
-    intersection = np.logical_and(trueVals, predVals)
-    union = np.logical_or(trueVals, predVals)
-    iou_score = np.sum(intersection) / np.sum(union)
-
 
 
 def _fix_overlapping_levelsets(levelsets):
@@ -818,11 +779,11 @@ def _weight_boundary(graph, src, dst, n):
 
     Parameters
     ----------
-    graph : RAG
+    graph: RAG
         The graph under consideration.
-    src, dst : int
+    src, dst: int
         The vertices in `graph` to be merged.
-    n : int
+    n: int
         A neighbor of `src` or `dst` or both.
 
     Returns
@@ -922,9 +883,9 @@ def visual_callback_2d(background, fig=None):
     
     Parameters
     ----------
-    background : (M, N) array
+    background: (M, N) array
         Image to be plotted as the background of the visual evolution.
-    fig : matplotlib.figure.Figure
+    fig: matplotlib.figure.Figure
         Figure where results will be drawn. If not given, a new figure
         will be created.
     
@@ -1110,18 +1071,18 @@ def temp_match(vector_path, raster_path, band, nodata_value=0, ind=None):
     Parameters
     ----------
     
-    vector_path : string
+    vector_path: string
                   input shapefile
         
-    raster_path : string
+    raster_path: string
                   input raster
 
-    band : int
+    band: int
            an integer val eg - 2
         
     nodata_value : numerical
                    If used the no data val of the raster
-    ind : int
+    ind: int
         The feature ID to use - if used this will use one feature and rotate it 90 for the second
         
     Returns
@@ -1238,13 +1199,13 @@ def imangle(im):
     Determine the orientation of non-zero vals in an image
     ---------- 
     
-    im : np array
-               input image
+    im: np array
+              input image
     Returns
     -------
     
-    axes : tuple
-              orientations of each side and binary array
+    axes: tuple
+             orientations of each side and binary array
     
     """
     
@@ -1280,7 +1241,7 @@ def min_bound_rectangle(points):
     Returns a set of points representing the corners of the bounding box.
     Parameters
     ----------
-    points : list
+    points: list
         An nx2 iterable of points
     
     Returns
@@ -1355,7 +1316,7 @@ def _bbox_to_pixel_offsets(rgt, geom):
     Parameters
     ----------
     
-    rgt : array
+    rgt: array
           List of points defining polygon (?)
           
     geom : shapely.geometry
@@ -1363,11 +1324,9 @@ def _bbox_to_pixel_offsets(rgt, geom):
     
     Returns
     -------
-    int
-       x offset
+    xoffset: int  
            
-    int
-       y offset
+    yoffset: int
            
     xcount : int
              rows of bounding box
@@ -1415,19 +1374,7 @@ def _bbox_to_pixel_offsets(rgt, geom):
     yoff = int((yOrigin - ymax)/pixelWidth)
     xcount = int((xmax - xmin)/pixelWidth)+1
     ycount = int((ymax - ymin)/pixelWidth)+1
-#    originX = gt[0]
-#    originY = gt[3]
-#    pixel_width = gt[1]
-#    pixel_eccen = gt[5]
-#    x1 = int((bbox[0] - originX) / pixel_width)
-#    x2 = int((bbox[1] - originX) / pixel_width) + 1
-#
-#    y1 = int((bbox[3] - originY) / pixel_eccen)
-#    y2 = int((bbox[2] - originY) / pixel_eccen) + 1
-#
-#    xsize = x2 - x1
-#    ysize = y2 - y1
-#    return (x1, y1, xsize, ysize)
+
     return (xoff, yoff, xcount, ycount)  
 
 
@@ -1466,171 +1413,5 @@ def colorscale(seg, prop):
 
 
 
-def otbMeanshift(inputImage, radius, rangeF, minSize, outShape):
-    """ 
-    OTB meanshift by calling the otb command line
-    Written for convenience and due to otb python api being rather verbose 
-    
-    Notes:
-    -----------        
-    There is a maximum size for the .shp format otb doesn't seem to
-    want to move beyond (2gb), so enormous rasters may need to be sub
-    divided
-        
-    You will need to install OTB etc seperately
-                
-        
-    Parameters
-    -----------    
-     
-    inputImage : string
-                 the input image 
-        
-    radius : int
-             the kernel radius
-        
-    rangeF : int
-             the kernel range
-        
-    minSize : int
-              minimum segment size
-        
-    outShape : string
-               the ouput shapefile
 
-    
-    """
-    # Yes it is possible to do this with the otb python api, but it is way more
-    # verbose, hence using the command line
-    # the long winded version is greyed out as takes far too long to process
-    print('segmenting image.... could be a little while!')
-#    cmd1 = ('otbcli_MeanShiftSmoothing -in '+inputImage+ '
-#            '-fout MeanShift_FilterOutput.tif -foutpos '
-#            'MeanShift_SpatialOutput.tif -spatialr 16 -ranger 16 ' 
-#            '-thres 0.1 -maxiter 100')
-#    cmd2 = ('otbcli_LSMSSegmentation -in smooth.tif -inpos position.tif ' 
-#            '-out segmentation.tif -ranger '+rangeF+' -spatialr '+radius+' 
-#            ' -minsize '+minSize+'
-#            ' -tilesizex 500 -tilesizey 500')
-#    cmd3 = ('otbcli_LSMSSmallRegionsMerging -in smooth.tif '
-#            '-inseg segmentation.tif -out merged.tif -minsize 20'
-#            '-tilesizex 500 -tilesizey 500')
-#    cmd4 = ('otbcli_LSMSVectorization -in avions.tif -inseg merged.tif '
-#            '-out vector.shp -tilesizex 500 -tilesizey 500')
-            
-    cmd1 = ['otbcli_Segmentation', '-in', str(inputImage), '-filter meanshift',
-            '-filter.meanshift.spatialr', str(radius),
-            '-filter.meanshift.ranger', str(rangeF), 
-            '-filter.meanshift.minsize', str(minSize), '-mode', 'vector',
-            '-mode.vector.out', outShape]
-    cmd1out = subprocess.check_output(cmd1)
-    print(cmd1out)
-#    print('filtering done')
-#    os.system(cmd2)
-#    print('raster seg done')
-#    os.system(cmd3)
-#    print('region merge done')
-#    os.system(cmd4)
-    print('vectorisation done - process complete - phew!')
-#    output = subprocess.Popen([cmd], stdout=subprocess.PIPE).communicate()[0]
-#    print(output)
-#def ms_toposnakes2(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
-#                  sigma=4, smooth=1, lambda1=1, lambda2=1, threshold='auto', 
-#                  balloon=-1):
-#    
-#    """
-#    Topology preserveing morphsnakes, implmented by Jirka Borovec version 
-#    with C++/cython elements- credit to him!
-#    
-#    This is memory intensive so large images will likely fill RAM and produces
-#    similar resuts to ms_toposnakes
-#    
-#    
-#    This uses morphsnakes and explanations are from there.
-#    
-#    Parameters
-#    ----------
-#    
-#    inSeg: string
-#                  input segmentation raster
-#        
-#    raster_path: string
-#                  input raster whose pixel vals will be used
-#
-#    band: int
-#           an integer val eg - 2
-#
-#    algo: string
-#           either "GAC" (geodesic active contours) or "ACWE" (active contours without edges)
-#           
-#    sigma: the size of stdv defining the gaussian envelope if using canny edge
-#              a unitless value
-#
-#    iterations: uint
-#        Number of iterations to run.
-#        
-#    smooth : uint, optional
-#    
-#        Number of times the smoothing operator is applied per iteration.
-#        Reasonable values are around 1-4. Larger values lead to smoother
-#        segmentations.
-#    
-#    lambda1: float, optional
-#    
-#        Weight parameter for the outer region. If `lambda1` is larger than
-#        `lambda2`, the outer region will contain a larger range of values than
-#        the inner region.
-#        
-#    lambda2: float, optional
-#    
-#        Weight parameter for the inner region. If `lambda2` is larger than
-#        `lambda1`, the inner region will contain a larger range of values than
-#        the outer region.
-#    
-#    threshold: float, optional
-#    
-#        Areas of the image with a value smaller than this threshold will be
-#        considered borders. The evolution of the contour will stop in this
-#        areas.
-#        
-#    balloon: float, optional
-#    
-#        Balloon force to guide the contour in non-informative areas of the
-#        image, i.e., areas where the gradient of the image is too small to push
-#        the contour towards a border. A negative value will shrink the contour,
-#        while a positive value will expand the contour in these areas. Setting
-#        this to zero will disable the balloon force.
-#        
-#    """    
-#
-#
-#    rds1 = gdal.Open(inRas)
-#    img = rds1.GetRasterBand(band).ReadAsArray()
-#    
-#    rds2 = gdal.Open(inSeg)
-#    seg = rds2.GetRasterBand(1).ReadAsArray()
-#    
-#    
-#    if algo=='GAC':
-#
-#        # class-based
-#        mseg = msn.MultiMorphSnakes(img, seg, MorphGAC, 
-#                               dict(smoothing=smooth, threshold=threshold,
-#                                    balloon=balloon))
-#        mseg.run(iterations)
-#
-#            
-#    else:
-#        mseg = msn.MultiMorphSnakes(img, seg, MorphACWE, 
-#                               dict(smoothing=smooth, lambda1=lambda1,
-#                                    lambda2=lambda2))
-#        mseg.run(iterations)
-#        
-#        
-#    outSeg = mseg.levelset
-#    
-#    array2raster(outSeg, 1, inSeg, inSeg[:-4]+'tsnake.tif', gdal.GDT_Int32)
-#    
-#    
-#    
-#    polygonize(inSeg[:-4]+'tsnake.tif', outShp, outField=None,  mask = True, band = 1)
+

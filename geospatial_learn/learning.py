@@ -75,29 +75,29 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
     Parameters
     ----------  
     
-    X_train : np array
+    X_train: np array
               numpy array of training data where the 1st column is labels
     
-    outModel : string
+    outModel: string
                the output model path (which is a .py file)
                from which to run the pipeline
     
-    cv : int
+    cv: int
          no of folds
     
-    cores : int or -1 (default)
+    cores: int or -1 (default)
             the no of parallel jobs
     
-    strat : bool
+    strat: bool
             a stratified grid search
     
-    regress : bool
+    regress: bool
               a regression model if True, a classifier if False
     
-    params : a dict of model params (see tpot)
+    params: a dict of model params (see tpot)
              enter your own params dict rather than the range provided
     
-    scoring : string
+    scoring: string
               a suitable sklearn scoring type (see notes)
                            
     """
@@ -161,10 +161,10 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
     Parameters
     ---------------   
     
-    X_train : np array
+    X_train: np array
               numpy array of training data where the 1st column is labels
     
-    outModel : string
+    outModel: string
                the output model path which is a gz file, if using keras it is 
                h5 
     
@@ -177,17 +177,16 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
           source. If using GPU, you will likely be limited to a sequential 
           grid search as multi-core overloads the GPUs quick!
           
-    
-    random : bool
+    random: bool
              if True, a random param search
     
-    cv : int
+    cv: int
          no of folds
     
-    cores : int or -1 (default)
+    cores: int or -1 (default)
             the no of parallel jobs
     
-    strat : bool
+    strat: bool
             a stratified grid search
     
     regress : bool
@@ -213,17 +212,6 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
     ----------------------    
         From my own experience and reading around
         
-    
-        sklearn svms tend to be not great on large training sets and are
-        slower with these (i have tried on HPCs and they time out on multi fits)
-       
-        sklearn 'gb' is very slow to train, though quick to predict 
-        
-        xgb is much faster, but rather different in algorithmic detail -
-        ie won't produce same results as sklearn...
-        
-        xgb also uses the sklearn wrapper params which differ from those in
-        xgb docs, hence they are commented next to the area of code
     
         Scoring types - there are a lot - some of which won't work for 
         multi-class, regression etc - see the sklearn docs!
@@ -690,25 +678,25 @@ def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
     Parameters
     ---------------------
     
-    model : string (.gz)
+    model: string (.gz)
             path to model to be saved
     
-    X_train : np array
+    X_train: np array
               numpy array of training data where the 1st column is labels
     
-    min_est : int
+    min_est: int
               min no of trees
     
-    max_est : int
+    max_est: int
               max no of trees
     
-    step : int
+    step: int
            the step at which no of trees is increased
     
-    regress : bool
+    regress: bool
               boolean where if True it is a regressor
     
-    Returns : tuple of np arrays
+    Returns: tuple of np arrays
     -----------------------
         
     error rate, best estimator
@@ -870,22 +858,22 @@ def classify_pixel(model, inputDir, bands, outMap, probMap):
     
     ---------------
         
-    model : sklearn model
+    model: sklearn model
             a path to a scikit learn model that has been saved 
     
-    inputDir : string
+    inputDir: string
                a folder with images to be classified
     
-    bands : int
+    bands: int
             the no of image bands eg 8
     
-    outMap : string
+    outMap: string
              path to output image excluding the file format 'pathto/mymap'
     
-    probMap : string
+    probMap: string
               path to output prob image excluding the file format 'pathto/mymap'
     
-    FMT : string 
+    FMT: string 
           optional parameter - gdal readable fmt
            
         """ 
@@ -951,26 +939,26 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     Parameters
     ------------------
         
-    model : sklearn model / keras model
+    model: sklearn model / keras model
             a path to a model that has been saved 
     
-    inputImage : string
+    inputImage: string
                  path to image including the file fmt 'Myimage.tif'
     
-    bands : band
+    bands: band
             the no of image bands eg 8
     
-    outMap : string
+    outMap: string
              path to output image excluding the file format 'pathto/mymap'
     
-    FMT : string
+    FMT: string
           optional parameter - gdal readable fmt
     
-    blocksize : int (optional) 
+    blocksize: int (optional) 
                 size of raster chunck in pixels 256 tends to be quickest
                 if you put None it will read size from gdal (this doesn't always pay off!)
     
-    dtype : int (optional - gdal syntax gdal.GDT_Int32) 
+    dtype: int (optional - gdal syntax gdal.GDT_Int32) 
             a gdal dataype - default is int32
 
 
@@ -1109,29 +1097,29 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
     
     Parameters
     ----------
-    model : string
+    model: string
             a path to a scikit learn model that has been saved 
         
     inputImage : string
                  path to image including the file fmt 'Myimage.tif'
     
-    bands : int
+    bands: int
             the no of image bands eg 8
     
-    outMap : string
+    outMap: string
              path to output image excluding the file format 'pathto/mymap'
     
-    classes : int
+    classes: int
               no of classes
     
-    blocksize : int (optional) 
+    blocksize: int (optional) 
                 size of raster chunck 256 tends to be quickest if you put None it 
                 will read size from gdal (this doesn't always pay off!)
                
-    FMT : string
+    FMT: string
           optional parameter - gdal readable fmt eg 'Gtiff'
         
-    one_class : int
+    one_class: int
                 choose a single class to produce output prob raster
 
 
@@ -1256,16 +1244,16 @@ def classify_object(model, inShape, attributes, field_name=None):
     
     Parameters
     ------------------
-    model : string
+    model: string
             path to input model
     
-    inShape : string
+    inShape: string
               input shapefile path (must be .shp for now....)
     
-    attributes : list of stings
+    attributes: list of stings
                  list of attributes names
     
-    field_name : string
+    field_name: string
                  name of classified label field (optional)
     """
     
@@ -1351,16 +1339,16 @@ def get_training_shp(inShape, label_field, feat_fields,  outFile = None):
     Parameters
     --------------------    
     
-    inShape : string
+    inShape: string
               the input shapefile - must be esri .shp at present
     
-    label_field : string
+    label_field: string
                   the field name for the class labels
                   
-    feat_fields : list
+    feat_fields: list
                   the field names of the feature data                
 
-    outFile : string (optional)
+    outFile: string (optional)
               path to training data to be saved (.gz)
     
     Returns
@@ -1410,19 +1398,19 @@ def get_training(inShape, inRas, bands, field, outFile = None):
     Parameters
     --------------
         
-    inShape : string
+    inShape: string
               the input shapefile - must be esri .shp at present
         
-    inRas : string
+    inRas: string
             the input raster from which the training is extracted
         
-    bands : int
+    bands: int
             no of bands
         
-    field : string
+    field: string
             the attribute field containing the training labels
     
-    outFile : string (optional)
+    outFile: string (optional)
               path to the training file saved as joblib format (eg - 'training.gz')
     
     Returns
@@ -1744,10 +1732,10 @@ def rmse_vector_lyr(inShape, attributes):
     Parameters 
     ----------- 
     
-    inShape : string
+    inShape: string
               the input vector of OGR type
         
-    attributes : list
+    attributes: list
            a list of strings denoting the attributes
          
 
@@ -1775,96 +1763,4 @@ def rmse_vector_lyr(inShape, attributes):
 
 
 
-# crap from classif point for ref##############################################
-#label = np.array(pf.elements[0].data[train], dtype='float64')
 
-# This ply lib is alright but writing I/O is extremely verbose
-# Purgatorial stuff
-# TODO Jeez tidy this too
-    
-    
-    
-#    pps = [PlyProperty('x', 'float'), PlyProperty('y', 'float'), 
-#                                         PlyProperty('z', 'float'), 
-#                                         PlyProperty('nx', 'float'), 
-#                                         PlyProperty('ny', 'float'), 
-#                                         PlyProperty('nz', 'float'), 
-#                                         PlyProperty('training', 'int'),
-#                                         PlyProperty('label', 'int'), 
-#                                         PlyProperty('red', 'uchar'), 
-#                                         PlyProperty('green', 'uchar'), 
-#                                         PlyProperty('blue', 'uchar'), 
-#                                         PlyProperty('e1(31)', 'float'), 
-#                                         PlyProperty('e2(31)', 'float'), 
-#                                         PlyProperty('e3(31)', 'float'), 
-#                                         PlyProperty('anisotropy(31)', 'float'), 
-#                                         PlyProperty('curvature(31)', 'float'), 
-#                                         PlyProperty('eigenentropy(31)', 'float'), 
-#                                         PlyProperty('eigen_sum(31)', 'float'), 
-#                                         PlyProperty('linearity(31)', 'float'), 
-#                                         PlyProperty('omnivariance(31)', 'float'), 
-#                                         PlyProperty('planarity(31)', 'float'), 
-#                                         PlyProperty('sphericity(31)', 'float'),
-#                                         PlyProperty(train_label, 'int'),
-#                                         PlyProperty(outclass, 'int')]
-#    
-#    pfn = PlyElement(['vertex'], pps, pf.elements[0].count)
-#    
-
-#    pfn = pf['vertex']
-#    pfn.properties=()
-#    
-#    props = ['x', 'y', 'z', 'nx', 'ny', 'nz', 'red', 'green', 'blue','e1','e2', 'e3',
-#             'anisotropy', 'curvature', "eigenentropy", "eigen_sum","linearity", 
-#     "omnivariance", "planarity", "sphericity", train_label, outclass]
-#    
-#    pfn.data.dtype.names = props
-#    
-#    
-#    
-#    
-#
-#    
-#    plist = PlyListProperty('float', 'uchar', 'int')
-#    #PlyElement('vertex',
-#    
-#    pfn.properties = (plist, (PlyProperty('x', 'float'),
-#                                 PlyProperty('y', 'float'),
-#                                 PlyProperty('z', 'float'),
-#                                 PlyProperty('nx', 'float'),
-#                                 PlyProperty('ny', 'float'),
-#                                 PlyProperty('nz', 'float'), 
-#                                 PlyProperty('red', 'uchar'),
-#                                 PlyProperty('green', 'uchar'),
-#                                 PlyProperty('blue', 'uchar'),
-#                                 PlyProperty('e1(31)', 'float'),
-#                                 PlyProperty('e2(31)', 'float'),
-#                                 PlyProperty('e3(31)', 'float'),
-#                                 PlyProperty('anisotropy(31)', 'float'),
-#                                 PlyProperty('curvature(31)', 'float'),
-#                                 PlyProperty('eigen_sum(31)', 'float'),
-#                                 PlyProperty('linearity(31)', 'float'),
-#                                 PlyProperty('omnivariance(31)', 'float'),
-#                                 PlyProperty('planarity(31)', 'float'),
-#                                 PlyProperty('sphericity(31)', 'float'),
-#                                 PlyProperty(train_label, 'int'),
-#                                 PlyProperty(outclass, 'int')))
-#    
-#    
-#    pfn.elements[0].data['x'] = x
-#    pfn.elements[0].data['y'] = y
-#    pfn.elements[0].data['z'] = z
-#    pfn.elements[0].data['nx'] = nx
-#    pfn.elements[0].data['ny'] = ny
-#    pfn.elements[0].data['nz'] = nz
-#    pfn.elements[0].data['red'] = r
-#    pfn.elements[0].data['green'] = g
-#    pfn.elements[0].data['blue'] = b
-#    pfn.elements[0].data['anisotropy(31)'] = a
-#    pfn.elements[0].data["curvature(31)"] = c
-#    pfn.elements[0].data["eigenentropy(31)"] = et
-#    pfn.elements[0].data["eigen_sum(31)"] = es
-#    pfn.elements[0].data["linearity(31)"] = l
-#    pfn.elements[0].data["planarity(31)"]  = pl
-#    pfn.elements[0].data["omnivariance(31)"] = om
-#    pfn.elements[0].data["sphericity(31)"] =sp    

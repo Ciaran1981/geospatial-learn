@@ -112,12 +112,10 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
     inShape: string
               input shape file path
 
-    
     inRas: string
             a raster to get the correct dimensions from (optional), required for
             scikit-image props
         
-    
     prop: string
            Scikit image regionprops prop 
            (see http://scikit-image.org/docs/dev/api/skimage.measure.html)
@@ -345,16 +343,16 @@ def _bbox_to_pixel_offsets(rgt, geom):
     
     Returns
     -------
-    int
-       x offset
+
+    x offset: int
            
-    int
-       y offset
+
+    y offset: int
            
-    xcount : int
+    xcount: int
              rows of bounding box
              
-    ycount : int
+    ycount: int
              columns of bounding box
     """
     
@@ -424,16 +422,16 @@ def filter_shp(inShp, expression, outField, outLabel):
     Parameters
     ----------
     
-    inShp : string
+    inShp: string
                   input shapefile
         
-    expression : string
+    expression: string
                   sql style expression e.g. "DN >= 168"
     
-    outField : string
+    outField: string
                   the field in which the label will reside
                   
-    outLabel : the label identifying the filtered features
+    outLabel: the label identifying the filtered features
     """
     
     vds = ogr.Open(inShp, 1) 
@@ -467,28 +465,28 @@ def zonal_stats(inShp, inRas, band, bandname, stat = 'mean',
     Parameters
     ----------
     
-    inShp : string
+    inShp: string
                   input shapefile
         
-    inRas : string
+    inRas: string
                   input raster
 
-    band : int
+    band: int
            an integer val eg - 2
 
-    bandname : string
+    bandname: string
                eg - blue
         
-    stat : string
+    stat: string
            string of a stat to calculate, if omitted it will be 'mean'
            others: 'mode', 'min','mean','max', 'std',' sum', 'count','var',
            skew', 'kurt (osis)'
                      
-    write_stat : bool (optional)
+    write_stat: bool (optional)
                 If True, stat will be written to OGR file, if false, dataframe
                 only returned (bool)
         
-    nodata_value : numerical
+    nodata_value: numerical
                    If used the no data val of the raster
         
     """    
@@ -618,19 +616,19 @@ def zonal_stats_all(inShp, inRas, bandnames,
     Parameters
     ----------
     
-    inShp : string
+    inShp: string
                   input shapefile
         
-    inRas : string
+    inRas: string
                   input raster
 
-    band : int
+    band: int
            an integer val eg - 2
 
-    bandnames : list
+    bandnames: list
                eg - ['b','g','r','nir']
         
-    nodata_value : numerical
+    nodata_value: numerical
                    If used the no data val of the raster
         
     """    
@@ -712,13 +710,13 @@ def zonal_rgb_idx(inShp, inRas, nodata_value=0):
     Parameters
     ----------
     
-    inShp : string
+    inShp: string
                   input shapefile
         
-    inRas : string
+    inRas: string
                   input raster
         
-    nodata_value : numerical
+    nodata_value: numerical
                    If used the no data val of the raster
         
     """    
@@ -804,13 +802,13 @@ def write_text_field(inShape, fieldName, attribute):
     
     Parameters
     ----------
-    inShape : string
+    inShape: string
               input OGR vecotr file
         
-    fieldName : string
+    fieldName: string
                 name of field being written
     
-    attribute : string
+    attribute: string
                 'text to enter in each entry of column'
         
     """
@@ -842,28 +840,28 @@ def texture_stats(inShp, inRas, band, gprop='contrast',
     
     Parameters
     ----------
-    inShp : string
+    inShp: string
                   input shapefile 
         
-    inRas : string 
+    inRas: string 
                   input raster path
         
-    gprop : string
+    gprop: string
             a skimage gclm property 
             entropy, contrast, dissimilarity, homogeneity, ASM, energy,
             correlation
         
-    offset : int
+    offset: int
              distance in pixels to measure - minimum of 2!!!
         
-    angle : int
+    angle: int
             angle in degrees from pixel (int) 
             
             135  90    45
             \    |    /
                  c    -  0         
      
-    mean : bool
+    mean: bool
            take the mean of all offsets
      
     Important to note that the results will be unreliable for glcm 
@@ -1542,19 +1540,19 @@ def thresh_seg(inShp, inRas, outShp, band, buf=0, algo='otsu',
     Parameters
     ----------
     
-    inShp : string
+    inShp: string
                   input shapefile
         
-    inRas : string
+    inRas: string
                   input raster
 
-    band : int
+    band: int
            an integer val eg - 2
 
-    algo : string
+    algo: string
            'otsu', niblack, sauvola
           
-    nodata_value : numerical
+    nodata_value: numerical
                    If used the no data val of the raster
 
  
@@ -1929,16 +1927,16 @@ def _sk_hough2line(vArray, hArray, inRaster, outShp):
         Parameters
         ----------
         
-        vArray : np array
+        vArray: np array
                       an array of edge or edge like feature can be continuous or binary
             
-        hArray : np array
+        hArray: np array
                       a second binary array from which lines are detetcted
     
-        inRaster : string
+        inRaster: string
                path to an input raster from which the geo-reffing is obtained
     
-        outShp : string
+        outShp: string
                path to the output shapefile
              
     
@@ -2314,36 +2312,7 @@ def meshgrid(inRaster, outShp, gridHeight=1, gridWidth=1):
     
 
     
-    # not rotated!
-#    numpoints = geom.GetPointCount()
-#    pointsX = []; pointsY = []
-#    
-#    if (geom.GetGeometryName() == 'MULTIPOLYGON'):
-#        count = 0
-#        pointsX = []; pointsY = []
-#        for polygon in geom:
-#            geomInner = geom.GetGeometryRef(count)
-#            ring = geomInner.GetGeometryRef(0)
-#            numpoints = ring.GetPointCount()
-#            for p in range(numpoints):
-#                    lon, lat, z = ring.GetPoint(p)
-#                    pointsX.append(lon)
-#                    pointsY.append(lat)
-#            count += 1
-#    elif (geom.GetGeometryName() == 'POLYGON'):
-#        ring = geom.GetGeometryRef(0)
-#        numpoints = ring.GetPointCount()
-#        pointsX = []; pointsY = []
-#        for p in range(numpoints):
-#                lon, lat, z = ring.GetPoint(p)
-#                pointsX.append(lon)
-#                pointsY.append(lat)
-#            
-#    xmin = min(pointsX)
-#    xmax = max(pointsX)
-#    ymin = min(pointsY)
-#    ymax = max(pointsY)
-#    
+
     
     wkt=geom.ExportToWkt()
     poly1 = loads(wkt)
@@ -2355,20 +2324,6 @@ def meshgrid(inRaster, outShp, gridHeight=1, gridWidth=1):
     
     xmin, ymin, xmax, ymax = poly2.bounds
     
-    
-
-
-
-    # so here we spin the rectangle round to the vertical then measure it
-#    x,y=poly2.exterior.coords.xy
-#    xy = np.vstack((x,y))
-#    rec = min_bound_rectangle(xy.transpose())
-#    poly2 = Polygon(rec)
-#    minx, miny, maxx, maxy = poly2.bounds
-#    axis1 = maxx - minx
-#    axis2 = maxy - miny
-#    axes = np.array([axis1, axis2])
-#    
 
     gridWidth = float(gridHeight)
     gridHeight = float(gridWidth)

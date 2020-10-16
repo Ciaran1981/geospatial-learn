@@ -32,23 +32,6 @@ import gdal
 cudnn.benchmark = True
 
 
-#mainDir = '/media/ciaran/Storage4A/Phenomics/Planet/DEEP'
-## Firstly, I need to have an OS master map topo of fields and planet imagery
-## here a number index is added to the outfile name
-#inRas = '/media/ciaran/Storage4A/Phenomics/Planet/PlanetSpring/SpringMergeosgb.tif'
-## Note that the vector was first bufferred by 3m (a planet pixel), as otherwise
-## there was no clear boundary between fields
-#inLabel = '/media/ciaran/Storage4A/Phenomics/Planet/DEEP/FieldsRaster.tif'
-#
-#outRasDir = '/media/ciaran/Storage4A/Phenomics/Planet/DEEP/planet'
-#
-#outLabelDir =  '/media/ciaran/Storage4A/Phenomics/Planet/DEEP/label'
-#
-#outMap = '/media/ciaran/Storage4A/Phenomics/Planet/DEEP/Epoch50Big.tif'
-#
-#
-#ootDir = '/media/ciaran/Storage4A/Phenomics/Planet/DEEP/classified'
-
 
 def semantic_seg(mainDir, inRas, inLabel, outMap, plot=False, bands=[1,2,3], 
                  trainPercent=0.3, f1=False, unet=True,
@@ -75,7 +58,6 @@ def semantic_seg(mainDir, inRas, inLabel, outMap, plot=False, bands=[1,2,3],
     inRas: string
             the input raster
         
-    
     inLabel: string
            the input label raster - at present this the same size as the input
            raster with the class labels, though this will be improved

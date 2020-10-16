@@ -266,7 +266,7 @@ to commonly used formats</p>
 
 <dl class="py function">
 <dt id="raster.clip_raster">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">clip_raster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">outRas</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blockmode</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.clip_raster" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">clip_raster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">outRas</span></em>, <em class="sig-param"><span class="n">cutline</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.clip_raster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clip a raster</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -274,9 +274,7 @@ to commonly used formats</p>
 <li><p><strong>inRas</strong> (<em>string</em>) – the input image</p></li>
 <li><p><strong>outPoly</strong> (<em>string</em>) – the input polygon file path</p></li>
 <li><p><strong>outRas</strong> (<em>string (optional)</em>) – the clipped raster</p></li>
-<li><p><strong>nodata_value</strong> (<em>numerical (optional)</em>) – self explanatory</p></li>
-<li><p><strong>blocksize</strong> (<em>int (optional)</em>) – the square chunk processed at any one time</p></li>
-<li><p><strong>blockmode</strong> (<em>bool (optional)</em>) – whether the raster will be clipped entirely in memory or by chunck</p></li>
+<li><p><strong>cutline</strong> (<em>bool (optional)</em>) – retain raster values only inside the polygon</p></li>
 </ul>
 </dd>
 </dl>
@@ -301,11 +299,11 @@ to commonly used formats</p>
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">combine_scene</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scl</span></em>, <em class="sig-param"><span class="n">c_scn</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.combine_scene" title="Permalink to this definition">¶</a></dt>
 <dd><p>combine another scene classification with the sen2cor one</p>
 <dl class="simple">
-<dt>scl<span class="classifier">string</span></dt><dd><p>the sen2cor one</p>
+<dt>scl: string</dt><dd><p>the sen2cor one</p>
 </dd>
-<dt>c_scn<span class="classifier">string</span></dt><dd><p>the independently derived one - this will be modified</p>
+<dt>c_scn: string</dt><dd><p>the independently derived one - this will be modified</p>
 </dd>
-<dt>blocksize<span class="classifier">string</span></dt><dd><p>chunck to process</p>
+<dt>blocksize: string</dt><dd><p>chunck to process</p>
 </dd>
 </dl>
 </dd></dl>
@@ -325,41 +323,6 @@ that author</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>inputImage</strong> (<em>string</em>) – image to transform; the histogram is computed over the flattened array</p></li>
 <li><p><strong>templateImage</strong> (<em>string</em>) – template image can have different dimensions to source</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="raster.jp2_translate">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">jp2_translate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">folder</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'L1C'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.jp2_translate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Translate all files from S2 download to a useable format</p>
-<p>Default FMT is GTiff (leave blank), for .img FMT=’HFA’, for .vrt FMT=’VRT’</p>
-<p>If you posses a gdal compiled with the corrext openjpg support use that</p>
-<p>This function might be useful if you wish to retain seperate rasters,
-but the use of stack_S2 is recommended</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>folder</strong> (<em>string</em>) – S2 granule dir</p></li>
-<li><p><strong>mode</strong> (<em>string</em>) – ‘L2A’ , ‘20’, ‘10’, L1C (default)</p></li>
-<li><p><strong>FMT</strong> (<em>string (optional)</em>) – a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="raster.jp2_translate_batch">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">jp2_translate_batch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mainFolder</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.jp2_translate_batch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Batch version of jp2translate</p>
-<p>Perhaps only useful for the old tile format</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>mainFolder</strong> (<em>string</em>) – the path to S2 tile folder to process</p></li>
-<li><p><strong>FMT</strong> (<em>string</em>) – a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA</p></li>
-<li><p><strong>mode</strong> (<em>string (optional)</em>) – ‘L2A’ , ‘20’, ‘10’, L1C (default)</p></li>
 </ul>
 </dd>
 </dl>
@@ -446,25 +409,6 @@ Quegan et al, Uni of Sheffield</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="raster.multi_temp_filter_block">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">multi_temp_filter_block</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outRas</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">windowsize</span><span class="o">=</span><span class="default_value">7</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.multi_temp_filter_block" title="Permalink to this definition">¶</a></dt>
-<dd><p>Multi temporal filter implementation for radar data</p>
-<p>See Quegan et al., for paper</p>
-<p>Requires an installation of OTB</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>inRas</strong> (<em>string</em>) – the input raster</p></li>
-<li><p><strong>outRas</strong> (<em>string</em>) – the output raster</p></li>
-<li><p><strong>blocksize</strong> (<em>int</em>) – the chunck processed</p></li>
-<li><p><strong>windowsize</strong> (<em>int</em>) – the filter window size</p></li>
-<li><p><strong>FMT</strong> (<em>string</em>) – gdal compatible (optional) defaults is tif</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt id="raster.polygonize">
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">polygonize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outPoly</span></em>, <em class="sig-param"><span class="n">outField</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mask</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">filetype</span><span class="o">=</span><span class="default_value">'ESRI Shapefile'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.polygonize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Lifted straight from the cookbook and gdal func docs.</p>
@@ -475,13 +419,13 @@ Quegan et al, Uni of Sheffield</p>
 </dd>
 </dl>
 <dl class="simple">
-<dt>outPoly<span class="classifier">string</span></dt><dd><p>the output polygon file path</p>
+<dt>outPoly: string</dt><dd><p>the output polygon file path</p>
 </dd>
-<dt>outField<span class="classifier">string (optional)</span></dt><dd><p>the name of the field containing burnded values</p>
+<dt>outField: string (optional)</dt><dd><p>the name of the field containing burnded values</p>
 </dd>
-<dt>mask<span class="classifier">bool (optional)</span></dt><dd><p>use the input raster as a mask</p>
+<dt>mask: bool (optional)</dt><dd><p>use the input raster as a mask</p>
 </dd>
-<dt>band<span class="classifier">int</span></dt><dd><p>the input raster band</p>
+<dt>band: int</dt><dd><p>the input raster band</p>
 </dd>
 </dl>
 </dd></dl>
@@ -495,6 +439,22 @@ Quegan et al, Uni of Sheffield</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>inRas</strong> (<em>string</em>) – input  raster</p></li>
 <li><p><strong>bands</strong> (<em>list</em>) – a list of bands to return in the array</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="raster.rasterize">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">rasterize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outRas</span></em>, <em class="sig-param"><span class="n">field</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fmt</span><span class="o">=</span><span class="default_value">'Gtiff'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.rasterize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rasterize a polygon to the extent &amp; geo transform of another raster</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRas</strong> (<em>string</em>) – the input image</p></li>
+<li><p><strong>outRas</strong> (<em>string</em>) – the output polygon file path</p></li>
+<li><p><strong>field</strong> (<em>string (optional)</em>) – the name of the field containing burned values, if none will be 1s</p></li>
+<li><p><strong>fmt</strong> (<em>the gdal image format</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -564,35 +524,6 @@ to zero (in the use case of 2 sceneIm classifications)</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="raster.stack_S2">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">stack_S2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">granule</span></em>, <em class="sig-param"><span class="n">inFMT</span><span class="o">=</span><span class="default_value">'jp2'</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">old_order</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">2048</span></em>, <em class="sig-param"><span class="n">overwrite</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.stack_S2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stacks S2 bands downloaded from ESA site</p>
-<p>Can translate directly from jp2 format (this is recommended and is
-default).</p>
-<p>If you possess gdal 2.1 with jp2k support then alternatively use
-gdal_translate</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>granule</strong> (<em>string</em>) – the granule folder</p></li>
-<li><p><strong>inFMT</strong> (<em>string (optional)</em>) – the format of the bands will likely be jp2</p></li>
-<li><p><strong>FMT</strong> (<em>string (optional)</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</p></li>
-<li><p><strong>mode</strong> (<em>string (optional)</em>) – None, ‘10’  ‘20’</p></li>
-<li><p><strong>old_order</strong> (<em>bool (optional)</em>) – this function used to order the 20m imagery 2,3,4,5,6,7,11,12,8a
-if false ordered like this 2,3,4,5,6,7,8a,11,12</p></li>
-<li><p><strong>blocksize</strong> (<em>int (optional)</em>) – the chunk of jp2 to read in - glymur seems to work fastest with 2048</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A string of the output file path</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>string</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt id="raster.stack_ras">
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">stack_ras</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rasterList</span></em>, <em class="sig-param"><span class="n">outFile</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.stack_ras" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stack some rasters for change classification</p>
@@ -630,16 +561,12 @@ are no nans as nan percentile is far too slow</p></li>
 <dt id="raster.temporal_comp">
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">temporal_comp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fileList</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">stat</span><span class="o">=</span><span class="default_value">'percentile'</span></em>, <em class="sig-param"><span class="n">q</span><span class="o">=</span><span class="default_value">95</span></em>, <em class="sig-param"><span class="n">folder</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.temporal_comp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)</p>
-<dl class="field-list">
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul>
+<dd class="field-odd"><ul class="simple">
 <li><p><strong>FileList</strong> (<em>list of strings</em>) – the files to be inputed, if None a folder must be specified</p></li>
-<li><p><strong>outMap</strong> (<em>string</em>) –      the output raster calculated</p>
-<dl class="simple">
-<dt>stat<span class="classifier">string</span></dt><dd><p>the statisitc to be calculated</p>
-</dd>
-</dl>
-</li>
+<li><p><strong>outMap</strong> (<em>string</em>) – the output raster calculated</p></li>
+<li><p><strong>stat</strong> (<em>string</em>) – the statisitc to be calculated</p></li>
 <li><p><strong>blocksize</strong> (<em>int</em>) – the chunck processed</p></li>
 <li><p><strong>q</strong> (<em>int</em>) – the ith percentile if percentile is the stat used</p></li>
 <li><p><strong>FMT</strong> (<em>string</em>) – gdal compatible (optional) defaults is tif</p></li>
@@ -723,17 +650,17 @@ a folder of tiled rasters for memory management - classify_pixel_block is
 recommended instead of this function</p>
 <p>Parameters</p>
 <dl class="simple">
-<dt>model<span class="classifier">sklearn model</span></dt><dd><p>a path to a scikit learn model that has been saved</p>
+<dt>model: sklearn model</dt><dd><p>a path to a scikit learn model that has been saved</p>
 </dd>
-<dt>inputDir<span class="classifier">string</span></dt><dd><p>a folder with images to be classified</p>
+<dt>inputDir: string</dt><dd><p>a folder with images to be classified</p>
 </dd>
-<dt>bands<span class="classifier">int</span></dt><dd><p>the no of image bands eg 8</p>
+<dt>bands: int</dt><dd><p>the no of image bands eg 8</p>
 </dd>
-<dt>outMap<span class="classifier">string</span></dt><dd><p>path to output image excluding the file format ‘pathto/mymap’</p>
+<dt>outMap: string</dt><dd><p>path to output image excluding the file format ‘pathto/mymap’</p>
 </dd>
-<dt>probMap<span class="classifier">string</span></dt><dd><p>path to output prob image excluding the file format ‘pathto/mymap’</p>
+<dt>probMap: string</dt><dd><p>path to output prob image excluding the file format ‘pathto/mymap’</p>
 </dd>
-<dt>FMT<span class="classifier">string</span></dt><dd><p>optional parameter - gdal readable fmt</p>
+<dt>FMT: string</dt><dd><p>optional parameter - gdal readable fmt</p>
 </dd>
 </dl>
 </dd></dl>
@@ -802,23 +729,14 @@ currently a dense sequential of 32, 16, 8, 32 - please inspect the
 source. If using GPU, you will likely be limited to a sequential
 grid search as multi-core overloads the GPUs quick!</p>
 </li>
+<li><p><strong>random</strong> (<em>bool</em>) – if True, a random param search</p></li>
+<li><p><strong>cv</strong> (<em>int</em>) – no of folds</p></li>
+<li><p><strong>cores</strong> (<em>int or -1 (default)</em>) – the no of parallel jobs</p></li>
+<li><p><strong>strat</strong> (<em>bool</em>) – a stratified grid search</p></li>
+<li><p><strong>regress</strong> (<em>bool</em>) – a regression model if True, a classifier if False</p></li>
+<li><p><strong>params</strong> (<em>a dict of model params (see scikit learn)</em>) – enter your own params dict rather than the range provided</p></li>
+<li><p><strong>scoring</strong> (<em>string</em>) – a suitable sklearn scoring type (see notes)</p></li>
 </ul>
-</dd>
-</dl>
-<dl class="simple">
-<dt>random<span class="classifier">bool</span></dt><dd><p>if True, a random param search</p>
-</dd>
-<dt>cv<span class="classifier">int</span></dt><dd><p>no of folds</p>
-</dd>
-<dt>cores<span class="classifier">int or -1 (default)</span></dt><dd><p>the no of parallel jobs</p>
-</dd>
-<dt>strat<span class="classifier">bool</span></dt><dd><p>a stratified grid search</p>
-</dd>
-<dt>regress<span class="classifier">bool</span></dt><dd><p>a regression model if True, a classifier if False</p>
-</dd>
-<dt>params<span class="classifier">a dict of model params (see scikit learn)</span></dt><dd><p>enter your own params dict rather than the range provided</p>
-</dd>
-<dt>scoring<span class="classifier">string</span></dt><dd><p>a suitable sklearn scoring type (see notes)</p>
 </dd>
 </dl>
 <blockquote>
@@ -831,13 +749,6 @@ tree specific</p>
 </div></blockquote>
 <blockquote>
 <div><p>From my own experience and reading around</p>
-<p>sklearn svms tend to be not great on large training sets and are
-slower with these (i have tried on HPCs and they time out on multi fits)</p>
-<p>sklearn ‘gb’ is very slow to train, though quick to predict</p>
-<p>xgb is much faster, but rather different in algorithmic detail -
-ie won’t produce same results as sklearn…</p>
-<p>xgb also uses the sklearn wrapper params which differ from those in
-xgb docs, hence they are commented next to the area of code</p>
 <p>Scoring types - there are a lot - some of which won’t work for
 multi-class, regression etc - see the sklearn docs!</p>
 <p>‘accuracy’, ‘adjusted_rand_score’, ‘average_precision’, ‘f1’,
@@ -1110,19 +1021,17 @@ this to zero will disable the balloon force.</p></li>
 Output will be relative to geographic units where relevant, but normalised where not (eg Eccentricity)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>inShape</strong> (<em>string</em>) – input shape file path</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inShape</strong> (<em>string</em>) – input shape file path</p></li>
+<li><p><strong>inRas</strong> (<em>string</em>) – a raster to get the correct dimensions from (optional), required for
+scikit-image props</p></li>
+<li><p><strong>prop</strong> (<em>string</em>) – Scikit image regionprops prop
+(see <a class="reference external" href="http://scikit-image.org/docs/dev/api/skimage.measure.html">http://scikit-image.org/docs/dev/api/skimage.measure.html</a>)</p></li>
+<li><p><strong>OGR is used to generate most of these as it is faster but the string</strong></p></li>
+<li><p><strong>keys are same as scikit-image see notes for which require raster</strong></p></li>
+</ul>
 </dd>
 </dl>
-<dl class="simple">
-<dt>inRas: string</dt><dd><p>a raster to get the correct dimensions from (optional), required for
-scikit-image props</p>
-</dd>
-<dt>prop: string</dt><dd><p>Scikit image regionprops prop
-(see <a class="reference external" href="http://scikit-image.org/docs/dev/api/skimage.measure.html">http://scikit-image.org/docs/dev/api/skimage.measure.html</a>)</p>
-</dd>
-</dl>
-<p>OGR is used to generate most of these as it is faster but the string
-keys are same as scikit-image see notes for which require raster</p>
 <p class="rubric">Notes</p>
 <p>Only shape file needed (OGR / shapely / numpy based)</p>
 <p>‘MajorAxisLength’, ‘MinorAxisLength’, Area’, ‘Eccentricity’, ‘Solidity’,
@@ -1344,6 +1253,26 @@ appropriate</p>
 <dd></dd></dl>
 
 <dl class="py function">
+<dt id="utilities.houghseg">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">houghseg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">edge</span><span class="o">=</span><span class="default_value">'canny'</span></em>, <em class="sig-param"><span class="n">sigma</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">thresh</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ratio</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">n_orient</span><span class="o">=</span><span class="default_value">6</span></em>, <em class="sig-param"><span class="n">n_scale</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">hArray</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">vArray</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">valrange</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">interval</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">min_area</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.houghseg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detect and write Hough lines to a line shapefile</p>
+<p>There two input arrays on the to keep line detection clean eg 2 orientations,
+such as vertical and horizontal</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRas</strong> (<em>string</em>) – path to an input raster from which the geo-reffing is obtained</p></li>
+<li><p><strong>outShp</strong> (<em>string</em>) – path to the output shapefile</p></li>
+<li><p><strong>edge</strong> (<em>string</em>) – edge method ‘canny’ or ‘ph’</p></li>
+<li><p><strong>sigma</strong> (<em>float</em>) – scalar value for gaussian smoothing</p></li>
+<li><p><strong>thresh</strong> (<em>int/float</em>) – the high hysterisis threshold</p></li>
+<li><p><strong>band</strong> (<em>int</em>) – the image band</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="utilities.image_thresh">
 <code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">image_thresh</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">image</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.image_thresh" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -1352,7 +1281,7 @@ appropriate</p>
 <dt id="utilities.imangle">
 <code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">imangle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">im</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.imangle" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
-<dt>im<span class="classifier">np array</span></dt><dd><p>input image</p>
+<dt>im: np array</dt><dd><p>input image</p>
 </dd>
 </dl>
 <dl class="field-list simple">
@@ -1364,11 +1293,6 @@ appropriate</p>
 </dd>
 </dl>
 </dd></dl>
-
-<dl class="py function">
-<dt id="utilities.iou_score">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">iou_score</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inSeg</span></em>, <em class="sig-param"><span class="n">trueSeg</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.iou_score" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="py function">
 <dt id="utilities.iter_ransac">
@@ -1461,28 +1385,6 @@ image, i.e., areas where the gradient of the image is too small to push
 the contour towards a border. A negative value will shrink the contour,
 while a positive value will expand the contour in these areas. Setting
 this to zero will disable the balloon force.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="utilities.otbMeanshift">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">otbMeanshift</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputImage</span></em>, <em class="sig-param"><span class="n">radius</span></em>, <em class="sig-param"><span class="n">rangeF</span></em>, <em class="sig-param"><span class="n">minSize</span></em>, <em class="sig-param"><span class="n">outShape</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.otbMeanshift" title="Permalink to this definition">¶</a></dt>
-<dd><p>OTB meanshift by calling the otb command line
-Written for convenience and due to otb python api being rather verbose</p>
-<p>There is a maximum size for the .shp format otb doesn’t seem to
-want to move beyond (2gb), so enormous rasters may need to be sub
-divided</p>
-<p>You will need to install OTB etc seperately</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>inputImage</strong> (<em>string</em>) – the input image</p></li>
-<li><p><strong>radius</strong> (<em>int</em>) – the kernel radius</p></li>
-<li><p><strong>rangeF</strong> (<em>int</em>) – the kernel range</p></li>
-<li><p><strong>minSize</strong> (<em>int</em>) – minimum segment size</p></li>
-<li><p><strong>outShape</strong> (<em>string</em>) – the ouput shapefile</p></li>
 </ul>
 </dd>
 </dl>
@@ -1582,25 +1484,16 @@ changed in the near future</p>
 <li><p><strong>model</strong> (<em>string</em>) – a choice of “unet, “fcn_resnet50”, “fcn_resnet101”,”deeplabv3_resnet50”
 “deeplabv3_resnet50”, “deeplabv3_resnet101”</p></li>
 <li><p><strong>inRas</strong> (<em>string</em>) – the input raster</p></li>
+<li><p><strong>inLabel</strong> (<em>string</em>) – the input label raster - at present this the same size as the input
+raster with the class labels, though this will be improved</p></li>
+<li><p><strong>outMap</strong> (<em>string</em>) – the output classification map</p></li>
+<li><p><strong>plot</strong> (<em>bool</em>) – whether to plot intermediate data results eg visualise the image aug,
+test results etc.</p></li>
+<li><p><strong>bands</strong> (<em>list of ints</em>) – the image bands to use</p></li>
+<li><p><strong>trainPercent</strong> – the percentage of to use as training</p></li>
+<li><p><strong>f1</strong> (<em>bool</em>) – whether to svae a classification report (will be a plot in working dir)</p></li>
+<li><p><strong>params</strong> (<em>dict</em>) – the convnet model params</p></li>
 </ul>
-</dd>
-</dl>
-<dl class="simple">
-<dt>inLabel: string</dt><dd><p>the input label raster - at present this the same size as the input
-raster with the class labels, though this will be improved</p>
-</dd>
-<dt>outMap: string</dt><dd><p>the output classification map</p>
-</dd>
-<dt>plot: bool</dt><dd><p>whether to plot intermediate data results eg visualise the image aug,
-test results etc.</p>
-</dd>
-<dt>bands: list of ints</dt><dd><p>the image bands to use</p>
-</dd>
-<dt>trainPercent:</dt><dd><p>the percentage of to use as training</p>
-</dd>
-<dt>f1: bool</dt><dd><p>whether to svae a classification report (will be a plot in working dir)</p>
-</dd>
-<dt>params: dict</dt><dd><p>the convnet model params</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
