@@ -1647,7 +1647,7 @@ def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff"):
     
     
     if field == None:
-        gdal.RasterizeLayer(vds, [1], lyr, burn_values=[1])
+        gdal.RasterizeLayer(outDataset, [1], lyr, burn_values=[1])
     else:
         gdal.RasterizeLayer(outDataset, [1], lyr, options=["ATTRIBUTE="+field])
     
@@ -1656,7 +1656,7 @@ def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff"):
     outDataset = None
     
 
-def clip_raster(inRas, inShape, outRas, nodata_value=None, cutline=True):
+def clip_raster(inRas, inShp, outRas, cutline=True):
 
     """
     Clip a raster
@@ -1680,7 +1680,7 @@ def clip_raster(inRas, inShape, outRas, nodata_value=None, cutline=True):
     """
     
 
-    vds = ogr.Open(inShape)
+    vds = ogr.Open(inShp)
            
     rds = gdal.Open(inRas, gdal.GA_ReadOnly)
     
@@ -1705,14 +1705,15 @@ def clip_raster(inRas, inShape, outRas, nodata_value=None, cutline=True):
     if cutline == True:
         
         rds1 = gdal.Open(outRas, gdal.GA_Update)
-        rasterize(inShape, rds1, outRas[:-4]+'mask.tif', field=None, fmt="Gtiff")
+        rasterize(inShp, outRas, outRas[:-4]+'mask.tif', field=None,
+                  fmt="Gtiff")
         
         mskds = gdal.Open(outRas[:-4]+'mask.tif')
         
         mskbnd = mskds.GetRasterBand(1)
 
-        cols = mskbnd.RasterXSize
-        rows = mskbnd.RasterYSize
+        cols = mskds.RasterXSize
+        rows = mskds.RasterYSize
 
         blocksizeX = 256
         blocksizeY = 256
