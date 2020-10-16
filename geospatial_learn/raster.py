@@ -1557,8 +1557,7 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1, filetype="
     """    
     
     #TODO investigate ways of speeding this up   
-    # My goodness this is SO SLOW - it's just the gdal function that's slow
-    # nowt else
+
     options = []
     src_ds = gdal.Open(inRas)
     if src_ds is None:
@@ -1611,10 +1610,53 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1, filetype="
 
         
 
+def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff"):
+    
+    """ 
+    Rasterize a polygon to the extent & geo transform of another raster
 
 
-def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None, 
-                blockmode = True):
+    Parameters
+    -----------   
+      
+    inRas : string
+            the input image 
+        
+    outRas : string
+              the output polygon file path 
+        
+    field : string (optional)
+             the name of the field containing burned values, if none will be 1s
+    
+    fmt : the gdal image format
+    
+    """
+    
+    
+    
+    inDataset = gdal.Open(inRas)
+    
+    # the usual 
+    
+    outDataset = _copy_dataset_config(inDataset, FMT=fmt, outMap=outRas,
+                         dtype = gdal.GDT_Int32, bands=1)
+    
+    
+    vds = ogr.Open(inShp)
+    lyr = vds.GetLayer()
+    
+    
+    if field == None:
+        gdal.RasterizeLayer(vds, [1], lyr, burn_values=[1])
+    else:
+        gdal.RasterizeLayer(outDataset, [1], lyr, options=["ATTRIBUTE="+field])
+    
+    outDataset.FlushCache()
+    
+    outDataset = None
+    
+
+def clip_raster(inRas, inShape, outRas, nodata_value=None, cutline=True):
 
     """
     Clip a raster
@@ -1630,63 +1672,77 @@ def clip_raster(inRas, inShape, outRas, nodata_value=None, blocksize=None,
         
     outRas : string (optional)
              the clipped raster
-        
-    nodata_value : numerical (optional)
-                   self explanatory
-        
-    blocksize : int (optional)
-                the square chunk processed at any one time
-        
-    blockmode : bool (optional)
-                whether the raster will be clipped entirely in memory or by chunck
+             
+    cutline : bool (optional)
+             retain raster values only inside the polygon       
             
    
     """
     
 
     vds = ogr.Open(inShape)
-    
-
-    # The input raster        
+           
     rds = gdal.Open(inRas, gdal.GA_ReadOnly)
     
-    print('getting geo-info')
-    
-    #driver = gdal.GetDriverByName('Gtiff')
-    # This first section gets the necessary coords/pixel dimensions for the 
-    # new sub-raster
-    rb = rds.GetRasterBand(1)
-   # dtype = rb.DataType
-    if nodata_value:
-        nodata_value = float(nodata_value)
-        rb.SetNoDataValue(nodata_value)
-       
-    
-    rgt = rds.GetGeoTransform()
-
     lyr = vds.GetLayer()
-    feat = lyr.GetFeature(0)
-    geom = feat.geometry()
+
+    
+    extent = lyr.GetExtent()
+    
+    extent = [extent[0], extent[2], extent[1], extent[3]]
             
-    src_offset = _bbox_to_pixel_offsets(rgt, geom)
-    # 'offset = xoff, yoff, xcount, ycount'
 
-    new_gt = (
-    (rgt[0] + (src_offset[0] * rgt[1])),
-    rgt[1],
-    0.0,
-    (rgt[3] + (src_offset[1] * rgt[5])),
-    0.0,
-    rgt[5])
+    print('cropping')
+    ootds = gdal.Warp(outRas,
+              rds,
+              format = 'GTiff', outputBounds = extent)
+              
+        
+    ootds.FlushCache()
+    ootds = None
+    rds = None
     
-    #TODO drop the subprocess call
-    
-    cmd = ['gdalwarp', '-q', '-cutline', inShape, '-crop_to_cutline', 
-           '-tr', str(new_gt[1]), str(new_gt[5]),
-           '-of', 'GTiff', inRas, outRas] 
-    subprocess.call(cmd)
+    if cutline == True:
+        
+        rds1 = gdal.Open(outRas, gdal.GA_Update)
+        rasterize(inShape, rds1, outRas[:-4]+'mask.tif', field=None, fmt="Gtiff")
+        
+        mskds = gdal.Open(outRas[:-4]+'mask.tif')
+        
+        mskbnd = mskds.GetRasterBand(1)
 
+        cols = mskbnd.RasterXSize
+        rows = mskbnd.RasterYSize
 
+        blocksizeX = 256
+        blocksizeY = 256
+        
+        bands = rds1.RasterCount
+        
+        mskbnd = mskds.GetRasterBand(1)
+        
+        for i in tqdm(range(0, rows, blocksizeY)):
+                if i + blocksizeY < rows:
+                    numRows = blocksizeY
+                else:
+                    numRows = rows -i
+            
+                for j in range(0, cols, blocksizeX):
+                    if j + blocksizeX < cols:
+                        numCols = blocksizeX
+                    else:
+                        numCols = cols - j
+                    for band in range(1, bands+1):
+                        
+                        bnd = rds1.GetRasterBand(band)
+                        array = bnd.ReadAsArray(j, i, numCols, numRows)
+                        mask = mskbnd.ReadAsArray(j, i, numCols, numRows)
+                        
+                        array[mask!=1]=0
+                        bnd.WriteArray(array, j, i)
+                        
+        rds1.FlushCache()
+        rds1 = None
 
 
 def color_raster(inRas, color_file, output_file):
@@ -1859,7 +1915,7 @@ def hist_match(inputImage, templateImage):
     
     
     
-    # TODO optimise with either cython or numba
+    # TODO VERY SLOW
     
     """
     Adjust the pixel values of a grayscale image such that its histogram
@@ -1977,12 +2033,6 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
     
 
 
-    # So with most datasets blocksize is a row scanline
-     # size of the pixel...they are square so thats ok.
-    #if not would need w x h
-    #If the block is a row, this simplifies things a bit
-    # Key issue now is to speed this part up 
-    # 
     rStack = np.zeros(shape = (outDataset.RasterYSize, outDataset.RasterXSize,
                                bands))
     mStack = np.zeros(shape = (outDataset.RasterYSize, outDataset.RasterXSize,

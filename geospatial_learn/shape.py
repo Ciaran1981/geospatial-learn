@@ -558,10 +558,7 @@ def zonal_stats(inShp, inRas, band, bandname, stat = 'mean',
         gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
         rv_array = rvds.ReadAsArray()
         
-        # Mask the source data array with our current feature
-        # we take the logical_not to flip 0<->1 to get the correct mask effect
-        # we also mask out nodata values explictly
-            
+        # Mask the source data array with our current feature using np mask     
 
         #rejects.append(feat.GetField('DN'))
         masked = np.ma.MaskedArray(
