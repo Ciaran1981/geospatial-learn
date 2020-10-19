@@ -13,9 +13,9 @@ from skimage.measure import regionprops
 from scipy.stats import entropy, skew, kurtosis
 import scipy.ndimage as nd
 from skimage import feature
-#from sklearn import cluster
+
 import shapefile
-#from simpledbf import Dbf5
+import cv2
 import os
 import gdal
 from json import dumps
@@ -27,10 +27,10 @@ from geospatial_learn.utilities import min_bound_rectangle, do_phasecong
 from shapely.wkt import loads
 from shapely.geometry import Polygon, box, LineString, Point, LinearRing
 from pandas import DataFrame
-#from pysal.lib import io 
+from pysal.lib import io as pio
 import pandas as pd
 from skimage.segmentation import active_contour#, find_boundaries
-#from shapely.affinity import affine_transform, rotate
+
 import morphsnakes as ms
 from geospatial_learn.raster import _copy_dataset_config,  array2raster, raster2array, polygonize
 import warnings
@@ -39,7 +39,7 @@ from skimage.filters import gaussian
 from skimage import exposure
 from skimage.filters import threshold_otsu, threshold_niblack, threshold_sauvola, apply_hysteresis_threshold
 from skimage.transform import probabilistic_hough_line as phl
-#from skimage.io import imread
+
 from skimage.feature import canny
 from skimage.morphology import remove_small_objects, remove_small_holes, medial_axis, skeletonize
 from skimage.util import img_as_float, invert
@@ -67,10 +67,9 @@ def shp2gj(inShape, outJson):
     inShape: string
               input shapefile
     
-
     outJson: string
               output geojson
-    
+              
     Notes
     -----
     
@@ -346,7 +345,6 @@ def _bbox_to_pixel_offsets(rgt, geom):
 
     x offset: int
            
-
     y offset: int
            
     xcount: int
@@ -431,7 +429,8 @@ def filter_shp(inShp, expression, outField, outLabel):
     outField: string
                   the field in which the label will reside
                   
-    outLabel: the label identifying the filtered features
+    outLabel: int
+        the label identifying the filtered features
     """
     
     vds = ogr.Open(inShp, 1) 
@@ -675,8 +674,7 @@ def _set_rgb_ind(feat, rv_array, src_offset, rds, nodata_value):
     
         
     # This all horrendously inefficient for now - must be addressed later
-    # For some reason ogr won't accept the masked.mean() in the set feature function hence the float - must be python -> C++ type thing
-    # otsu threshold works perfectly on green band - would be better stat representation
+
     exG = (g * 2) - (r - b)        
     feat.SetField('ExGmn', float(exG.mean()))            
     exR = (r * 1.4) - g
@@ -732,9 +730,9 @@ def zonal_rgb_idx(inShp, inRas, nodata_value=0):
         rb.SetNoDataValue(nodata_value)
 
     vds = ogr.Open(inShp, 1)  # TODO maybe open update if we want to write stats
-   #assert(vds)
+
     vlyr = vds.GetLayer(0)
-    #if write_stat != None:
+
     field_names = ['ExGmn', 'ExRmn', 'ExGRmn', 'CIVEmn', 'NDImn', 'RGBVImn', 'VARImn',
          'ARImn', 'RGBImn', 'GLImn', 'TGLmn']
     
@@ -744,10 +742,10 @@ def zonal_rgb_idx(inShp, inRas, nodata_value=0):
     driver = gdal.GetDriverByName('MEM')
 
     # Loop through vectors
-    stats = []
+#    stats = []
     feat = vlyr.GetNextFeature()
     features = np.arange(vlyr.GetFeatureCount())
-    rejects = list()
+#    rejects = list()
     
     for label in tqdm(features):
 
@@ -787,7 +785,7 @@ def zonal_rgb_idx(inShp, inRas, nodata_value=0):
         feat = vlyr.GetNextFeature()
 
     vds.SyncToDisk()
-    #vds.FlushCache()
+
 
 
     vds = None
@@ -856,11 +854,7 @@ def texture_stats(inShp, inRas, band, gprop='contrast',
         
     angle: int
             angle in degrees from pixel (int) 
-            
-            135  90    45
-            \    |    /
-                 c    -  0         
-     
+                    
     mean: bool
            take the mean of all offsets
      
@@ -908,14 +902,6 @@ def texture_stats(inShp, inRas, band, gprop='contrast',
     features = np.arange(vlyr.GetFeatureCount())
     rejects = list()
     for label in tqdm(features):
-#        field = feat.GetField('DN')
-#        print(field)
-
-#        if not global_src_extent:
-            # use local source extent
-            # fastest option when you have fast disks and well indexed raster (ie tiled Geotiff)
-            # advantage: each feature uses the smallest raster chunk
-            # disadvantage: lots of reads on the source raster
 
         if feat is None:
             feat = vlyr.GetFeature(label)
@@ -955,7 +941,6 @@ def texture_stats(inShp, inRas, band, gprop='contrast',
         mem_layer.CreateFeature(feat.Clone())
 
         # Rasterize it
-        #with warnings.catch_warnings():
 
         warnings.simplefilter("ignore")
         rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Int32)
@@ -1030,7 +1015,6 @@ def snake(inShp, inRas, outShp, band=1, buf=1, nodata_value=0,
     Parameters
     ----------
     
-    
     inShp: string
                   input shapefile
         
@@ -1086,22 +1070,17 @@ def snake(inShp, inRas, outShp, band=1, buf=1, nodata_value=0,
     # TODO actually implement the Heipke paper properly
     
     rds = gdal.Open(inRas, gdal.GA_ReadOnly)
-    #assert(rds)
+
     rb = rds.GetRasterBand(band)
     rgt = rds.GetGeoTransform()
-    
-    cols = rds.RasterXSize
-    rows = rds.RasterYSize
 
     if nodata_value:
         nodata_value = float(nodata_value)
         rb.SetNoDataValue(nodata_value)
 
     vds = ogr.Open(inShp, 1)  # TODO maybe open update if we want to write stats
-   #assert(vds)
+
     vlyr = vds.GetLayer(0)
-#    if write_stat != None:
-#        vlyr.CreateField(ogr.FieldDefn(bandname, ogr.OFTReal))
 
     mem_drv = ogr.GetDriverByName('Memory')
     driver = gdal.GetDriverByName('MEM')
@@ -1150,7 +1129,7 @@ def snake(inShp, inRas, outShp, band=1, buf=1, nodata_value=0,
         
         wkt=buff.ExportToWkt()
         
-        poly1 = loads(wkt)
+#        poly1 = loads(wkt)
         
         src_offset = _bbox_to_pixel_offsets(rgt, buff)
         
@@ -1200,7 +1179,7 @@ def snake(inShp, inRas, outShp, band=1, buf=1, nodata_value=0,
         mem_ds = mem_drv.CreateDataSource('out')
         mem_layer = mem_ds.CreateLayer('line', None, ogr.wkbPolygon)
         mem_layer.CreateFeature(feat.Clone())
-#
+
 #        # Rasterize it
         #
         rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
@@ -1236,7 +1215,7 @@ def snake(inShp, inRas, outShp, band=1, buf=1, nodata_value=0,
                            alpha=alpha, beta=beta, w_line=w_line, w_edge=w_edge,
                            gamma=gamma, max_iterations=max_iterations,
                            coordinates='rc')
-        #dear skimage this function is deeply flawed.....grrrr
+        # dear skimage this function is deeply flawed.....grrrr
         # there should NOT be negative coordinate values in the output
         
         
@@ -1555,7 +1534,6 @@ def thresh_seg(inShp, inRas, outShp, band, buf=0, algo='otsu',
     nodata_value: numerical
                    If used the no data val of the raster
 
- 
     """    
     
     
@@ -1696,588 +1674,7 @@ def thresh_seg(inShp, inRas, outShp, band, buf=0, algo='otsu',
     
 
 
-from numpy.lib.stride_tricks import as_strided as ast
-
-def _block_view(A, block=(3, 3)):
-    """Provide a 2D block view to 2D array. No error checking made.
-    Therefore meaningful (as implemented) only for blocks strictly
-    compatible with the shape of A."""
-    # simple shape and strides computations may seem at first strange
-    # unless one is able to recognize the 'tuple additions' involved ;-)
-    shape= (A.shape[0]/ block[0], A.shape[1]/ block[1])+ block
-    strides= (block[0]* A.strides[0], block[1]* A.strides[1])+ A.strides
-    return ast(A, shape= shape, strides= strides)
-
-
-#    orientIm = ph[4]
-#    anglez = np.array([p * (np.pi / 6) for p in range(1,7)])
-#    
-#    # hang on this is not working
-#    ootV = np.abs(np.array(anglez) - angleV)
-#    ootH = np.abs(np.array(anglez) - angleD)
-#    
-#    
-#    vInd = np.where(ootV==ootV.min())
-#    hInd = np.where(ootH==ootH.min())
-#    
-#    v = int(vInd[0])+1
-#    h = int(hInd[0])+1
-#    
-#    if v>=6:
-#        v -= 1
-#    if h >=6:
-#        h -= 1                
-#
-#    vT = threshold_otsu(orientIm[v])
-#    hT = threshold_otsu(orientIm[h])
-#    vArray = orientIm[v]>=vT
-#    hArray = orientIm[h]>=hT     
-#    return vArray, hArray
-
-
-
-def _cv_hough2line(inRas, outShp, edge='canny', sigma=2, low_t=0, 
-               hi_t=0, n_orient=6, n_scale=5, increment=180, thresh=100, min_theta=None, bounds=1,
-                  max_theta=None, min_area=None):
-    
-    img = cv2.imread(inRas) 
-     
-    gray = raster2array(inRas, bands=[2])
-    
-    bw = gray > 0
-    
-    inDataset = gdal.Open(inRas, gdal.GA_ReadOnly)
-
-#        rb = inRas.GetRasterBand(band)
-    rgt = inDataset.GetGeoTransform()
-    
-    pixel_res = rgt[1]
-        
-   
-    props = regionprops(bw*1)
-    orient = props[0]['Orientation']
-    
-    # we will need these.....
-    perim = mh.bwperim(bw)
-
-    
-    bw[perim==1]=0
-
-    # if the the binary box is pointing negatively along maj axis
-#   
-    if min_theta == None:
-        if orient < 0:
-            orient += np.pi
-        
-        if orient < np.pi:
-            angleD = np.pi - orient
-            angleV = angleD - np.deg2rad(90)
-        else:
-        # if the the binary box is pointing positively along maj axis
-            angleD = np.pi + orient
-            angleV = angleD + np.deg2rad(90)
-        angles = np.array([angleD, angleV])
-        
-    
-     
-    if edge == 'phase':
-            edges = do_phasecong(gray, low_t, hi_t, norient=n_orient, 
-                               nscale=n_scale, sigma=sigma)
-            
-            edges[perim==1]=0
-            
-           
-    else: 
-        # else it is canny
-        # We must have a float to get rid of  zero to nonzero image 
-        # boundary, otherwise huff will only detect the non-zero boundary
-        inIm = gray.astype(np.float32)
-        inIm[inIm==0]=np.nan 
-    
-        edges = canny(inIm, sigma=sigma, low_threshold=low_t,
-                           high_threshold=hi_t)
-        
- 
-      
-    # This returns an array of r and theta values 
-    lines1 = cv2.HoughLines(np.uint8(edges),1, np.pi/increment, thresh,
-                            min_theta=angles.min()-np.deg2rad(bounds), 
-                           max_theta=angles.min()+np.deg2rad(bounds)) 
-    
-      
-    # The below for loop runs till r and theta values  
-    # are in the range of the 2d array 
-    for l in tqdm(lines1): 
-        
-        # Right so unlike the cv docs we actually have to do this!!! 
-        # see for i in lines:
-        #        print(i) 
-        # as to why
-        r = l[0][0]
-        theta = l[0][1]
-        # Stores the value of cos(theta) in a 
-        a = np.cos(theta) 
-      
-        # Stores the value of sin(theta) in b 
-        b = np.sin(theta) 
-          
-        # x0 stores the value rcos(theta) 
-        x0 = a*r 
-          
-        # y0 stores the value rsin(theta) 
-        y0 = b*r 
-          
-        # x1 stores the rounded off value of (rcos(theta)-1000sin(theta)) 
-        x1 = int(x0 + img.shape[1]*(-b)) 
-          
-        # y1 stores the rounded off value of (rsin(theta)+1000cos(theta)) 
-        y1 = int(y0 + img.shape[0]*(a)) 
-      
-        # x2 stores the rounded off value of (rcos(theta)+1000sin(theta)) 
-        x2 = int(x0 - img.shape[0]*(-b)) 
-          
-        # y2 stores the rounded off value of (rsin(theta)-1000cos(theta)) 
-        y2 = int(y0 - img.shape[0]*(a)) 
-          
-        # cv2.line draws a line in img from the point(x1,y1) to (x2,y2). 
-        # (0,0,255) denotes the colour of the line to be  
-        #drawn. In this case, it is red.  
-        cv2.line(img,(x1,y1), (x2,y2), (0,0,255),1)
-    
-    lines2 = cv2.HoughLines(np.uint8(edges),1, np.pi/increment, thresh,
-                            min_theta=angles.max()-np.deg2rad(bounds), 
-                           max_theta=angles.max()+np.deg2rad(bounds)) 
-    for l in tqdm(lines2): 
-        
-        # Right so unlike the cv docs we actually have to do this!!! 
-        # see for i in lines:
-        #        print(i) 
-        # as to why
-        r = l[0][0]
-        theta = l[0][1]
-        # Stores the value of cos(theta) in a 
-        a = np.cos(theta) 
-      
-        # Stores the value of sin(theta) in b 
-        b = np.sin(theta) 
-          
-        # x0 stores the value rcos(theta) 
-        x0 = a*r 
-          
-        # y0 stores the value rsin(theta) 
-        y0 = b*r 
-          
-        # x1 stores the rounded off value of (rcos(theta)-1000sin(theta)) 
-        
-        
-        
-        
-        x1 = int(x0 + img.shape[1]*(-b)) 
-          
-        # y1 stores the rounded off value of (rsin(theta)+1000cos(theta)) 
-        y1 = int(y0 + img.shape[0]*(a)) 
-      
-        # x2 stores the rounded off value of (rcos(theta)+1000sin(theta)) 
-        x2 = int(x0 - img.shape[1]*(-b)) 
-          
-        # y2 stores the rounded off value of (rsin(theta)-1000cos(theta)) 
-        y2 = int(y0 - img.shape[0]*(a)) 
-          
-        # cv2.line draws a line in img from the point(x1,y1) to (x2,y2). 
-        # (0,0,255) denotes the colour of the line to be  
-        #drawn. In this case, it is red.  
-        cv2.line(img,(x1,y1), (x2,y2), (0,0,255),1) 
-        
-    #minLineLength = 5
-    #maxLineGap = 10
-    #linesP = cv2.HoughLinesP(np.uint8(edges),1,np.pi/180,50,minLineLength,maxLineGap)
-    #for i in linesP:
-    #    l = i[0]
-    #    cv2.line(img, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv2.LINE_AA)
-    
-    #cv2.imwrite('houghlines5.jpg',img)
-    
-    
-    oot= img[:,:,2]==255
-    oot[perim==1]=1
- 
-
-    inv = np.invert(oot)
-    inv[bw==0]=0
-    if min_area != None:
-        min_final = np.round(min_area/(pixel_res*pixel_res))
-        if min_final <= 0:
-            min_final=4
-        remove_small_objects(inv, min_size=min_final, in_place=True)
-    sg, _ = nd.label(inv)
-    segRas=outShp[:-3]+"seg.tif"
-    array2raster(sg, 1, inRas, segRas,  gdal.GDT_Int32)
-    del img, inv
-    polygonize(segRas, outShp, outField='DN',  mask = True, band = 1)
-
-    
-def _sk_hough2line(vArray, hArray, inRaster, outShp):
-    
-        """ 
-        Detect and write Hough lines to a line shapefile
-        
-        There two input arrays on the to keep line detection clean eg 2 orientations,
-        such as vertical and horizontal
-        
-        Parameters
-        ----------
-        
-        vArray: np array
-                      an array of edge or edge like feature can be continuous or binary
-            
-        hArray: np array
-                      a second binary array from which lines are detetcted
-    
-        inRaster: string
-               path to an input raster from which the geo-reffing is obtained
-    
-        outShp: string
-               path to the output shapefile
-             
-    
-     
-        """         
-        
-        inRas = gdal.Open(inRaster, gdal.GA_ReadOnly)
-
-#        rb = inRas.GetRasterBand(band)
-        rgt = inRas.GetGeoTransform()
-        
-        ref = inRas.GetSpatialRef()
-        
-        outShapefile = outShp
-        outDriver = ogr.GetDriverByName("ESRI Shapefile")
-        
-        # Remove output shapefile if it already exists
-        if os.path.exists(outShapefile):
-            outDriver.DeleteDataSource(outShapefile)
-        
-        # get the spatial ref
-        #ref = vlyr.GetSpatialRef()
-        
-        # Create the output shapefile
-        outDataSource = outDriver.CreateDataSource(outShapefile)
-        outLayer = outDataSource.CreateLayer("OutLyr", geom_type=ogr.wkbMultiLineString,
-                                         srs=ref)
-    
-        
-        # Add an ID field
-        idField = ogr.FieldDefn("id", ogr.OFTInteger)
-        outLayer.CreateField(idField)
-        
-        
-        """
-        Standard Hough ##############################################################
-        """
-        # Horizontal
-        
-        tested_angles = np.linspace(-np.pi / 2, np.pi / 2, 360)
-        hh, htheta, hd = hough_line(hArray, theta=tested_angles)
-        origin = np.array((0, hArray.shape[1]))
-        
-        
-        empty = np.zeros_like(hArray, dtype=np.bool)
-        
-        height, width = empty.shape
-        
-        bbox = box(width, height, 0, 0)
-        
-        
-        # Here we adapt the skimage loop to draw a bw line into the image
-        for _, angle, dist in tqdm(zip(*hough_line_peaks(hh, htheta, hd))):
-        
-        # here we obtain y extrema in our arbitrary coord system
-            y0, y1 = (dist - origin * np.cos(angle)) / np.sin(angle)
-            
-            # shapely used to get the geom and intersection in our arbitrary
-            # coordinate system
-            linestr = LineString([[origin[0], y0], [origin[1], y1]])
-            
-            # just in case this has not been done
-            #rotated = rotate(linestr, 90, origin='centroid')
-            
-            # here for readability visual query
-            # shapely in-built converts to np via np.array(inter)
-            inter = bbox.intersection(linestr)
-            
-            in_coord= np.array(bbox.intersection(linestr).coords)
-            
-            coord = np.around(in_coord)
-            
-            # for readability just now
-            x1 = int(coord[0][0])
-            y1 = int(coord[0][1]) 
-            x2 = int(coord[1][0])
-            y2 = int(coord[1][1])
-            
-            if y1 == height:
-                y1 = height-1
-            if y2 == height:
-                y2 = height-1
-            if x1 == width:
-                x1 = width-1
-            if x2 == width:
-                x2 = width-1
-            
-            
-            rr, cc = line(x1, y1, x2, y2)
-            
-            empty[cc,rr]=1    
-            outSnk = []
-            
-            snList = np.arange(len(cc))
-            
-            for s in snList:
-                x = rr[s]
-                y = cc[s]
-                xout = (x * rgt[1]) + rgt[0]
-                yout = (y * rgt[5]) + rgt[3]
-                
-                outSnk.append([xout, yout])
-            
-            snakeLine2 = LineString(outSnk)
-            
-            
-            geomOut = ogr.CreateGeometryFromWkt(snakeLine2.wkt)
-            
-            featureDefn = outLayer.GetLayerDefn()
-            feature = ogr.Feature(featureDefn)
-            
-            feature.SetGeometry(geomOut)
-            feature.SetField("id", 1)
-            outLayer.CreateFeature(feature)
-            feature = None
-    
-
-        vh, vtheta, vd = hough_line(vArray, theta=tested_angles)
-        origin = np.array((0, hArray.shape[1]))
-    
-    
-        height, width = empty.shape
-    
-        bbox = box(width, height, 0, 0)
-    
-    
-    # Here we adapt the skimage loop to draw a bw line into the image
-        for _, angle, dist in tqdm(zip(*hough_line_peaks(vh, vtheta, vd))):
-            
-            # here we obtain y extrema in our arbitrary coord system
-            y0, y1 = (dist - origin * np.cos(angle)) / np.sin(angle)
-            
-            # shapely used to get the geom and intersection in our arbitrary
-            # coordinate system
-            linestr = LineString([[origin[0], y0], [origin[1], y1]])
-            
-            # just in case this has not been done
-            #rotated = rotate(linestr, 90, origin='centroid')
-            
-            # here for readability visual query
-            # shapely in-built converts to np via np.array(inter)
-            inter = bbox.intersection(linestr)
-            
-            in_coord= np.array(bbox.intersection(linestr).coords)
-            
-            coord = np.around(in_coord)
-            
-            # for readability just now
-            x1 = int(coord[0][0])
-            y1 = int(coord[0][1]) 
-            x2 = int(coord[1][0])
-            y2 = int(coord[1][1])
-            
-            if y1 == height:
-                y1 = height-1
-            if y2 == height:
-                y2 = height-1
-            if x1 == width:
-                x1 = width-1
-            if x2 == width:
-                x2 = width-1
-            
-            
-            rr, cc = line(x1, y1, x2, y2)
-            
-            
-            empty[cc,rr]=1
-            
-            outSnk = []
-            
-            snList = np.arange(len(cc))
-            
-            for s in snList:
-                x = rr[s]
-                y = cc[s]
-                xout = (x * rgt[1]) + rgt[0]
-                yout = (y * rgt[5]) + rgt[3]
-                
-                outSnk.append([xout, yout])
-        
-            snakeLine2 = LineString(outSnk)
-            
-            
-            geomOut = ogr.CreateGeometryFromWkt(snakeLine2.wkt)
-            
-            featureDefn = outLayer.GetLayerDefn()
-            feature = ogr.Feature(featureDefn)
-            
-            feature.SetGeometry(geomOut)
-            feature.SetField("id", 1)
-            outLayer.CreateFeature(feature)
-            feature = None
-        
-        
-        outDataSource.SyncToDisk()
-          
-        outDataSource=None
-        
-        
-        array2raster(np.invert(empty), 1, inRaster, outShp[:-3]+"tif",  gdal.GDT_Int32)
-        
-        polygonize(outShp[:-4]+'.tif', outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)  
-
-def _do_ransac(inArray, order='col'):
-    
-    outArray = np.zeros_like(inArray)
-    
-    #th = filters.threshold_otsu(inArray)
-    
-    #bw = inArray > th
-    
-    
-    inDex = np.where(inArray > 0)
-    if order == 'col':
-        
-        inData = np.column_stack([inDex[0], inDex[1]])
-        
-        
-        model = LineModelND()
-        model.estimate(inData)
-    
-        model_robust, inliers = ransac(inData, LineModelND, min_samples=2,
-                                       residual_threshold=1, max_trials=2500)
-    
-    
-        outliers = inliers == False
-    
-        
-        line_x = inData[:, 0]
-        line_y = model.predict_y(line_x)
-        line_y_robust = model_robust.predict_y(line_x)
-    
-        outArray[line_x, np.int64(np.round(line_y_robust))]=1
-        
-    if order == 'row':
-        
-        inData = np.column_stack([inDex[1], inDex[0]])
-    
-    
-        model = LineModelND()
-        model.estimate(inData)
-    
-        model_robust, inliers = ransac(inData, LineModelND, min_samples=2,
-                                   residual_threshold=1, max_trials=2500)
-    
-    
-        outliers = inliers == False
-        
-        line_x = inData[:,0]
-        line_y = model.predict_y(line_x)
-
-        line_y_robust = model_robust.predict_y(line_x)
-        
-        outArray[np.int64(np.round(line_y_robust)), line_x]=1
-
-    
-    return outArray
-    
-def ransac_lines(inRas, outRas, sigma=3, row=True, col=True, binwidth=40):
-
-
-    inDataset = gdal.Open(inRas)
-        
-    outDataset = _copy_dataset_config(inDataset, outMap = outRas,
-                                     dtype = gdal.GDT_Byte, bands = 1)
-    band = inDataset.GetRasterBand(2)
-    cols = inDataset.RasterXSize
-    rows = inDataset.RasterYSize
-    outBand = outDataset.GetRasterBand(1)
-    
-    
-    blocksizeY = inDataset.RasterYSize
-    
-    blocksizeX = binwidth
-    
-    
-    # vertical lines
-    if col is True:
-        
-        
-        for i in range(0, rows, blocksizeY):
-            if i + blocksizeY < rows:
-                numRows = blocksizeY
-            else:
-                numRows = rows -i
-            
-            for j in tqdm(range(0, cols, blocksizeX)):
-                if j + blocksizeX < cols:
-                    numCols = blocksizeX
-                else:
-                    numCols = cols - j
-                
-                inArray = band.ReadAsArray(j,i, numCols, numRows)
-                #glim = nd.gaussian_laplace(inArray, sigma=4)
-                edge = canny(inArray, sigma=sigma)
-                oot = _do_ransac(edge, order='col')
-                
-                outBand.WriteArray(oot,j,i)
-    
-    if row is True:
-    # horizontal lines
-    
-        blocksizeY = binwidth
-        
-        blocksizeX = inDataset.RasterXSize
-        
-        for i in tqdm(range(0, rows, blocksizeY)):
-            if i + blocksizeY < rows:
-                numRows = blocksizeY
-            else:
-                numRows = rows -i
-            
-            for j in range(0, cols, blocksizeX):
-                if j + blocksizeX < cols:
-                    numCols = blocksizeX
-                else:
-                    numCols = cols - j
-                
-                inArray = band.ReadAsArray(j,i, numCols, numRows)
-                #glim = nd.gaussian_laplace(inArray, sigma=4)
-                edge = canny(inArray, sigma=sigma)
-                oot = _do_ransac(edge, order='row')
-                
-                outArray = outBand.ReadAsArray(j,i, numCols, numRows)
-                
-        
-                outArray[oot==1]=1
-                
-                outBand.WriteArray(outArray,j,i)
-    
-            
-    outDataset.FlushCache()
-    outDataset = None
-    tmpIm = gdal.Open(outRas)
-    outIm = tmpIm.GetRasterBand(1).ReadAsArray()
-    
-    array2raster(np.invert(outIm), 1, inRas, inRas[:-4]+"seg.tif",  gdal.GDT_Int32)
-        
-    polygonize(inRas[:-4]+"seg.tif", inRas[:-4]+"seg.shp", outField=None,  mask = True, band = 1)
     return outIm        
-
 
 
 def meshgrid(inRaster, outShp, gridHeight=1, gridWidth=1):

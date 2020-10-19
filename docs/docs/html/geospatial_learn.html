@@ -297,13 +297,14 @@ to commonly used formats</p>
 <dl class="py function">
 <dt id="raster.combine_scene">
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">combine_scene</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scl</span></em>, <em class="sig-param"><span class="n">c_scn</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.combine_scene" title="Permalink to this definition">¶</a></dt>
-<dd><p>combine another scene classification with the sen2cor one</p>
-<dl class="simple">
-<dt>scl: string</dt><dd><p>the sen2cor one</p>
-</dd>
-<dt>c_scn: string</dt><dd><p>the independently derived one - this will be modified</p>
-</dd>
-<dt>blocksize: string</dt><dd><p>chunck to process</p>
+<dd><p>Combine another scene classification with the sen2cor one</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scl</strong> (<em>string</em>) – the sen2cor one</p></li>
+<li><p><strong>c_scn</strong> (<em>string</em>) – the independently derived one - this will be modified</p></li>
+<li><p><strong>blocksize</strong> (<em>string</em>) – chunck to process</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -340,8 +341,7 @@ efficiency on larger rasters</p>
 <li><p><strong>inputIm</strong> (<em>string</em>) – the input raster</p></li>
 <li><p><strong>mval</strong> (<em>int</em>) – the mask value eg 1, 2 etc</p></li>
 <li><p><strong>FMT</strong> (<em>string</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</p></li>
-<li><p><strong>outputIm</strong> (<em>string (optional)</em>) – optionally write a separate output image, if None, will
-mask the input</p></li>
+<li><p><strong>outputIm</strong> (<em>string (optional)</em>) – optionally write a separate output image, if None, will mask the input</p></li>
 <li><p><strong>blocksize</strong> (<em>int</em>) – the chunk of raster to read in</p></li>
 </ul>
 </dd>
@@ -392,8 +392,8 @@ efficiency on larger rasters</p>
 <dl class="py function">
 <dt id="raster.multi_temp_filter">
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">multi_temp_filter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outRas</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">windowSize</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.multi_temp_filter" title="Permalink to this definition">¶</a></dt>
-<dd><p>The multi temp filter for radar data as outlined &amp; published by
-Quegan et al, Uni of Sheffield</p>
+<dd><p>The multi temp filter for SAR data as outlined &amp; published by
+Quegan et al</p>
 <p>This is only suitable for small images, as it holds intermediate data in memory</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -411,21 +411,16 @@ Quegan et al, Uni of Sheffield</p>
 <dl class="py function">
 <dt id="raster.polygonize">
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">polygonize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outPoly</span></em>, <em class="sig-param"><span class="n">outField</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mask</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">filetype</span><span class="o">=</span><span class="default_value">'ESRI Shapefile'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.polygonize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Lifted straight from the cookbook and gdal func docs.</p>
-<p><a class="reference external" href="http://pcjericks.github.io/py-gdalogr-cookbook">http://pcjericks.github.io/py-gdalogr-cookbook</a></p>
+<dd><p>Polygonise a raster</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>inRas</strong> (<em>string</em>) – the input image</p>
-</dd>
-</dl>
-<dl class="simple">
-<dt>outPoly: string</dt><dd><p>the output polygon file path</p>
-</dd>
-<dt>outField: string (optional)</dt><dd><p>the name of the field containing burnded values</p>
-</dd>
-<dt>mask: bool (optional)</dt><dd><p>use the input raster as a mask</p>
-</dd>
-<dt>band: int</dt><dd><p>the input raster band</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRas</strong> (<em>string</em>) – the input image</p></li>
+<li><p><strong>outPoly</strong> (<em>string</em>) – the output polygon file path</p></li>
+<li><p><strong>outField</strong> (<em>string (optional)</em>) – the name of the field containing burnded values</p></li>
+<li><p><strong>mask</strong> (<em>bool (optional)</em>) – use the input raster as a mask</p></li>
+<li><p><strong>band</strong> (<em>int</em>) – the input raster band</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -482,24 +477,19 @@ It is assumed the scene map consists of 1 shadow, 2 cloud, 3 land, 4 water</p></
 <dl class="py function">
 <dt id="raster.remove_cloud_S2_stk">
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">remove_cloud_S2_stk</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputIm</span></em>, <em class="sig-param"><span class="n">sceneIm1</span></em>, <em class="sig-param"><span class="n">sceneIm2</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">baseIm</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_size</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">dist</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.remove_cloud_S2_stk" title="Permalink to this definition">¶</a></dt>
-<dd><p>remove cloud using the the c_utils scene classification
-the KEA format is recommended, .tif is the default,</p>
-<p>no need to add the file extension this is done automatically</p>
+<dd><p>Remove cloud using a classification where cloud == 1
+Esoteric - from the Forest Sentinel project, but retained here</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>inputIm</strong> (<em>string</em>) – the input image</p></li>
 <li><p><strong>sceneIm1, 2</strong> (<em>string</em>) – the classification rasters used to mask out the areas in</p></li>
-<li><p><strong>the input image</strong></p></li>
 <li><p><strong>baseIm</strong> (<em>string</em>) – Another multiband raster of same size extent as the inputIm
 where the baseIm image values are used rather than simply converting
 to zero (in the use case of 2 sceneIm classifications)</p></li>
-<li><p><strong>Returns</strong></p></li>
-<li><p><strong>———–</strong></p></li>
-<li><p><strong>nowt</strong></p></li>
 <li><p><strong>Notes</strong></p></li>
 <li><p><strong>———–</strong></p></li>
-<li><p><strong>Useful if you have a base image whic is a cloudless composite, which</strong></p></li>
+<li><p><strong>Useful if you have a base image which is a cloudless composite, which</strong></p></li>
 <li><p><strong>you intend to replace with the current image for the next round of</strong></p></li>
 <li><p><strong>classification/ change detection</strong></p></li>
 </ul>
@@ -526,7 +516,7 @@ to zero (in the use case of 2 sceneIm classifications)</p></li>
 <dl class="py function">
 <dt id="raster.stack_ras">
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">stack_ras</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rasterList</span></em>, <em class="sig-param"><span class="n">outFile</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.stack_ras" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stack some rasters for change classification</p>
+<dd><p>Stack some rasters</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -695,18 +685,14 @@ so that has been prioritised rather than raster IO</p>
 <dd><p>Classify a point cloud (ply format)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>incld</strong> (<em>string</em>) – the input point cloud</p>
-</dd>
-</dl>
-<dl class="simple">
-<dt>class_field: string</dt><dd><p>the name of the field that the results will be written to
-this must already exist! Create in CldComp. or cgal</p>
-</dd>
-<dt>train_field: string</dt><dd><p>the name of the training label field so it can be ignored</p>
-</dd>
-<dt>rgb: bool</dt><dd><p>whether there is rgb data to be included</p>
-</dd>
-<dt>outcld: string</dt><dd><p>path to a new ply to write if not writing to the input one</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>incld</strong> (<em>string</em>) – the input point cloud</p></li>
+<li><p><strong>class_field</strong> (<em>string</em>) – the name of the field that the results will be written to
+this must already exist! Create in CldComp. or cgal</p></li>
+<li><p><strong>train_field</strong> (<em>string</em>) – the name of the training label field so it can be ignored</p></li>
+<li><p><strong>rgb</strong> (<em>bool</em>) – whether there is rgb data to be included</p></li>
+<li><p><strong>outcld</strong> (<em>string</em>) – path to a new ply to write if not writing to the input one</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -740,16 +726,7 @@ grid search as multi-core overloads the GPUs quick!</p>
 </dd>
 </dl>
 <blockquote>
-<div><p>There are more sophisticated ways to tune a model, this greedily
-searches everything but can be computationally costly. Fine tuning
-in a more measured way is likely better. There are numerous books,
-guides etc…
-E.g. with gb- first tune no of trees for gb, then learning rate, then
-tree specific</p>
-</div></blockquote>
-<blockquote>
-<div><p>From my own experience and reading around</p>
-<p>Scoring types - there are a lot - some of which won’t work for
+<div><p>Scoring types - there are a lot - some of which won’t work for
 multi-class, regression etc - see the sklearn docs!</p>
 <p>‘accuracy’, ‘adjusted_rand_score’, ‘average_precision’, ‘f1’,
 ‘f1_macro’, ‘f1_micro’, ‘f1_samples’, ‘f1_weighted’, ‘neg_log_loss’,
@@ -822,19 +799,14 @@ be positive integers</p></li>
 <li><p><strong>classif_field</strong> (<em>string</em>) – the name of the field that will be used for classification later
 must be specified so it can be ignored</p></li>
 <li><p><strong>rgb</strong> (<em>bool</em>) – whether there is rgb data to be included</p></li>
+<li><p><strong>outFile</strong> (<em>string</em>) – path to training array to be saved as .gz via joblib</p></li>
 </ul>
 </dd>
-</dl>
-<dl class="simple">
-<dt>outFile: string</dt><dd><p>path to training array to be saved as .gz via joblib</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
 </dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p></p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>np array of training where first column is labels</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np array of training where first column is labels</p>
 </dd>
 </dl>
 </dd></dl>
@@ -955,7 +927,7 @@ raster operation</p>
 <li><p><strong>inShp</strong> (<em>string</em>) – input shapefile</p></li>
 <li><p><strong>expression</strong> (<em>string</em>) – sql style expression e.g. “DN &gt;= 168”</p></li>
 <li><p><strong>outField</strong> (<em>string</em>) – the field in which the label will reside</p></li>
-<li><p><strong>outLabel</strong> (<em>the label identifying the filtered features</em>)</p></li>
+<li><p><strong>outLabel</strong> (<em>int</em>) – the label identifying the filtered features</p></li>
 </ul>
 </dd>
 </dl>
@@ -1010,11 +982,6 @@ this to zero will disable the balloon force.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="shape.ransac_lines">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">ransac_lines</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outRas</span></em>, <em class="sig-param"><span class="n">sigma</span><span class="o">=</span><span class="default_value">3</span></em>, <em class="sig-param"><span class="n">row</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">col</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">binwidth</span><span class="o">=</span><span class="default_value">40</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.ransac_lines" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
 <dt id="shape.shape_props">
 <code class="sig-prename descclassname">shape.</code><code class="sig-name descname">shape_props</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">prop</span></em>, <em class="sig-param"><span class="n">inRas</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">label_field</span><span class="o">=</span><span class="default_value">'ID'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.shape_props" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate various geometric properties of a set of polygons
@@ -1049,11 +1016,10 @@ scikit-image props</p></li>
 <dd><p>Converts a geojson/json to a shapefile</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>inShape</strong> (<em>string</em>) – input shapefile</p>
-</dd>
-</dl>
-<dl class="simple">
-<dt>outJson: string</dt><dd><p>output geojson</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inShape</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>outJson</strong> (<em>string</em>) – output geojson</p></li>
+</ul>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -1102,22 +1068,16 @@ yields same behaviour as ‘fixed’ and ‘free’, respectively.</p></li>
 <code class="sig-prename descclassname">shape.</code><code class="sig-name descname">texture_stats</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">gprop</span><span class="o">=</span><span class="default_value">'contrast'</span></em>, <em class="sig-param"><span class="n">offset</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">angle</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">write_stat</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">mean</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.texture_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate and optionally write texture stats for an OGR compatible polygon
 based on underlying raster values</p>
-<dl class="field-list">
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul>
+<dd class="field-odd"><ul class="simple">
 <li><p><strong>inShp</strong> (<em>string</em>) – input shapefile</p></li>
 <li><p><strong>inRas</strong> (<em>string</em>) – input raster path</p></li>
 <li><p><strong>gprop</strong> (<em>string</em>) – a skimage gclm property
 entropy, contrast, dissimilarity, homogeneity, ASM, energy,
 correlation</p></li>
 <li><p><strong>offset</strong> (<em>int</em>) – distance in pixels to measure - minimum of 2!!!</p></li>
-<li><p><strong>angle</strong> (<em>int</em>) – angle in degrees from pixel (int)</p>
-<p>135  90    45
-   |    /</p>
-<blockquote>
-<div><p>c    -  0</p>
-</div></blockquote>
-</li>
+<li><p><strong>angle</strong> (<em>int</em>) – angle in degrees from pixel (int)</p></li>
 <li><p><strong>mean</strong> (<em>bool</em>) – take the mean of all offsets</p></li>
 <li><p><strong>Important to note that the results will be unreliable for glcm</strong></p></li>
 <li><p><strong>texture features if seg is true as non-masked values will be zero or</strong></p></li>
@@ -1250,14 +1210,26 @@ appropriate</p>
 <dl class="py function">
 <dt id="utilities.fixply">
 <code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">fixply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incloud</span></em>, <em class="sig-param"><span class="n">outcloud</span></em>, <em class="sig-param"><span class="n">field</span><span class="o">=</span><span class="default_value">'scalar_label'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.fixply" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Fix a ply file for use in cgal after cloudcompare</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>incloud</strong> (<em>string</em>) – path to an input ply</p></li>
+<li><p><strong>outcloud</strong> (<em>string</em>) – path to the output sply</p></li>
+<li><p><strong>field</strong> (<em>string</em>) – the scalar field to alter</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt id="utilities.houghseg">
 <code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">houghseg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">edge</span><span class="o">=</span><span class="default_value">'canny'</span></em>, <em class="sig-param"><span class="n">sigma</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">thresh</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ratio</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">n_orient</span><span class="o">=</span><span class="default_value">6</span></em>, <em class="sig-param"><span class="n">n_scale</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">hArray</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">vArray</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">valrange</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">interval</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">min_area</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.houghseg" title="Permalink to this definition">¶</a></dt>
-<dd><p>Detect and write Hough lines to a line shapefile</p>
-<p>There two input arrays on the to keep line detection clean eg 2 orientations,
-such as vertical and horizontal</p>
+<dd><p>Detect and write Hough lines to a line shapefile and create rectangular segments
+from them</p>
+<p>Implemented for the paper Robb et al. (2020),
+Semi-automated field plot segmentation from UAS imagery for experimental agriculture,
+Froniers in Plant Science</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1267,6 +1239,10 @@ such as vertical and horizontal</p>
 <li><p><strong>sigma</strong> (<em>float</em>) – scalar value for gaussian smoothing</p></li>
 <li><p><strong>thresh</strong> (<em>int/float</em>) – the high hysterisis threshold</p></li>
 <li><p><strong>band</strong> (<em>int</em>) – the image band</p></li>
+<li><p><strong>hArray</strong> (<em>bool</em>) – axis 1 of the image</p></li>
+<li><p><strong>vArray</strong> (<em>bool</em>) – axis2 of the image</p></li>
+<li><p><strong>band</strong> (<em>int</em>) – axis 1 of the image</p></li>
+<li><p><strong>min_area</strong> (<em>float</em>) – the minimum area of segment to retain</p></li>
 </ul>
 </dd>
 </dl>
@@ -1280,16 +1256,16 @@ such as vertical and horizontal</p>
 <dl class="py function">
 <dt id="utilities.imangle">
 <code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">imangle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">im</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.imangle" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>im: np array</dt><dd><p>input image</p>
-</dd>
-</dl>
+<dd><p>Determine the orientation of non-zero vals in an image</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><strong>axes</strong> – orientations of each side and binary array</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>im</strong> (<em>np array</em>) – input image</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>tuple</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>axes</strong> – orientations of each side and binary array</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1393,6 +1369,22 @@ this to zero will disable the balloon force.</p></li>
 <dl class="py function">
 <dt id="utilities.ragmerge">
 <code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ragmerge</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inSeg</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">thresh</span><span class="o">=</span><span class="default_value">0.02</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ragmerge" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inSeg</strong> (<em>string</em>) – Path to Input segmentation raster</p></li>
+<li><p><strong>inRas</strong> (<em>string</em>) – Path to underlying raster that will be used merge segments</p></li>
+<li><p><strong>outShape</strong> (<em>string</em>) – Path to output segmentation shape</p></li>
+<li><p><strong>band</strong> (<em>int</em>) – The band on which to perform the RAG merge</p></li>
+<li><p><strong>thresh</strong> (<em>float</em>) – The RAG merge threshold</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="utilities.ransac_lines">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">ransac_lines</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outRas</span></em>, <em class="sig-param"><span class="n">sigma</span><span class="o">=</span><span class="default_value">3</span></em>, <em class="sig-param"><span class="n">row</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">col</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">binwidth</span><span class="o">=</span><span class="default_value">40</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.ransac_lines" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -1462,7 +1454,18 @@ accordingly. This can be passed as the <cite>iter_callback</cite> argument of
 <dl class="py function">
 <dt id="utilities.wipe_ply_field">
 <code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">wipe_ply_field</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incloud</span></em>, <em class="sig-param"><span class="n">outcloud</span></em>, <em class="sig-param"><span class="n">tfield</span><span class="o">=</span><span class="default_value">'training'</span></em>, <em class="sig-param"><span class="n">field</span><span class="o">=</span><span class="default_value">'label'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.wipe_ply_field" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Scrub a field from a ply file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>incloud</strong> (<em>string</em>) – path to an input ply</p></li>
+<li><p><strong>outcloud</strong> (<em>string</em>) – path to the output sply</p></li>
+<li><p><strong>tfield</strong> (<em>string</em>) – the training field</p></li>
+<li><p><strong>field</strong> (<em>string</em>) – the field to erase (that was previously full of class values)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 </div>
 <div class="section" id="module-convnet">

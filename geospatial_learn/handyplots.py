@@ -89,7 +89,7 @@ def _plt_heatmap(values, xlabel, ylabel, xticklabels, yticklabels,
     """
     Plot a heamap for something like a confusion matrix
     
-    
+  
     """
     
     
@@ -125,7 +125,7 @@ def plt_confmat(trueVals, predVals, cmap = plt.cm.gray, fmt="%d"):
     """
     Plot a confusion matrix
     
-     Parameters
+    Parameters
     -------------------
     
     trueVals : nparray
@@ -270,29 +270,6 @@ def plot3d(data, features, feature_names, point_color = 0):
     plt.show()   
     
     
-def plot_S2_cloud(user, paswd, start_date, end_date, aoiJson, print_date=True):
-    """
-    
-    Plot Sentinel 2 cloud percentage for a given time period 
-    
-    Parameters
-    ------------------
-    
-    data : np array
-        the aformentioned array of features
-    
-    features : list 
-        a list of feature indices, eg [1,2,3] or [4,3,1] 
-    
-    feature_names : list of strings
-        a list of feature names ef ['red', 'green', 'blue']
-        
-    """
-    dF, products = data.sent2_query(user, paswd, aoiJson, start_date, end_date)
-    
-    dF.sort_values('ingestiondate', inplace=True)
-
-    dF.plot.line('ingestiondate', 'cloudcoverpercentage')
 
 def plot_change(inArray):
     """ This assumes that features are column wise and rows are samples

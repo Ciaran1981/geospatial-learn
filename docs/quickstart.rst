@@ -110,7 +110,7 @@ To write multiple attributes a simple loop will suffice:
 
 
 Train & then classify shapefile attributes
------------------------------
+------------------------------------------
 
 In the previous example several attributes were calculated and written to a shapefile. The following example outlines how to train a ML model then classify these.
 In this case the attributes are some of those calculated above

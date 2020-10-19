@@ -114,10 +114,13 @@ def houghseg(inRas, outShp, edge='canny', sigma=2,
                min_area=None):
     
         """
-        Detect and write Hough lines to a line shapefile
+        Detect and write Hough lines to a line shapefile and create rectangular segments
+        from them
+
         
-        There two input arrays on the to keep line detection clean eg 2 orientations,
-        such as vertical and horizontal
+        Implemented for the paper Robb et al. (2020),
+        Semi-automated field plot segmentation from UAS imagery for experimental agriculture,
+        Froniers in Plant Science
         
         Parameters
         ----------
@@ -138,6 +141,18 @@ def houghseg(inRas, outShp, edge='canny', sigma=2,
                  the high hysterisis threshold
         band: int
                 the image band
+                
+        hArray: bool
+                axis 1 of the image
+                
+        vArray: bool
+                axis2 of the image
+                
+        band: int
+                axis 1 of the image
+                
+        min_area: float
+                the minimum area of segment to retain
         """
         # Standard GDAL I/O fair
         inDataset = gdal.Open(inRas, gdal.GA_ReadOnly)
@@ -219,6 +234,21 @@ def houghseg(inRas, outShp, edge='canny', sigma=2,
 def fixply(incloud, outcloud, field='scalar_label'): 
     
     
+    """
+    Fix a ply file for use in cgal after cloudcompare
+    
+    Parameters
+    ----------
+
+    incloud: string
+           path to an input ply 
+
+    outcloud: string
+           path to the output sply
+           
+    field: string
+           the scalar field to alter
+    """
     
     # The labels should be contiguous ie -1,0,1,2,3 - counting from zero
     
@@ -259,7 +289,24 @@ def fixply(incloud, outcloud, field='scalar_label'):
 
 def wipe_ply_field(incloud, outcloud, tfield='training' ,field='label'): 
     
+    """
+    Scrub a field from a ply file
     
+    Parameters
+    ----------
+
+    incloud: string
+           path to an input ply 
+
+    outcloud: string
+           path to the output sply
+    
+    tfield: string
+           the training field
+           
+    field: string
+           the field to erase (that was previously full of class values)
+    """
     
     # The labels should be contiguous ie -1,0,1,2,3 - counting from zero
     
@@ -329,7 +376,7 @@ def raster2array(inRas, bands=[1]):
                   input  raster
         
     bands: list
-                  a list of bands to return in the array
+                a list of bands to return in the array
     
     """
     rds = gdal.Open(inRas)
@@ -457,7 +504,7 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
         gimg = inverse_gaussian_gradient(img, sigma=sigma, alpha=alpha)
 
 
-#  using an approximation of the
+#    using an approximation of the
 #    homotopic skeleton to prevent merging of blobs       
         for i in tqdm(iters):          
             # get the skeleton of the background of the prev seg
@@ -486,14 +533,8 @@ def ms_toposnakes(inSeg, inRas, outShp, iterations=100, algo='ACWE', band=2,
             orig[bw==1]=1
             del inv, sk
    
-
-    
     newseg, _ = nd.label(bw)
-    
 
-        
-
-    
     array2raster(newseg, 1, inSeg, inSeg[:-4]+'tsnake.tif', gdal.GDT_Int32)
     
     
@@ -816,6 +857,27 @@ def _merge_boundary(graph, src, dst):
     pass
 
 def ragmerge(inSeg, inRas, outShp, band, thresh=0.02):
+    
+    """
+
+    Parameters
+    ----------
+    inSeg: string
+        Path to Input segmentation raster
+        
+    inRas: string
+        Path to underlying raster that will be used merge segments 
+        
+    outShape: string
+        Path to output segmentation shape
+    
+    band: int
+         The band on which to perform the RAG merge
+    
+    thresh: float
+         The RAG merge threshold
+
+    """
     
     img = raster2array(inRas, bands=[band])
     
@@ -1197,7 +1259,9 @@ def imangle(im):
     
     """
     Determine the orientation of non-zero vals in an image
-    ---------- 
+    
+    Parameters
+    ----------
     
     im: np array
               input image
@@ -1410,7 +1474,142 @@ def colorscale(seg, prop):
     return propIm
 
 
+def _do_ransac(inArray, order='col'):
+    
+    outArray = np.zeros_like(inArray)
+    
+    #th = filters.threshold_otsu(inArray)
+    
+    #bw = inArray > th
+    
+    
+    inDex = np.where(inArray > 0)
+    if order == 'col':
+        
+        inData = np.column_stack([inDex[0], inDex[1]])
+        
+        
+        model = LineModelND()
+        model.estimate(inData)
+    
+        model_robust, inliers = ransac(inData, LineModelND, min_samples=2,
+                                       residual_threshold=1, max_trials=2500)
+    
+    
+        outliers = inliers == False
+    
+        
+        line_x = inData[:, 0]
+        line_y = model.predict_y(line_x)
+        line_y_robust = model_robust.predict_y(line_x)
+    
+        outArray[line_x, np.int64(np.round(line_y_robust))]=1
+        
+    if order == 'row':
+        
+        inData = np.column_stack([inDex[1], inDex[0]])
+    
+    
+        model = LineModelND()
+        model.estimate(inData)
+    
+        model_robust, inliers = ransac(inData, LineModelND, min_samples=2,
+                                   residual_threshold=1, max_trials=2500)
+    
+    
+        outliers = inliers == False
+        
+        line_x = inData[:,0]
+        line_y = model.predict_y(line_x)
 
+        line_y_robust = model_robust.predict_y(line_x)
+        
+        outArray[np.int64(np.round(line_y_robust)), line_x]=1
+
+    
+    return outArray
+    
+def ransac_lines(inRas, outRas, sigma=3, row=True, col=True, binwidth=40):
+
+
+    inDataset = gdal.Open(inRas)
+        
+    outDataset = _copy_dataset_config(inDataset, outMap = outRas,
+                                     dtype = gdal.GDT_Byte, bands = 1)
+    band = inDataset.GetRasterBand(2)
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
+    outBand = outDataset.GetRasterBand(1)
+    
+    
+    blocksizeY = inDataset.RasterYSize
+    
+    blocksizeX = binwidth
+    
+    
+    # vertical lines
+    if col is True:
+        
+        
+        for i in range(0, rows, blocksizeY):
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
+            else:
+                numRows = rows -i
+            
+            for j in tqdm(range(0, cols, blocksizeX)):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+                
+                inArray = band.ReadAsArray(j,i, numCols, numRows)
+                #glim = nd.gaussian_laplace(inArray, sigma=4)
+                edge = canny(inArray, sigma=sigma)
+                oot = _do_ransac(edge, order='col')
+                
+                outBand.WriteArray(oot,j,i)
+    
+    if row is True:
+    # horizontal lines
+    
+        blocksizeY = binwidth
+        
+        blocksizeX = inDataset.RasterXSize
+        
+        for i in tqdm(range(0, rows, blocksizeY)):
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
+            else:
+                numRows = rows -i
+            
+            for j in range(0, cols, blocksizeX):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+                
+                inArray = band.ReadAsArray(j,i, numCols, numRows)
+                #glim = nd.gaussian_laplace(inArray, sigma=4)
+                edge = canny(inArray, sigma=sigma)
+                oot = _do_ransac(edge, order='row')
+                
+                outArray = outBand.ReadAsArray(j,i, numCols, numRows)
+                
+        
+                outArray[oot==1]=1
+                
+                outBand.WriteArray(outArray,j,i)
+    
+            
+    outDataset.FlushCache()
+    outDataset = None
+    tmpIm = gdal.Open(outRas)
+    outIm = tmpIm.GetRasterBand(1).ReadAsArray()
+    
+    array2raster(np.invert(outIm), 1, inRas, inRas[:-4]+"seg.tif",  gdal.GDT_Int32)
+        
+    polygonize(inRas[:-4]+"seg.tif", inRas[:-4]+"seg.shp", outField=None,  mask = True, band = 1)
 
 
 

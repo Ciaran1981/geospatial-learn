@@ -129,8 +129,8 @@ def raster2array(inRas, bands=[1]):
     ----------
     
     inRas: string
-                  input  raster
-        
+                  input  raster 
+                  
     bands: list
                   a list of bands to return in the array
     
@@ -258,7 +258,6 @@ def _bbox_to_pixel_offsets(rgt, geom):
     -------
     xoffset: int
            
-
     yoffset: iny
            
     xcount: int
@@ -413,8 +412,7 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
           the output gdal format eg 'Gtiff', 'KEA', 'HFA'
         
     outputIm: string (optional)
-               optionally write a separate output image, if None, will 
-               mask the input
+               optionally write a separate output image, if None, will mask the input
         
     blocksize: int
                 the chunk of raster to read in
@@ -603,10 +601,7 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
                         if outval != None:
                             array[array == mval] = outval     
                             bnd.WriteArray(array, j, i)
-        # This is annoying but necessary as the stats need updated and cannot be 
-        # done in above band loop due as this would be very inefficient
-        #for band in range(1, bands+1):
-        #inDataset.GetRasterBand(1).ComputeStatistics(0)
+
            
         inDataset.FlushCache()
         inDataset = None
@@ -859,11 +854,7 @@ def remove_cloud_S2(inputIm, sceneIm,
     else:
         blocksizeX = blocksize
         blocksizeY = blocksize
-     # size of the pixel...they are square so thats ok.
-    #if not would need w x h
-    #If the block is a row, this simplifies things a bit
-    # Key issue now is to speed this part up 
-    # 
+
     
     for i in tqdm(range(0, rows, blocksizeY)):
             if i + blocksizeY < rows:
@@ -887,8 +878,7 @@ def remove_cloud_S2(inputIm, sceneIm,
                     array = bnd.ReadAsArray(j, i, numCols, numRows)
                     array[mask==1]=0
                     inDataset.GetRasterBand(band).WriteArray(array, j, i)
-    # This is annoying but necessary as the stats need updated and cannot be 
-    # done in above band loop due as this would be very inefficient
+
     for band in range(1, bands+1):
         inDataset.GetRasterBand(band).ComputeStatistics(0)
 
@@ -898,35 +888,29 @@ def remove_cloud_S2(inputIm, sceneIm,
 def remove_cloud_S2_stk(inputIm, sceneIm1, sceneIm2=None, baseIm = None,
                     blocksize = 256, FMT = None, max_size=10,
                     dist=1):
-    """ remove cloud using the the c_utils scene classification
-        the KEA format is recommended, .tif is the default,
+    """ 
+    Remove cloud using a classification where cloud == 1
+    Esoteric - from the Forest Sentinel project, but retained here
 
-        no need to add the file extension this is done automatically
+    Parameters
+    -----------
 
-        Parameters
-        -----------
-
-        inputIm: string
-            the input image
-
-        sceneIm1, 2: string
-            the classification rasters used to mask out the areas in
+    inputIm: string
         the input image
 
-        baseIm: string
-            Another multiband raster of same size extent as the inputIm
-            where the baseIm image values are used rather than simply converting
-            to zero (in the use case of 2 sceneIm classifications)
+    sceneIm1, 2: string
+        the classification rasters used to mask out the areas in
 
-        Returns:
-        -----------
-        nowt
+    baseIm: string
+        Another multiband raster of same size extent as the inputIm
+        where the baseIm image values are used rather than simply converting
+        to zero (in the use case of 2 sceneIm classifications)
 
-        Notes:
-        -----------
-        Useful if you have a base image whic is a cloudless composite, which
-        you intend to replace with the current image for the next round of
-        classification/ change detection
+    Notes:
+    -----------
+    Useful if you have a base image which is a cloudless composite, which
+    you intend to replace with the current image for the next round of
+    classification/ change detection
 
     """
 
@@ -968,12 +952,6 @@ def remove_cloud_S2_stk(inputIm, sceneIm1, sceneIm2=None, baseIm = None,
     else:
         blocksizeX = blocksize
         blocksizeY = blocksize
-     # size of the pixel...they are square so thats ok.
-    #if not would need w x h
-    #If the block is a row, this simplifies things a bit
-    # Key issue now is to speed this part up
-    #
-    # TODO - this is VERY ugly fix mess of if statements
 
 
     for i in tqdm(range(0, rows, blocksizeY)):
@@ -1016,8 +994,7 @@ def remove_cloud_S2_stk(inputIm, sceneIm1, sceneIm2=None, baseIm = None,
                         array = bnd.ReadAsArray(j, i, numCols, numRows)
                         array[mask1==1]=0
                     inDataset.GetRasterBand(band).WriteArray(array, j, i)
-    # This is annoying but necessary as the stats need updated and cannot be
-    # done in above band loop as this would be very inefficient
+
     for band in range(1, bands+1):
         inDataset.GetRasterBand(band).ComputeStatistics(0)
 
@@ -1028,7 +1005,7 @@ def remove_cloud_S2_stk(inputIm, sceneIm1, sceneIm2=None, baseIm = None,
 
 def stack_ras(rasterList, outFile):
     """ 
-    Stack some rasters for change classification
+    Stack some rasters 
     
     Parameters
     ----------- 
@@ -1045,10 +1022,10 @@ def stack_ras(rasterList, outFile):
     
 def combine_scene(scl, c_scn, blocksize = 256):
     """ 
-    combine another scene classification with the sen2cor one
+    Combine another scene classification with the sen2cor one
     
-    Where: 
-    ----------- 
+    Parameters 
+    ----------
     scl: string
         the sen2cor one
 
@@ -1058,7 +1035,6 @@ def combine_scene(scl, c_scn, blocksize = 256):
     blocksize: string
         chunck to process
         
-
     """
 
     
@@ -1107,17 +1083,13 @@ def combine_scene(scl, c_scn, blocksize = 256):
 def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1, filetype="ESRI Shapefile"):
     
     """ 
-    Lifted straight from the cookbook and gdal func docs.
-
-    http://pcjericks.github.io/py-gdalogr-cookbook
-
+    Polygonise a raster
 
     Parameters
     -----------   
       
     inRas: string
-            the input image 
-    
+            the input image   
         
     outPoly: string
               the output polygon file path 
@@ -1334,8 +1306,7 @@ def color_raster(inRas, color_file, output_file):
             Path to input raster (single band greyscale)
         
     color_file: string
-                 Path to output colorfile.txt
-        
+                 Path to output colorfile.txt     
         
     """
 
@@ -1456,8 +1427,8 @@ def hist_match(inputImage, templateImage):
 def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
     
     """ 
-    The multi temp filter for radar data as outlined & published by
-    Quegan et al, Uni of Sheffield
+    The multi temp filter for SAR data as outlined & published by
+    Quegan et al
     
     This is only suitable for small images, as it holds intermediate data in memory
         
@@ -1479,12 +1450,9 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
     FMT: string
           gdal compatible (optional) defaults is tif
 
-
  
     """
     selem = np.ones(shape=((7,7)))
-    
-    
     
     inDataset = gdal.Open(inRas)
     if bands==None:
@@ -1521,7 +1489,7 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
                     #print(i,j)
         
 
-    #outBand.FlushCache()
+
     outDataset.FlushCache()
 
 def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,

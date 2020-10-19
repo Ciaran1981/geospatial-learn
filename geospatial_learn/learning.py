@@ -197,22 +197,10 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
     
     scoring : string
               a suitable sklearn scoring type (see notes)
-            
     
-    General Note:
-    --------------------    
-        There are more sophisticated ways to tune a model, this greedily 
-        searches everything but can be computationally costly. Fine tuning 
-        in a more measured way is likely better. There are numerous books,
-        guides etc...
-        E.g. with gb- first tune no of trees for gb, then learning rate, then
-        tree specific
         
-    Notes on algorithms:
-    ----------------------    
-        From my own experience and reading around
-        
-    
+    Notes:
+    ------      
         Scoring types - there are a lot - some of which won't work for 
         multi-class, regression etc - see the sklearn docs!
         
@@ -816,11 +804,6 @@ def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
     return error_rate, best_param
 
 
-
-
-
-
-
 def plot_feature_importances(modelPth, featureNames):
     
     """
@@ -963,7 +946,7 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
 
 
     Notes
-    -------------------------------------------------
+    -----
     
     Block processing is sequential, but quite a few sklearn models are parallel
     so that has been prioritised rather than raster IO
@@ -995,20 +978,7 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
         blocksizeX = blocksize
         blocksizeY = blocksize
 
-    # For either option below making a block index is FAR slower than the 
-    # code used below - don't be tempted - likely cython is the solution to 
-    # performance gain here or para processing (but the model is already multi-core)
-    
-    # TODO 1- find an efficient way of classifying only non-zero values
-    # issue is extracting them, then writing back to the output array
-    #e.g
-    # [[02456812000002567], ]02456812000002567], ]02456812000002567]]
-    # predict [[24568122567, 24568122567, 24568122567]]
-    # then write back to original positions
-    # scipy sparse doesn't seem to work....
-    # TODO 2- thread or parallelise block/line processing
-    # Pressumably writing to different parts of raster should be ok....
-    
+
     if os.path.splitext[1] == ".h5":
         model1 = load_model(model)
     else:  
@@ -1159,13 +1129,7 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
     else:
         blocksizeX = blocksize
         blocksizeY = blocksize
-     # size of the pixel...they are square so thats ok.
-    #if not would need w x h
-    #If the block is a row, this simplifies things a bit
-    # Key issue now is to speed this part up 
-    # For either option below making a block index is FAR slower than the 
-    # code used below - don't be tempted - likely cython is the solution to 
-    # performance gain here
+
     model1 = joblib.load(model)
     if blocksizeY==1:
         rows = np.arange(cols, dtype=np.int)        
@@ -1212,9 +1176,7 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
                 X = X.transpose() 
                 X = np.where(np.isfinite(X),X,0)  # this is a slower line  
                 Probs=model1.predict_proba(X)
-                #Class 1 = Deforestattion
-                #if inputImage.RasterXSize < inputImage.RasterYSize:
-                #classArr = np.arange(classes)
+
                 
                 if one_class != None:
                     ProbsFinal = np.reshape(Probs[:,one_class-1], 
@@ -1233,7 +1195,6 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
     #outBand.FlushCache()
     outDataset.FlushCache()
     outDataset = None
-    #print("done in %0.3fs" % (time() - t0))
 
     
 def classify_object(model, inShape, attributes, field_name=None):
@@ -1279,26 +1240,20 @@ def classify_object(model, inShape, attributes, field_name=None):
     The next three lines obviously depend on the state in which the training data
     comes into this process
     """
-    #----------------------------------------------------------------------------------
+
     X[np.where(np.isnan(X))]=0
     X = X[np.isfinite(X).all(axis=1)]
      
     
-    """
-    Now the classification itself - see sklearn for details on params
-    """
+
+    #Now the classification itself - see sklearn for details on params
+
     print('Classifying')
-#    RF_clf = RandomForestClassifier(n_estimators=500, \
-#          oob_score=True, n_jobs=6, verbose=2)#R-forest
-#    
-#    RF_clf.fit(X_train, y_train) 
-    model1 = joblib.load(model)
+
     predictClass = model1.predict(X)
-#    predictClass = RF_clf.predict(X) 
-    #----------------------------------------------------------------------------------
-    """
-    Finally! Now we sort the values to match the order of the vector attribute table
-    """
+
+    #Now we sort the values to match the order of the vector attribute table
+
     # clear redundant variables from memory
 
     del X
@@ -1582,8 +1537,7 @@ def get_training_ply(incld, label_field="training", classif_field='label',
               the name of the field that will be used for classification later
               must be specified so it can be ignored
     rgb: bool
-              whether there is rgb data to be included
-              
+              whether there is rgb data to be included             
                 
     outFile: string
                path to training array to be saved as .gz via joblib
@@ -1655,7 +1609,6 @@ def classify_ply(incld, inModel, train_field="training", class_field='label',
     
     incld: string
               the input point cloud
-    
                 
     class_field: string
                the name of the field that the results will be written to
@@ -1738,7 +1691,6 @@ def rmse_vector_lyr(inShape, attributes):
     attributes: list
            a list of strings denoting the attributes
          
-
     """    
     
     #open the layer etc
