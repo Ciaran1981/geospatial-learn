@@ -1477,9 +1477,10 @@ accordingly. This can be passed as the <cite>iter_callback</cite> argument of
 object identification</p>
 <dl class="py function">
 <dt id="convnet.semantic_seg">
-<code class="sig-prename descclassname">convnet.</code><code class="sig-name descname">semantic_seg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mainDir</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">inLabel</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">plot</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1, 2, 3]</span></em>, <em class="sig-param"><span class="n">trainPercent</span><span class="o">=</span><span class="default_value">0.3</span></em>, <em class="sig-param"><span class="n">f1</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">unet</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">{'batch_size': 16, 'device': 'cuda', 'epochs': 50, 'lr': 0.001, 'model': 'UNet11', 'num_workers': 2}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#convnet.semantic_seg" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">convnet.</code><code class="sig-name descname">semantic_seg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mainDir</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">inLabel</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">plot</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1, 2, 3]</span></em>, <em class="sig-param"><span class="n">trainPercent</span><span class="o">=</span><span class="default_value">0.3</span></em>, <em class="sig-param"><span class="n">f1</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">unet</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">preTrain</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">proc</span><span class="o">=</span><span class="default_value">'cuda:0'</span></em>, <em class="sig-param"><span class="n">noclasses</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">{'batch_size': 16, 'classes': 1, 'device': 'cuda', 'encoder': 'resnet34', 'epochs': 50, 'in_channels': 3, 'lr': 0.001, 'model': 'Unet', 'num_workers': 2}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#convnet.semantic_seg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Semantic Segmentation of EO-imagery - an early version things are to be
-changed in the near future</p>
+changed in the near future
+Based on segmentation_models.pytorch &amp; albumentations</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1495,7 +1496,21 @@ test results etc.</p></li>
 <li><p><strong>bands</strong> (<em>list of ints</em>) – the image bands to use</p></li>
 <li><p><strong>trainPercent</strong> – the percentage of to use as training</p></li>
 <li><p><strong>f1</strong> (<em>bool</em>) – whether to svae a classification report (will be a plot in working dir)</p></li>
-<li><p><strong>params</strong> (<em>dict</em>) – the convnet model params</p></li>
+<li><p><strong>params</strong> (<em>dict</em>) – the convnet model params
+models:
+Unet, UNet11, UNet16, U Linknet, FPN, PSPNet,PAN, DeepLabV3 and DeepLabV3+
+encoders:
+‘resnet18’,’resnet34’,’resnet50’, ‘resnet101’,’resnet152’,’resnext50_32x4d’,
+‘resnext101_32x4d’,’resnext101_32x8d’,’resnext101_32x16d’,’resnext101_32x32d’,
+‘resnext101_32x48d’,’dpn68’,’dpn68b’,’dpn92’,’dpn98’,’dpn107’,’dpn131’,’vgg11’,
+‘vgg11_bn’,’vgg13’,’vgg13_bn’,’vgg16’,’vgg16_bn’,’vgg19’,’vgg19_bn’,’senet154’,
+‘se_resnet50’,’se_resnet101’,’se_resnet152’,’se_resnext50_32x4d’,’se_resnext101_32x4d’,
+‘densenet121’,’densenet169’,’densenet201’,’densenet161’,’inceptionresnetv2’,
+‘inceptionv4’,’efficientnet-b0’,’efficientnet-b1’,’efficientnet-b2’,’efficientnet-b3’,
+‘efficientnet-b4’,’efficientnet-b5’,’efficientnet-b6’,’efficientnet-b7’,
+‘mobilenet_v2’,’xception’,’timm-efficientnet-b0’,’timm-efficientnet-b1’,
+‘timm-efficientnet-b2’,’timm-efficientnet-b3’,’timm-efficientnet-b4’,’timm-efficientnet-b5’,
+‘timm-efficientnet-b6’,’timm-efficientnet-b7’,’timm-efficientnet-b8’,’timm-efficientnet-l2’</p></li>
 </ul>
 </dd>
 </dl>
