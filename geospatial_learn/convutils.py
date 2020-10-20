@@ -29,6 +29,7 @@ import torch.optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision.models import segmentation
 import gdal
+import segmentation_models_pytorch as smp
 cudnn.benchmark = True
 
 
@@ -183,13 +184,40 @@ def validate(val_loader, model, criterion, epoch, params):
             )
 
 # The method of doing this in torch vision is pretty similar            
-def create_model(params):
-    if params["model"] == "UNet11":
+def create_model(params, proc="cuda:0"):
+#    os.environ['CUDA_VISIBLE_DEVICES'] = proc
+
+    if params["model"] == "UNet11" or params["model"] == "UNet16":
         model = getattr(ternausnet.models, params["model"])(pretrained=True)
-    else:
-        model = getattr(segmentation, params["model"])(pretrained=True)
+        hrdWare = torch.device(proc)
+        model = model.to(hrdWare)
         
-    model = model.to(params["device"])
+    else:
+        #Unet, UNet11, UNet16, ULinknet, FPN, PSPNet,PAN, DeepLabV3 and DeepLabV3+
+        if params["model"] == 'Unet':
+            model = smp.Unet(encoder_name=params['encoder'], 
+                        classes=params['classes'],in_channels=params['in_channels'])     
+        if params["model"] == 'Linknet':
+            model = smp.Linknet(encoder_name=params['encoder'], 
+                        classes=params['classes'],in_channels=params['in_channels']) 
+        if params["model"] == 'FPN':
+            model = smp.FPN(encoder_name=params['encoder'], 
+                        classes=params['classes'],in_channels=params['in_channels']) 
+        if params["model"] == 'PSPNet':
+            model = smp.PSPNet(encoder_name=params['encoder'], 
+                        classes=params['classes'],in_channels=params['in_channels']) 
+        if params["model"] == 'PAN':
+            model = smp.PAN(encoder_name=params['encoder'], 
+                        classes=params['classes'],in_channels=params['in_channels']) 
+        if params["model"] == 'DeepLabV3':
+            model = smp.DeepLabV3(encoder_name=params['encoder'], 
+                        classes=params['classes'],in_channels=params['in_channels']) 
+        if params["model"] == 'DeepLabV3+':
+            model = smp.DeepLabV3(encoder_name=params['encoder'], 
+                        classes=params['classes'],in_channels=params['in_channels'])
+        hrdWare = torch.device(proc)
+        model = model.to(hrdWare)        
+    
     return model
 
 
@@ -234,6 +262,3 @@ def predict(model, params, testData, batch_size):
                 predTest.append((predicted_mask, original_height, original_width))
     return predTest
 
-
-
-    

@@ -34,16 +34,20 @@ cudnn.benchmark = True
 
 
 def semantic_seg(mainDir, inRas, inLabel, outMap, plot=False, bands=[1,2,3], 
-                 trainPercent=0.3, f1=False, unet=True,
-                 params = {"model": "UNet11",
-                           "device": "cuda",
-                           "lr": 0.001,
-                           "batch_size": 16,
-                           "num_workers": 2,
-                           "epochs": 50}):
+                 trainPercent=0.3, f1=False, unet=True, preTrain=True,
+                 proc="cuda:0", noclasses=2, 
+                 params={'model': 'Unet',
+                         'encoder': 'resnet34',
+                         'in_channels': 3,
+                         'classes' : 1,
+                         "lr": 0.001,
+                         "device": "cuda",
+                         "batch_size": 16,
+                         "num_workers": 2,"epochs": 50}):
     """
     Semantic Segmentation of EO-imagery - an early version things are to be 
     changed in the near future
+    Based on segmentation_models.pytorch & albumentations
     
     Parameters 
     ----------
@@ -80,7 +84,21 @@ def semantic_seg(mainDir, inRas, inLabel, outMap, plot=False, bands=[1,2,3],
     
     params: dict
           the convnet model params
-    
+          models: 
+          Unet, UNet11, UNet16, U Linknet, FPN, PSPNet,PAN, DeepLabV3 and DeepLabV3+
+          encoders:
+          'resnet18','resnet34','resnet50', 'resnet101','resnet152','resnext50_32x4d',
+          'resnext101_32x4d','resnext101_32x8d','resnext101_32x16d','resnext101_32x32d',
+          'resnext101_32x48d','dpn68','dpn68b','dpn92','dpn98','dpn107','dpn131','vgg11',
+          'vgg11_bn','vgg13','vgg13_bn','vgg16','vgg16_bn','vgg19','vgg19_bn','senet154',
+          'se_resnet50','se_resnet101','se_resnet152','se_resnext50_32x4d','se_resnext101_32x4d',
+          'densenet121','densenet169','densenet201','densenet161','inceptionresnetv2',
+          'inceptionv4','efficientnet-b0','efficientnet-b1','efficientnet-b2','efficientnet-b3',
+          'efficientnet-b4','efficientnet-b5','efficientnet-b6','efficientnet-b7',
+          'mobilenet_v2','xception','timm-efficientnet-b0','timm-efficientnet-b1',
+          'timm-efficientnet-b2','timm-efficientnet-b3','timm-efficientnet-b4','timm-efficientnet-b5',
+          'timm-efficientnet-b6','timm-efficientnet-b7','timm-efficientnet-b8','timm-efficientnet-l2'
+
     Notes
     -----
     
@@ -167,7 +185,8 @@ def semantic_seg(mainDir, inRas, inLabel, outMap, plot=False, bands=[1,2,3],
     test_imgNms =  [os.path.split(t)[1] for t in testList]
     test_imgNms.sort()
 
-    
+    # Other augs in the various material online do not appear to offer better results
+    # than this simple one!
     trainTfrm = A.Compose(
     [   #A.ToFloat(max_value=65535.0),
         A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
@@ -217,7 +236,8 @@ def semantic_seg(mainDir, inRas, inLabel, outMap, plot=False, bands=[1,2,3],
     if plot == True:
        visAug(trainData, idx=6)
        
-    model = create_model(params)
+    model = create_model(params,
+                         proc="cuda:0")
 
     model = train_and_validate(model, trainData, valData, params)
 
@@ -277,6 +297,8 @@ def semantic_seg(mainDir, inRas, inLabel, outMap, plot=False, bands=[1,2,3],
     # using gdal merge and clear up the mess   
     
     ootDir = os.path.join(mainDir, 'classifChips')
+    if os.path.isdir(ootDir):
+        shutil.rmtree(ootDir)
     os.mkdir(ootDir)
     
     # hahaha list comp mania
@@ -284,7 +306,7 @@ def semantic_seg(mainDir, inRas, inLabel, outMap, plot=False, bands=[1,2,3],
     
     
     for idx, p in enumerate(predicted_Geo):
-        rs.array2raster(p, 1, planetInit[idx], imOot[idx], gdal.GDT_Byte)
+        rs.array2raster(p, 1, planetInit[idx], imOot[idx], gdal.GDT_Int32)
     
     
     
