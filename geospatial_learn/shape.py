@@ -408,6 +408,41 @@ def _bbox_to_pixel_offsets(rgt, geom):
 #    return (x1, y1, xsize, ysize)
     return (xoff, yoff, xcount, ycount)        
 
+def sqlfilter(inShp, sql):
+    
+    """ 
+    Return an OGR layer via sql statement
+    for some further analysis
+    
+    See https://gdal.org/user/ogr_sql_dialect.html for examples
+    
+    Notes
+    -----
+
+    An OS Master map example
+    
+    "SELECT * FROM TopographicArea WHERE DescriptiveGroup='General Surface'"
+    
+    Parameters
+    ----------
+    
+    inShp: string
+                  input shapefile
+        
+    sql: string
+                  sql expression (ogr dialect)
+    Returns
+    -------
+    
+    ogr lyr
+          
+    """
+    vds = ogr.Open(inShp, 1)
+    
+    lyr = vds.ExecuteSQL(sql)
+    
+    return lyr
+    
     
 def filter_shp(inShp, expression, outField, outLabel):
     
