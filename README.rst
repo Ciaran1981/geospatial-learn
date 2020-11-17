@@ -29,15 +29,26 @@ geospatial-learn requires:
 
 - Python 3
 
+- Anaconda 
+
 User installation
 ~~~~~~~~~~~~~~~~~
 
-Installation use the anaconda/miniconda system please install this first
+1. Installation uses the anaconda/miniconda system - please install this first if you don't have it already
+
+2. Clone the repository or download and unzip the tar
+
+3. cd into the folder and type the following
 
 .. code-block:: bash
    
 conda env create -f geolearn_env.yml
 
+4. To activate - type
+
+.. code-block:: bash
+
+conda activate geospatial_learn
 
 Quickstart
 ----------
