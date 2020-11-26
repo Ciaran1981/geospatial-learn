@@ -32,7 +32,59 @@ import gdal
 import segmentation_models_pytorch as smp
 cudnn.benchmark = True
 
+# handy to know
+numpy_type_map = {
+    'float64': torch.DoubleTensor,
+    'float32': torch.FloatTensor,
+    'float16': torch.HalfTensor,
+    'int64': torch.LongTensor,
+    'int32': torch.IntTensor,
+    'int16': torch.ShortTensor,
+    'int8': torch.CharTensor,
+    'uint8': torch.ByteTensor,
+}
 
+def raster2arrayc(inRas):
+    
+    """
+    Read a raster and return an array of all bands
+
+    
+    Parameters
+    ----------
+    
+    inRas: string
+                  input  raster 
+                  
+    """
+    rds = gdal.Open(inRas)
+    
+   
+
+    #   The nump and gdal dtype (ints)
+    #   {"uint8": 1,"int8": 1,"uint16": 2,"int16": 3,"uint32": 4,"int32": 5,
+    #    "float32": 6, "float64": 7, "complex64": 10, "complex128": 11}
+    
+    # a numpy gdal conversion dict - this seems a bit long-winded
+    dtypes = {"1": np.uint8, "2": np.uint16,
+          "3": np.int16, "4": np.uint32,"5": np.int32,
+          "6": np.float32,"7": np.float64,"10": np.complex64,
+          "11": np.complex128}
+    rdsDtype = rds.GetRasterBand(1).DataType
+    inDt = dtypes[str(rdsDtype)]
+    
+    rcount = rds.RasterCount+1
+    
+    inArray = np.zeros((rds.RasterYSize, rds.RasterXSize, rcount-1),
+                       dtype=inDt) 
+    
+    
+    for band in range(0, rcount-1):  
+        rA = rds.GetRasterBand(band+1).ReadAsArray()
+        inArray[:, :, band]=rA
+   
+   
+    return inArray
 def cleanupdir(inDir):
     files = glob(os.path.join(inDir, "*.tif"))
     [os.remove(f) for f in files]
