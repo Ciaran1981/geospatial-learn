@@ -459,7 +459,7 @@ def filter_shp(inShp, expression, outField, outLabel):
                   input shapefile
         
     expression: string
-                  sql style expression e.g. "DN >= 168"
+                  expression e.g. "DN >= 168"
     
     outField: string
                   the field in which the label will reside
@@ -487,11 +487,33 @@ def filter_shp(inShp, expression, outField, outLabel):
     lyr.SyncToDisk()
 
     vds = None
-        
+    
+#def _deletefield(inShp, field):
+#    
+#    "dump a field"
+#    cdir = os.getcwd()
+#    os.chdir(hd)
+#    
+#    hd, tl = os.path.split(inShp)
+#    
+#    ds = gdal.OpenEx(inShp, gdal.OF_VECTOR | gdal.OF_UPDATE)
+#    cmd = "ALTER TABLE "+tl+" DROP COLUMN "+field
+#    ds.ExecuteSQL(cmd)
+    
+def _fieldexist(vlyr, field):
+    """
+    check a field exists
+    """
+    
+    lyrdef = vlyr.GetLayerDefn()
 
+    fieldz = []
+    for i in range(lyrdef.GetFieldCount()):
+        fieldz.append(lyrdef.GetFieldDefn(i).GetName())
+    return field in fieldz
 
-def zonal_stats(inShp, inRas, band, bandname, stat = 'mean',
-                write_stat=None, nodata_value=0):
+def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
+                write_stat=True, nodata_value=0, all_touched=True):
     
     """ 
     Calculate zonal stats for an OGR polygon file
@@ -510,7 +532,10 @@ def zonal_stats(inShp, inRas, band, bandname, stat = 'mean',
 
     bandname: string
                eg - blue
-        
+    layer: string
+           if using a db type format with multi layers, specify the name of the
+           layer in question
+           
     stat: string
            string of a stat to calculate, if omitted it will be 'mean'
            others: 'mode', 'min','mean','max', 'std',' sum', 'count','var',
@@ -522,10 +547,20 @@ def zonal_stats(inShp, inRas, band, bandname, stat = 'mean',
         
     nodata_value: numerical
                    If used the no data val of the raster
+    
+    all_touched: bool
+                    whether to use all touched when raterising the polygon
+                    if the poly is smaller/comaparable to the pixel size, 
+                    True is perhaps the best option
         
     """    
-    # Inspired by Matt Perry's excellent script
+    # gdal/ogr-based zonal stats
     
+    if all_touched == True:
+        touch = "ALL_TOUCHED=TRUE"
+    else:
+        touch = "ALL_TOUCHED=FALSE"
+        
     rds = gdal.Open(inRas, gdal.GA_ReadOnly)
     #assert(rds)
     rb = rds.GetRasterBand(band)
@@ -535,11 +570,18 @@ def zonal_stats(inShp, inRas, band, bandname, stat = 'mean',
         nodata_value = float(nodata_value)
         rb.SetNoDataValue(nodata_value)
 
-    vds = ogr.Open(inShp, 1)  # TODO maybe open update if we want to write stats
-   #assert(vds)
-    vlyr = vds.GetLayer(0)
+    vds = ogr.Open(inShp, 1) 
+    
+    # if we are using a db of some sort gpkg etc where we have to choose
+    if layer !=None:
+        vlyr = vds.GetLayerByName(layer)
+    else:
+        vlyr = vds.GetLayer()
     if write_stat != None:
-        vlyr.CreateField(ogr.FieldDefn(bandname, ogr.OFTReal))
+        # if the field exists leave it as ogr is a pain with dropping it
+        # plus can break the file
+        if _fieldexist(vlyr, bandname) == False:
+            vlyr.CreateField(ogr.FieldDefn(bandname, ogr.OFTReal))
 
     mem_drv = ogr.GetDriverByName('Memory')
     driver = gdal.GetDriverByName('MEM')
@@ -553,6 +595,9 @@ def zonal_stats(inShp, inRas, band, bandname, stat = 'mean',
 
         if feat is None:
             continue
+#        debug
+#        wkt=geom.ExportToWkt()
+#        poly1 = loads(wkt)
         geom = feat.geometry()
 
         src_offset = _bbox_to_pixel_offsets(rgt, geom)
@@ -587,7 +632,7 @@ def zonal_stats(inShp, inRas, band, bandname, stat = 'mean',
         rvds.SetGeoTransform(new_gt)
         rvds.SetProjection(rds.GetProjectionRef())
         rvds.SetGeoTransform(new_gt)
-        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
+        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1], options=[touch])
         rv_array = rvds.ReadAsArray()
         
         # Mask the source data array with our current feature using np mask     
@@ -603,25 +648,25 @@ def zonal_stats(inShp, inRas, band, bandname, stat = 'mean',
         
         if stat == 'mode':
             feature_stats = mode(masked)[0]
-        elif stat == 'min':
+        if stat == 'min':
             feature_stats = float(masked.min())
-        elif stat == 'mean':
+        if stat == 'mean':
             feature_stats = float(masked.mean())
-        elif stat == 'max':
+        if stat == 'max':
             feature_stats = float(masked.max())
-        elif stat == 'median':
+        if stat == 'median':
             feature_stats = float(np.median(masked[masked.nonzero()]))
-        elif stat == 'std':
+        if stat == 'std':
             feature_stats = float(masked.std())
-        elif stat == 'sum':
+        if stat == 'sum':
             feature_stats = float(masked.sum())
 #        elif stat is 'count':
 #            feature_stats = int(masked.count())
-        elif stat == 'var':
+        if stat == 'var':
             feature_stats = float(masked.var())
-        elif stat == 'skew':
+        if stat == 'skew':
             feature_stats = float(skew(masked[masked.nonzero()]))
-        elif stat == 'kurt':
+        if stat == 'kurt':
             feature_stats = float(kurtosis(masked[masked.nonzero()]))
         
         stats.append(feature_stats)
@@ -631,7 +676,7 @@ def zonal_stats(inShp, inRas, band, bandname, stat = 'mean',
         feat = vlyr.GetNextFeature()
     if write_stat != None:
         vlyr.SyncToDisk()
-    #vds.FlushCache()
+
 
 
     vds = None

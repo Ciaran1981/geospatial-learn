@@ -163,7 +163,7 @@ def raster2array(inRas, bands=[1]):
    
     return inArray
 
-def tile_rasters(inRas, outDir, tilesize = ["256", "256"]): 
+def tile_rasters(inRas, outDir, tilesize = ["256", "256"], overlap='0'): 
     
     """ 
     Split a large raster into smaller ones
@@ -178,12 +178,15 @@ def tile_rasters(inRas, outDir, tilesize = ["256", "256"]):
     
     tilesize: list of str
                the sides of a square tile ["256", "256"]
+    overlap: string
+            should a overlap per tile be required
         
     """
     
 
             
-    cmd = ["gdal_retile.py", inRas, "-ps", tilesize[0], tilesize[1], 
+    cmd = ["gdal_retile.py", inRas, "-ps", tilesize[0], tilesize[1], "-overlap",
+           overlap,
                               "-targetDir", outDir]
     subprocess.call(cmd)
 
@@ -391,6 +394,8 @@ def mask_with_poly(vector_path, raster_path):
     vds = None
     rds = None
     
+    
+
 
 def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
                     blocksize = None, FMT = None):
@@ -1493,7 +1498,7 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
     outDataset.FlushCache()
 
 def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
-                  blocksize=None,
+                  blocksize=256,
                   FMT=None,  dtype = gdal.GDT_Int32):
     
     """
@@ -1534,7 +1539,7 @@ def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
     inDataset = gdal.Open(rasterList[0])
     bands = inDataset.RasterCount
     
-    outDataset = _copy_dataset_config(rasterList[1], outMap = outMap,
+    outDataset = _copy_dataset_config(inDataset, outMap = outMap,
                                      bands = bands)
         
     band = inDataset.GetRasterBand(1)
@@ -1553,11 +1558,11 @@ def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
     def statChoose(X, stat, q):
         if stat == 'mean':
             stats = np.nanmean(X, axis=2)
-        elif stat == 'std':
+        if stat == 'std':
             stats = np.nanstd(X, axis=2)
-        elif stat == 'percentile':
+        if stat == 'percentile':
             stats = np.nanpercentile(X, q, axis=2)    
-        elif stat == 'median':
+        if stat == 'median':
             stats = np.nanmedian(X, axis=2)
             
         
@@ -1676,12 +1681,12 @@ def stat_comp(inRas, outMap, bandList = None,  stat = 'percentile', q = 95,
     def statChoose(X, stat, q):
         if stat == 'mean':
             stats = np.nanmean(X, axis=2)
-        elif stat == 'std':
+        if stat == 'std':
             stats = np.nanstd(X, axis=2)
-        elif stat == 'percentile':
+        if stat == 'percentile':
             # slow as feck
             stats = np.percentile(X, q, axis=2)    
-        elif stat == 'median':
+        if stat == 'median':
             stats = np.nanmedian(X, axis=2)
             
         
@@ -1776,6 +1781,15 @@ def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy',
     outDataset.SetProjection(projection)
     
     return outDataset
+
+def _quickwarp(inRas, outRas, proj='EPSG:3035'):
+    
+    """gdalwarp a dataset
+
+    """
+    ootRas = gdal.Warp(outRas, inRas, dstSRS='EPSG:3035', format='Gtiff')
+    ootRas.FlushCache()
+    ootRas=None
 
 # Can't remember if this works   
 #def temporal_comp2(inRasSet, outRas, stat, q=5,  window = None, blockSize = None):
