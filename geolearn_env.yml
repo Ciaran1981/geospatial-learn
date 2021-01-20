@@ -48,6 +48,7 @@ dependencies:
   - pyntcloud
   - napari
   - scikit-plot
+  - requests
 
 
   - pip:
