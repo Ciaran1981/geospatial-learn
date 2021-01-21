@@ -48,12 +48,10 @@ dependencies:
   - pyntcloud
   - napari
   - scikit-plot
-  - requests
+
 
 
   - pip:
-    - git+https://github.com/Ciaran1981/geospatial-learn#egg=geospatial-learnpy
-#    - ternausnet
     - segmentation-models-pytorch
     - opencv-python
     - xmltodict
@@ -65,6 +63,8 @@ dependencies:
     - SimpleCRF
     - morphsnakes
     - skorch
+    - git+https://github.com/Ciaran1981/geospatial-learn#egg=geospatial-learn
+#py
 
 
 
