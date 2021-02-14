@@ -583,7 +583,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         else:
             if params is None:
                  param_grid = [{'nu':[0.25, 0.5, 0.75, 1],'gamma': [1e-3, 1e-4],
-                                'class_weight':['auto']}]
+                                'class_weight':['balanced']}]
             else:
                 param_grid = params
             #param_grid = [{'kernel':['rbf', 'linear']}]
@@ -804,7 +804,7 @@ def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
     return error_rate, best_param
 
 
-def plot_feature_importances(modelPth, featureNames):
+def plot_feature_importances(modelPth, featureNames, model_type='scikit'):
     
     """
     Plot the feature importances of an ensemble classifier
@@ -822,7 +822,10 @@ def plot_feature_importances(modelPth, featureNames):
     
     model = joblib.load(modelPth)
     
-    n_features = model.n_features_
+    if model_type=='scikit':
+        n_features = model.n_features_
+    if model_type=='xgb':
+        n_features = model.n_features_in_
     plt.barh(range(n_features), model.feature_importances_, align='center')
     plt.yticks(np.arange(n_features), featureNames)
     plt.xlabel("Feature importance")
@@ -1468,7 +1471,10 @@ def get_training(inShape, inRas, bands, field, outFile = None):
     
     return outData, rejects
 
-def ply_features(incld, outcld=None, k=[10,20,30]):
+def ply_features(incld, outcld=None, k=[50,100,200],
+                 props=['anisotropy', "curvature", "eigenentropy", "eigen_sum",
+                         "linearity","omnivariance", "planarity", "sphericity"],
+                        nrm_props=None):
     
     """ 
     Calculate point cloud features and write to file
@@ -1487,6 +1493,12 @@ def ply_features(incld, outcld=None, k=[10,20,30]):
     k: list
               the no of neighbors to use when calculating the props
               multiple is more effective
+    props: list
+            the properties you wish to include
+
+    nrm_props: list
+            properties based on normals if the exist (this will fail if they don't)
+            e.g. ["inclination_radians",  "orientation_radians"]
 
     """  
     
@@ -1497,18 +1509,22 @@ def ply_features(incld, outcld=None, k=[10,20,30]):
     
     #cloud = PyntCloud.from_instance("open3d", 
 
-
-    pProps =['anisotropy', "curvature", "eigenentropy", "eigen_sum", "linearity",
-             "omnivariance", "planarity", "sphericity"]#, "inclination_deg",
+    pProps = props 
+#    pProps =['anisotropy', "curvature", "eigenentropy", "eigen_sum", "linearity",
+#             "omnivariance", "planarity", "sphericity"]#, "inclination_deg",
             # "inclination_rad", "orientation_deg", "orientation_rad"]
     #, "HueSaturationValue",#"RelativeLuminance"," RGBIntensity"]
-
+    
     
     # iterate through neighborhood sizes to get a multiscale output
     for i in k:
         k_neighbors = pcd.get_neighbors(k=i)
         eigenvalues = pcd.add_scalar_field("eigen_values", k_neighbors=k_neighbors)
         [pcd.add_scalar_field(p, ev=eigenvalues) for p in pProps]
+    
+    if nrm_props != None:
+        [pcd.add_scalar_field(n) for n in nrm_props]
+        
         
     
     if outcld == None:
@@ -1517,7 +1533,9 @@ def ply_features(incld, outcld=None, k=[10,20,30]):
         pcd.to_file(outcld)
 
 def get_training_ply(incld, label_field="training", classif_field='label',
-                     rgb=True, outFile=None):
+                     rgb=True, outFile=None,  
+                     ignore=['x', 'y', 'scalar_ScanAngleRank', 'scalar_NumberOfReturns',
+                         'scalar_ReturnNumber', 'scalar_GpsTime','scalar_PointSourceId']):
     
     """ 
     Get training from a point cloud
@@ -1541,10 +1559,15 @@ def get_training_ply(incld, label_field="training", classif_field='label',
                 
     outFile: string
                path to training array to be saved as .gz via joblib
+    
+    ignore: list
+           the pointcloud attributes to ignore for training
     Returns
     -------
     
     np array of training where first column is labels
+    
+    list of feature names for later ref/plotting
 
     """  
     # TODO Clean up lack of loops funcs to do stuff
@@ -1556,19 +1579,24 @@ def get_training_ply(incld, label_field="training", classif_field='label',
     
     dF = pcd.points
     
-    ignore = ['x', 'y', 'scalar_ScanAngleRank',
-       'scalar_NumberOfReturns', 'scalar_ReturnNumber', 'scalar_GpsTime',
-       'scalar_PointSourceId', classif_field]
+    ignore.append(classif_field)
+#    ignore = ['x', 'y', 'scalar_ScanAngleRank', 
+#       'scalar_NumberOfReturns', 'scalar_ReturnNumber', 'scalar_GpsTime',
+#       'scalar_PointSourceId', classif_field]
     
     # If any of the above list exists, cut them from the dF
+
+    cols = dF.columns.to_list()
+
     for i in ignore:
-        try:
+        if i in cols:
             del dF[i]
-        except ValueError:
-                pass
-    
+    del cols
 #    pProps =['anisotropy', 'curvature', "eigenentropy", "eigen_sum",
 #             "linearity", "omnivariance", "planarity", "sphericity"]
+    
+     # python bug this var persists/pointer or somehting
+    del ignore      
    
     label = dF[label_field].to_numpy()
     
@@ -1579,6 +1607,10 @@ def get_training_ply(incld, label_field="training", classif_field='label',
     label.shape = (label.shape[0], 1)
     
     X_train = np.hstack((label, features))
+    
+    # retain feat names for plot potentiallu
+    
+    fnames = dF.columns.to_list()
     
     del features, dF, label
     
@@ -1594,11 +1626,13 @@ def get_training_ply(incld, label_field="training", classif_field='label',
     if outFile != None:
         jb.dump(X_train, outFile, compress=2)
     
-    return X_train
+    return X_train, fnames
     
 
 def classify_ply(incld, inModel, train_field="training", class_field='label',
-                 rgb=True, outcld=None):
+                 rgb=True, outcld=None,
+                 ignore=['x', 'y', 'scalar_ScanAngleRank', 'scalar_NumberOfReturns',
+                         'scalar_ReturnNumber', 'scalar_GpsTime','scalar_PointSourceId']):
     
     """ 
     Classify a point cloud (ply format)
@@ -1621,38 +1655,49 @@ def classify_ply(incld, inModel, train_field="training", class_field='label',
                  
     outcld: string
                path to a new ply to write if not writing to the input one
-
+   
+    ignore: list
+           the pointcloud attributes to ignore for classification
     """  
     
     
-    pf = PlyData.read(incld)
+   # pf = PlyData.read(incld)
     
     pcd = PyntCloud.from_file(incld)
     
     dF = pcd.points
     
-
-    ignore = ['x', 'y', 'scalar_ScanAngleRank',
-       'scalar_NumberOfReturns', 'scalar_ReturnNumber', 'scalar_GpsTime',
-       'scalar_PointSourceId', class_field, train_field]
+    # required to ensure we don't lose field later
+    # bloody classes
+    del pcd
+    
+    ignore.append(train_field)
+    ignore.append(class_field)
+#    ignore = ['x', 'y', 'scalar_ScanAngleRank',
+#       'scalar_NumberOfReturns', 'scalar_ReturnNumber', 'scalar_GpsTime',
+#       'scalar_PointSourceId', class_field, train_field]
     
     # If any of the above list exists, cut them from the dF
+    cols = dF.columns.to_list()
+
     for i in ignore:
-        try:
+
+        if i in cols:
             del dF[i]
-        except ValueError:
-                pass
+
+    del cols
 #    pProps =['anisotropy', 'curvature', "eigenentropy", "eigen_sum",
 #             "linearity", "omnivariance", "planarity", "sphericity"]
-            
+    
+    # python bug this var persists/pointer or somehting
+    del ignore        
     
     X = dF.to_numpy()
-    
     
     # keep a for the shape
     X[np.where(np.isnan(X))]=0
     X = X[np.isfinite(X).all(axis=1)]
-
+    del dF
     print('Classifying')
     
     if os.path.splitext(inModel)[1] == ".h5":
@@ -1664,13 +1709,17 @@ def classify_ply(incld, inModel, train_field="training", class_field='label',
         model1 = joblib.load(inModel)
         predictClass = model1.predict(X)
     
-    pf.elements[0].data[class_field]=predictClass
+    #pf.elements[0].data[class_field]=predictClass
+
+    # read the files in again due to the earlier issue
+    pcd = PyntCloud.from_file(incld)
     
-    if outcld != None:
+    pcd.points[class_field] = np.int32(predictClass)
     
-        pf.write(outcld)
+    if outcld == None:    
+        pcd.to_file(incld)
     else:
-        pf.write(incld)
+        pcd.to_file(outcld)
 
 
 
