@@ -32,7 +32,7 @@ from skimage.transform import rescale
 from skimage.feature import canny
 from skimage.measure import LineModelND, ransac
 from skimage.segmentation import relabel_sequential
-
+from skimage.filters import apply_hysteresis_threshold
 from skimage.util import invert #, img_as_float
 from skimage.morphology import dilation, remove_small_objects, skeletonize, binary_dilation, selem
 import scipy.ndimage as nd
@@ -109,7 +109,7 @@ def _std_huff(inArray, outArray,  angl, valrange, interval, rgt):
     return outArray
 
 def houghseg(inRas, outShp, edge='canny', sigma=2, 
-               thresh=None, ratio=2, n_orient=6, n_scale=5, hArray=True, vArray=True,
+               thresh=0, ratio=2, n_orient=6, n_scale=5, hArray=True, vArray=True,
                valrange=1, interval=10, band=2,
                min_area=None):
     
@@ -224,10 +224,12 @@ def houghseg(inRas, outShp, edge='canny', sigma=2,
         
 
         array2raster(inv, 1, inRas, segRas,  gdal.GDT_Int32)
-        del tempIm, inv
+        
         
 
         polygonize(segRas, outShp[:-4]+"_poly.shp", outField=None,  mask = True, band = 1)
+
+        return inv
 
 
 
