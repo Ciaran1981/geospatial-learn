@@ -97,13 +97,135 @@ def shp2gj(inShape, outJson):
                          "features": buffer}, indent=2) + "\n")
     geojson.close()
 
+def _raster_extent(inras):
+    
+    """
+    Parameters
+    ----------
+    
+    inras: string
+        input gdal raster (already opened)
+    
+    """
+    rds = gdal.Open(inras)
+    rgt = rds.GetGeoTransform()
+    minx = rgt[0]
+    maxy = rgt[3]
+    maxx = minx + rgt[1] * rds.RasterXSize
+    miny = maxy + rgt[5] * rds.RasterYSize
+    ext = (minx, miny, maxx, maxy)
+    
+    return ext
+    
 
+def extent2poly(infile, filetype='raster', outfile=None, polytype="ESRI Shapefile", 
+                   geecoord=False):
+    
+    """
+    Get the coordinates of a files extent and return an ogr polygon ring with 
+    the option to save the  
+    
+    
+    Parameters
+    ----------
+    
+    infile: string
+            input ogr compatible geometry file or gdal raster
+            
+    filetype: string
+            the path of the output file, if not specified, it will be input file
+            with 'extent' added on before the file type
+    
+    outfile: string
+            the path of the output file, if not specified, it will be input file
+            with 'extent' added on before the file type
+    
+    polytype: string
+            ogr comapatible file type (see gdal/ogr docs) default 'ESRI Shapefile'
+            ensure your outfile string has the equiv. e.g. '.shp'
+    
+    geecoord: bool
+           optionally convert to WGS84 lat,lon
+           
+    Returns
+    -------
+    
+    a GEE polygon geometry
+    
+    """
+    # ogr read in etc
+    if filetype == 'raster':
+        ext = _raster_extent(infile)
+        
+    else:
+        # tis a vector
+        vds = ogr.Open(infile)
+        lyr = vds.GetLayer()
+        ext = lyr.GetExtent()
+    
+    # make the linear ring 
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    ring.AddPoint(ext[0],ext[2])
+    ring.AddPoint(ext[1], ext[2])
+    ring.AddPoint(ext[1], ext[3])
+    ring.AddPoint(ext[0], ext[3])
+    ring.AddPoint(ext[0], ext[2])
+    
+    # drop the geom into poly object
+    poly = ogr.Geometry(ogr.wkbPolygon)
+    poly.AddGeometry(ring)
+    
+    if geecoord == True:
+        # Getting spatial reference of input 
+        srs = lyr.GetSpatialRef()
+    
+        # make WGS84 projection reference3
+        wgs84 = osr.SpatialReference()
+        wgs84.ImportFromEPSG(4326)
+    
+        # OSR transform
+        transform = osr.CoordinateTransformation(srs, wgs84)
+        # apply
+        poly.Transform(transform)
+    
+    # in case we wish to write it for later....    
+    if outfile != None:
+        outfile = infile[:-4]+'extent.shp'
+        
+        out_drv = ogr.GetDriverByName(filetype)
+        
+        # remove output shapefile if it already exists
+        if os.path.exists(outfile):
+            out_drv.DeleteDataSource(outfile)
+        
+        # create the output shapefile
+        ootds = out_drv.CreateDataSource(outfile)
+        ootlyr = ootds.CreateLayer("extent", geom_type=ogr.wkbPolygon)
+        
+        # add an ID field
+        idField = ogr.FieldDefn("id", ogr.OFTInteger)
+        ootlyr.CreateField(idField)
+        
+        # create the feature and set values
+        featureDefn = ootlyr.GetLayerDefn()
+        feature = ogr.Feature(featureDefn)
+        feature.SetGeometry(poly)
+        feature.SetField("id", 1)
+        ootlyr.CreateFeature(feature)
+        feature = None
+        
+        # Save and close 
+        ootds.FlushCache()
+        ootds = None
+    
+    return poly
 
 
 def shape_props(inShape, prop, inRas=None,  label_field='ID'):
     """
     Calculate various geometric properties of a set of polygons
-    Output will be relative to geographic units where relevant, but normalised where not (eg Eccentricity)
+    Output will be relative to geographic units where relevant, but normalised 
+    where not (eg Eccentricity)
     
     Parameters 
     ----------
@@ -513,7 +635,8 @@ def _fieldexist(vlyr, field):
     return field in fieldz
 
 def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
-                write_stat=True, nodata_value=0, all_touched=True):
+                write_stat=True, nodata_value=0, all_touched=True, 
+                expression=None):
     
     """ 
     Calculate zonal stats for an OGR polygon file
@@ -552,7 +675,8 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
                     whether to use all touched when raterising the polygon
                     if the poly is smaller/comaparable to the pixel size, 
                     True is perhaps the best option
-        
+    expression: string
+                     process a selection only eg expression e.g. "DN >= 168"    
     """    
     # gdal/ogr-based zonal stats
     
@@ -577,6 +701,12 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
         vlyr = vds.GetLayerByName(layer)
     else:
         vlyr = vds.GetLayer()
+    
+    if expression != None:
+        vlyr.SetAttributeFilter(expression)
+        fcount = str(vlyr.GetFeatureCount())    
+        print(expression+"\nresults in "+fcount+" features to process")
+    
     if write_stat != None:
         # if the field exists leave it as ogr is a pain with dropping it
         # plus can break the file
@@ -591,6 +721,10 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
     feat = vlyr.GetNextFeature()
     features = np.arange(vlyr.GetFeatureCount())
     rejects = list()
+    
+    #TODO FAR too many if statements in this loop.
+    # This is FAR too slow
+    
     for label in tqdm(features):
 
         if feat is None:
@@ -609,7 +743,10 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
             if src_array is None:
                 rejects.append(feat.GetFID())
                 continue
+            
 
+
+            
         # calculate new geotransform of the feature subset
         new_gt = (
         (rgt[0] + (src_offset[0] * rgt[1])),
@@ -646,12 +783,14 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
             )
         )
         
+                   
         if stat == 'mode':
             feature_stats = mode(masked)[0]
         if stat == 'min':
             feature_stats = float(masked.min())
         if stat == 'mean':
             feature_stats = float(masked.mean())
+            
         if stat == 'max':
             feature_stats = float(masked.max())
         if stat == 'median':
@@ -667,8 +806,12 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
         if stat == 'skew':
             feature_stats = float(skew(masked[masked.nonzero()]))
         if stat == 'kurt':
-            feature_stats = float(kurtosis(masked[masked.nonzero()]))
-        
+            feature_stats = float(kurtosis(masked[masked.nonzero()]))               
+        # You can't have the stat of a single value - this is not an ideal
+        # solution - should be flagged somehow but
+        if src_array.shape == (1,1):
+            feature_stats=float(src_array[0])
+            
         stats.append(feature_stats)
         if write_stat != None:
             feat.SetField(bandname, feature_stats)
@@ -906,7 +1049,35 @@ def write_text_field(inShape, fieldName, attribute):
     vlyr.SyncToDisk()
     vds = None
 
+def write_id_field(inShape, fieldName='id'):
     
+    """ Write a string to a ogr vector file
+    
+    Parameters
+    ----------
+    inShape: string
+              input OGR vecotr file
+        
+    fieldName: string
+                name of field being written
+    
+        
+    """
+        
+    vds = ogr.Open(inShape, 1)  # TODO maybe open update if we want to write stats
+   #assert(vds)
+    vlyr = vds.GetLayer(0)
+    vlyr.CreateField(ogr.FieldDefn(fieldName, ogr.OFTInteger))
+    feat = vlyr.GetNextFeature()
+    features = np.arange(vlyr.GetFeatureCount())
+    
+    for label in tqdm(features):
+        feat.SetField(fieldName, int(label))
+        vlyr.SetFeature(feat)
+        feat = vlyr.GetNextFeature()
+
+    vlyr.SyncToDisk()
+    vds = None    
 
 def texture_stats(inShp, inRas, band, gprop='contrast',
                   offset=2,angle=0, write_stat=None, nodata_value=0, mean=False):
@@ -1870,6 +2041,88 @@ def meshgrid(inRaster, outShp, gridHeight=1, gridWidth=1):
     outDataSource.SyncToDisk()
     outDataSource = None
 
+def zonal_point(inShp, inRas, bandname, band=1, nodata_value=0, write_stat=True):
+    
+    """ 
+    Get the pixel val at a given point and write to vector
+    
+    Parameters
+    ----------
+    
+    inShp: string
+                  input shapefile
+        
+    inRas: string
+                  input raster
+
+    band: int
+           an integer val eg - 2
+                            
+    nodata_value: numerical
+                   If used the no data val of the raster
+        
+    """    
+    
+   
+
+    rds = gdal.Open(inRas, gdal.GA_ReadOnly)
+    rb = rds.GetRasterBand(band)
+    rgt = rds.GetGeoTransform()
+
+    if nodata_value:
+        nodata_value = float(nodata_value)
+        rb.SetNoDataValue(nodata_value)
+
+    vds = ogr.Open(inShp, 1)  # TODO maybe open update if we want to write stats
+    vlyr = vds.GetLayer(0)
+    
+    if write_stat != None:
+        # if the field exists leave it as ogr is a pain with dropping it
+        # plus can break the file
+        if _fieldexist(vlyr, bandname) == False:
+            vlyr.CreateField(ogr.FieldDefn(bandname, ogr.OFTReal))
+    
+    
+    
+    feat = vlyr.GetNextFeature()
+    features = np.arange(vlyr.GetFeatureCount())
+    
+    for label in tqdm(features):
+    
+            if feat is None:
+                continue
+            
+            # the vector geom
+            geom = feat.geometry()
+            
+            #coord in map units
+            mx, my = geom.GetX(), geom.GetY()  
+
+            # Convert from map to pixel coordinates.
+            # No rotation but for this that should not matter
+            px = int((mx - rgt[0]) / rgt[1])
+            py = int((my - rgt[3]) / rgt[5])
+            
+            
+            src_array = rb.ReadAsArray(px, py, 1, 1)
+
+            if src_array is None:
+                # unlikely but if none will have no data in the attribute table
+                continue
+            outval =  int(src_array.max())
+            
+#            if write_stat != None:
+            feat.SetField(bandname, outval)
+            vlyr.SetFeature(feat)
+            feat = vlyr.GetNextFeature()
+        
+    if write_stat != None:
+        vlyr.SyncToDisk()
+
+
+
+    vds = None
+    rds = None
 
 
 #def line2poly(inShp, outShp):

@@ -8,7 +8,9 @@ Description
 Admin utils for convmets using pytorch
 
 """
+from PIL import Image
 from geospatial_learn import raster as rs
+import cv2
 import numpy as np
 from skimage.exposure import rescale_intensity 
 import os
@@ -30,6 +32,10 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision.models import segmentation
 import gdal
 import segmentation_models_pytorch as smp
+import skimage.morphology as skm
+import gdal
+import pandas as pd
+gdal.UseExceptions()
 cudnn.benchmark = True
 
 # handy to know
@@ -43,6 +49,115 @@ numpy_type_map = {
     'int8': torch.CharTensor,
     'uint8': torch.ByteTensor,
 }
+
+def close_mask(inRas, noclasses=1):
+    
+    
+    rds = gdal.Open(inRas, gdal.GA_Update)
+    
+    #lazy
+    inbw=rs.raster2array(inRas)
+    
+    if noclasses>1:
+       bw = skm.closing(inbw)
+    else:
+        bw = skm.binary_closing(inbw)
+    rds.GetRasterBand(1).WriteArray(bw)
+    rds.FlushCache()
+    rds = None
+    
+
+# for mask to be returned to a readable state
+def torch2np(outputs):
+    outputs = outputs.squeeze(0).permute(1, 2, 0).numpy()
+    return outputs
+
+def filtermask(inList):
+    
+    outList = []
+    
+    for i in inList:
+        img = Image.open(i)
+        if img.getextrema()[1] == 0:
+            continue
+        else:
+            outList.append(i)
+        del img
+    return outList
+
+def matchImgList(trainList, imgFolder):
+    
+    outList = []
+    
+    for i in trainList:
+        hd, tl = os.path.split(i)
+        imgpath = os.path.join(imgFolder, tl)
+        outList.append(imgpath)
+       
+    return outList
+# TODO - see notebook
+# For chip classifications 
+
+def calculate_accuracy(output, target):
+    output = torch.sigmoid(output) >= 0.5
+    target = target == 1.0
+    return torch.true_divide((target == output).sum(dim=0), output.size(0)).item()
+
+
+def train_chip(train_loader, model, criterion, optimizer, epoch, params):
+    metric_monitor = MetricMonitor()
+    model.train()
+    stream = tqdm(train_loader)
+    for i, (images, target) in enumerate(stream, start=1):
+        images = images.to(params["device"], non_blocking=True)
+        target = target.to(params["device"], non_blocking=True).float().view(-1, 1)
+        output = model(images)
+        loss = criterion(output, target)
+        accuracy = calculate_accuracy(output, target)
+        metric_monitor.update("Loss", loss.item())
+        metric_monitor.update("Accuracy", accuracy)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        stream.set_description(
+            "Epoch: {epoch}. Train.      {metric_monitor}".format(epoch=epoch, metric_monitor=metric_monitor)
+        )
+
+def validate_chip(val_loader, model, criterion, epoch, params):
+    metric_monitor = MetricMonitor()
+    model.eval()
+    stream = tqdm(val_loader)
+    with torch.no_grad():
+        for i, (images, target) in enumerate(stream, start=1):
+            images = images.to(params["device"], non_blocking=True)
+            target = target.to(params["device"], non_blocking=True).float().view(-1, 1)
+            output = model(images)
+            loss = criterion(output, target)
+            accuracy = calculate_accuracy(output, target)
+
+            metric_monitor.update("Loss", loss.item())
+            metric_monitor.update("Accuracy", accuracy)
+            stream.set_description(
+                "Epoch: {epoch}. Validation. {metric_monitor}".format(epoch=epoch, metric_monitor=metric_monitor)
+            )
+
+def display_chips(images_filepaths, predicted_labels, true_label = "noclouds", 
+                  predicted_label="clouds", cols=5):
+    rows = len(images_filepaths) // cols
+    figure, ax = plt.subplots(nrows=rows, ncols=cols, figsize=(12, 6))
+    for i, image_filepath in enumerate(images_filepaths):
+        image = cv2.imread(image_filepath)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        
+
+        
+        color = "green" if true_label == predicted_label else "red"
+        ax.ravel()[i].imshow(image)
+        ax.ravel()[i].set_title(predicted_label, color=color)
+        ax.ravel()[i].set_axis_off()
+    plt.tight_layout()
+    plt.show()
+
 
 def raster2arrayc(inRas):
     
@@ -85,24 +200,48 @@ def raster2arrayc(inRas):
    
    
     return inArray
+
 def cleanupdir(inDir):
     files = glob(os.path.join(inDir, "*.tif"))
     [os.remove(f) for f in files]
 
 
-def test256(inList):   
+def testtile(inList, tileSize=256):   
     outList = []
     for idx, i in enumerate(inList):
         inR = gdal.Open(i)
 
         xSize = inR.RasterXSize
         ySize = inR.RasterYSize
-        if xSize != 256:
+        if xSize != tileSize:
             continue
-        if ySize != 256:
+        if ySize != tileSize:
             continue
         outList.append(i)
     return outList
+
+def get_classes(inList):   
+    
+    nList = []
+    cList = []
+    lList = []
+    
+    for idx, i in enumerate(inList):
+        arr = rs.raster2array(i)
+        vals = np.unique(arr)
+        nList.append(i)
+        cList.append(vals[vals!=0])
+        lList.append(len(vals))
+    
+    df = pd.DataFrame(columns=["File", "Classes", "noClasses"])
+    
+    df["File"]=nList
+    df["Classes"]=cList
+    df["noClasses"]=lList
+
+    return df
+
+
 
 # rename label files if different from 
 def rename_labels(trainInit, planetInit, inRas, inLabel):
@@ -119,6 +258,19 @@ def prep_mask(mask):
 
     return mask
 
+def normalize(img, mean, std, max_pixel_value=255.0):
+    mean = np.array(mean, dtype=np.float32)
+    mean *= max_pixel_value
+
+    std = np.array(std, dtype=np.float32)
+    std *= max_pixel_value
+
+    denominator = np.reciprocal(std, dtype=np.float32)
+
+    img = img.astype(np.float32)
+    img -= mean
+    img *= denominator
+    return img
 
 def display_image_grid(imgNms, outRasDir,  mask,
                        outLabelDir, predMasks=None, maxIm=3, bands=[1,2,3]):
@@ -236,39 +388,56 @@ def validate(val_loader, model, criterion, epoch, params):
             )
 
 # The method of doing this in torch vision is pretty similar            
-def create_model(params, proc="cuda:0"):
-#    os.environ['CUDA_VISIBLE_DEVICES'] = proc
+def create_model(params, activation, proc="cuda:0"):
+    
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
     if params["model"] == "UNet11" or params["model"] == "UNet16":
         model = getattr(ternausnet.models, params["model"])(pretrained=True)
+        if torch.cuda.device_count() > 1: 
+            #consider also DistributedDataParallel
+            model= nn.DataParallel(model)
         hrdWare = torch.device(proc)
         model = model.to(hrdWare)
         
     else:
-        #Unet, UNet11, UNet16, ULinknet, FPN, PSPNet,PAN, DeepLabV3 and DeepLabV3+
+        #Unet,  UNet16, ULinknet, FPN, PSPNet,PAN, DeepLabV3 and DeepLabV3+
         if params["model"] == 'Unet':
             model = smp.Unet(encoder_name=params['encoder'], 
-                        classes=params['classes'],in_channels=params['in_channels'])     
+                        classes=params['classes'],in_channels=params['in_channels'],
+                        activation=activation)     
         if params["model"] == 'Linknet':
             model = smp.Linknet(encoder_name=params['encoder'], 
-                        classes=params['classes'],in_channels=params['in_channels']) 
+                        classes=params['classes'],in_channels=params['in_channels'],
+                        activation=activation) 
         if params["model"] == 'FPN':
             model = smp.FPN(encoder_name=params['encoder'], 
-                        classes=params['classes'],in_channels=params['in_channels']) 
+                        classes=params['classes'],in_channels=params['in_channels'],
+                        activation=activation) 
         if params["model"] == 'PSPNet':
             model = smp.PSPNet(encoder_name=params['encoder'], 
-                        classes=params['classes'],in_channels=params['in_channels']) 
+                        classes=params['classes'],in_channels=params['in_channels'],
+                        activation=activation) 
         if params["model"] == 'PAN':
             model = smp.PAN(encoder_name=params['encoder'], 
-                        classes=params['classes'],in_channels=params['in_channels']) 
+                        classes=params['classes'],in_channels=params['in_channels'],
+                        activation=activation) 
         if params["model"] == 'DeepLabV3':
             model = smp.DeepLabV3(encoder_name=params['encoder'], 
-                        classes=params['classes'],in_channels=params['in_channels']) 
+                        classes=params['classes'],in_channels=params['in_channels'],
+                        activation=activation) 
         if params["model"] == 'DeepLabV3+':
             model = smp.DeepLabV3(encoder_name=params['encoder'], 
-                        classes=params['classes'],in_channels=params['in_channels'])
-        hrdWare = torch.device(proc)
-        model = model.to(hrdWare)        
+                        classes=params['classes'],in_channels=params['in_channels'],
+                        activation=activation)
+        if torch.cuda.device_count() > 1: 
+            #consider also DistributedDataParallel
+            model= nn.DataParallel(model)
+            model = model.to(device)
+        else:
+            hrdWare = torch.device(proc)
+            model = model.to(hrdWare)        
     
     return model
 
@@ -295,15 +464,19 @@ def train_and_validate(model, trainData, valData, params):
         validate(val_loader, model, criterion, epoch, params)
     return model
 
-def predict(model, params, testData, batch_size):
+def predict(model, testData, batch_size, nw, device):
+    
+    # TODO parallelize prediction? 
     test_loader = DataLoader(
-        testData, batch_size=batch_size, shuffle=False, num_workers=params["num_workers"], pin_memory=True,
+        testData, batch_size=batch_size, shuffle=False,
+        num_workers=nw, pin_memory=True,
     )
     model.eval()
     predTest = []
     with torch.no_grad():
         for images, (original_heights, original_widths) in test_loader:
-            images = images.to(params["device"], non_blocking=True)
+            
+            images = images.to(device, non_blocking=True)
             output = model(images)
             probabilities = torch.sigmoid(output.squeeze(1))
             predMasks = (probabilities >= 0.5).float() * 1
@@ -314,3 +487,226 @@ def predict(model, params, testData, batch_size):
                 predTest.append((predicted_mask, original_height, original_width))
     return predTest
 
+def pad_predict(inRas, outputIm, model, classes, preprocessing,
+                    blocksize = 256, FMT ='Gtiff', bands=[1,2,3],
+                    device='cuda'):
+    """ 
+    Perform a perblock prediction on a raster
+    
+    Parameters 
+    ----------- 
+    
+    inputIm: string
+              the input raster
+    FMT: string
+          the output gdal format eg 'Gtiff', 'KEA', 'HFA'
+        
+    outputIm: string (optional)
+               optionally write a separate output image, if None, will mask the input
+    inList:  list
+           the list (of arrays) of predicted masks
+        
+    blocksize: int
+                the chunk of raster to read in
+        
+    Returns
+    ----------- 
+    string
+          A string of the output file path
+        
+    """
+    
+    if FMT == None:
+        FMT = 'Gtiff'
+        fmt = '.tif'
+    if FMT == 'HFA':
+        fmt = '.img'
+    if FMT == 'KEA':
+        fmt = '.kea'
+    if FMT == 'Gtiff':
+        fmt = '.tif'
+    
+   
+        
+    inDataset = gdal.Open(inRas)
+
+    outDataset = rs._copy_dataset_config(inDataset, outMap = outputIm,
+                                 bands = 1)
+    ootBnd = outDataset.GetRasterBand(1)
+        
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
+
+    blocksizeX = blocksize
+    blocksizeY = blocksize
+    
+    # the number of block in a row is simply rounding up the division
+    # us np floor to ensure round down
+    # TODO  use this to predict entire rows rather than chip wise
+    #blkrow = np.floor(rows / blocksize) +1
+    #blkcol = np.floor(cols / blocksize) +1
+    
+    for i in tqdm(range(0, rows, blocksizeY)):
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
+            else:
+                numRows = rows -i
+        
+            for j in range(0, cols, blocksizeX):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+                
+                image = mb2array(inDataset, j, i, numCols, numRows, 
+                                 bands=bands)
+                
+                pred = pred_img(image, preprocessing, model, device,
+                         classes, blocksize)
+
+                ootBnd.WriteArray(pred, j, i)
+    
+               
+    outDataset.FlushCache()
+    outDataset = None 
+
+def to_tensor(x, **kwargs):
+    """
+    ingestible by torch
+    """
+    return x.transpose(2, 0, 1).astype('float32')
+    
+def get_preprocessing_p(preprocessing_fn, tilesize):
+    
+    """
+    custom transforms and pad if needed - p denotes prediction
+    """
+    
+    _transform = [
+            A.PadIfNeeded(tilesize, tilesize),
+            A.Lambda(image=preprocessing_fn),
+            A.Lambda(image=to_tensor, mask=to_tensor),
+            ]
+    return A.Compose(_transform)    
+
+def convert_pred(inpred, tilesize):
+    
+    """
+    bit of reshaping to get the result 'image ready'
+    """
+    
+    oot = np.zeros(shape=(tilesize, tilesize))
+    count = inpred.shape[0]
+    for i in range(0, count):
+        oot[inpred[i,:,:]==1]=i
+    return oot
+
+
+def pred_img(image, preprocessing, model, device, classes, tilesize):
+    """
+    convert an image to an appropriate form, predict, unpad, then return
+    """
+    
+    if image.shape[1:2] != (tilesize, tilesize):
+        oldshp = image.shape[0:2]
+        
+    sample = preprocessing(image=image)
+    image = sample['image']
+    
+    x_tensor = torch.from_numpy(image).to(device).unsqueeze(0)
+    
+    pr_mask = model.predict(x_tensor)
+    pr_mask = (pr_mask.squeeze().cpu().numpy().round())
+    
+    if len(classes) > 1: 
+        pred = convert_pred(pr_mask)
+    else:
+        # For binary get weird results here - neg values and 0 which should be 1
+        # hack is to get rid of neg values and make 0 (which should be 1)
+        # 1. Hack for now until addressed
+        pred = pr_mask
+        pred[pred>=0]=1
+        pred[pred<0]=0
+    
+    # this is on the premise the old shape < pred.shape which should always be case
+    # as well as the 0th coordinate being top left 
+    if oldshp != pred.shape:
+        # take a view of the pred shape to return
+        pred = pred[:oldshp[0], :oldshp[1]]
+        
+    
+    
+    return pred
+    
+
+
+
+def _chip_writer(array, j, i, n_cols, n_rows, rgt, inras, outfile, fmt='Gtiff'):
+    """
+    convert pixels to geo coords to extract a subset and write to file
+    retaining correct positional info
+    """
+    # Top left of the raster is the x/ymin
+    xmin = j * rgt[1] + rgt[0]
+    ymin = i * rgt[5] + rgt[3]
+
+    # size of pixel
+    pixel_sz = rgt[1]
+    
+    #Get the info from the input raster
+    projection = inras.GetProjection()
+    
+    # usual gdal setup
+    driver = gdal.GetDriverByName(fmt)
+    
+    bands = inras.RasterCount
+    
+    dtype = inras.GetRasterBand(1).DataType
+    
+    # Set the information in the new subset
+    dataset = driver.Create(outfile, n_cols, n_rows, bands, dtype)
+
+    dataset.SetGeoTransform((xmin, pixel_sz, 0, ymin, 0, -pixel_sz))    
+
+    dataset.SetProjection(projection)
+    
+    if bands == 1:
+        dataset.GetRasterBand(1).WriteArray(array)
+        # Write to disk, deallocate
+        dataset.FlushCache()  
+        dataset=None
+    else:
+    # Per band....
+        for band in range(1,bands+1):
+            arr = array[:,:,band-1]
+            dataset.GetRasterBand(band).WriteArray(arr)
+        # Write to disk, deallocate
+        dataset.FlushCache() 
+        dataset=None
+
+def mb2array(rds, j, i, n_cols, n_rows, bands=[1,2,3]):
+    
+    """
+    multi band2array
+    """
+    # gdal returns a weird shape reading all at once, hence this function
+    # np transpose put the img upside down/on side
+    
+    #   The nump and gdal dtype (ints)
+    #   {"uint8": 1,"int8": 1,"uint16": 2,"int16": 3,"uint32": 4,"int32": 5,
+    #    "float32": 6, "float64": 7, "complex64": 10, "complex128": 11}    
+    # a numpy gdal conversion dict - this seems a bit long-winded
+    dtypes = {"1": np.uint8, "2": np.uint16,
+          "3": np.int16, "4": np.uint32,"5": np.int32,
+          "6": np.float32,"7": np.float64,"10": np.complex64,
+          "11": np.complex128}
+    rdsDtype = rds.GetRasterBand(1).DataType
+    inDt = dtypes[str(rdsDtype)]
+    
+    inArray = np.zeros((n_rows, n_cols, len(bands)), dtype=inDt) 
+    for idx, band in enumerate(bands):  
+        rA = rds.GetRasterBand(band).ReadAsArray(j, i, n_cols, n_rows)
+        inArray[:, :, idx]=rA
+    
+    return inArray
+   

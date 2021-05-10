@@ -1,21 +1,25 @@
-name: geospatial_learn
+name: geolearn_k
 
 channels:
-  - pytorch
-  - conda-forge
+ # - pytorch
   - anaconda
+  - conda-forge
+  
 
 dependencies:
-  - python=3.7
+#  - python=3.7
   - pip
   - numpy
-  - pytorch-gpu
-  - torchvision
+#  - cudatoolkit
+#=10.2
+#  - pytorch
+#  - torchvision
   - tensorflow-gpu 
   - keras-gpu
   - jupyter
   - matplotlib
   - opencv
+# suspect gdak may be issue
   - gdal
   - scikit-image
   - scikit-learn
@@ -51,8 +55,8 @@ dependencies:
 
 
   - pip:
-    - segmentation-models-pytorch
-    - opencv-python
+#    - segmentation-models-pytorch
+#    - opencv-python
     - xmltodict
     - simpledbf
     - pyfftw
@@ -61,7 +65,7 @@ dependencies:
     - plyfile
     - SimpleCRF
     - morphsnakes
-    - skorch
+#    - skorch
     - git+https://github.com/Ciaran1981/geospatial-learn#egg=geospatial-learn
 #py
 

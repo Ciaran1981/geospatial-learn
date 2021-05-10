@@ -163,6 +163,26 @@ def raster2array(inRas, bands=[1]):
    
     return inArray
 
+def write_vrt(infiles, outfile):
+    
+    """
+    Parameters
+    ----------
+    
+    infiles:
+    
+    outfile: string
+                the output .vrt
+
+    """
+    
+    
+    virtpath = outfile
+    outvirt = gdal.BuildVRT(virtpath, infiles)
+    outvirt.FlushCache()
+    outvirt=None
+
+
 def tile_rasters(inRas, outDir, tilesize = ["256", "256"], overlap='0'): 
     
     """ 
@@ -184,7 +204,7 @@ def tile_rasters(inRas, outDir, tilesize = ["256", "256"], overlap='0'):
     """
     
 
-            
+    #TODO use the API directly
     cmd = ["gdal_retile.py", inRas, "-ps", tilesize[0], tilesize[1], "-overlap",
            overlap,
                               "-targetDir", outDir]
@@ -1782,12 +1802,12 @@ def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy',
     
     return outDataset
 
-def _quickwarp(inRas, outRas, proj='EPSG:3035'):
+def _quickwarp(inRas, outRas, proj='EPSG:27700'):
     
     """gdalwarp a dataset
 
     """
-    ootRas = gdal.Warp(outRas, inRas, dstSRS='EPSG:3035', format='Gtiff')
+    ootRas = gdal.Warp(outRas, inRas, dstSRS=proj, format='Gtiff')
     ootRas.FlushCache()
     ootRas=None
 
