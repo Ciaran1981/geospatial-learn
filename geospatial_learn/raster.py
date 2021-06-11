@@ -263,6 +263,140 @@ def batch_translate(folder, wildcard, FMT='Gtiff'):
         src_ds = None
         #print(outList[file]+' done')
 
+def batch_translate_adf(inlist):
+    
+    """
+    batch translate a load of adf (arcgis) files from some format to tif
+    
+    Parameters
+    ----------
+    
+    inlist: string
+        A list of raster paths
+    
+    Returns
+    -------
+    
+    List of file paths
+    
+    """
+    outpths = []
+    
+    for i in tqdm(inlist):
+        hd, _ = os.path.split(i)
+        ootpth = hd+".tif"
+        srcds = gdal.Open(i)
+        out = gdal.Translate(ootpth, srcds)
+        out.FlushCache()
+        out = None
+        outpths.append(ootpth)
+    return outpths
+
+def batch_gdaldem(inlist, prop='aspect'):
+    
+    """
+    batch dem calculation a load of gdal files from some format to tif
+    
+    Parameters
+    ----------
+    
+    inlist: string
+        A list of raster paths
+    
+    prop: string
+        one of "hillshade", "slope", "aspect", "color-relief", "TRI",
+        "TPI", "Roughness"
+    
+    Returns
+    -------
+    
+    List of file paths
+    
+    """
+    
+    outpths = []
+    
+    for i in tqdm(inlist):
+        
+        ootpth = i[:-4]+prop+".tif"
+        srcds = gdal.Open(i)
+        out = gdal.DEMProcessing(ootpth, srcds, prop)
+        out.FlushCache()
+        out = None
+        outpths.append(ootpth)
+    return outpths
+
+def srtm_gdaldem(inlist, prop='aspect'):
+    
+    
+    """
+    Batch dem calculation a load of srtm files 
+    
+    SRTM scale & z factor vary across the globe so this calculates based on 
+    latitude
+    
+    Parameters
+    ----------
+    
+    inlist: string
+        A list of raster paths
+    
+    prop: string
+        one of "hillshade", "slope", "aspect", "color-relief", "TRI",
+        "TPI", "Roughness"
+    
+    Returns
+    -------
+    
+    List of file paths
+    
+    """
+    
+    
+    # There is likely a more susinct way to do this but it works....
+    # eg pretty sure the centroid can be done with numpy....
+    outpths = []
+    
+    for i in tqdm(inlist):
+        
+        ootpth = i[:-4]+prop+".tif"
+        srtm = gdal.Open(i)
+        
+        
+        # the geotransform contains the top left, bottom right coords we need
+        ext = srtm.GetGeoTransform()
+        
+        # make an OGR geom from the layer extent
+        ring = ogr.Geometry(ogr.wkbLinearRing)
+        ring.AddPoint(ext[0],ext[2])
+        ring.AddPoint(ext[1], ext[2])
+        ring.AddPoint(ext[1], ext[3])
+        ring.AddPoint(ext[0], ext[3])
+        ring.AddPoint(ext[0], ext[2])
+        
+        # drop the geom into poly object
+        poly = ogr.Geometry(ogr.wkbPolygon)
+        poly.AddGeometry(ring)
+        # load as a shapely geometry as OGR centroid returns nowt
+        poly1 = loads(poly.ExportToWkt())
+        # get the centroid
+        cent=poly1.centroid
+        lon, lat = cent.coords[0]
+        
+        # the scale factor based on the latitude derived from the centre of the 
+        # tile (111320 is len of 1 degree at equator)
+        s = 111320 * np.cos(lat * np.pi/180)
+        z = 1 / (111320 * np.cos(lat * np.pi/180))
+        
+        # create the output dataset and cal slope
+        out = gdal.DEMProcessing(ootpth, srtm, prop, zFactor=z, scale=s)
+        # to disk
+        out.FlushCache()
+        # deallocate
+        out = None
+        outpths.append(ootpth)
+        
+
 def _bbox_to_pixel_offsets(rgt, geom):
     
     """ 
@@ -1505,7 +1639,7 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
         rStack[:,:,band-1]= np.float64(data) / np.float64(mStack[:,:,band-1])
     # mean on the band axis
     ovMean = np.nanmean(rStack, axis=2)     
-    imFinal =np.empty((outDataset.RasterYSize, outDataset.RasterXSize, bands))    
+    imFinal = np.empty((outDataset.RasterYSize, outDataset.RasterXSize, bands))    
     #imFinal = np.empty((data.shape[0], data.shape[1], bands))
     for band in range(1,bands+1):
         imFinal[:,:,band-1] = mStack[:,:,band-1] * ovMean
@@ -1517,9 +1651,9 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
 
     outDataset.FlushCache()
 
-def temporal_comp(fileList, outMap, stat = 'percentile', q = 95, folder=None,
+def temporal_comp(fileList, outMap, stat='percentile', q = 95, folder=None,
                   blocksize=256,
-                  FMT=None,  dtype = gdal.GDT_Int32):
+                  FMT=None,  dtype=gdal.GDT_Int32):
     
     """
     Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)
@@ -1810,6 +1944,8 @@ def _quickwarp(inRas, outRas, proj='EPSG:27700'):
     ootRas = gdal.Warp(outRas, inRas, dstSRS=proj, format='Gtiff')
     ootRas.FlushCache()
     ootRas=None
+    
+
 
 # Can't remember if this works   
 #def temporal_comp2(inRasSet, outRas, stat, q=5,  window = None, blockSize = None):

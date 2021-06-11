@@ -6,16 +6,17 @@ Description
 -----------
 
 This module contains various functions for the writing of data in OGR vector 
-formats. The functions are mainly concerned with writing geometric or pixel based attributes, with the view to them being classified in the learning module
+formats. 
+The functions are mainly concerned with writing geometric or pixel based attributes, 
+with the view to them being classified in the learning module
 
 """
 from skimage.measure import regionprops
 from scipy.stats import entropy, skew, kurtosis
 import scipy.ndimage as nd
 from skimage import feature
-
+import json
 import shapefile
-import cv2
 import os
 import gdal
 from json import dumps
@@ -23,32 +24,25 @@ import  ogr, osr
 from tqdm import tqdm
 import numpy as np
 from scipy.stats.mstats import mode
-from geospatial_learn.utilities import min_bound_rectangle, do_phasecong
+from geospatial_learn.utilities import min_bound_rectangle
 from shapely.wkt import loads
-from shapely.geometry import Polygon, box, LineString, Point, LinearRing
+from shapely.geometry import Polygon, LineString
 from pandas import DataFrame
 from pysal.lib import io as pio
 import pandas as pd
-from skimage.segmentation import active_contour#, find_boundaries
+from skimage.segmentation import active_contour
 
 import morphsnakes as ms
-from geospatial_learn.raster import _copy_dataset_config,  array2raster, raster2array, polygonize
+from geospatial_learn.raster import _copy_dataset_config,  array2raster, polygonize
 import warnings
-from skimage.measure import LineModelND, ransac
 from skimage.filters import gaussian
 from skimage import exposure
-from skimage.filters import threshold_otsu, threshold_niblack, threshold_sauvola, apply_hysteresis_threshold
-from skimage.transform import probabilistic_hough_line as phl
-
-from skimage.feature import canny
-from skimage.morphology import remove_small_objects, remove_small_holes, medial_axis, skeletonize
-from skimage.util import img_as_float, invert
-
+from skimage.filters import threshold_otsu, threshold_niblack, threshold_sauvola
+from skimage.morphology import remove_small_objects, remove_small_holes
 import matplotlib
 from shapely.affinity import rotate
 #from geospatial_learn.geodata import rasterize
 from math import ceil
-import mahotas as mh
 #from centerline.geometry import Centerline
 
 matplotlib.use('Qt5Agg')
@@ -96,6 +90,33 @@ def shp2gj(inShape, outJson):
     geojson.write(dumps({"type": "FeatureCollection", 
                          "features": buffer}, indent=2) + "\n")
     geojson.close()
+    
+def _feat2dict(feat):
+    """
+    convert an ogr feat to a dict
+    """
+    geom = feat.GetGeometryRef()
+    js = geom.ExportToJson()
+    geoj = json.loads(js)
+    
+    return geoj
+
+def poly2dictlist(inShp):
+    
+    """
+    convert an ogr to a list of json like dicts
+    """
+    vds = ogr.Open(inShp)
+    lyr = vds.GetLayer()
+    
+    features = np.arange(lyr.GetFeatureCount()).tolist()
+    
+    feat = lyr.GetNextFeature() 
+
+    oot = [_feat2dict(feat) for f in features]
+    
+    return oot
+    
 
 def _raster_extent(inras):
     
@@ -187,12 +208,16 @@ def extent2poly(infile, filetype='raster', outfile=None, polytype="ESRI Shapefil
         transform = osr.CoordinateTransformation(srs, wgs84)
         # apply
         poly.Transform(transform)
+        
+        tproj = wgs84
+    else:
+        tproj = lyr.GetSpatialRef()
     
     # in case we wish to write it for later....    
     if outfile != None:
         outfile = infile[:-4]+'extent.shp'
         
-        out_drv = ogr.GetDriverByName(filetype)
+        out_drv = ogr.GetDriverByName(polytype)
         
         # remove output shapefile if it already exists
         if os.path.exists(outfile):
@@ -200,7 +225,7 @@ def extent2poly(infile, filetype='raster', outfile=None, polytype="ESRI Shapefil
         
         # create the output shapefile
         ootds = out_drv.CreateDataSource(outfile)
-        ootlyr = ootds.CreateLayer("extent", geom_type=ogr.wkbPolygon)
+        ootlyr = ootds.CreateLayer("extent", tproj, geom_type=ogr.wkbPolygon)
         
         # add an ID field
         idField = ogr.FieldDefn("id", ogr.OFTInteger)
@@ -439,6 +464,7 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
                 if len(Props) == 0:
                     continue
                 stat = Props[0][prop]
+                
                 #print(label)
                 fldName = propNames[prop]
                 feat.SetField(fldName, stat)
@@ -786,27 +812,30 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
                    
         if stat == 'mode':
             feature_stats = mode(masked)[0]
-        if stat == 'min':
+        elif stat == 'min':
             feature_stats = float(masked.min())
-        if stat == 'mean':
+        elif stat == 'mean':
             feature_stats = float(masked.mean())
             
-        if stat == 'max':
+        elif stat == 'max':
             feature_stats = float(masked.max())
-        if stat == 'median':
+        elif stat == 'median':
             feature_stats = float(np.median(masked[masked.nonzero()]))
-        if stat == 'std':
+        elif stat == 'std':
             feature_stats = float(masked.std())
-        if stat == 'sum':
+        elif stat == 'sum':
             feature_stats = float(masked.sum())
 #        elif stat is 'count':
 #            feature_stats = int(masked.count())
-        if stat == 'var':
+        elif stat == 'var':
             feature_stats = float(masked.var())
-        if stat == 'skew':
+        elif stat == 'skew':
             feature_stats = float(skew(masked[masked.nonzero()]))
-        if stat == 'kurt':
-            feature_stats = float(kurtosis(masked[masked.nonzero()]))               
+        elif stat == 'kurt':
+            feature_stats = float(kurtosis(masked[masked.nonzero()]))
+        else:
+            raise ValueError("Must be one of mode, min, mean, max,"
+                             "std, sum, count, var, skew, kurt")               
         # You can't have the stat of a single value - this is not an ideal
         # solution - should be flagged somehow but
         if src_array.shape == (1,1):
@@ -872,10 +901,6 @@ def _set_rgb_ind(feat, rv_array, src_offset, rds, nodata_value):
         rgb[:,:, band-1] = rBnd.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                    src_offset[3])
         
-        
-        # Mask the source data array with our current feature
-        # we take the logical_not to flip 0<->1 to get the correct mask effect
-        # we also mask out nodata values explictly
                    
     
     
@@ -1013,10 +1038,7 @@ def zonal_rgb_idx(inShp, inRas, nodata_value=0):
 
     vds = None
     rds = None
-#    
-#    if write_stat != None:
-#        return frame, rejects
-    
+
 def write_text_field(inShape, fieldName, attribute):
     
     """ Write a string to a ogr vector file
@@ -1137,7 +1159,7 @@ def texture_stats(inShp, inRas, band, gprop='contrast',
         rb.SetNoDataValue(nodata_value)
 
     vds = ogr.Open(inShp, 1)  # TODO maybe open update if we want to write stats
-   #assert(vds)
+
     vlyr = vds.GetLayer(0)
     if write_stat != None:
         gname = gprop[:10]+str(band)
@@ -1186,12 +1208,12 @@ def texture_stats(inShp, inRas, band, gprop='contrast',
         rgt[5])
             
             
-        # Create a temporary vector layer in memory
+        # Temporary vector layer in memory
         mem_ds = mem_drv.CreateDataSource('out')
         mem_layer = mem_ds.CreateLayer('poly', None, ogr.wkbPolygon)
         mem_layer.CreateFeature(feat.Clone())
 
-        # Rasterize it
+        # Rasterize
 
         warnings.simplefilter("ignore")
         rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Int32)
@@ -1238,7 +1260,7 @@ def texture_stats(inShp, inRas, band, gprop='contrast',
 
     if write_stat != None:
         vlyr.SyncToDisk()
-    #vds.FlushCache()
+
 
 
     vds = None
@@ -2041,7 +2063,7 @@ def meshgrid(inRaster, outShp, gridHeight=1, gridWidth=1):
     outDataSource.SyncToDisk()
     outDataSource = None
 
-def zonal_point(inShp, inRas, bandname, band=1, nodata_value=0, write_stat=True):
+def zonal_point(inShp, inRas, field, band=1, nodata_value=0, write_stat=True):
     
     """ 
     Get the pixel val at a given point and write to vector
@@ -2054,6 +2076,9 @@ def zonal_point(inShp, inRas, bandname, band=1, nodata_value=0, write_stat=True)
         
     inRas: string
                   input raster
+    
+    field: string
+                    the name of the field
 
     band: int
            an integer val eg - 2
@@ -2079,8 +2104,8 @@ def zonal_point(inShp, inRas, bandname, band=1, nodata_value=0, write_stat=True)
     if write_stat != None:
         # if the field exists leave it as ogr is a pain with dropping it
         # plus can break the file
-        if _fieldexist(vlyr, bandname) == False:
-            vlyr.CreateField(ogr.FieldDefn(bandname, ogr.OFTReal))
+        if _fieldexist(vlyr, field) == False:
+            vlyr.CreateField(ogr.FieldDefn(field, ogr.OFTReal))
     
     
     
@@ -2112,7 +2137,7 @@ def zonal_point(inShp, inRas, bandname, band=1, nodata_value=0, write_stat=True)
             outval =  int(src_array.max())
             
 #            if write_stat != None:
-            feat.SetField(bandname, outval)
+            feat.SetField(field, outval)
             vlyr.SetFeature(feat)
             feat = vlyr.GetNextFeature()
         

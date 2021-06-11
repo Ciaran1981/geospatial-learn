@@ -31,6 +31,7 @@ from torch.utils.data import Dataset as BaseDataset
 import torch.backends.cudnn as cudnn
 import gdal
 import torch
+from tqdm import tqdm
 cudnn.benchmark = True
 
 def makewrkdir(directory):
@@ -41,7 +42,7 @@ def makewrkdir(directory):
 
 
 def train_semseg_binary(maindir, bands=[1,2,3], train_percent=0.8, f1=False, 
-                 proc="cuda:0", noclasses=2, tilesize=256, redo=False, 
+                 proc="cuda:0", tilesize=256, redo=False, activation=None,
                  modelpth='./best_model.pth',
                  params={'model': 'Unet',
                          'encoder': 'resnet34',
@@ -62,19 +63,11 @@ def train_semseg_binary(maindir, bands=[1,2,3], train_percent=0.8, f1=False,
     maindir: string
               the directory containing the training masks and labels as 
               produced by collect_train is stored
-
-    model: string
-              a choice of "unet, "fcn_resnet50", "fcn_resnet101","deeplabv3_resnet50"
-              "deeplabv3_resnet50", "deeplabv3_resnet101"
-
-    plot: bool
-          whether to plot intermediate data results eg visualise the image aug,
-          test results etc. 
     
     bands: list of ints
             the image bands to use
 
-    trainPercent: 
+    train_percent: 
                  the percentage of to use as training
     
     f1: bool
@@ -226,11 +219,12 @@ def train_semseg_binary(maindir, bands=[1,2,3], train_percent=0.8, f1=False,
     random.seed(42)
 
        
-    model = create_model(params, proc=proc, activation=None)
+    model = create_model(params, proc=proc, activation=activation)
 
     modelout = train_and_validate(model, trainData, valData, params)
     
     torch.save(model, modelpth)
+    
     
     return modelout    
 
@@ -258,22 +252,9 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
     mainDir: string
               the working directory where everything is done
 
-    model: string
-              a choice of "unet, "fcn_resnet50", "fcn_resnet101","deeplabv3_resnet50"
-              "deeplabv3_resnet50", "deeplabv3_resnet101"
     modelpth: string
                 where to save the model eg 'dir/best_model.pth'
-    
-    inRas: string
-            the input raster
-        
-    inLabel: string
-           the input label raster - at present this the same size as the input
-           raster with the class labels, though this will be improved
-    
-    outMap: string
-           the output classification map 
-    
+            
     plot: bool
           whether to plot intermediate data results eg visualise the image aug,
           test results etc. 
@@ -281,16 +262,23 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
     bands: list of ints
             the image bands to use
 
-    trainPercent: string
+    train_percent: string
                  the percentage of to use as training
-    tileSize: int
+                 
+    tilesize: int
               the size of the image tile used in training and thus classification
+              
+    classes: list
+                a list of strings with the classes eg ['1', '2', '3'] as labelled
+                in raster
+    weights: string
+                the encoder weights, typically imagenet or None for rand init
     
     f1: bool
         whether to svae a classification report (will be a plot in working dir)
     
     activation: string
-               the neural net activation function
+               the neural net activation function e.e 'sigmoid', softmax2d
     
     params: dict
           the convnet model params
@@ -410,8 +398,8 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
     
     class Dataset(BaseDataset):
 
-        # this a necessary relic of smp code until I figure it out
-        CLASSES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
+        # a relic to be altered
+        CLASSES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
                    '11', '12', '13', '14', '15', '16', '17', '18', '19', '20']
 
        
@@ -548,9 +536,19 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
     
     
     train_loader = DataLoader(train_dataset, batch_size=params['batch_size'],
-                              shuffle=True, num_workers=4)
+                              shuffle=True, num_workers=params["num_workers"])
     valid_loader = DataLoader(valid_dataset, batch_size=params['batch_size'],
-                              shuffle=False, num_workers=4)
+                              shuffle=False, num_workers=params["num_workers"])
+    
+
+    # Something weird here with the losses or activation etc.  
+#    if len(classes) > 1:
+#        loss = smp.utils.losses.DiceLoss()
+#
+#    else:
+#        # was using dice/f1 but wasn't working well.....
+#        loss = smp.utils.losses.BCEWithLogitsLoss()
+        
     
     loss = smp.utils.losses.DiceLoss()
     metrics = [
@@ -604,40 +602,43 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
     # load best saved checkpoint
     best_model = torch.load(modelpth)
     
-    return best_model
-
- 
+    print('running test dataset')
+    x_test_dir = os.path.join(maindir, 'testImg')
+    y_test_dir = os.path.join(maindir, 'testMsk')
+    # create test dataset
+    test_dataset = Dataset(
+        x_test_dir, 
+        y_test_dir, 
+        augmentation=get_validation_augmentation(), 
+        preprocessing=get_preprocessing(preprocessing_fn),
+        classes=classes,
+    )
     
-#    x_test_dir = os.path.join(mainDir, 'testImg')
-#    y_test_dir = os.path.join(mainDir, 'testMsk')
-#    # create test dataset
-#    test_dataset = Dataset(
-#        x_test_dir, 
-#        y_test_dir, 
-#        augmentation=get_validation_augmentation(), 
-#        preprocessing=get_preprocessing(preprocessing_fn),
-#        classes=classes,
-#    )
-#    
-#    test_dataloader = DataLoader(test_dataset)
-#    
-#    # evaluate model on test set
-#    test_epoch = smp.utils.train.ValidEpoch(
-#        model=best_model,
-#        loss=loss,
-#        metrics=metrics,
-#        device=params['device'],
-#    )
-#    
-#    logs = test_epoch.run(test_dataloader)
-#    
-#    # test dataset without transformations for image visualization
+    test_dataloader = DataLoader(test_dataset)
+    
+    # evaluate model on test set
+    test_epoch = smp.utils.train.ValidEpoch(
+        model=best_model,
+        loss=loss,
+        metrics=metrics,
+        device=params['device'],
+    )
+    
+    logs = test_epoch.run(test_dataloader)
+    
+    # test dataset without transformations for image visualization
 #    test_dataset_vis = Dataset(
 #        x_test_dir, y_test_dir, 
 #        classes=classes,
 #    )
     
     
+    
+    return best_model, logs
+
+
+
+
 
     
 def semseg_pred(inRas, model, outMap, encoder, classes=['1'], tilesize=256,
@@ -646,6 +647,61 @@ def semseg_pred(inRas, model, outMap, encoder, classes=['1'], tilesize=256,
     Semantic Segmentation of EO-imagery - an early version things are to be 
     changed in the near future
     Based on segmentation_models.pytorch & albumentations
+    
+    Parameters 
+    ----------
+    
+    inRas: string
+            the input raster
+            
+    model: string or pytorch model
+             the model to predict
+
+    outMap: string
+           the output classification map 
+           
+    encoder: string
+           the encoder component of the CNN e.g. resnet34
+    
+    tilesize: int
+          the image chip/tile size that will be processed def 256
+    
+    bands: list of ints
+            the image bands to use
+
+    Notes
+    -----
+    
+    This is an early version with some stuff to add/change 
+    
+    """
+    # move these and above outside the func
+    
+    preprocessing_fn = smp.encoders.get_preprocessing_fn(encoder, weights)
+    
+    # from utils
+    preprocessing=get_preprocessing_p(preprocessing_fn, tilesize)
+    
+    
+    if type(model) is str:
+        model = torch.load(model)
+    
+    # if we have trained in parallel
+    if isinstance(model, torch.nn.DataParallel):
+        model = model.module
+    
+    # from utils  do the block proc
+    # This is VERY slow with larger images - suspect GDAL I/O of blocks
+    # is bottle neck
+    pad_predict(inRas, outMap, model, classes, preprocessing,
+                    blocksize = tilesize, FMT ='Gtiff', bands=bands,
+                    device=device)
+        
+def chip_pred(inRas, model, outMap, encoder, classes=['1'], tilesize=256,
+                bands=[1,2,3],  weights='imagenet', device='cuda'):
+    """
+    Chip-based prediction of EO imagery 
+    Based on pytorch & albumentations
     
     Parameters 
     ----------
@@ -701,14 +757,13 @@ def semseg_pred(inRas, model, outMap, encoder, classes=['1'], tilesize=256,
     pad_predict(inRas, outMap, model, classes, preprocessing,
                     blocksize = tilesize, FMT ='Gtiff', bands=bands,
                     device=device)
-        
-
             
             
-def collect_train(masklist, tilelist, outdir, chip_size=256):
+def collect_train(masklist, tilelist, outdir, chip_size=256, bands=[1,2,3]):
     
     """
-    Collect and save chips of both mask and image from a list of images
+    Collect and save chips of both mask and image from a list of images for a
+     semantic segmentation task
     
     The list of images must correspond/ be in the same order
     
@@ -792,7 +847,7 @@ def collect_train(masklist, tilelist, outdir, chip_size=256):
                         
                     else:
                         
-                        img = mb2array(tile_rds, j, i, n_cols, n_rows)
+                        img = mb2array(tile_rds, j, i, n_cols, n_rows, bands=bands)
                     
                         # ugly but its friday make names and store them
                         outmsk = msk_bsnm.replace('.tif', str(j)+str(i)+'.tif')
@@ -801,13 +856,120 @@ def collect_train(masklist, tilelist, outdir, chip_size=256):
                         outimg = tl_bsnm.replace('.tif', str(j)+str(i)+'.tif')
                         imgout.append(outimg)
                         
-                        _chip_writer(msk, j, i, n_cols, n_rows, rgt,
+                        chip_writer(msk, j, i, n_cols, n_rows, rgt,
                                     mask_rds, outmsk, fmt='Gtiff')
-                        _chip_writer(img, j, i, n_cols, n_rows, rgt,
+                        chip_writer(img, j, i, n_cols, n_rows, rgt,
                                     tile_rds, outimg, fmt='Gtiff')
         
     return mskout, imgout
         
+def collect_train_chip(masklist, tilelist, outdir, chip_size=256, include_zero=True,
+                       bands=[1,2,3]):
+    
+    """
+    Collect and save chips of an image from a list of masks and images
+    
+    for a chip-based CNN (i.e. we are simply labelling a chip NOT segmenting anything)
+    
+    Please note that areas of 0 (no mask) will count as a class
+    
+    The list of images must correspond/ be in the same order.
+    
+    Parameters
+    ----------
+    
+    masklist: list
+                A list of images containing the training masks
+    
+    tilelist: list
+                A list of images containing the corresponding spectral info
+    
+    outdir: string
+                Where the training chips will be written
+    
+    chip_size: int
+                the training "chip" size e.g. 256x256 pixels  dependent on the 
+                nnet used
+                
+    include_zero: bool
+                whether to include a non-masked area as class 0
+                
+    Returns
+    -------
+    
+    A tuple of lists of the respective paths of both masks and corresponding 
+    images
+    
 
+    """
+    # TODO ultimately this could be replaced with a text file denoting the 
+    # img name, coords, class etc, rather than writing the chips out  
     
+    # we know this so not in loop
+    block_X = chip_size
+    block_Y = chip_size
     
+    # make the dirs if not there
+
+    tiledir = os.path.join(outdir, 'images')
+    makewrkdir(tiledir)
+    # TODO  this could be parallelized per raster pair
+    for t,m in zip(tilelist, masklist):
+        
+        tile_rds =  gdal.Open(t)
+        
+        mask_rds = gdal.Open(m)
+        
+        cols = mask_rds.RasterXSize
+        rows = mask_rds.RasterYSize
+        
+        mskbnd = mask_rds.GetRasterBand(1)
+        
+        rgt = mask_rds.GetGeoTransform()
+
+        block_Y = chip_size
+        block_X = chip_size
+             
+        imgout = []
+        
+        # basic tile name
+        basename = os.path.split(t)[1]
+        # extended for each 
+
+        tl_bsnm = os.path.join(tiledir, basename) 
+        
+        # block proc
+        # no running off end of the pier....
+        # As with image proc convention i = y, j = x 
+        for i in tqdm(range(0, rows, block_Y)):
+                if i + block_Y < rows:
+                    n_rows = block_Y
+                else:
+                    n_rows = rows - i
+            
+                for j in range(0, cols, block_X):
+                    if j + block_X < cols:
+                        n_cols = block_X
+                    else:
+                        n_cols = cols - j
+                    msk = mskbnd.ReadAsArray(j, i, n_cols, n_rows)
+                    
+                    
+                    #this messy clause to be replaced
+                    if msk.max() == 0 and include_zero == False:
+                        continue
+                    else:
+                        # use the maximum value to label the class
+                        idx = '_'+str(int(msk.max()))+'.tif'
+                    outimg = tl_bsnm.replace('.tif', str(j)+str(i)+idx)
+
+                    imgout.append(outimg)
+                        
+                    img = mb2array(tile_rds, j, i, n_cols, n_rows, bands=bands)
+
+                    chip_writer(img, j, i, n_cols, n_rows, rgt,
+                                tile_rds, outimg, fmt='Gtiff')
+        
+    return imgout
+    
+

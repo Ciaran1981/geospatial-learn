@@ -39,16 +39,16 @@ gdal.UseExceptions()
 cudnn.benchmark = True
 
 # handy to know
-numpy_type_map = {
-    'float64': torch.DoubleTensor,
-    'float32': torch.FloatTensor,
-    'float16': torch.HalfTensor,
-    'int64': torch.LongTensor,
-    'int32': torch.IntTensor,
-    'int16': torch.ShortTensor,
-    'int8': torch.CharTensor,
-    'uint8': torch.ByteTensor,
-}
+#numpy_type_map = {
+#    'float64': torch.DoubleTensor,
+#    'float32': torch.FloatTensor,
+#    'float16': torch.HalfTensor,
+#    'int64': torch.LongTensor,
+#    'int32': torch.IntTensor,
+#    'int16': torch.ShortTensor,
+#    'int8': torch.CharTensor,
+#    'uint8': torch.ByteTensor,
+#}
 
 def close_mask(inRas, noclasses=1):
     
@@ -272,8 +272,7 @@ def normalize(img, mean, std, max_pixel_value=255.0):
     img *= denominator
     return img
 
-def display_image_grid(imgNms, outRasDir,  mask,
-                       outLabelDir, predMasks=None, maxIm=3, bands=[1,2,3]):
+def image_grid(imgNms, mskNms, predMasks=None, maxIm=3, bands=[1,2,3]):
     
     cols = 3 if predMasks else 2
     rows = maxIm
@@ -281,14 +280,12 @@ def display_image_grid(imgNms, outRasDir,  mask,
     figure, ax = plt.subplots(nrows=rows, ncols=cols, figsize=(10, 10))
     for i, imgNm in enumerate(imgNms):
 
-        image = rs.raster2array(os.path.join(outRasDir, imgNm),
-                               bands=bands)
+        image = rs.raster2array(imgNm, bands=bands)
     
         image = rescale_intensity(image, out_range="uint8")
 
-        mask = rs.raster2array(os.path.join(outLabelDir, imgNm),
-                               bands=[1])
-        mask = prep_mask(mask)
+        mask = rs.raster2array(mskNms[i], bands=[1])
+        
         ax[i, 0].imshow(image)
         ax[i, 1].imshow(mask, interpolation="nearest")
 
@@ -308,7 +305,6 @@ def display_image_grid(imgNms, outRasDir,  mask,
             break
     plt.tight_layout()
     plt.show()
-
 
 
 def visAug(dataset, idx=0, samples=5):
@@ -503,6 +499,88 @@ def pad_predict(inRas, outputIm, model, classes, preprocessing,
         
     outputIm: string (optional)
                optionally write a separate output image, if None, will mask the input
+        
+    blocksize: int
+                the chunk of raster to read in
+        
+    Returns
+    ----------- 
+    string
+          A string of the output file path
+        
+    """
+    
+    if FMT == None:
+        FMT = 'Gtiff'
+        fmt = '.tif'
+    if FMT == 'HFA':
+        fmt = '.img'
+    if FMT == 'KEA':
+        fmt = '.kea'
+    if FMT == 'Gtiff':
+        fmt = '.tif'
+    
+   
+        
+    inDataset = gdal.Open(inRas)
+
+    outDataset = rs._copy_dataset_config(inDataset, outMap = outputIm,
+                                 bands = 1)
+    ootBnd = outDataset.GetRasterBand(1)
+        
+    cols = inDataset.RasterXSize
+    rows = inDataset.RasterYSize
+
+    blocksizeX = blocksize
+    blocksizeY = blocksize
+    
+    # the number of block in a row is simply rounding up the division
+    # us np floor to ensure round down
+    # TODO  use this to predict entire rows rather than chip wise
+    #blkrow = np.floor(rows / blocksize) +1
+    #blkcol = np.floor(cols / blocksize) +1
+    
+    for i in tqdm(range(0, rows, blocksizeY)):
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
+            else:
+                numRows = rows -i
+        
+            for j in range(0, cols, blocksizeX):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+                
+                image = mb2array(inDataset, j, i, numCols, numRows, 
+                                 bands=bands)
+                
+                pred = pred_img(image, preprocessing, model, device,
+                         classes, blocksize)
+
+                ootBnd.WriteArray(pred, j, i)
+    
+               
+    outDataset.FlushCache()
+    outDataset = None 
+
+def chip_pad_predict(inRas, outputIm, model, classes, preprocessing,
+                    blocksize = 256, FMT ='Gtiff', bands=[1,2,3],
+                    device='cuda'):
+    """ 
+    Perform a perblock prediction on a raster, classifying the entire block 
+    as a single class
+    
+    Parameters 
+    ----------- 
+    
+    inputIm: string
+              the input raster
+    FMT: string
+          the output gdal format eg 'Gtiff', 'KEA', 'HFA'
+        
+    outputIm: string (optional)
+               optionally write a separate output image, if None, will mask the input
     inList:  list
            the list (of arrays) of predicted masks
         
@@ -570,6 +648,77 @@ def pad_predict(inRas, outputIm, model, classes, preprocessing,
     outDataset.FlushCache()
     outDataset = None 
 
+def maskblock(inRas, outRas, blocksize=256):
+    
+    
+    """
+    Collect and save chips of both mask and image from a list of images
+    
+    The list of images must correspond/be in the same order
+    
+    Parameters
+    ----------
+    
+    inRas: string
+                Path to a mask image containing drawn masks to be converted
+                to blocks
+    
+    outRas: string
+                A list of images containing the corresponding spectral info
+                
+    """
+    
+    
+    rds = gdal.Open(inRas)
+    
+    inBnd = rds.GetRasterBand(1)
+    
+    outrds = rs._copy_dataset_config(rds, outMap = outRas,
+                                 bands = 1)
+    ootBnd = outrds.GetRasterBand(1)
+        
+    cols = rds.RasterXSize
+    rows = rds.RasterYSize
+
+    blocksizeX = blocksize
+    blocksizeY = blocksize
+    
+    # the number of block in a row is simply rounding up the division
+    # us np floor to ensure round down
+    # TODO  use this to predict entire rows rather than chip wise
+    #blkrow = np.floor(rows / blocksize) +1
+    #blkcol = np.floor(cols / blocksize) +1
+    
+    for i in tqdm(range(0, rows, blocksizeY)):
+            if i + blocksizeY < rows:
+                numRows = blocksizeY
+            else:
+                numRows = rows -i
+        
+            for j in range(0, cols, blocksizeX):
+                if j + blocksizeX < cols:
+                    numCols = blocksizeX
+                else:
+                    numCols = cols - j
+                
+                image = inBnd.ReadAsArray(j, i, numCols, numRows)
+                
+
+                if image.max() == 0:
+                    continue
+                else:
+                    oot = np.ones_like(image, dtype=np.uint8)
+                    
+
+                ootBnd.WriteArray(oot, j, i)
+    
+               
+    outrds.FlushCache()
+    outrds = None 
+    
+    return 
+
+
 def to_tensor(x, **kwargs):
     """
     ingestible by torch
@@ -589,7 +738,7 @@ def get_preprocessing_p(preprocessing_fn, tilesize):
             ]
     return A.Compose(_transform)    
 
-def convert_pred(inpred, tilesize):
+def convert_pred(inpred, tilesize, classes):
     
     """
     bit of reshaping to get the result 'image ready'
@@ -598,7 +747,7 @@ def convert_pred(inpred, tilesize):
     oot = np.zeros(shape=(tilesize, tilesize))
     count = inpred.shape[0]
     for i in range(0, count):
-        oot[inpred[i,:,:]==1]=i
+        oot[inpred[i,:,:]==1]=int(classes[i])
     return oot
 
 
@@ -619,7 +768,7 @@ def pred_img(image, preprocessing, model, device, classes, tilesize):
     pr_mask = (pr_mask.squeeze().cpu().numpy().round())
     
     if len(classes) > 1: 
-        pred = convert_pred(pr_mask)
+        pred = convert_pred(pr_mask, tilesize, classes)
     else:
         # For binary get weird results here - neg values and 0 which should be 1
         # hack is to get rid of neg values and make 0 (which should be 1)
@@ -641,7 +790,7 @@ def pred_img(image, preprocessing, model, device, classes, tilesize):
 
 
 
-def _chip_writer(array, j, i, n_cols, n_rows, rgt, inras, outfile, fmt='Gtiff'):
+def chip_writer(array, j, i, n_cols, n_rows, rgt, inras, outfile, fmt='Gtiff'):
     """
     convert pixels to geo coords to extract a subset and write to file
     retaining correct positional info
@@ -709,4 +858,11 @@ def mb2array(rds, j, i, n_cols, n_rows, bands=[1,2,3]):
         inArray[:, :, idx]=rA
     
     return inArray
-   
+
+def split_rand_tile(tilelist):
+    
+    final_test = list(np.random.choice(tilelist, 1))
+    tl = os.path.split(final_test[0])[1]
+    final_test.append(os.path.join(label_t, tl))
+    
+    return final_test
