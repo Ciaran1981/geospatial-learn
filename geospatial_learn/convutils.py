@@ -770,11 +770,12 @@ def pred_img(image, preprocessing, model, device, classes, tilesize):
     if len(classes) > 1: 
         pred = convert_pred(pr_mask, tilesize, classes)
     else:
-        # For binary get weird results here - neg values and 0 which should be 1
+        # For binary sometimes get weird results here - 
+        # neg values and 0 which should be 1
         # hack is to get rid of neg values and make 0 (which should be 1)
-        # 1. Hack for now until addressed
+        # likel to be dumped as mask should be binary already!
         pred = pr_mask
-        pred[pred>=0]=1
+        pred[pred>0]=1
         pred[pred<0]=0
     
     # this is on the premise the old shape < pred.shape which should always be case

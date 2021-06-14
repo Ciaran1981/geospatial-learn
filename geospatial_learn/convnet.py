@@ -41,7 +41,7 @@ def makewrkdir(directory):
         os.mkdir(directory)
 
 
-def train_semseg_binary(maindir, bands=[1,2,3], train_percent=0.8, f1=False, 
+def train_semseg_binary(maindir, bands=[1,2,3], train_percent=0.7, f1=False, 
                  proc="cuda:0", tilesize=256, redo=False, activation=None,
                  modelpth='./best_model.pth',
                  params={'model': 'Unet',
@@ -224,9 +224,10 @@ def train_semseg_binary(maindir, bands=[1,2,3], train_percent=0.8, f1=False,
     modelout = train_and_validate(model, trainData, valData, params)
     
     torch.save(model, modelpth)
+ 
+
     
-    
-    return modelout    
+    return modelout
 
         
 def train_semantic_seg(maindir, plot=False, bands=[1,2,3], 
@@ -278,7 +279,8 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
         whether to svae a classification report (will be a plot in working dir)
     
     activation: string
-               the neural net activation function e.e 'sigmoid', softmax2d
+               the neural net activation function e.g 'sigmoid' for binary or 
+               softmax2d for multiclass
     
     params: dict
           the convnet model params
@@ -366,14 +368,14 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
     #    trainList.sort()
         
      
-    # get norm elswhere now
-    #    if len(bands) > 3:
-    #        mean=(0.485, 0.456, 0.406, 0.485)
-    #        std=(0.229, 0.224, 0.225, 0.229)
-    #    else:
-    #        mean=(0.485, 0.456, 0.406)
-    #        std=(0.229, 0.224, 0.225)
-    #        
+     #get norm elswhere now
+#    if len(bands) > 3:
+#        mean=(0.485, 0.456, 0.406, 0.485)
+#        std=(0.229, 0.224, 0.225, 0.229)
+#    else:
+#        mean=(0.485, 0.456, 0.406)
+#        std=(0.229, 0.224, 0.225)
+#            
 
     # Ultimately for smp version
     makewrkdir(os.path.join(maindir, 'trainMsk'))
@@ -456,7 +458,7 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
     def get_training_augmentation():
         train_transform = [
             
-  #          A.Normalize(mean=mean,  std=std),
+            #A.Normalize(mean=mean,  std=std),
             A.PadIfNeeded(min_height=tilesize, min_width=tilesize),
             A.HorizontalFlip(p=0.5),
     
@@ -635,11 +637,6 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
     
     
     return best_model, logs
-
-
-
-
-
     
 def semseg_pred(inRas, model, outMap, encoder, classes=['1'], tilesize=256,
                 bands=[1,2,3],  weights='imagenet', device='cuda'):
