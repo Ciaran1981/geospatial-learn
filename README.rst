@@ -44,6 +44,13 @@ User installation
    
 conda env create -f geolearn_env.yml
 
+Alternatively, for a shorter wait (conda is quite slow these days), the mamba system is recommended, install this in your base conda then:
+
+.. code-block:: bash
+
+mamba env create -f geolearn_env.yml
+
+
 4. To activate - type
 
 .. code-block:: bash
@@ -76,32 +83,13 @@ These are a work in progress!
 Development
 -----------
 
-New contributors of all experience levels are welcome
-
-Useful links
-~~~~~~~~~~~~~~~
-Here are some links to the principal libs used in geospatial-learn.
-
-https://github.com/scikit-learn/
-
-http://xgboost.readthedocs.io/en/latest/
-
-http://scikit-learn.org/stable/
-
-http://www.gdal.org/
-
-http://www.numpy.org/
-
-https://www.scipy.org/
-
-http://scikit-image.org/
-
+Any contributors of all experience levels are welcome
 
 
 Project History
 ---------------
 
-Geospatial-learn is written and maintained by Ciaran Robb. The functionality was written as part of various research projects involving Earth observation & geo-spatial data. 
+The functionality was written as part of various research projects involving Earth observation & geo-spatial data. 
 
 
 Citation
