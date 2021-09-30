@@ -307,6 +307,38 @@ def image_grid(imgNms, mskNms, predMasks=None, maxIm=3, bands=[1,2,3]):
     plt.show()
 
 
+def visualize_aug(aug, img, msk, bands=[1,2,3]):
+    
+    fontsize = 18
+    
+    image = rs.raster2array(img, bands=bands)
+    
+    image = rescale_intensity(image, out_range="uint8")
+
+    mask = rs.raster2array(msk, bands=[1])
+    
+    augmented = aug(image=image, mask=mask)
+
+    imaug= augmented['image']
+    mskaug = augmented['mask']
+
+
+    f, ax = plt.subplots(2, 2, figsize=(8, 8))
+
+    ax[0, 0].imshow(image)
+    ax[0, 0].set_title('Original image', fontsize=fontsize)
+
+    ax[1, 0].imshow(mask)
+    ax[1, 0].set_title('Original mask', fontsize=fontsize)
+
+    ax[0, 1].imshow(imaug)
+    ax[0, 1].set_title('Transformed image', fontsize=fontsize)
+
+    ax[1, 1].imshow(mskaug)
+    ax[1, 1].set_title('Transformed mask', fontsize=fontsize)
+
+
+
 def visAug(dataset, idx=0, samples=5):
     dataset = copy.deepcopy(dataset)
     dataset.transform = A.Compose([t for t in dataset.transform if not isinstance(t, (A.Normalize, ToTensorV2))])

@@ -47,6 +47,8 @@ dependencies:
   - pyntcloud
   - napari
   - scikit-plot
+  - dask-ml
+  - auto-sklearn
 
 
 

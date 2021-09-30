@@ -2149,6 +2149,47 @@ def zonal_point(inShp, inRas, field, band=1, nodata_value=0, write_stat=True):
     vds = None
     rds = None
 
+#essentially cookbook version
+
+def buffer(inShp, outfile, dist):
+    
+    """ 
+    Buffer a shapefile by a given distance outputting a new one
+    
+    Parameters
+    ----------
+    
+    inShp: string
+                  input shapefile
+        
+    outfile: string
+                  output shapefile
+                  
+    dist: float
+                the distance in map units to buffer
+    """
+    
+    inputds = ogr.Open(inShp)
+    inputlyr = inputds.GetLayer()
+
+    shpdriver = ogr.GetDriverByName('ESRI Shapefile')
+    if os.path.exists(outfile):
+        shpdriver.DeleteDataSource(outfile)
+    outputBufferds = shpdriver.CreateDataSource(outfile)
+    bufferlyr = outputBufferds.CreateLayer(outfile, geom_type=ogr.wkbPolygon)
+    featureDefn = bufferlyr.GetLayerDefn()
+
+    for feat in tqdm(inputlyr):
+        ingeom = feat.GetGeometryRef()
+        geomBuffer = ingeom.Buffer(dist)
+
+        outFeature = ogr.Feature(featureDefn)
+        outFeature.SetGeometry(geomBuffer)
+        bufferlyr.CreateFeature(outFeature)
+        outFeature = None
+    
+    return outfile
+
 
 #def line2poly(inShp, outShp):
 #    

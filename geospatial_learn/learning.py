@@ -29,7 +29,7 @@ import glob
 from sklearn import svm
 import gdal, ogr#,osr
 import numpy as np
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier,RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 import joblib
@@ -44,34 +44,38 @@ from scipy.stats import expon
 from tpot import TPOTClassifier, TPOTRegressor
 import warnings
 from geospatial_learn.raster import _copy_dataset_config
-
+import geospatial_learn.handyplots as hp
+import geopandas as gpd
 import pandas as pd
 import simpledbf
 from plyfile import PlyData, PlyProperty, PlyListProperty
 from pyntcloud import PyntCloud
-
 from keras.models import Sequential
 
 from keras.models import load_model, save_model
 # if still not working try:
-from keras.layers.core import Dense, Dropout, Flatten, Activation
+from keras.layers.core import Dense#, Dropout, Flatten, Activation
 
 from keras.wrappers.scikit_learn import KerasClassifier
-import tensorflow as tf
-from keras.utils import multi_gpu_model
+#import tensorflow as tf
+#from keras.utils import multi_gpu_model
+
+#TODO - is it any good?
+from autosklearn.classification import AutoSklearnClassifier
+from psutil import virtual_memory
 import os
 gdal.UseExceptions()
 ogr.UseExceptions()
 
-def create_model_tpot(X_train, outModel, cv=6, cores=-1,
-                      regress=False, params = None, scoring=None):
+def create_model_tpot(X_train, outModel, gen=5, popsize=50,  
+                      cv=5, cores=-1, dask=False, test_size=0.2,
+                      regress=False, params=None, scoring=None, verbosity=2, 
+                      warm_start=False):
     
     """
     Create a model using the tpot library where genetic algorithms
     are used to optimise pipline and params. 
-    
-    This also supports xgboost incidentally
-    
+
     Parameters
     ----------  
     
@@ -88,25 +92,32 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
     cores: int or -1 (default)
             the no of parallel jobs
     
-    strat: bool
-            a stratified grid search
-    
     regress: bool
               a regression model if True, a classifier if False
     
+    test_size: float
+                size of test set held out
+    
     params: a dict of model params (see tpot)
              enter your own params dict rather than the range provided
+             e.g. 
+             {'sklearn.ensemble.RandomForestClassifier': {"n_estimators": [200],
+                             "max_features": ['sqrt', 'log2'],                                                
+                             "max_depth": [10, None],
+    },
+
+    'xgboost.sklearn.XGBClassifier': {
+        'n_estimators': [200],
+                            'learning_rate': [0.1, 0.2, 0.4]
+    }}
+             
     
     scoring: string
               a suitable sklearn scoring type (see notes)
+              
+    warm_start: bool
+                use the previous population, useful if interactive
                            
-    """
-    #t0 = time()
-    
-    print('Preparing data')   
-    
-    """
-    Prep of data for model fitting 
     """
 
     bands = X_train.shape[1]-1
@@ -114,6 +125,19 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
     #X_train = X_train.transpose()
     
     X_train = X_train[X_train[:,0] != 0]
+    
+
+#   # params could be something like
+#    params = {'sklearn.ensemble.RandomForestClassifier': {"n_estimators": [200],
+#                             "max_features": ['sqrt', 'log2'],                                                
+#                             "max_depth": [10, None],
+#    },
+#
+#    'xgboost.sklearn.XGBClassifier': {
+#        'n_estimators': [200],
+#                            'learning_rate': [0.1, 0.2, 0.4]
+#    }}
+
     
      
     # Remove non-finite values
@@ -124,34 +148,213 @@ def create_model_tpot(X_train, outModel, cv=6, cores=-1,
     # remove labels from X_train
     X_train = X_train[:,1:bands+1]
     
+    #train/test split....
+    X_train, X_test, y_train, y_test = train_test_split(
+            X_train, y_train, test_size=test_size, random_state=0)
+    
+    
     if params is None and regress is False:       
-        tpot = TPOTClassifier(generations=5, population_size=50, verbosity=2,
-                              n_jobs=cores, scoring = scoring,
-                              warm_start=True)
+        tpot = TPOTClassifier(generations=gen, population_size=popsize, 
+                              verbosity=verbosity,
+                              n_jobs=cores, scoring=scoring, use_dask=dask,
+                              warm_start=warm_start, memory='auto')
         tpot.fit(X_train, y_train)
         
     elif params != None and regress is False:
-        tpot = TPOTClassifier(config_dict=params, n_jobs=cores, scoring = scoring,
-                              warm_start=True)
+        tpot = TPOTClassifier(generations=gen, population_size=popsize,
+                              n_jobs=cores,  verbosity=verbosity,
+                              scoring=scoring,
+                              use_dask=dask, 
+                              config_dict=params, 
+                              warm_start=warm_start, memory='auto')
         tpot.fit(X_train, y_train)
         
     elif params is None and regress is True:       
-        tpot = TPOTRegressor(generations=5, population_size=50, verbosity=2,
-                              n_jobs=cores, scoring = scoring,
-                              warm_start=True)
+        tpot = TPOTRegressor(generations=gen, population_size=popsize, 
+                             verbosity=verbosity,
+                             n_jobs=cores, scoring=scoring,
+                             use_dask=dask, warm_start=warm_start, memory='auto')
         tpot.fit(X_train, y_train)
         
     elif params != None and regress is True:
-        tpot = TPOTRegressor(config_dict=params, n_jobs=cores, verbosity=2,
-                             scoring = scoring,
-                              warm_start=True)
+        tpot = TPOTRegressor(generations=gen, population_size=popsize,
+                             config_dict=params, n_jobs=cores, 
+                             verbosity=verbosity,
+                             scoring=scoring,
+                             use_dask=dask, 
+                             warm_start=warm_start, memory='auto')
         tpot.fit(X_train, y_train)
 
-    tpot.export(outModel)    
+    tpot.export(outModel)
+    
+    
 
+#    testresult = grid.best_estimator_.predict(X_test)
+#    
+#    crDf = hp.plot_classif_report(y_test, testresult, save=outModel[:-3]+'.png')
+#    
+#    OR
+#    
+#    tpot.score( X_test, y_test)
 
-def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
-                 strat=True, regress=False, params = None, scoring=None, 
+    #TODO
+    # how'd we export the pipline as an object then simply load to predict?
+    # interim is to return the object for now
+    #joblib.dump(tpot, 
+    
+    #this'll do for now
+    scr = tpot.score(X_test, y_test)
+    print(scr)
+    
+    return tpot, scr
+
+def create_model_autosk(X_train, outModel,  cores=-1, class_names=None,
+                        incld_est=None,
+                        excld_est=None, incld_prep=None, excld_prep=None, 
+                        total_time=120, res_args={'cv':5},
+                        mem_limit=None,
+                        per_run=None, test_size=0.3, 
+                        wrkfolder=None,
+                        scoring=None, save=True, ply=False):
+    
+    """
+    Auto-sklearn to create a model
+    
+    Parameters
+    ---------------   
+    
+    X_train: np array
+              numpy array of training data where the 1st column is labels
+    
+    outModel: string
+               the output model path which is a gz file, if using keras it is 
+               h5 
+    
+    cores: int or -1 (default)
+            the no of parallel jobs
+    
+    class_names: list of strings
+                class names in order of their numercial equivalents
+    
+    incld_est: list of strings
+                estimators to included eg ['random_forest']
+    
+    excld_est: list of strings
+                estimators to excluded eg ['random_forest']
+    
+    incld_prep: list of strings
+                preproc to include
+                
+    excld_prep: list of strings
+                preproc to include
+    
+    total_time: int
+                time in seconds for the whole search process
+    
+    res_args: dict
+                strategy for overfit avoidance e.g. {'cv':5}
+    
+    mem_limit: int
+                memory limit per job
+    
+    per_run: int
+                time limit per run
+    
+    test_size: float
+            percentage to hold out to test
+    
+    wrkfolder: string
+                path to dir for intermediate working
+    
+    scoring : string
+              a suitable sklearn scoring type (see notes)
+    
+    
+    
+    Returns
+    -------
+    A list of:
+        
+    [model, classif_report]
+    
+    """
+    # default limit set by autosk is low and prone to error, hence estimate
+    # here based on mem + cores used 
+    # (though using everything on offer as limit!)
+    if mem_limit == None:
+        #Work out RAM and divide among threads
+        mem = virtual_memory()
+        #ingb = mem.total / (1024.**3)
+        inmb = mem.total / (1024.**2)
+        mem_limit = inmb / cores
+    
+    
+    bands = X_train.shape[1]-1
+    
+    #X_train = X_train.transpose()
+    if ply == False:
+        
+        X_train = X_train[X_train[:,0] != 0]
+    
+     
+    # Remove non-finite values
+    X_train = X_train[np.isfinite(X_train).all(axis=1)]
+    # y labels
+    y_train = X_train[:,0]
+
+    # remove labels from X_train
+    X_train = X_train[:,1:bands+1]
+
+    # then introduce the test at the end 
+    X_train, X_test, y_train, y_test = train_test_split(
+            X_train, y_train, test_size=test_size, random_state=0)
+    
+    #no_classes = len(np.unique(y_train))
+    
+    # seemingly this must guard the code below (which should then be indented),
+    # though I don't understand this completely
+    #if __name__ == "__main__"
+    
+    automl = AutoSklearnClassifier(time_left_for_this_task=total_time, 
+                                   resampling_strategy_arguments=res_args,
+                                   include_estimators=incld_est, 
+                                   exclude_estimators=excld_est,
+                                   include_preprocessors=incld_prep, 
+                                   exclude_preprocessors=excld_prep,
+                                   per_run_time_limit=per_run, 
+                                   tmp_folder = wrkfolder,
+                                   # per job seemingly
+                                   memory_limit=mem_limit,
+                                   n_jobs=cores)
+    
+    automl.fit(X_train, y_train)
+    
+    testresult = automl.predict(X_test)
+    
+    print(automl.leaderboard())
+    # print results
+    print(automl.sprint_statistics())
+    
+    #for ref
+#    automl.cv_results_
+#    automl.show_models()
+    
+    #save it
+    joblib.dump(automl, outModel)
+    
+    crDf = hp.plot_classif_report(y_test, testresult, target_names=class_names,
+                                  save=outModel[:-3]+'.png')
+    
+    plt_confmat(trueVals, predVals, cmap = plt.cm.gray, fmt="%d")
+
+    return [automl, crDf]
+    
+    
+    
+    
+def create_model(X_train, outModel, clf='svc', random=False, cv=5, cores=-1,
+                 strat=True, test_size=0.3, regress=False, params = None,
+                 scoring=None, class_names=None,
                  ply=False, save=True):
     
     """
@@ -168,7 +371,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
                the output model path which is a gz file, if using keras it is 
                h5 
     
-    clf : string
+    clf: string
           an sklearn or xgb classifier/regressor 
           logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb,
           
@@ -189,14 +392,27 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
     strat: bool
             a stratified grid search
     
-    regress : bool
+    test_size: float
+            percentage to hold out to test
+    
+    regress: bool
               a regression model if True, a classifier if False
     
-    params : a dict of model params (see scikit learn)
+    params: a dict of model params (see scikit learn)
              enter your own params dict rather than the range provided
     
-    scoring : string
+    scoring: string
               a suitable sklearn scoring type (see notes)
+    
+    class_names: list of strings
+                class names in order of their numercial equivalents
+    
+    Returns
+    -------
+    A list of:
+        
+    [grid.best_estimator_, grid.cv_results_, grid.best_score_, 
+            grid.best_params_, classification_report)]
     
         
     Notes:
@@ -223,7 +439,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
     """
     Prep of data for model fitting 
     """
-
+    
     bands = X_train.shape[1]-1
     
     #X_train = X_train.transpose()
@@ -243,6 +459,10 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         scoring = 'accuracy'
     elif scoring is None and regress is True:    
         scoring = 'r2'
+    # then introduce the test at the end 
+    X_train, X_test, y_train, y_test = train_test_split(
+            X_train, y_train, test_size=test_size, random_state=0)
+    
     # Choose the classifier type
     # TODO this has become rather messy (understatement)
     # and inefficient - need to make it more 
@@ -307,11 +527,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         # the gpu
         grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=1, 
                             cv=kf, verbose=1)
-        grid.fit(X_train, y_train)
-        
-        grid.best_estimator_.model.save(outModel)
-        
-
+                              
         
         
     if clf == 'erf':
@@ -326,9 +542,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
                       
         # run randomized search
             grid = RandomizedSearchCV(RF_clf, param_distributions=param_grid,
-                                       n_jobs=-1, n_iter=20,  verbose=2)
-            grid.fit(X_train, y_train)
-            joblib.dump(grid.best_estimator_, outModel) 
+                                       n_jobs=cores, n_iter=20,  verbose=2)
             #print("done in %0.3fs" % (time() - t0))
          else:
             if params is None: 
@@ -350,8 +564,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
                                     cv=cv, n_jobs=cores,
                                     scoring=scoring, verbose=2)
                 
-         grid.fit(X_train, y_train)
-         joblib.dump(grid.best_estimator_, outModel) 
+
          
     if clf == 'xgb' and regress is False:
         xgb_clf = XGBClassifier()
@@ -386,8 +599,8 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         grid = GridSearchCV(xgb_clf, param_grid=param_grid, 
                                 cv=StratifiedKFold(cv), n_jobs=cores,
                                 scoring=scoring, verbose=2)
-        grid.fit(X_train, y_train)
-        joblib.dump(grid.best_estimator_, outModel)
+
+        
     if clf == 'gb' and regress is False:
         # Key parameter here is max depth
         gb_clf = GradientBoostingClassifier()
@@ -408,8 +621,6 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
             grid = GridSearchCV(gb_clf, param_grid=param_grid, 
                                 cv=cv, n_jobs=cores,
                                 scoring=scoring, verbose=2)
-        grid.fit(X_train, y_train)
-        joblib.dump(grid.best_estimator_, outModel) 
         
     if clf == 'gb'  and regress is True:
         gb_clf = GradientBoostingRegressor(n_jobs=cores)
@@ -427,25 +638,23 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
                             cv=cv, n_jobs=cores,
                             scoring=scoring, verbose=2)
         
-        grid.fit(X_train, y_train)
-        joblib.dump(grid.best_estimator_, outModel) 
-        
     #Find best params----------------------------------------------------------
     if clf == 'rf' and regress is False:
          RF_clf = RandomForestClassifier(n_jobs=cores, random_state = 123)
          if random==True:
-            param_grid = {"max_depth": [10, None],
+             if params is None:
+                 param_grid = {"max_depth": [10, None],
                           "n_estimators": [500],
                           "min_samples_split": sp_randint(1, 20),
                           "min_samples_leaf": sp_randint(1, 20),
                           "bootstrap": [True, False],
                           "criterion": ["gini", "entropy"]}
+             else:
+                  param_grid = params
                       
         # run randomized search
-            grid = RandomizedSearchCV(RF_clf, param_distributions=param_grid,
-                                       n_jobs=-1, n_iter=20,  verbose=2)
-            grid.fit(X_train, y_train)
-            joblib.dump(grid.best_estimator_, outModel) 
+             grid = RandomizedSearchCV(RF_clf, param_distributions=param_grid,
+                                       n_jobs=cores, n_iter=20,  verbose=2)
             #print("done in %0.3fs" % (time() - t0))
          else:
             if params is None: 
@@ -466,9 +675,6 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
                 grid = GridSearchCV(RF_clf, param_grid=param_grid, 
                                     cv=cv, n_jobs=cores,
                                     scoring=scoring, verbose=2)
-                
-         grid.fit(X_train, y_train)
-         joblib.dump(grid.best_estimator_, outModel) 
          
     if clf == 'rf' and regress is True:
         RF_clf = RandomForestRegressor(n_jobs = cores, random_state = 123)
@@ -485,8 +691,6 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
                             cv=cv, n_jobs=cores,
                             scoring=scoring, verbose=2)
                 
-        grid.fit(X_train, y_train)
-        joblib.dump(grid.best_estimator_, outModel) 
             #print("done in %0.3fs" % (time() - t0))
     
     # Random can be quicker and more often than not produces close to
@@ -513,8 +717,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
                  grid = GridSearchCV(svm_clf, param_grid=param_grid, 
                                     cv=cv, n_jobs=cores,
                                     scoring=scoring, verbose=2)
-        grid.fit(X_train, y_train)
-        joblib.dump(grid.best_estimator_, outModel) 
+        
     if clf == 'linsvc' and regress is True:
         svm_clf = svm.LinearSVR()
         if params is None:
@@ -526,8 +729,6 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         grid = GridSearchCV(svm_clf, param_grid=param_grid, 
                             cv=cv, n_jobs=cores,
                             scoring=scoring, verbose=2)
-        grid.fit(X_train, y_train)
-        joblib.dump(grid.best_estimator_, outModel) 
              #print("done in %0.3fs" % (time() - t0))
     if clf == 'svc': # Far too bloody slow
         X_train = min_max_scaler.fit_transform(X_train)
@@ -542,8 +743,6 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
             #param_grid = [{'kernel':['rbf', 'linear']}]
             grid = GridSearchCV(svm_clf, param_grid=param_grid, cv=cv,
                                 scoring=scoring, verbose=1, n_jobs=cores)
-            grid.fit(X_train, y_train)
-            joblib.dump(grid.best_estimator_, outModel) 
             #print("done in %0.3fs" % (time() - t0))
 
         if params is None:
@@ -561,8 +760,6 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
             grid = GridSearchCV(svm_clf, param_grid=param_grid, 
                                 cv=cv, n_jobs=cores,
                                 scoring=scoring, verbose=2)
-        grid.fit(X_train, y_train)
-        joblib.dump(grid.best_estimator_, outModel) 
              #print("done in %0.3fs" % (time() - t0))
     
     if clf == 'nusvc' and regress is False:
@@ -577,8 +774,6 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
             #param_grid = [{'kernel':['rbf', 'linear']}]
             grid = GridSearchCV(svm_clf, param_grid=param_grid, cv=cv,
                                 scoring=scoring, verbose=1, n_jobs=cores)
-            grid.fit(X_train, y_train)
-            joblib.dump(grid.best_estimator_, outModel) 
             #print("done in %0.3fs" % (time() - t0))
         else:
             if params is None:
@@ -595,16 +790,13 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
              grid = GridSearchCV(svm_clf, param_grid=param_grid, 
                                 cv=cv, n_jobs=cores,
                                 scoring=scoring, verbose=2)
-        grid.fit(X_train, y_train)
-        joblib.dump(grid.best_estimator_, outModel) 
+        
     if clf == 'nusvc' and regress is True:
          svm_clf = svm.NuSVR()
          param_grid = [{'nu':[0.25, 0.5, 0.75, 1],'gamma': [1e-3, 1e-4]}]
          grid = GridSearchCV(svm_clf, param_grid=param_grid, 
                             cv=cv, n_jobs=cores,
                             scoring=scoring, verbose=2)
-         grid.fit(X_train, y_train)
-         joblib.dump(grid.best_estimator_, outModel) 
              #print("done in %0.3fs" % (time() - t0))
     if clf == 'logit':
         logit_clf = LogisticRegression()
@@ -617,8 +809,6 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         grid = GridSearchCV(logit_clf, param_grid=param_grid, 
                             cv=cv, n_jobs=cores,
                             scoring=scoring, verbose=2)
-        grid.fit(X_train, y_train)
-        joblib.dump(grid.best_estimator_, outModel) 
         
     if clf == 'sgd':
         logit_clf = SGDClassifier()
@@ -633,10 +823,28 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
         grid = GridSearchCV(logit_clf, param_grid=param_grid, 
                             cv=cv, n_jobs=cores,
                             scoring=scoring, verbose=2)
-        grid.fit(X_train, y_train)
+        
+    grid.fit(X_train, y_train)
+    
+    if clf == 'keras':
+        
+        grid.best_estimator_.model.save(outModel)
+    else:
+    
         joblib.dump(grid.best_estimator_, outModel) 
-
-    return [grid.best_estimator_, grid.cv_results_, grid.best_score_, grid.best_params_]
+    
+    testresult = grid.best_estimator_.predict(X_test)
+    
+    crDf = hp.plot_classif_report(y_test, testresult, target_names=class_names,
+                                  save=outModel[:-3]+'._classif_report.png')
+    
+    confmat = hp.plt_confmat(X_test, y_test, grid.best_estimator_, 
+                             class_names=class_names, 
+                   cmap=plt.cm.Blues, 
+                fmt="%d", save=outModel[:-3]+'_confmat.png')
+    
+    return [grid.best_estimator_, grid.cv_results_, grid.best_score_, 
+            grid.best_params_, crDf, confmat]
 #    print(grid.best_params_)
 #    print(grid.best_estimator_)
 #    print(grid.oob_score_)
@@ -645,11 +853,6 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=6, cores=-1,
 #    plt.xlabel('no of estimators')
 #    plt.ylabel('Cross validated accuracy')    
     
-
-    
-    #Save the model
-#    joblib.dump(grid.best_estimator_, outModel+'.pkl') 
-#    print("done in %0.3fs" % (time() - t0))
 
 def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
     
@@ -1200,7 +1403,7 @@ def prob_pixel_bloc(model, inputImage, bands, outMap, classes, blocksize=None,
     outDataset = None
 
     
-def classify_object(model, inShape, attributes, field_name=None):
+def classify_object(model, inShape, attributes, field_name=None, write='gpd'):
     
     """
     Classify a polygon/point file attributes ('object based') using an sklearn
@@ -1219,43 +1422,33 @@ def classify_object(model, inShape, attributes, field_name=None):
     
     field_name: string
                  name of classified label field (optional)
+    
+    write: string
+                either gpd(geopandas) or ogr
     """
     
-    print('prepping data')
-    dbf=simpledbf.Dbf5(inShape[:-4]+'.dbf')  
+#    old method for ref - limited to .shp
+#    dbf=simpledbf.Dbf5(inShape[:-4]+'.dbf')  
 #    csv = inShape[:-4]+'.csv'
 #    dbf.to_csv(inShape[:-4]+'.csv')
+#    df = dbf.to_dataframe()
+
+    # it seems rather ugly/inefficient to read in every row via ogr
+    model1 = joblib.load(model)
     
-    df = dbf.to_dataframe()
+    df = gpd.read_file(inShape)
     
-    X = df[attributes].as_matrix()
+    X = df[attributes].to_numpy()
     
-    del df
-    
-    print('data ready')
-    """
-    Classification
-    
-    The data must be prepared for input and exit from scikit learn
-    
-    e.g we require cross tabulating training and input data
-    
-    The next three lines obviously depend on the state in which the training data
-    comes into this process
-    """
+    if write == 'ogr':
+        del df
 
     X[np.where(np.isnan(X))]=0
     X = X[np.isfinite(X).all(axis=1)]
-     
-    
 
     #Now the classification itself - see sklearn for details on params
 
-    print('Classifying')
-
     predictClass = model1.predict(X)
-
-    #Now we sort the values to match the order of the vector attribute table
 
     # clear redundant variables from memory
 
@@ -1263,31 +1456,57 @@ def classify_object(model, inShape, attributes, field_name=None):
     
     predictClass = predictClass.transpose() 
     
+    if write == 'ogr':
+        shp = ogr.Open(inShape, 1)
+        lyr = shp.GetLayer()
+        fldDef = ogr.FieldDefn(field_name, ogr.OFTInteger)
+        lyr.CreateField(fldDef)
+        
+        labels = np.arange(lyr.GetFeatureCount())
+        
+        for label in tqdm(labels):
+            val=predictClass[label]
+            feat = lyr.GetFeature(label)
+            feat.SetField(field_name, int(val))
+            lyr.SetFeature(feat)
     
-    shp = ogr.Open(inShape, 1)
+        lyr.SyncToDisk()
+        shp.FlushCache()
+        shp = None
+        lyr = None
+    else:
+        df[field_name] = predictClass
+        df.to_file(inShape)
+        
+def get_polars(inShp, polars=["VV", "VH"]):
+    
+    """
+    Get list of fields containing polarisations from a polygon/point file
+    
+    Parameters
+    ----------
+    
+    inShp: string
+          the input polygon
+          
+    polars: list of strings
+            the attributes headed with polarisations eg 'VV'
+    
+    """
+    
+    shp = ogr.Open(inShp)
     lyr = shp.GetLayer()
-    fldDef = ogr.FieldDefn(field_name, ogr.OFTInteger)
-    lyr.CreateField(fldDef)
+    lyrdefn = lyr.GetLayerDefn()
     
-    labels = np.arange(lyr.GetFeatureCount())
+    ootlist = []
     
-    #a vector of label vals    
-    #PropIM = np.zeros_like(segras.ReadAsArray(), dtype=np.double)
-
-     
-    # TODO - order is not quite right -sort this
+    for f in range(lyrdefn.GetFieldCount()):
+        defn = lyrdefn.GetFieldDefn(f)
+        ootlist.append(defn.name)
     
-    for label in tqdm(labels):
-        val=predictClass[label]
-        feat = lyr.GetFeature(label)
-        feat.SetField(field_name, int(val))
-        lyr.SetFeature(feat)
-
-    lyr.SyncToDisk()
-    shp.FlushCache()
-    shp = None
-    lyr = None
-
+    final = [o for o in ootlist if "VV" in o or "VH" in o]
+    
+    return final
     
 def get_training_shp(inShape, label_field, feat_fields,  outFile = None):
     """
@@ -1298,7 +1517,7 @@ def get_training_shp(inShape, label_field, feat_fields,  outFile = None):
     --------------------    
     
     inShape: string
-              the input shapefile - must be esri .shp at present
+              the input polygon
     
     label_field: string
                   the field name for the class labels
@@ -1315,7 +1534,7 @@ def get_training_shp(inShape, label_field, feat_fields,  outFile = None):
     list of reject features
     
     """
-
+    # TODO Could be done in a less verbose way by gpd
     outData = list()
     
     feat_fields.insert(0,label_field)
@@ -1339,7 +1558,7 @@ def get_training_shp(inShape, label_field, feat_fields,  outFile = None):
         outData.append(row)
         
     df=pd.DataFrame(outData, columns = feat_fields)    
-    outArray = df.as_matrix()
+    outArray = df.to_numpy()
     
     if outFile != None:
         jb.dump(outArray, outFile, compress=2)
@@ -1422,7 +1641,7 @@ def get_training(inShape, inRas, bands, field, outFile = None):
         mem_layer = mem_ds.CreateLayer('poly', None, ogr.wkbPolygon)
         mem_layer.CreateFeature(feat.Clone())
 
-        # Rasterize it
+        # Rasterize 
         rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
         rvds.SetGeoTransform(new_gt)
         gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
@@ -1430,8 +1649,7 @@ def get_training(inShape, inRas, bands, field, outFile = None):
         
         # Mask the source data array with our current feature
         # Use the logical_not to flip 0<->1 to get the correct mask effect
-        # we also mask out nodata values explictly
-            
+        # we also mask out nodata values explictly            
         rb = raster.GetRasterBand(1)
         src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                            src_offset[3])

@@ -1464,16 +1464,55 @@ def image_thresh(image):
         name='thresholded', colormap='magenta', blending='additive'
     )
 
+def apply_lut(src, lut):
+    # dst(I) <-- lut(src)
+    # https://stackoverflow.com/questions/14448763/
+    #is-there-a-convenient-way-to-apply-a-lookup-table-to-a-large-array-in-numpy
+    dst = lut[src]
+    return dst
 
-def colorscale(seg, prop):
+def colorscale(seg, prop='Area', custom=None):
     
-    props = regionprops(np.int32(seg))
-    propIm = np.zeros_like(seg, dtype=np.float64) 
+    """
+    Colour an array according to a region prop value
     
-    for p in props:
-        propIm[np.where(seg==p.label)]=p[prop]
+    Parameters
+    ----------
     
-    return propIm
+    seg: np.array
+        input array of labelled image
+    
+    prop: string
+        sklearn region prop
+    
+    custom: list
+            a custom list of values to apply to array
+    
+    Returns
+    -------
+    
+    np array of attributed regions
+    
+    """
+    
+    if custom == None:
+        props = regionprops(np.int32(seg))
+         
+        
+        alist = [p[prop] for p in props] 
+    
+    else:
+        alist = custom
+    
+    # there must be a zero to represent no data so insert at start
+    alist.insert(0, 0)
+    alist = np.array(alist)
+    
+    oot = apply_lut(seg, alist)
+    
+    return oot
+
+
 
 
 def _do_ransac(inArray, order='col'):

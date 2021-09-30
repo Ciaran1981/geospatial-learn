@@ -233,6 +233,27 @@ a GDAL datatype (see the GDAL website) e.g gdal.GDT_Int32</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt id="raster.batch_gdaldem">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">batch_gdaldem</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inlist</span></em>, <em class="sig-param"><span class="n">prop</span><span class="o">=</span><span class="default_value">'aspect'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.batch_gdaldem" title="Permalink to this definition">¶</a></dt>
+<dd><p>batch dem calculation a load of gdal files from some format to tif</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inlist</strong> (<em>string</em>) – A list of raster paths</p></li>
+<li><p><strong>prop</strong> (<em>string</em>) – one of “hillshade”, “slope”, “aspect”, “color-relief”, “TRI”,
+“TPI”, “Roughness”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List of file paths</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="raster.batch_translate">
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">batch_translate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">folder</span></em>, <em class="sig-param"><span class="n">wildcard</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">'Gtiff'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.batch_translate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Using the gdal python API, this function translates the format of files
@@ -244,6 +265,23 @@ to commonly used formats</p>
 <li><p><strong>wildcard</strong> (<em>string</em>) – the format wildcard to search for e.g. ‘.tif’</p></li>
 <li><p><strong>FMT</strong> (<em>string (optional)</em>) – a GDAL raster format (see the GDAL website) eg Gtiff, HFA, KEA</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="raster.batch_translate_adf">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">batch_translate_adf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inlist</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.batch_translate_adf" title="Permalink to this definition">¶</a></dt>
+<dd><p>batch translate a load of adf (arcgis) files from some format to tif</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>inlist</strong> (<em>string</em>) – A list of raster paths</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List of file paths</p>
 </dd>
 </dl>
 </dd></dl>
@@ -514,6 +552,29 @@ to zero (in the use case of 2 sceneIm classifications)</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt id="raster.srtm_gdaldem">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">srtm_gdaldem</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inlist</span></em>, <em class="sig-param"><span class="n">prop</span><span class="o">=</span><span class="default_value">'aspect'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.srtm_gdaldem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Batch dem calculation a load of srtm files</p>
+<p>SRTM scale &amp; z factor vary across the globe so this calculates based on
+latitude</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inlist</strong> (<em>string</em>) – A list of raster paths</p></li>
+<li><p><strong>prop</strong> (<em>string</em>) – one of “hillshade”, “slope”, “aspect”, “color-relief”, “TRI”,
+“TPI”, “Roughness”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List of file paths</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="raster.stack_ras">
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">stack_ras</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rasterList</span></em>, <em class="sig-param"><span class="n">outFile</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.stack_ras" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stack some rasters</p>
@@ -549,7 +610,7 @@ are no nans as nan percentile is far too slow</p></li>
 
 <dl class="py function">
 <dt id="raster.temporal_comp">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">temporal_comp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fileList</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">stat</span><span class="o">=</span><span class="default_value">'percentile'</span></em>, <em class="sig-param"><span class="n">q</span><span class="o">=</span><span class="default_value">95</span></em>, <em class="sig-param"><span class="n">folder</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.temporal_comp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">temporal_comp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fileList</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">stat</span><span class="o">=</span><span class="default_value">'percentile'</span></em>, <em class="sig-param"><span class="n">q</span><span class="o">=</span><span class="default_value">95</span></em>, <em class="sig-param"><span class="n">folder</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.temporal_comp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate an image beased on a time series collection of imagery (eg a years woth of S2 data)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -568,7 +629,7 @@ are no nans as nan percentile is far too slow</p></li>
 
 <dl class="py function">
 <dt id="raster.tile_rasters">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">tile_rasters</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outDir</span></em>, <em class="sig-param"><span class="n">tilesize</span><span class="o">=</span><span class="default_value">['256', '256']</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.tile_rasters" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">tile_rasters</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outDir</span></em>, <em class="sig-param"><span class="n">tilesize</span><span class="o">=</span><span class="default_value">['256', '256']</span></em>, <em class="sig-param"><span class="n">overlap</span><span class="o">=</span><span class="default_value">'0'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.tile_rasters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Split a large raster into smaller ones</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -576,6 +637,20 @@ are no nans as nan percentile is far too slow</p></li>
 <li><p><strong>inRas</strong> (<em>string</em>) – the path to input raster</p></li>
 <li><p><strong>outDir</strong> (<em>string</em>) – the path to the output dir</p></li>
 <li><p><strong>tilesize</strong> (<em>list of str</em>) – the sides of a square tile [“256”, “256”]</p></li>
+<li><p><strong>overlap</strong> (<em>string</em>) – should a overlap per tile be required</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="raster.write_vrt">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">write_vrt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">infiles</span></em>, <em class="sig-param"><span class="n">outfile</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.write_vrt" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infiles</strong></p></li>
+<li><p><strong>outfile</strong> (<em>string</em>) – the output .vrt</p></li>
 </ul>
 </dd>
 </dl>
@@ -617,7 +692,7 @@ potentially slower than the other cross val in the create_model function</p>
 
 <dl class="py function">
 <dt id="learning.classify_object">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_object</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">attributes</span></em>, <em class="sig-param"><span class="n">field_name</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_object" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_object</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">attributes</span></em>, <em class="sig-param"><span class="n">field_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">write</span><span class="o">=</span><span class="default_value">'gpd'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_object" title="Permalink to this definition">¶</a></dt>
 <dd><p>Classify a polygon/point file attributes (‘object based’) using an sklearn
 model</p>
 <dl class="field-list simple">
@@ -627,6 +702,7 @@ model</p>
 <li><p><strong>inShape</strong> (<em>string</em>) – input shapefile path (must be .shp for now….)</p></li>
 <li><p><strong>attributes</strong> (<em>list of stings</em>) – list of attributes names</p></li>
 <li><p><strong>field_name</strong> (<em>string</em>) – name of classified label field (optional)</p></li>
+<li><p><strong>write</strong> (<em>string</em>) – either gpd(geopandas) or ogr</p></li>
 </ul>
 </dd>
 </dl>
@@ -681,7 +757,7 @@ so that has been prioritised rather than raster IO</p>
 
 <dl class="py function">
 <dt id="learning.classify_ply">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_ply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">inModel</span></em>, <em class="sig-param"><span class="n">train_field</span><span class="o">=</span><span class="default_value">'training'</span></em>, <em class="sig-param"><span class="n">class_field</span><span class="o">=</span><span class="default_value">'label'</span></em>, <em class="sig-param"><span class="n">rgb</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">outcld</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_ply" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_ply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">inModel</span></em>, <em class="sig-param"><span class="n">train_field</span><span class="o">=</span><span class="default_value">'training'</span></em>, <em class="sig-param"><span class="n">class_field</span><span class="o">=</span><span class="default_value">'label'</span></em>, <em class="sig-param"><span class="n">rgb</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">outcld</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ignore</span><span class="o">=</span><span class="default_value">['x', 'y', 'scalar_ScanAngleRank', 'scalar_NumberOfReturns', 'scalar_ReturnNumber', 'scalar_GpsTime', 'scalar_PointSourceId']</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_ply" title="Permalink to this definition">¶</a></dt>
 <dd><p>Classify a point cloud (ply format)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -692,6 +768,7 @@ this must already exist! Create in CldComp. or cgal</p></li>
 <li><p><strong>train_field</strong> (<em>string</em>) – the name of the training label field so it can be ignored</p></li>
 <li><p><strong>rgb</strong> (<em>bool</em>) – whether there is rgb data to be included</p></li>
 <li><p><strong>outcld</strong> (<em>string</em>) – path to a new ply to write if not writing to the input one</p></li>
+<li><p><strong>ignore</strong> (<em>list</em>) – the pointcloud attributes to ignore for classification</p></li>
 </ul>
 </dd>
 </dl>
@@ -699,7 +776,7 @@ this must already exist! Create in CldComp. or cgal</p></li>
 
 <dl class="py function">
 <dt id="learning.create_model">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_train</span></em>, <em class="sig-param"><span class="n">outModel</span></em>, <em class="sig-param"><span class="n">clf</span><span class="o">=</span><span class="default_value">'svc'</span></em>, <em class="sig-param"><span class="n">random</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">cv</span><span class="o">=</span><span class="default_value">6</span></em>, <em class="sig-param"><span class="n">cores</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">strat</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">regress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scoring</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ply</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">save</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_train</span></em>, <em class="sig-param"><span class="n">outModel</span></em>, <em class="sig-param"><span class="n">clf</span><span class="o">=</span><span class="default_value">'svc'</span></em>, <em class="sig-param"><span class="n">random</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">cv</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">cores</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">strat</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">test_size</span><span class="o">=</span><span class="default_value">0.3</span></em>, <em class="sig-param"><span class="n">regress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scoring</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">class_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ply</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">save</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Brute force or random model creating using scikit learn. Either use the
 default params in this function or enter your own (recommended - see sklearn)</p>
 <dl class="field-list">
@@ -719,10 +796,19 @@ grid search as multi-core overloads the GPUs quick!</p>
 <li><p><strong>cv</strong> (<em>int</em>) – no of folds</p></li>
 <li><p><strong>cores</strong> (<em>int or -1 (default)</em>) – the no of parallel jobs</p></li>
 <li><p><strong>strat</strong> (<em>bool</em>) – a stratified grid search</p></li>
+<li><p><strong>test_size</strong> (<em>float</em>) – percentage to hold out to test</p></li>
 <li><p><strong>regress</strong> (<em>bool</em>) – a regression model if True, a classifier if False</p></li>
 <li><p><strong>params</strong> (<em>a dict of model params (see scikit learn)</em>) – enter your own params dict rather than the range provided</p></li>
 <li><p><strong>scoring</strong> (<em>string</em>) – a suitable sklearn scoring type (see notes)</p></li>
+<li><p><strong>class_names</strong> (<em>list of strings</em>) – class names in order of their numercial equivalents</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A list of</em></p></li>
+<li><p><em>[grid.best_estimator_, grid.cv_results_, grid.best_score_,</em> – <a href="#id4"><span class="problematic" id="id5">grid.best_params_</span></a>, classification_report)]</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 <blockquote>
@@ -739,23 +825,91 @@ multi-class, regression etc - see the sklearn docs!</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="learning.create_model_tpot">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model_tpot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_train</span></em>, <em class="sig-param"><span class="n">outModel</span></em>, <em class="sig-param"><span class="n">cv</span><span class="o">=</span><span class="default_value">6</span></em>, <em class="sig-param"><span class="n">cores</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">regress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scoring</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model_tpot" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a model using the tpot library where genetic algorithms
-are used to optimise pipline and params.</p>
-<p>This also supports xgboost incidentally</p>
+<dt id="learning.create_model_autosk">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model_autosk</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_train</span></em>, <em class="sig-param"><span class="n">outModel</span></em>, <em class="sig-param"><span class="n">cores</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">class_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">incld_est</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">excld_est</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">incld_prep</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">excld_prep</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">total_time</span><span class="o">=</span><span class="default_value">120</span></em>, <em class="sig-param"><span class="n">res_args</span><span class="o">=</span><span class="default_value">{'cv': 5}</span></em>, <em class="sig-param"><span class="n">mem_limit</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">per_run</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">test_size</span><span class="o">=</span><span class="default_value">0.3</span></em>, <em class="sig-param"><span class="n">wrkfolder</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scoring</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">save</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">ply</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model_autosk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Auto-sklearn to create a model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>X_train</strong> (<em>np array</em>) – numpy array of training data where the 1st column is labels</p></li>
+<li><p><strong>outModel</strong> (<em>string</em>) – the output model path which is a gz file, if using keras it is
+h5</p></li>
+<li><p><strong>cores</strong> (<em>int or -1 (default)</em>) – the no of parallel jobs</p></li>
+<li><p><strong>class_names</strong> (<em>list of strings</em>) – class names in order of their numercial equivalents</p></li>
+<li><p><strong>incld_est</strong> (<em>list of strings</em>) – estimators to included eg [‘random_forest’]</p></li>
+<li><p><strong>excld_est</strong> (<em>list of strings</em>) – estimators to excluded eg [‘random_forest’]</p></li>
+<li><p><strong>incld_prep</strong> (<em>list of strings</em>) – preproc to include</p></li>
+<li><p><strong>excld_prep</strong> (<em>list of strings</em>) – preproc to include</p></li>
+<li><p><strong>total_time</strong> (<em>int</em>) – time in seconds for the whole search process</p></li>
+<li><p><strong>res_args</strong> (<em>dict</em>) – strategy for overfit avoidance e.g. {‘cv’:5}</p></li>
+<li><p><strong>mem_limit</strong> (<em>int</em>) – memory limit per job</p></li>
+<li><p><strong>per_run</strong> (<em>int</em>) – time limit per run</p></li>
+<li><p><strong>test_size</strong> (<em>float</em>) – percentage to hold out to test</p></li>
+<li><p><strong>wrkfolder</strong> (<em>string</em>) – path to dir for intermediate working</p></li>
+<li><p><strong>scoring</strong> (<em>string</em>) – a suitable sklearn scoring type (see notes)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A list of</em></p></li>
+<li><p><em>[model, classif_report]</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="learning.create_model_tpot">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model_tpot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_train</span></em>, <em class="sig-param"><span class="n">outModel</span></em>, <em class="sig-param"><span class="n">gen</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">popsize</span><span class="o">=</span><span class="default_value">50</span></em>, <em class="sig-param"><span class="n">cv</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">cores</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">dask</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">test_size</span><span class="o">=</span><span class="default_value">0.2</span></em>, <em class="sig-param"><span class="n">regress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scoring</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">verbosity</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">warm_start</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model_tpot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a model using the tpot library where genetic algorithms
+are used to optimise pipline and params.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul>
 <li><p><strong>X_train</strong> (<em>np array</em>) – numpy array of training data where the 1st column is labels</p></li>
 <li><p><strong>outModel</strong> (<em>string</em>) – the output model path (which is a .py file)
 from which to run the pipeline</p></li>
 <li><p><strong>cv</strong> (<em>int</em>) – no of folds</p></li>
 <li><p><strong>cores</strong> (<em>int or -1 (default)</em>) – the no of parallel jobs</p></li>
-<li><p><strong>strat</strong> (<em>bool</em>) – a stratified grid search</p></li>
 <li><p><strong>regress</strong> (<em>bool</em>) – a regression model if True, a classifier if False</p></li>
-<li><p><strong>params</strong> (<em>a dict of model params (see tpot)</em>) – enter your own params dict rather than the range provided</p></li>
-<li><p><strong>scoring</strong> (<em>string</em>) – a suitable sklearn scoring type (see notes)</p></li>
+<li><p><strong>test_size</strong> (<em>float</em>) – size of test set held out</p></li>
+<li><p><strong>params</strong> (<em>a dict of model params (see tpot)</em>) – enter your own params dict rather than the range provided
+e.g.
+{‘sklearn.ensemble.RandomForestClassifier’: {“n_estimators”: [200],</p>
+<blockquote>
+<div><p>“max_features”: [‘sqrt’, ‘log2’],
+“max_depth”: [10, None],</p>
+</div></blockquote>
+</li>
+<li><p><strong>},</strong></p></li>
+<li><p><strong>‘xgboost.sklearn.XGBClassifier’</strong> (<em>{</em>) –</p>
+<dl class="simple">
+<dt>‘n_estimators’: [200],</dt><dd><p>‘learning_rate’: [0.1, 0.2, 0.4]</p>
+</dd>
+</dl>
+</li>
+<li><p><strong>}}</strong></p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>scoring: string</dt><dd><p>a suitable sklearn scoring type (see notes)</p>
+</dd>
+<dt>warm_start: bool</dt><dd><p>use the previous population, useful if interactive</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="learning.get_polars">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">get_polars</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">polars</span><span class="o">=</span><span class="default_value">['VV', 'VH']</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_polars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of fields containing polarisations from a polygon/point file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inShp</strong> (<em>string</em>) – the input polygon</p></li>
+<li><p><strong>polars</strong> (<em>list of strings</em>) – the attributes headed with polarisations eg ‘VV’</p></li>
 </ul>
 </dd>
 </dl>
@@ -788,7 +942,7 @@ from which to run the pipeline</p></li>
 
 <dl class="py function">
 <dt id="learning.get_training_ply">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">get_training_ply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">label_field</span><span class="o">=</span><span class="default_value">'training'</span></em>, <em class="sig-param"><span class="n">classif_field</span><span class="o">=</span><span class="default_value">'label'</span></em>, <em class="sig-param"><span class="n">rgb</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">outFile</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training_ply" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">get_training_ply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">label_field</span><span class="o">=</span><span class="default_value">'training'</span></em>, <em class="sig-param"><span class="n">classif_field</span><span class="o">=</span><span class="default_value">'label'</span></em>, <em class="sig-param"><span class="n">rgb</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">outFile</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ignore</span><span class="o">=</span><span class="default_value">['x', 'y', 'scalar_ScanAngleRank', 'scalar_NumberOfReturns', 'scalar_ReturnNumber', 'scalar_GpsTime', 'scalar_PointSourceId']</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.get_training_ply" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get training from a point cloud</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -800,13 +954,15 @@ be positive integers</p></li>
 must be specified so it can be ignored</p></li>
 <li><p><strong>rgb</strong> (<em>bool</em>) – whether there is rgb data to be included</p></li>
 <li><p><strong>outFile</strong> (<em>string</em>) – path to training array to be saved as .gz via joblib</p></li>
+<li><p><strong>ignore</strong> (<em>list</em>) – the pointcloud attributes to ignore for training</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>np array of training where first column is labels</p>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>np array of training where first column is labels</em></p></li>
+<li><p><em>list of feature names for later ref/plotting</em></p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -819,7 +975,7 @@ classification (typically).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>inShape</strong> (<em>string</em>) – the input shapefile - must be esri .shp at present</p></li>
+<li><p><strong>inShape</strong> (<em>string</em>) – the input polygon</p></li>
 <li><p><strong>label_field</strong> (<em>string</em>) – the field name for the class labels</p></li>
 <li><p><strong>feat_fields</strong> (<em>list</em>) – the field names of the feature data</p></li>
 <li><p><strong>outFile</strong> (<em>string (optional)</em>) – path to training data to be saved (.gz)</p></li>
@@ -837,7 +993,7 @@ classification (typically).</p>
 
 <dl class="py function">
 <dt id="learning.plot_feature_importances">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">plot_feature_importances</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">modelPth</span></em>, <em class="sig-param"><span class="n">featureNames</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.plot_feature_importances" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">plot_feature_importances</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">modelPth</span></em>, <em class="sig-param"><span class="n">featureNames</span></em>, <em class="sig-param"><span class="n">model_type</span><span class="o">=</span><span class="default_value">'scikit'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.plot_feature_importances" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the feature importances of an ensemble classifier</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -851,7 +1007,7 @@ classification (typically).</p>
 
 <dl class="py function">
 <dt id="learning.ply_features">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">ply_features</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">outcld</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">k</span><span class="o">=</span><span class="default_value">[10, 20, 30]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.ply_features" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">ply_features</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incld</span></em>, <em class="sig-param"><span class="n">outcld</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">k</span><span class="o">=</span><span class="default_value">[50, 100, 200]</span></em>, <em class="sig-param"><span class="n">props</span><span class="o">=</span><span class="default_value">['anisotropy', 'curvature', 'eigenentropy', 'eigen_sum', 'linearity', 'omnivariance', 'planarity', 'sphericity']</span></em>, <em class="sig-param"><span class="n">nrm_props</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.ply_features" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate point cloud features and write to file</p>
 <p>Currently memory intensive due to using pyntcloud….</p>
 <dl class="field-list simple">
@@ -861,6 +1017,9 @@ classification (typically).</p>
 <li><p><strong>outcld</strong> (<em>string</em>) – the output point cloud</p></li>
 <li><p><strong>k</strong> (<em>list</em>) – the no of neighbors to use when calculating the props
 multiple is more effective</p></li>
+<li><p><strong>props</strong> (<em>list</em>) – the properties you wish to include</p></li>
+<li><p><strong>nrm_props</strong> (<em>list</em>) – properties based on normals if the exist (this will fail if they don’t)
+e.g. [“inclination_radians”,  “orientation_radians”]</p></li>
 </ul>
 </dd>
 </dl>
@@ -914,7 +1073,51 @@ so that has been prioritised rather than raster IO</p>
 <div class="section" id="id2">
 <h3>Description<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <p>This module contains various functions for the writing of data in OGR vector
-formats. The functions are mainly concerned with writing geometric or pixel based attributes, with the view to them being classified in the learning module</p>
+formats.
+The functions are mainly concerned with writing geometric or pixel based attributes,
+with the view to them being classified in the learning module</p>
+<dl class="py function">
+<dt id="shape.buffer">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">buffer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">outfile</span></em>, <em class="sig-param"><span class="n">dist</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Buffer a shapefile by a given distance outputting a new one</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inShp</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>outfile</strong> (<em>string</em>) – output shapefile</p></li>
+<li><p><strong>dist</strong> (<em>float</em>) – the distance in map units to buffer</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="shape.extent2poly">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">extent2poly</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">infile</span></em>, <em class="sig-param"><span class="n">filetype</span><span class="o">=</span><span class="default_value">'raster'</span></em>, <em class="sig-param"><span class="n">outfile</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">polytype</span><span class="o">=</span><span class="default_value">'ESRI Shapefile'</span></em>, <em class="sig-param"><span class="n">geecoord</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.extent2poly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the coordinates of a files extent and return an ogr polygon ring with
+the option to save the</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> (<em>string</em>) – input ogr compatible geometry file or gdal raster</p></li>
+<li><p><strong>filetype</strong> (<em>string</em>) – the path of the output file, if not specified, it will be input file
+with ‘extent’ added on before the file type</p></li>
+<li><p><strong>outfile</strong> (<em>string</em>) – the path of the output file, if not specified, it will be input file
+with ‘extent’ added on before the file type</p></li>
+<li><p><strong>polytype</strong> (<em>string</em>) – ogr comapatible file type (see gdal/ogr docs) default ‘ESRI Shapefile’
+ensure your outfile string has the equiv. e.g. ‘.shp’</p></li>
+<li><p><strong>geecoord</strong> (<em>bool</em>) – optionally convert to WGS84 lat,lon</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>a GEE polygon geometry</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt id="shape.filter_shp">
 <code class="sig-prename descclassname">shape.</code><code class="sig-name descname">filter_shp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">expression</span></em>, <em class="sig-param"><span class="n">outField</span></em>, <em class="sig-param"><span class="n">outLabel</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.filter_shp" title="Permalink to this definition">¶</a></dt>
@@ -925,7 +1128,7 @@ raster operation</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>inShp</strong> (<em>string</em>) – input shapefile</p></li>
-<li><p><strong>expression</strong> (<em>string</em>) – sql style expression e.g. “DN &gt;= 168”</p></li>
+<li><p><strong>expression</strong> (<em>string</em>) – expression e.g. “DN &gt;= 168”</p></li>
 <li><p><strong>outField</strong> (<em>string</em>) – the field in which the label will reside</p></li>
 <li><p><strong>outLabel</strong> (<em>int</em>) – the label identifying the filtered features</p></li>
 </ul>
@@ -982,10 +1185,17 @@ this to zero will disable the balloon force.</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt id="shape.poly2dictlist">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">poly2dictlist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.poly2dictlist" title="Permalink to this definition">¶</a></dt>
+<dd><p>convert an ogr to a list of json like dicts</p>
+</dd></dl>
+
+<dl class="py function">
 <dt id="shape.shape_props">
 <code class="sig-prename descclassname">shape.</code><code class="sig-name descname">shape_props</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">prop</span></em>, <em class="sig-param"><span class="n">inRas</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">label_field</span><span class="o">=</span><span class="default_value">'ID'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.shape_props" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate various geometric properties of a set of polygons
-Output will be relative to geographic units where relevant, but normalised where not (eg Eccentricity)</p>
+Output will be relative to geographic units where relevant, but normalised
+where not (eg Eccentricity)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1064,6 +1274,31 @@ yields same behaviour as ‘fixed’ and ‘free’, respectively.</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt id="shape.sqlfilter">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">sqlfilter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">sql</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.sqlfilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an OGR layer via sql statement
+for some further analysis</p>
+<p>See <a class="reference external" href="https://gdal.org/user/ogr_sql_dialect.html">https://gdal.org/user/ogr_sql_dialect.html</a> for examples</p>
+<p class="rubric">Notes</p>
+<p>An OS Master map example</p>
+<p>“SELECT * FROM TopographicArea WHERE DescriptiveGroup=’General Surface’”</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inShp</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>sql</strong> (<em>string</em>) – sql expression (ogr dialect)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ogr lyr</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="shape.texture_stats">
 <code class="sig-prename descclassname">shape.</code><code class="sig-name descname">texture_stats</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">gprop</span><span class="o">=</span><span class="default_value">'contrast'</span></em>, <em class="sig-param"><span class="n">offset</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">angle</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">write_stat</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">mean</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.texture_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate and optionally write texture stats for an OGR compatible polygon
@@ -1113,6 +1348,20 @@ this issue</p>
 </dd></dl>
 
 <dl class="py function">
+<dt id="shape.write_id_field">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">write_id_field</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">fieldName</span><span class="o">=</span><span class="default_value">'id'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.write_id_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a string to a ogr vector file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inShape</strong> (<em>string</em>) – input OGR vecotr file</p></li>
+<li><p><strong>fieldName</strong> (<em>string</em>) – name of field being written</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="shape.write_text_field">
 <code class="sig-prename descclassname">shape.</code><code class="sig-name descname">write_text_field</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">fieldName</span></em>, <em class="sig-param"><span class="n">attribute</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.write_text_field" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write a string to a ogr vector file</p>
@@ -1122,6 +1371,23 @@ this issue</p>
 <li><p><strong>inShape</strong> (<em>string</em>) – input OGR vecotr file</p></li>
 <li><p><strong>fieldName</strong> (<em>string</em>) – name of field being written</p></li>
 <li><p><strong>attribute</strong> (<em>string</em>) – ‘text to enter in each entry of column’</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="shape.zonal_point">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_point</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">field</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">write_stat</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the pixel val at a given point and write to vector</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inShp</strong> (<em>string</em>) – input shapefile</p></li>
+<li><p><strong>inRas</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>field</strong> (<em>string</em>) – the name of the field</p></li>
+<li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
+<li><p><strong>nodata_value</strong> (<em>numerical</em>) – If used the no data val of the raster</p></li>
 </ul>
 </dd>
 </dl>
@@ -1144,7 +1410,7 @@ this issue</p>
 
 <dl class="py function">
 <dt id="shape.zonal_stats">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_stats</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">bandname</span></em>, <em class="sig-param"><span class="n">stat</span><span class="o">=</span><span class="default_value">'mean'</span></em>, <em class="sig-param"><span class="n">write_stat</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_stats" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">zonal_stats</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">band</span></em>, <em class="sig-param"><span class="n">bandname</span></em>, <em class="sig-param"><span class="n">layer</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">stat</span><span class="o">=</span><span class="default_value">'mean'</span></em>, <em class="sig-param"><span class="n">write_stat</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">nodata_value</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">all_touched</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">expression</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.zonal_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate zonal stats for an OGR polygon file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1153,12 +1419,18 @@ this issue</p>
 <li><p><strong>inRas</strong> (<em>string</em>) – input raster</p></li>
 <li><p><strong>band</strong> (<em>int</em>) – an integer val eg - 2</p></li>
 <li><p><strong>bandname</strong> (<em>string</em>) – eg - blue</p></li>
+<li><p><strong>layer</strong> (<em>string</em>) – if using a db type format with multi layers, specify the name of the
+layer in question</p></li>
 <li><p><strong>stat</strong> (<em>string</em>) – string of a stat to calculate, if omitted it will be ‘mean’
 others: ‘mode’, ‘min’,’mean’,’max’, ‘std’,’ sum’, ‘count’,’var’,
 skew’, ‘kurt (osis)’</p></li>
 <li><p><strong>write_stat</strong> (<em>bool (optional)</em>) – If True, stat will be written to OGR file, if false, dataframe
 only returned (bool)</p></li>
 <li><p><strong>nodata_value</strong> (<em>numerical</em>) – If used the no data val of the raster</p></li>
+<li><p><strong>all_touched</strong> (<em>bool</em>) – whether to use all touched when raterising the polygon
+if the poly is smaller/comaparable to the pixel size,
+True is perhaps the best option</p></li>
+<li><p><strong>expression</strong> (<em>string</em>) – process a selection only eg expression e.g. “DN &gt;= 168”</p></li>
 </ul>
 </dd>
 </dl>
@@ -1192,9 +1464,30 @@ may eventually move elsewhere</p>
 <p>If you use code to publish work cite/acknowledge me and authors of libs etc as
 appropriate</p>
 <dl class="py function">
-<dt id="utilities.colorscale">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">colorscale</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">seg</span></em>, <em class="sig-param"><span class="n">prop</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.colorscale" title="Permalink to this definition">¶</a></dt>
+<dt id="utilities.apply_lut">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">apply_lut</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">src</span></em>, <em class="sig-param"><span class="n">lut</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.apply_lut" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py function">
+<dt id="utilities.colorscale">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">colorscale</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">seg</span></em>, <em class="sig-param"><span class="n">prop</span><span class="o">=</span><span class="default_value">'Area'</span></em>, <em class="sig-param"><span class="n">custom</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.colorscale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Colour an array according to a region prop value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>seg</strong> (<em>np.array</em>) – input array of labelled image</p></li>
+<li><p><strong>prop</strong> (<em>string</em>) – sklearn region prop</p></li>
+<li><p><strong>custom</strong> (<em>list</em>) – a custom list of values to apply to array</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np array of attributed regions</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt id="utilities.combine_grid">
@@ -1224,7 +1517,7 @@ appropriate</p>
 
 <dl class="py function">
 <dt id="utilities.houghseg">
-<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">houghseg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">edge</span><span class="o">=</span><span class="default_value">'canny'</span></em>, <em class="sig-param"><span class="n">sigma</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">thresh</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ratio</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">n_orient</span><span class="o">=</span><span class="default_value">6</span></em>, <em class="sig-param"><span class="n">n_scale</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">hArray</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">vArray</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">valrange</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">interval</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">min_area</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.houghseg" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">houghseg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">outShp</span></em>, <em class="sig-param"><span class="n">edge</span><span class="o">=</span><span class="default_value">'canny'</span></em>, <em class="sig-param"><span class="n">sigma</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">thresh</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">ratio</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">n_orient</span><span class="o">=</span><span class="default_value">6</span></em>, <em class="sig-param"><span class="n">n_scale</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">hArray</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">vArray</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">valrange</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">interval</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">min_area</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#utilities.houghseg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Detect and write Hough lines to a line shapefile and create rectangular segments
 from them</p>
 <p>Implemented for the paper Robb et al. (2020),
@@ -1476,25 +1769,165 @@ accordingly. This can be passed as the <cite>iter_callback</cite> argument of
 <p>A module for using pytorch to classify EO data for semantic segmentation and
 object identification</p>
 <dl class="py function">
-<dt id="convnet.semantic_seg">
-<code class="sig-prename descclassname">convnet.</code><code class="sig-name descname">semantic_seg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mainDir</span></em>, <em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">inLabel</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">plot</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1, 2, 3]</span></em>, <em class="sig-param"><span class="n">trainPercent</span><span class="o">=</span><span class="default_value">0.3</span></em>, <em class="sig-param"><span class="n">f1</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">unet</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">preTrain</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">proc</span><span class="o">=</span><span class="default_value">'cuda:0'</span></em>, <em class="sig-param"><span class="n">noclasses</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">{'batch_size': 16, 'classes': 1, 'device': 'cuda', 'encoder': 'resnet34', 'epochs': 50, 'in_channels': 3, 'lr': 0.001, 'model': 'Unet', 'num_workers': 2}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#convnet.semantic_seg" title="Permalink to this definition">¶</a></dt>
+<dt id="convnet.chip_pred">
+<code class="sig-prename descclassname">convnet.</code><code class="sig-name descname">chip_pred</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">encoder</span></em>, <em class="sig-param"><span class="n">classes</span><span class="o">=</span><span class="default_value">['1']</span></em>, <em class="sig-param"><span class="n">tilesize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1, 2, 3]</span></em>, <em class="sig-param"><span class="n">weights</span><span class="o">=</span><span class="default_value">'imagenet'</span></em>, <em class="sig-param"><span class="n">device</span><span class="o">=</span><span class="default_value">'cuda'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#convnet.chip_pred" title="Permalink to this definition">¶</a></dt>
+<dd><p>Chip-based prediction of EO imagery
+Based on pytorch &amp; albumentations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inRas</strong> (<em>string</em>) – the input raster</p></li>
+<li><p><strong>model</strong> (<em>string or pytorch model</em>) – the model to predict</p></li>
+<li><p><strong>outMap</strong> (<em>string</em>) – the output classification map</p></li>
+<li><p><strong>encoder</strong> (<em>string</em>) – the encoder component of the CNN e.g. resnet34</p></li>
+<li><p><strong>tilesize</strong> (<em>int</em>) – the image chip/tile size that will be processed def 256</p></li>
+<li><p><strong>bands</strong> (<em>list of ints</em>) – the image bands to use</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This is an early version with some stuff to add/change</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="convnet.collect_train">
+<code class="sig-prename descclassname">convnet.</code><code class="sig-name descname">collect_train</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">masklist</span></em>, <em class="sig-param"><span class="n">tilelist</span></em>, <em class="sig-param"><span class="n">outdir</span></em>, <em class="sig-param"><span class="n">chip_size</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1, 2, 3]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#convnet.collect_train" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Collect and save chips of both mask and image from a list of images for a</dt><dd><p>semantic segmentation task</p>
+</dd>
+</dl>
+<p>The list of images must correspond/ be in the same order</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>masklist</strong> (<em>list</em>) – A list of images containing the training masks</p></li>
+<li><p><strong>tilelist</strong> (<em>list</em>) – A list of images containing the corresponding spectral info</p></li>
+<li><p><strong>outdir</strong> (<em>string</em>) – Where the training chips will be written</p></li>
+<li><p><strong>chip_size</strong> (<em>int</em>) – the training “chip” size e.g. 256x256 pixels  dependent on the
+nnet used</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A tuple of lists of the respective paths of both masks and corresponding</em></p></li>
+<li><p><em>images</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="convnet.collect_train_chip">
+<code class="sig-prename descclassname">convnet.</code><code class="sig-name descname">collect_train_chip</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">masklist</span></em>, <em class="sig-param"><span class="n">tilelist</span></em>, <em class="sig-param"><span class="n">outdir</span></em>, <em class="sig-param"><span class="n">chip_size</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">include_zero</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1, 2, 3]</span></em><span class="sig-paren">)</span><a class="headerlink" href="#convnet.collect_train_chip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect and save chips of an image from a list of masks and images</p>
+<p>for a chip-based CNN (i.e. we are simply labelling a chip NOT segmenting anything)</p>
+<p>Please note that areas of 0 (no mask) will count as a class</p>
+<p>The list of images must correspond/ be in the same order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>masklist</strong> (<em>list</em>) – A list of images containing the training masks</p></li>
+<li><p><strong>tilelist</strong> (<em>list</em>) – A list of images containing the corresponding spectral info</p></li>
+<li><p><strong>outdir</strong> (<em>string</em>) – Where the training chips will be written</p></li>
+<li><p><strong>chip_size</strong> (<em>int</em>) – the training “chip” size e.g. 256x256 pixels  dependent on the
+nnet used</p></li>
+<li><p><strong>include_zero</strong> (<em>bool</em>) – whether to include a non-masked area as class 0</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A tuple of lists of the respective paths of both masks and corresponding</em></p></li>
+<li><p><em>images</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="convnet.makewrkdir">
+<code class="sig-prename descclassname">convnet.</code><code class="sig-name descname">makewrkdir</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">directory</span></em><span class="sig-paren">)</span><a class="headerlink" href="#convnet.makewrkdir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="convnet.semseg_pred">
+<code class="sig-prename descclassname">convnet.</code><code class="sig-name descname">semseg_pred</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inRas</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">encoder</span></em>, <em class="sig-param"><span class="n">classes</span><span class="o">=</span><span class="default_value">['1']</span></em>, <em class="sig-param"><span class="n">tilesize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1, 2, 3]</span></em>, <em class="sig-param"><span class="n">weights</span><span class="o">=</span><span class="default_value">'imagenet'</span></em>, <em class="sig-param"><span class="n">device</span><span class="o">=</span><span class="default_value">'cuda'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#convnet.semseg_pred" title="Permalink to this definition">¶</a></dt>
 <dd><p>Semantic Segmentation of EO-imagery - an early version things are to be
 changed in the near future
 Based on segmentation_models.pytorch &amp; albumentations</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mainDir</strong> (<em>string</em>) – the working directory where everything is done</p></li>
-<li><p><strong>model</strong> (<em>string</em>) – a choice of “unet, “fcn_resnet50”, “fcn_resnet101”,”deeplabv3_resnet50”
-“deeplabv3_resnet50”, “deeplabv3_resnet101”</p></li>
 <li><p><strong>inRas</strong> (<em>string</em>) – the input raster</p></li>
-<li><p><strong>inLabel</strong> (<em>string</em>) – the input label raster - at present this the same size as the input
-raster with the class labels, though this will be improved</p></li>
+<li><p><strong>model</strong> (<em>string or pytorch model</em>) – the model to predict</p></li>
 <li><p><strong>outMap</strong> (<em>string</em>) – the output classification map</p></li>
+<li><p><strong>encoder</strong> (<em>string</em>) – the encoder component of the CNN e.g. resnet34</p></li>
+<li><p><strong>tilesize</strong> (<em>int</em>) – the image chip/tile size that will be processed def 256</p></li>
+<li><p><strong>bands</strong> (<em>list of ints</em>) – the image bands to use</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This is an early version with some stuff to add/change</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="convnet.train_semantic_seg">
+<code class="sig-prename descclassname">convnet.</code><code class="sig-name descname">train_semantic_seg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">maindir</span></em>, <em class="sig-param"><span class="n">plot</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1, 2, 3]</span></em>, <em class="sig-param"><span class="n">train_percent</span><span class="o">=</span><span class="default_value">0.8</span></em>, <em class="sig-param"><span class="n">tilesize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">f1</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">preTrain</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">proc</span><span class="o">=</span><span class="default_value">'cuda:0'</span></em>, <em class="sig-param"><span class="n">activation</span><span class="o">=</span><span class="default_value">'softmax2d'</span></em>, <em class="sig-param"><span class="n">classes</span><span class="o">=</span><span class="default_value">['1']</span></em>, <em class="sig-param"><span class="n">weights</span><span class="o">=</span><span class="default_value">'imagenet'</span></em>, <em class="sig-param"><span class="n">modelpth</span><span class="o">=</span><span class="default_value">'./best_model.pth'</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">{'batch_size': 16, 'classes': 1, 'device': 'cuda', 'encoder': 'resnet34', 'epochs': 50, 'in_channels': 3, 'lr': 0.0001, 'model': 'Unet', 'num_workers': 2}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#convnet.train_semantic_seg" title="Permalink to this definition">¶</a></dt>
+<dd><p>multi-class Semantic Segmentation of EO-imagery - an early version things are to be
+changed in the near future
+Based on segmentation_models.pytorch &amp; albumentations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mainDir</strong> (<em>string</em>) – the working directory where everything is done</p></li>
+<li><p><strong>modelpth</strong> (<em>string</em>) – where to save the model eg ‘dir/best_model.pth’</p></li>
 <li><p><strong>plot</strong> (<em>bool</em>) – whether to plot intermediate data results eg visualise the image aug,
 test results etc.</p></li>
 <li><p><strong>bands</strong> (<em>list of ints</em>) – the image bands to use</p></li>
-<li><p><strong>trainPercent</strong> – the percentage of to use as training</p></li>
+<li><p><strong>train_percent</strong> (<em>string</em>) – the percentage of to use as training</p></li>
+<li><p><strong>tilesize</strong> (<em>int</em>) – the size of the image tile used in training and thus classification</p></li>
+<li><p><strong>classes</strong> (<em>list</em>) – a list of strings with the classes eg [‘1’, ‘2’, ‘3’] as labelled
+in raster</p></li>
+<li><p><strong>weights</strong> (<em>string</em>) – the encoder weights, typically imagenet or None for rand init</p></li>
+<li><p><strong>f1</strong> (<em>bool</em>) – whether to svae a classification report (will be a plot in working dir)</p></li>
+<li><p><strong>activation</strong> (<em>string</em>) – the neural net activation function e.g ‘sigmoid’ for binary or
+softmax2d for multiclass</p></li>
+<li><p><strong>params</strong> (<em>dict</em>) – the convnet model params
+models:
+Unet, UNet11, UNet16, U Linknet, FPN, PSPNet,PAN, DeepLabV3 and DeepLabV3+
+encoders:
+‘resnet18’,’resnet34’,’resnet50’, ‘resnet101’,’resnet152’,’resnext50_32x4d’,
+‘resnext101_32x4d’,’resnext101_32x8d’,’resnext101_32x16d’,’resnext101_32x32d’,
+‘resnext101_32x48d’,’dpn68’,’dpn68b’,’dpn92’,’dpn98’,’dpn107’,’dpn131’,’vgg11’,
+‘vgg11_bn’,’vgg13’,’vgg13_bn’,’vgg16’,’vgg16_bn’,’vgg19’,’vgg19_bn’,’senet154’,
+‘se_resnet50’,’se_resnet101’,’se_resnet152’,’se_resnext50_32x4d’,’se_resnext101_32x4d’,
+‘densenet121’,’densenet169’,’densenet201’,’densenet161’,’inceptionresnetv2’,
+‘inceptionv4’,’efficientnet-b0’,’efficientnet-b1’,’efficientnet-b2’,’efficientnet-b3’,
+‘efficientnet-b4’,’efficientnet-b5’,’efficientnet-b6’,’efficientnet-b7’,
+‘mobilenet_v2’,’xception’,’timm-efficientnet-b0’,’timm-efficientnet-b1’,
+‘timm-efficientnet-b2’,’timm-efficientnet-b3’,’timm-efficientnet-b4’,’timm-efficientnet-b5’,
+‘timm-efficientnet-b6’,’timm-efficientnet-b7’,’timm-efficientnet-b8’,’timm-efficientnet-l2’</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This is an early version with some stuff to add/change</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="convnet.train_semseg_binary">
+<code class="sig-prename descclassname">convnet.</code><code class="sig-name descname">train_semseg_binary</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">maindir</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1, 2, 3]</span></em>, <em class="sig-param"><span class="n">train_percent</span><span class="o">=</span><span class="default_value">0.7</span></em>, <em class="sig-param"><span class="n">f1</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">proc</span><span class="o">=</span><span class="default_value">'cuda:0'</span></em>, <em class="sig-param"><span class="n">tilesize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">redo</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">activation</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">modelpth</span><span class="o">=</span><span class="default_value">'./best_model.pth'</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">{'batch_size': 16, 'classes': 1, 'device': 'cuda', 'encoder': 'resnet34', 'epochs': 50, 'in_channels': 3, 'lr': 0.001, 'model': 'Unet', 'num_workers': 2}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#convnet.train_semseg_binary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Train a semantic seg model for binary classification</p>
+<p>Based on segmentation_models.pytorch &amp; albumentations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>maindir</strong> (<em>string</em>) – the directory containing the training masks and labels as
+produced by collect_train is stored</p></li>
+<li><p><strong>bands</strong> (<em>list of ints</em>) – the image bands to use</p></li>
+<li><p><strong>train_percent</strong> – the percentage of to use as training</p></li>
 <li><p><strong>f1</strong> (<em>bool</em>) – whether to svae a classification report (will be a plot in working dir)</p></li>
 <li><p><strong>params</strong> (<em>dict</em>) – the convnet model params
 models:
@@ -1516,9 +1949,6 @@ encoders:
 </dl>
 <p class="rubric">Notes</p>
 <p>This is an early version with some stuff to add/change eg</p>
-<p>The training and classification will be split into two functions</p>
-<p>Non intersecting training data to be done</p>
-<p>Image augmentations are to be made a param</p>
 </dd></dl>
 
 </div>

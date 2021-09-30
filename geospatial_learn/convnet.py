@@ -542,15 +542,6 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
     valid_loader = DataLoader(valid_dataset, batch_size=params['batch_size'],
                               shuffle=False, num_workers=params["num_workers"])
     
-
-    # Something weird here with the losses or activation etc.  
-#    if len(classes) > 1:
-#        loss = smp.utils.losses.DiceLoss()
-#
-#    else:
-#        # was using dice/f1 but wasn't working well.....
-#        loss = smp.utils.losses.BCEWithLogitsLoss()
-        
     
     loss = smp.utils.losses.DiceLoss()
     metrics = [
