@@ -35,6 +35,7 @@ import segmentation_models_pytorch as smp
 import skimage.morphology as skm
 import gdal
 import pandas as pd
+from mpl_toolkits.axes_grid1 import ImageGrid
 gdal.UseExceptions()
 cudnn.benchmark = True
 
@@ -336,6 +337,56 @@ def visualize_aug(aug, img, msk, bands=[1,2,3]):
 
     ax[1, 1].imshow(mskaug)
     ax[1, 1].set_title('Transformed mask', fontsize=fontsize)
+
+
+def visualize_D4(img, msk, bands=[1,2,3]):
+    
+    # must define the range
+    augs = ['orig', A.Rotate((90,90), p=1), A.Rotate((180, 180), p=1), 
+            A.Rotate((270,270), p=1), A.HorizontalFlip(p=1),
+            A.VerticalFlip(p=1), A.Transpose(p=1)]
+    
+    text = ['Original','Rotate 90', 'Rotate 180', 'Rotate 270',
+            'H-Reflection', 'V-Reflection',
+            'D-Reflection']
+    
+    fontsize = 16
+
+    image = rs.raster2array(img, bands=bands)
+    
+    image = rescale_intensity(image, out_range="uint8")
+    mask = rs.raster2array(msk, bands=[1])
+    
+    imlist = [image]
+    masklist = [mask]
+    
+    #TODO rewrite
+    for i in range(1, len(augs)):
+        a = augs[i]
+        augmented = a(image=image, mask=mask)
+        imaug= augmented['image']
+        mskaug = augmented['mask']
+        masklist.append(mskaug)
+        imlist.append(imaug)      
+    finallist = imlist + masklist
+    
+    del imlist, masklist
+    
+    figure = plt.figure()
+
+    grid = ImageGrid(figure, 111,  
+         nrows_ncols=(2, len(augs)),  
+         axes_pad=0.1,  # pad between axes in inch.
+         )
+    
+    for idx, (im, ax) in enumerate(zip(finallist, grid)):
+        ax.imshow(im)
+        if idx <= len(text)-1:
+            ax.set_title(text[idx], fontsize=fontsize)
+        ax.set_axis_off()
+        
+    plt.tight_layout()
+    plt.show()
 
 
 

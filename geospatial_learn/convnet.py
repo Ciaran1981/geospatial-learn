@@ -25,13 +25,18 @@ import albumentations as A
 import albumentations.augmentations.functional as F
 import cv2
 #import cv2
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
 #from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset as BaseDataset
+from torch.utils.tensorboard import SummaryWriter
 import torch.backends.cudnn as cudnn
 import gdal
 import torch
 from tqdm import tqdm
+from joblib import Parallel, delayed
+import matplotlib.pyplot as plt
 cudnn.benchmark = True
 
 def makewrkdir(directory):
@@ -41,199 +46,11 @@ def makewrkdir(directory):
         os.mkdir(directory)
 
 
-def train_semseg_binary(maindir, bands=[1,2,3], train_percent=0.7, f1=False, 
-                 proc="cuda:0", tilesize=256, redo=False, activation=None,
-                 modelpth='./best_model.pth',
-                 params={'model': 'Unet',
-                         'encoder': 'resnet34',
-                         'in_channels': 3,
-                         'classes' : 1,
-                         "lr": 0.001,
-                         "device": "cuda",
-                         "batch_size": 16,
-                         "num_workers": 2,"epochs": 50}):
-    """
-    Train a semantic seg model for binary classification
-    
-    Based on segmentation_models.pytorch & albumentations
-    
-    Parameters 
-    ----------
-    
-    maindir: string
-              the directory containing the training masks and labels as 
-              produced by collect_train is stored
-    
-    bands: list of ints
-            the image bands to use
-
-    train_percent: 
-                 the percentage of to use as training
-    
-    f1: bool
-        whether to svae a classification report (will be a plot in working dir)
-    
-    params: dict
-          the convnet model params
-          models: 
-          Unet, UNet11, UNet16, U Linknet, FPN, PSPNet,PAN, DeepLabV3 and DeepLabV3+
-          encoders:
-          'resnet18','resnet34','resnet50', 'resnet101','resnet152','resnext50_32x4d',
-          'resnext101_32x4d','resnext101_32x8d','resnext101_32x16d','resnext101_32x32d',
-          'resnext101_32x48d','dpn68','dpn68b','dpn92','dpn98','dpn107','dpn131','vgg11',
-          'vgg11_bn','vgg13','vgg13_bn','vgg16','vgg16_bn','vgg19','vgg19_bn','senet154',
-          'se_resnet50','se_resnet101','se_resnet152','se_resnext50_32x4d','se_resnext101_32x4d',
-          'densenet121','densenet169','densenet201','densenet161','inceptionresnetv2',
-          'inceptionv4','efficientnet-b0','efficientnet-b1','efficientnet-b2','efficientnet-b3',
-          'efficientnet-b4','efficientnet-b5','efficientnet-b6','efficientnet-b7',
-          'mobilenet_v2','xception','timm-efficientnet-b0','timm-efficientnet-b1',
-          'timm-efficientnet-b2','timm-efficientnet-b3','timm-efficientnet-b4','timm-efficientnet-b5',
-          'timm-efficientnet-b6','timm-efficientnet-b7','timm-efficientnet-b8','timm-efficientnet-l2'
-
-    Notes
-    -----
-    
-    This is an early version with some stuff to add/change eg
-    
-    """
-     
-
-    mskdir = os.path.join(maindir, 'masks')
-    imgdir = os.path.join(maindir, 'images')
-
-    # Now that all the data has been 'chipped' a random subset is required for 
-    # training and perhaps testing
-    # list all files in dir using glob
-    
-    # TODO this could be made into a fucntion
-    
-    train_init = glob(os.path.join(mskdir, "*.tif"))
-    train_init.sort()
-
-    
-    planet_init = glob(os.path.join(imgdir,  "*.tif"))
-    planet_init.sort()
-
-    random_init = np.random.choice(train_init, int(len(train_init)*train_percent))
-    
-    
-    trainlist = random_init.tolist()
-    
-    # handled by albumentations
-    #trainList = testtile(trainInit, tilesize=tilesize)
-    
-    #for later- I think I need to replace this with set theory func
-    planet_train =  matchImgList(trainlist, imgdir)
-    #planetTrain = testtile(planetTrain, tilesize=tilesize)
-    
-    random_valid = np.random.choice(trainlist, int(len(train_init)*.1))
-    vallist = random_valid.tolist()
-    #vallist = testtile(vallist, tilesize=tilesize)
-    val_img = matchImgList(vallist, imgdir)
-    
-    
-    random_test = np.random.choice(train_init, int(len(train_init)*.1))
-    #testlist = testtile(randomTest, tilesize=tilesize)
-    testlist = random_test.tolist()
-    test_im = matchImgList(testlist, imgdir)
-    
-    # This and the class structure need addressed also
-    img_nms = [os.path.split(p)[1] for p in planet_init]
-    img_nms.sort()
-    
-    train_files = [os.path.split(p)[1] for p in trainlist]
-    train_files.sort() 
-    
-    val_nms = [os.path.split(v)[1] for v in vallist]
-    val_nms.sort()
-    
-    
-    test_img_nms =  [os.path.split(t)[1] for t in testlist]
-    test_img_nms.sort()
-
-    # Other augs in the various material online do not appear to offer better results
-    # than this simple one!
-    
-    # TODO
-    # Note!!! Albu will support 4-band images, but the default normalisation 
-    # must be changed
-    # Just an extension of the defaults at present.....
-    if len(bands) > 3:
-        mean=(0.485, 0.456, 0.406, 0.485)
-        std=(0.229, 0.224, 0.225, 0.229)
-    else:
-        mean=(0.485, 0.456, 0.406)
-        std=(0.229, 0.224, 0.225)
-    
-    trainTfrm = A.Compose(
-    [   #A.ToFloat(max_value=65535.0),
-        A.PadIfNeeded(min_height=tilesize, min_width=tilesize),
-        A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
-        #A.RGBShift(r_shift_limit=25, g_shift_limit=25, b_shift_limit=25, p=0.5),
-        #A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
-        # Above 0.5 is shite
-        A.Normalize(mean=mean,  std=std),
-        ToTensorV2(),
-    ]
-    )
-    
-    
-    class imgDataset(Dataset):
-        def __init__(self, img_nms, imgdir, mskdir,
-                     transform=None):
-            self.img_nms = img_nms
-            self.imgdir = imgdir
-            self.mskdir = mskdir
-            self.transform = transform
-    
-        def __len__(self):
-            return len(self.img_nms)
-    
-        def __getitem__(self, idx):
-            imgNm = self.img_nms[idx]
-            image = rs.raster2array(os.path.join(self.imgdir, imgNm),
-                                   bands=bands)
-            # now seperate cos of some albu issue
-            #image = normalize(image, 0.5, 0.5)
-            mask = rs.raster2array(os.path.join(self.mskdir, imgNm),
-                             bands=[1])
-            
-            mask = prep_mask(mask)
-            if self.transform is not None:
-                transformed = self.transform(image=image, mask=mask)
-                image = transformed["image"]
-                mask = transformed["mask"]
-            return image, mask
-
-
-    trainData = imgDataset(train_files, imgdir,
-                                  mskdir, transform=trainTfrm)
-    valTfrm = A.Compose(
-        [A.Normalize(mean=mean,  std=std), 
-         A.PadIfNeeded(min_height=tilesize, min_width=tilesize),
-         ToTensorV2()]
-    )
-    
-    valData = imgDataset(val_nms, imgdir, 
-                                mskdir, transform=valTfrm)
-    random.seed(42)
-
-       
-    model = create_model(params, proc=proc, activation=activation)
-
-    modelout = train_and_validate(model, trainData, valData, params)
-    
-    torch.save(model, modelpth)
- 
-
-    
-    return modelout
-
         
 def train_semantic_seg(maindir, plot=False, bands=[1,2,3], 
-                 train_percent=0.8, tilesize=256, f1=False, preTrain=True,
+                 tilesize=256, f1=False, preTrain=True,
                  proc="cuda:0",  activation='softmax2d', classes=['1'],
-                 weights='imagenet', modelpth='./best_model.pth',
+                 weights='imagenet', modelpth='./best_model.pth', plot_score=True,
                  params={'model': 'Unet',
                          'encoder': 'resnet34',
                          'in_channels': 3,
@@ -241,7 +58,7 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
                          "lr": 0.0001,
                          "device": "cuda",
                          "batch_size": 16,
-                         "num_workers": 2,"epochs": 50}):
+                         "num_workers": 2,"epochs": 50}, nt=-1):
     """
     multi-class Semantic Segmentation of EO-imagery - an early version things are to be 
     changed in the near future
@@ -262,9 +79,6 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
     
     bands: list of ints
             the image bands to use
-
-    train_percent: string
-                 the percentage of to use as training
                  
     tilesize: int
               the size of the image tile used in training and thus classification
@@ -285,7 +99,7 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
     params: dict
           the convnet model params
           models: 
-          Unet, UNet11, UNet16, U Linknet, FPN, PSPNet,PAN, DeepLabV3 and DeepLabV3+
+          Unet, UNet11, UNet16, U Linknet, FPN, PSPNet, PAN, DeepLabV3 and DeepLabV3+
           encoders:
           'resnet18','resnet34','resnet50', 'resnet101','resnet152','resnext50_32x4d',
           'resnext101_32x4d','resnext101_32x8d','resnext101_32x16d','resnext101_32x32d',
@@ -328,54 +142,14 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
     planet_init = glob(os.path.join(imgdir,  "*.tif"))
     planet_init.sort()
 
-    random_init = np.random.choice(train_init, int(len(train_init)*train_percent))
-    
-    
-    trainlist = random_init.tolist()
-    
-    # handled by albumentations
-    #trainList = testtile(trainInit, tilesize=tilesize)
-    
-    #for later- I think I need to replace this with set theory func
-    planet_train =  matchImgList(trainlist, imgdir)
-    #planetTrain = testtile(planetTrain, tilesize=tilesize)
-    
-    random_valid = np.random.choice(trainlist, int(len(train_init)*.1))
-    vallist = random_valid.tolist()
-    #vallist = testtile(vallist, tilesize=tilesize)
-    #val_img = matchImgList(vallist, imgdir)
-    
-    
-    random_test = np.random.choice(train_init, int(len(train_init)*.1))
-    #testlist = testtile(randomTest, tilesize=tilesize)
-    testlist = random_test.tolist()
-    test_im = matchImgList(testlist, imgdir)
 
+    # as usual
+    X_train, X_test, y_train, y_test = train_test_split(planet_init, train_init)
     
-    # TODO as always, how does one strat sample
-    
-    # Here we obtain the unique classes to ensure we training evenly
-    #    df = get_classes(trainList)
-        
-        # as a quick hack for now lets take only those with all classes
-        # TODO - this needs to change to a strat sample!!!
-    #    if params['classes'] > 1:
-    #        all_class=df.loc[df['noClasses']==params['classes']]
-    #    else:
-    #        all_class=df
-        
-    #    trainList = all_class['File'].to_list()
-    #    trainList.sort()
-        
-     
-     #get norm elswhere now
-#    if len(bands) > 3:
-#        mean=(0.485, 0.456, 0.406, 0.485)
-#        std=(0.229, 0.224, 0.225, 0.229)
-#    else:
-#        mean=(0.485, 0.456, 0.406)
-#        std=(0.229, 0.224, 0.225)
-#            
+    # Then split again so we have smaller sets respectively
+    # despite my confusing var names we use the val lot for the final test
+    X_train, x_val, y_train, y_val = train_test_split(
+            X_train, y_train, test_size=0.25, random_state=1)
 
     # Ultimately for smp version
     makewrkdir(os.path.join(maindir, 'trainMsk'))
@@ -383,20 +157,22 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
     makewrkdir(os.path.join(maindir, 'validMsk'))
     makewrkdir(os.path.join(maindir, 'validImg'))
     makewrkdir(os.path.join(maindir, 'testImg'))
-    makewrkdir(os.path.join(maindir, 'testMsk'))
-    
-    # here to stop a list related bug
-    val_img = matchImgList(vallist, imgdir)
+    makewrkdir(os.path.join(maindir, 'testMsk'))   
    
+    print("prepping data")
+    #TODO parallelise - rather slow
     
-    [shutil.copy(t, os.path.join(maindir, 'trainMsk')) for t in trainlist]
-    [shutil.copy(i, os.path.join(maindir, 'trainImg')) for i in planet_train]
-    [shutil.copy(v, os.path.join(maindir, 'validMsk')) for v in vallist]
-    [shutil.copy(m, os.path.join(maindir, 'validImg')) for m in val_img]
-    [shutil.copy(e, os.path.join(maindir, 'testMsk')) for e in testlist]
-    [shutil.copy(s, os.path.join(maindir, 'testImg')) for s in test_im]
+    drnms = ['trainMsk', 'trainImg', 'validMsk', 'validImg', 'testMsk', 
+             'testImg']
+    inlists = [y_train, X_train,  y_test, X_test, y_val, x_val]
     
-    
+    def _copylist(inlist, maindir, name):
+        
+        _ = [shutil.copy(i, os.path.join(maindir, name)) for i in inlist]
+        
+    Parallel(n_jobs=nt, verbose=2)(delayed(_copylist)(t,  maindir, n) for t,n in zip(inlists, drnms))    
+        
+    print("prep done")
     
     class Dataset(BaseDataset):
 
@@ -433,8 +209,7 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
             #image = cv2norm(image)
             mask = rs.raster2array(self.masks_fps[i],
                              bands=[1])
-            
-            
+                        
             # extract certain classes from mask 
             
             masks = [(mask == v) for v in self.class_values]
@@ -459,11 +234,12 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
         train_transform = [
             
             #A.Normalize(mean=mean,  std=std),
+            A.HorizontalFlip(p=1), A.VerticalFlip(p=1), A.RandomRotate90(p=1),
             A.PadIfNeeded(min_height=tilesize, min_width=tilesize),
-            A.HorizontalFlip(p=0.5),
     
-            A.ShiftScaleRotate(scale_limit=0.5, rotate_limit=0, shift_limit=0.3,
-                                  p=1, border_mode=0)]
+            #A.ShiftScaleRotate(scale_limit=0.5, rotate_limit=0, shift_limit=0.3,
+            #                      p=1, border_mode=0)
+            ]
         return A.Compose(train_transform)
     
     
@@ -489,7 +265,7 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
         """Construct preprocessing transform
         
         Args:
-            preprocessing_fn (callbale): data normalization function 
+            preprocessing_fn (callable): data normalization function 
                 (can be specific for each pretrained neural network)
         Return:
             transform: Amentations.Compose
@@ -576,6 +352,12 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
     
     max_score = 0
     
+    # log the score
+    train_score = []
+    val_score = []
+    
+
+    
     for i in range(0, params['epochs']):
         
         print('\nEpoch: {}'.format(i))
@@ -591,7 +373,24 @@ def train_semantic_seg(maindir, plot=False, bands=[1,2,3],
         if i == 25:
             optimizer.param_groups[0]['lr'] = 1e-5
             print('Decrease decoder learning rate to 1e-5!')
-            
+        val_score.append(valid_logs['iou_score'])
+        train_score.append(train_logs['iou_score'])
+    
+    
+    
+    if plot_score == True:
+        
+        plt.figure(figsize=(10,5))
+        plt.title("Training and Validation Score")
+        plt.plot(val_score,label="val")
+        plt.plot(train_score,label="train")
+        plt.xlabel("iterations")
+        plt.ylabel("Loss")
+        plt.legend()
+        plt.show()
+        plt.savefig(modelpth[:-3]+'png')
+        plt.close()
+        
     # load best saved checkpoint
     best_model = torch.load(modelpth)
     
