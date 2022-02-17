@@ -646,12 +646,12 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
         outDataset.FlushCache()
         outDataset = None
      
-def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
+def mask_raster_multi(inputIm,  mval=1, rule='==', outval = None, mask=None,
                     blocksize = 256, FMT = None, dtype=None):
     """ 
     Perform a numpy masking operation on a raster where all values
-    corresponding to  mask value are retained - does this in blocks for
-    efficiency on larger rasters
+    corresponding to, less than or greater than the mask value are retained 
+    - does this in blocks for efficiency on larger rasters
     
     Parameters 
     ----------- 
@@ -661,6 +661,9 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
         
     mval: int
            the masking value that delineates pixels to be kept
+    
+    rule: string
+            the logic for masking either '==', '<' or '>'
         
     outval: numerical dtype eg int, float
               the areas removed will be written to this value default is 0
@@ -700,8 +703,7 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
     cols = inDataset.RasterXSize
     rows = inDataset.RasterYSize
 
-    
-    
+
     # So with most datasets blocksize is a row scanline
     if blocksize == None:
         blocksize = bnnd.GetBlockSize()
@@ -737,7 +739,12 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
                     for band in range(1, bands+1):
                         bnd = inDataset.GetRasterBand(band)
                         array = bnd.ReadAsArray(j, i, numCols, numRows)
-                        array[mask != mval]=0
+                        if rule == '==':
+                            array[array != mval]=0
+                        elif rule == '<':
+                            array[array < mval]=0
+                        elif rule == '>':
+                            array[array > mval]=0
                         bnd.WriteArray(array, j, i)
                         
     else:
@@ -756,7 +763,12 @@ def mask_raster_multi(inputIm,  mval=1, outval = None, mask=None,
                     for band in range(1, bands+1):
                         bnd = inDataset.GetRasterBand(1)
                         array = bnd.ReadAsArray(j, i, numCols, numRows)
-                        array[array != mval]=0
+                        if rule == '==':
+                            array[array != mval]=0
+                        elif rule == '<':
+                            array[array < mval]=0
+                        elif rule == '>':
+                            array[array > mval]=0
                         if outval != None:
                             array[array == mval] = outval     
                             bnd.WriteArray(array, j, i)

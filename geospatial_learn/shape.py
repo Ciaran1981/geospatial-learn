@@ -18,9 +18,8 @@ from skimage import feature
 import json
 import shapefile
 import os
-import gdal
 from json import dumps
-import  ogr, osr
+from osgeo import gdal, ogr, osr
 from tqdm import tqdm
 import numpy as np
 from scipy.stats.mstats import mode
@@ -31,7 +30,7 @@ from pandas import DataFrame
 from pysal.lib import io as pio
 import pandas as pd
 from skimage.segmentation import active_contour
-
+import geopandas as gpd
 import morphsnakes as ms
 from geospatial_learn.raster import _copy_dataset_config,  array2raster, polygonize
 import warnings
@@ -137,7 +136,55 @@ def _raster_extent(inras):
     ext = (minx, miny, maxx, maxy)
     
     return ext
+
+def create_ogr_poly(outfile, spref, file_type="ESRI Shapefile", field="id", 
+                     field_dtype=0):
+    """
+    Create an ogr dataset an layer (convenience)
     
+    Parameters
+    ----------
+    
+    outfile: string
+                path to ogr file 
+    
+    spref: wkt or int
+        spatial reference either a wkt or espg
+    
+    file_type: string
+                ogr file designation
+        
+    field: string
+            attribute field e.g. "id"
+    
+    field_type: int or ogr.OFT.....
+            ogr dtype of field e.g. 0 == ogr.OFTInteger
+        
+             
+    """   
+    proj = osr.SpatialReference()
+    #TODO if int assume espg - crude there will be a better way
+    if spref is int:
+        proj.ImportFromEPSG(spref)
+    else:
+        proj.ImportFromWkt(spref)
+        
+    out_drv = ogr.GetDriverByName(file_type)
+    
+    # remove output shapefile if it already exists
+    if os.path.exists(outfile):
+        out_drv.DeleteDataSource(outfile)
+    
+    # create the output shapefile
+    ootds = out_drv.CreateDataSource(outfile)
+    ootlyr = ootds.CreateLayer("extent", proj, geom_type=ogr.wkbPolygon)
+    
+    # add the fields
+    # ogr.OFTInteger == 0, hence the arg
+    idField = ogr.FieldDefn("id", ogr.OFTInteger)
+    ootlyr.CreateField(idField)
+    
+    return ootds, ootlyr
 
 def extent2poly(infile, filetype='raster', outfile=None, polytype="ESRI Shapefile", 
                    geecoord=False):
@@ -541,10 +588,10 @@ def _bbox_to_pixel_offsets(rgt, geom):
     yoff = int((yOrigin - ymax)/pixelWidth)
     xcount = int((xmax - xmin)/pixelWidth)+1
     ycount = int((ymax - ymin)/pixelWidth)+1
-#    originX = gt[0]
-#    originY = gt[3]
-#    pixel_width = gt[1]
-#    pixel_height = gt[5]
+#    originX = rgt[0]
+#    originY = rgt[3]
+#    pixel_width = rgt[1]
+#    pixel_height = rgt[5]
 #    x1 = int((bbox[0] - originX) / pixel_width)
 #    x2 = int((bbox[1] - originX) / pixel_width) + 1
 #
@@ -659,6 +706,101 @@ def _fieldexist(vlyr, field):
     for i in range(lyrdef.GetFieldCount()):
         fieldz.append(lyrdef.GetFieldDefn(i).GetName())
     return field in fieldz
+
+def geom2pixelbbox(inshp, inras, label="Tree", outfile=None):
+    
+    """
+    Convert shapefile geometries to a df of pixel bounding boxes
+    Projections must be the same!
+    
+    Parameters
+    ----------
+    
+    inshp: string
+                    input ogr compatible geometry
+    
+    inras: string
+                    input raster
+        
+    label: string
+                    label name def. 'Tree'
+                    
+    outfile: string
+                    path to save annotation csv 
+    """
+    # inputs
+    rds = gdal.Open(inras, gdal.GA_ReadOnly)
+    rgt = rds.GetGeoTransform()
+    # for reference as always forget
+    originX = rgt[0]
+    originY = rgt[3]
+    pixel_width = rgt[1] # usually square but oh well
+    pixel_height = rgt[5]
+
+    # Should we need to revert to OGR
+    vds = ogr.Open(inshp, 1) 
+    vlyr = vds.GetLayer()
+    # mem_drv = ogr.GetDriverByName('Memory')
+    # driver = gdal.GetDriverByName('MEM')
+    # Loop through vectors
+    #feat = vlyr.GetNextFeature()
+    features = np.arange(vlyr.GetFeatureCount())
+    
+    # # via ogr it may be quicker with gpd....here for ref
+    
+    # we only need the relative path not the full
+    rds_path = os.path.split(inras)[1]
+    
+    ootlist = []
+    for f in tqdm(features):
+        feat = vlyr.GetFeature(f)
+        if feat is None:
+            continue
+    #        debug
+    #        wkt=geom.ExportToWkt()
+    #        poly1 = loads(wkt)
+        geom = feat.geometry()
+        
+        # tuple is (xmin, xmax, ymin, ymax)
+        bbox = geom.GetEnvelope()
+        
+        # so (xmin - rasteroriginX) / pixel_width
+        xmin = int((bbox[0] - originX) / pixel_width) #xmin
+        xmax = int((bbox[1] - originX) / pixel_width) + 1 #xmax
+    
+        ymin = int((bbox[3] - originY) / pixel_height) #ymin
+        ymax = int((bbox[2] - originY) / pixel_height) + 1 #ymax
+        
+        # order should be thus for annotation
+        # image_path, xmin, ymin, xmax, ymax, label
+        ootlist.append([rds_path, xmin, ymin, xmax, ymax, label])
+        
+    
+    df = pd.DataFrame(data=ootlist, 
+                      columns=["image_path", "xmin", "ymin",
+                               "xmax", "ymax", 'label'])
+    if outfile != None:
+        df.to_csv(outfile)
+        
+    return df
+        
+        # to check reading raster
+        #src_offset = _bbox_to_pixel_offsets(rgt, geom)
+    
+    # todo so much shorter and vectorised
+    # gdf = gpd.read_file(inshp) 
+    
+    # bboxes = gdf.bounds
+    
+    # df["xmin"] = (bboxes['minx'] - originX) / pixel_width
+    # df["xmax"] = (bboxes['maxx'] - originX) / pixel_width #+1
+    # df["ymin"] = (bboxes['miny'] - originX) / pixel_height
+    # df["ymax"] = (bboxes['maxy'] - originX) / pixel_height #+1
+    # floating pint issues here - line below not working
+    # df["xmin", "ymin", "xmax", "ymax"].round(0).astype(int)
+    
+    
+
 
 def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
                 write_stat=True, nodata_value=0, all_touched=True, 
