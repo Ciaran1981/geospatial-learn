@@ -8,7 +8,7 @@
 geospatial-learn
 ============
 
-Geospatial-learn is a Python lib for using scikit-learn, xgb and keras models with geo-spatial data. Some raster and vector manipulation is also included. The aim is to produce convenient, relatively minimal commands for putting together geo-spatial processing chains and using machine learning (ML) libs. The name is a play-on of scikit-learn, though I really ought to think of something better. The functions are mainly a collection resulting from my own research area of remote sensing and image processing; hence some of it may be esoteric but there are some fairly typical processing tasks too. 
+Geospatial-learn is a Python lib for using scikit-learn, xgb and keras models with geo-spatial data. Some raster and vector manipulation is also included. The aim is to produce convenient, relatively minimal commands for putting together geo-spatial processing chains and using machine learning (ML) libs. The name is a play-on of scikit-learn, though I really ought to think of something better. The functions are mainly a collection resulting from my own research area of remote sensing and image processing; hence some of it may be esoteric but there are some fairly typical processing tasks too. Thought it better to have these up here in case they are of use. 
 
 - There is a 'raster' module for (you guessed it) raster/image processing. This is not exaustive set of functions of course, just things that have been convenient and repeated such as I/O, masking, some filtering. 
 
@@ -78,18 +78,6 @@ Documentation can be found here:
 https://ciaran1981.github.io/geospatial-learn/docs/html/index.html 
 
 These are a work in progress!
-
-
-Development
------------
-
-Any contributors of all experience levels are welcome
-
-
-Project History
----------------
-
-The functionality was written as part of various research projects involving Earth observation & geo-spatial data. 
 
 
 Citation
