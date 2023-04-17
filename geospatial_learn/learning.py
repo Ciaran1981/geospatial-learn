@@ -14,7 +14,7 @@ EO data for both per pixel or object properties
 #ImportError: dlopen: cannot load any more object with static TLS
 try:
     #import xgboost as xgb
-    from xgboost.sklearn import XGBClassifier
+    from xgboost.sklearn import XGBClassifier, XGBRegressor
     import xgboost as xgb
 except ImportError:
     pass
@@ -29,8 +29,8 @@ import glob
 from sklearn import svm
 import gdal, ogr#,osr
 import numpy as np
-from sklearn.model_selection import StratifiedKFold, train_test_split
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier,RandomForestRegressor, GradientBoostingRegressor
+from sklearn.model_selection import StratifiedKFold, KFold, train_test_split
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier,RandomForestRegressor, GradientBoostingRegressor, ExtraTreesRegressor
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 import joblib
 from sklearn import metrics
@@ -432,13 +432,6 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=5, cores=-1,
     #t0 = time()
     
     min_max_scaler = preprocessing.MinMaxScaler()
-    print('Preparing data')   
-    # TODO IMPORTANT add xgb boost functionality
-    #inputImage = gdal.Open(inputIm)    
-    
-    """
-    Prep of data for model fitting 
-    """
     
     bands = X_train.shape[1]-1
     
@@ -563,6 +556,20 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=5, cores=-1,
                 grid = GridSearchCV(RF_clf, param_grid=param_grid, 
                                     cv=cv, n_jobs=cores,
                                     scoring=scoring, verbose=2)
+    if clf == 'erf' and regress is True:
+        RF_clf = ExtraTreesRegressor(n_jobs = cores, random_state = 123)
+        if params is None:
+            param_grid ={"n_estimators": [500],
+                             "max_features": ['sqrt', 'log2'],                                                
+                             "max_depth": [10, None],
+                             "min_samples_split": [2,3,5],
+                             "min_samples_leaf": [5,10,20,50,100,200,500],
+                             "bootstrap": [True, False]}
+        else:
+            param_grid = params
+            grid = GridSearchCV(RF_clf, param_grid=param_grid, 
+                                cv=cv, n_jobs=cores,
+                                scoring=scoring, verbose=2)
                 
 
          
@@ -599,7 +606,24 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=5, cores=-1,
         grid = GridSearchCV(xgb_clf, param_grid=param_grid, 
                                 cv=StratifiedKFold(cv), n_jobs=cores,
                                 scoring=scoring, verbose=2)
-
+    if clf == 'xgb' and regress is True:
+        xgb_reg = XGBRegressor()
+        if params is None:
+            # This is based on the Tianqi Chen author of xgb
+            # tips for data science as a starter
+            # he recommends fixing trees - they are 200 by default here
+            # crunch this first then fine tune rest
+            # 
+            ntrees = 200
+            param_grid={'n_estimators': [ntrees],
+                        'learning_rate': [0.1], # fine tune last
+                        'max_depth': [4, 6, 8, 10],
+                        'colsample_bytree': [0.4,0.6,0.8,1.0]}
+        else:
+            param_grid = params
+        grid = GridSearchCV(xgb_reg, param_grid=param_grid, 
+                                cv=cv, n_jobs=cores,
+                                scoring=scoring, verbose=2)
         
     if clf == 'gb' and regress is False:
         # Key parameter here is max depth
@@ -623,7 +647,7 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=5, cores=-1,
                                 scoring=scoring, verbose=2)
         
     if clf == 'gb'  and regress is True:
-        gb_clf = GradientBoostingRegressor(n_jobs=cores)
+        gb_clf = GradientBoostingRegressor()#n_jobs=cores)
         if params is None:
             param_grid = {"n_estimators": [500],
                           "loss": ['ls', 'lad', 'huber', 'quantile'],                      
@@ -835,16 +859,41 @@ def create_model(X_train, outModel, clf='svc', random=False, cv=5, cores=-1,
     
     testresult = grid.best_estimator_.predict(X_test)
     
-    crDf = hp.plot_classif_report(y_test, testresult, target_names=class_names,
-                                  save=outModel[:-3]+'._classif_report.png')
+    if regress == True:
+        regrslt = regression_results(y_test, testresult)
+        return [grid.best_estimator_, grid.cv_results_, grid.best_score_, 
+            grid.best_params_, regrslt]
+        
+    else:
+        crDf = hp.plot_classif_report(y_test, testresult, target_names=class_names,
+                                      save=outModel[:-3]+'._classif_report.png')
     
-    confmat = hp.plt_confmat(X_test, y_test, grid.best_estimator_, 
-                             class_names=class_names, 
-                   cmap=plt.cm.Blues, 
-                fmt="%d", save=outModel[:-3]+'_confmat.png')
-    
-    return [grid.best_estimator_, grid.cv_results_, grid.best_score_, 
+        confmat = hp.plt_confmat(X_test, y_test, grid.best_estimator_, 
+                                 class_names=class_names, 
+                       cmap=plt.cm.Blues, 
+                    fmt="%d", save=outModel[:-3]+'_confmat.png')
+        return [grid.best_estimator_, grid.cv_results_, grid.best_score_, 
             grid.best_params_, crDf, confmat]
+
+
+def regression_results(y_true, y_pred):
+
+    # Regression metrics
+    explained_variance = metrics.explained_variance_score(y_true, y_pred)
+    mean_absolute_error = metrics.mean_absolute_error(y_true, y_pred) 
+    mse=metrics.mean_squared_error(y_true, y_pred) 
+    #mean_squared_log_error = metrics.mean_squared_log_error(y_true, y_pred)
+    median_absolute_error = metrics.median_absolute_error(y_true, y_pred)
+    r2=metrics.r2_score(y_true, y_pred)
+
+    print('explained_variance: ', round(explained_variance,4))    
+    #print('mean_squared_log_error: ', round(mean_squared_log_error,4))
+    print('r2: ', round(r2,4))
+    print('MAE: ', round(mean_absolute_error,4))
+    print('MSE: ', round(mse,4))
+    print('RMSE: ', round(np.sqrt(mse),4))    
+    
+    
 #    print(grid.best_params_)
 #    print(grid.best_estimator_)
 #    print(grid.oob_score_)
@@ -923,7 +972,7 @@ def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
     if regress is True:
         max_feat = X_train.shape[1]-1
         ensemble_clfs = [
-        ("RandomForestClassifier, max_features='no_features'",
+        ("RandomForestRegressor, max_features='no_features'",
                 RandomForestRegressor(warm_start=True, oob_score=True,
                                        max_features=max_feat,
                                        random_state=RANDOM_STATE))]
@@ -969,7 +1018,7 @@ def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
     # regression option
     if regress is True:
         max_features = max_feat
-        er = np.array(error_rate["RandomForestClassifier, max_features='no_features'"][0:max_estimators])
+        er = np.array(error_rate["RandomForestRegressor, max_features='no_features'"][0:max_estimators])
         bestscr = er[:,1].min()
         data = er[np.where(er[:,1] == bestscr)]
         best_param = ((max_features, data[0]))
@@ -1119,7 +1168,7 @@ def classify_pixel(model, inputDir, bands, outMap, probMap):
 
       
         
-def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None, 
+def classify_pixel_bloc(model, inputImage,  outMap, bands=[1,2,3], blocksize=None, 
                         FMT=None, ndvi = None, dtype = gdal.GDT_Int32):
     """
     A block processing classifier for large rasters, supports KEA, HFA, & Gtiff
@@ -1135,7 +1184,7 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
                  path to image including the file fmt 'Myimage.tif'
     
     bands: band
-            the no of image bands eg 8
+            list of band indices to be used eg [1,2,3]
     
     outMap: string
              path to output image excluding the file format 'pathto/mymap'
@@ -1172,8 +1221,8 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
     outDataset = _copy_dataset_config(inDataset, outMap = outMap,
                                      dtype = gdal.GDT_Byte, bands = 1)
     band = inDataset.GetRasterBand(1)
-    cols = inDataset.RasterXSize
-    rows = inDataset.RasterYSize
+    cols = int(inDataset.RasterXSize)
+    rows = int(inDataset.RasterYSize)
     outBand = outDataset.GetRasterBand(1)
     # So with most datasets blocksize is a row scanline
     if blocksize == None:
@@ -1185,10 +1234,16 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
         blocksizeY = blocksize
 
 
-    if os.path.splitext[1] == ".h5":
+    if os.path.splitext(model)[1] == ".h5":
         model1 = load_model(model)
     else:  
         model1 = joblib.load(model)
+    
+    noBands = inDataset.RasterCount
+    
+    # minus the bands to zero start
+    bands = list(np.array(bands)-1)
+    
     if blocksizeY==1:
         rows = np.arange(cols, dtype=np.int)                
         for row in tqdm(rows):
@@ -1198,11 +1253,13 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
             #for band in range(1,bands+1):
             
             X = inDataset.ReadAsArray(j, i, xsize=blocksizeX, ysize=blocksizeY)
-            X.shape = ((bands,blocksizeX))
+            X.shape = ((noBands,blocksizeX))
+            
+            X = X[bands, :]
             
             if X.max() == 0:
                 predictClass = np.zeros_like(rows, dtype = np.int32)
-            else: 
+            else:         
                 X = np.where(np.isfinite(X),X,0) # this is a slower line                
                 X = X.transpose() 
                 #Xs = csr_matrix(X)
@@ -1236,7 +1293,9 @@ def classify_pixel_bloc(model, inputImage, bands, outMap, blocksize=None,
                             if X.max() == 0:
                                 continue              
                             else:
-                                X.shape = ((bands,numRows*numCols))
+                                
+                                X.shape = ((noBands,numRows*numCols))
+                                X = X[bands, :]
                                 X = X.transpose() 
                                 X = np.where(np.isfinite(X),X,0) 
                                 # this is a slower line   

@@ -25,7 +25,8 @@ from skimage.filters import rank
 from skimage.exposure import rescale_intensity
 import warnings
 from os import sys, path
-#import re
+from shapely.wkt import loads
+from shapely.geometry import Polygon, LineString
 import matplotlib
 matplotlib.use('Qt5Agg')
 
@@ -406,7 +407,7 @@ def _bbox_to_pixel_offsets(rgt, geom):
     ----------
     
     rgt: array
-          List of points defining polygon (?)
+         raster geotransform
           
     geom: shapely.geometry
            Structure defining geometry
@@ -464,12 +465,44 @@ def _bbox_to_pixel_offsets(rgt, geom):
     xcount = int((xmax - xmin)/pixelWidth)+1
     ycount = int((ymax - ymin)/pixelWidth)+1
 
-    return (xoff, yoff, xcount, ycount)      
-       
-def mask_with_poly(vector_path, raster_path):
+    return (xoff, yoff, xcount, ycount)
+
+def _raster_extent2poly(inras):
+    
+    """
+    Parameters
+    ----------
+    
+    inras: string
+        input gdal raster (already opened)
+    
+    """
+    rds = gdal.Open(inras)
+    rgt = rds.GetGeoTransform()
+    minx = rgt[0]
+    maxy = rgt[3]
+    maxx = minx + rgt[1] * rds.RasterXSize
+    miny = maxy + rgt[5] * rds.RasterYSize
+    ext = (minx, miny, maxx, maxy)
+    spref = rds.GetSpatialRef()
+    
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    ring.AddPoint(ext[0],ext[2])
+    ring.AddPoint(ext[1], ext[2])
+    ring.AddPoint(ext[1], ext[3])
+    ring.AddPoint(ext[0], ext[3])
+    ring.AddPoint(ext[0], ext[2])
+    
+    # drop the geom into poly object
+    poly = ogr.Geometry(ogr.wkbPolygon)
+    poly.AddGeometry(ring)
+    
+    return poly, spref, ext
+
+def mask_with_poly(vector_path, raster_path, value=0):
     
     """ 
-    Remove raster values inside a polygon and update the raster
+    Change raster values inside a polygon and update the raster
     
     Parameters
     ----------
@@ -479,26 +512,35 @@ def mask_with_poly(vector_path, raster_path):
         
     raster_path: string
                   input raster
+    
+    value: int
+            the value to alter
     """    
     
     rds = gdal.Open(raster_path, gdal.GA_Update)
-
     rgt = rds.GetGeoTransform()
-    
     bands = rds.RasterCount
     
     vds = ogr.Open(vector_path, 1)  
-
     vlyr = vds.GetLayer(0)
-
 
     mem_drv = ogr.GetDriverByName('Memory')
     driver = gdal.GetDriverByName('MEM')
 
     # Loop through vectors
-
     features = np.arange(vlyr.GetFeatureCount())
-
+    
+#    # use the rgt to limit the masking and avoid edge overlap errors
+#     NOT working
+#    clp_ds, clp_lyr = extent2poly(raster_path, filetype='raster', 
+#                                  outfile=None, 
+#                                  polytype="Memory", 
+#                                  geecoord=False, lyrtype='ogr')
+#
+#    finalyr = clp_ds.CreateLayer('poly', None, geom_type=ogr.wkbMultiPolygon)
+#
+#    ogr.Layer.Clip(vlyr, clp_lyr, finalyr)
+    rds_ext, spref, ext = _raster_extent2poly(raster_path)
     
     for label in tqdm(features):
         feat = vlyr.GetNextFeature()
@@ -506,6 +548,10 @@ def mask_with_poly(vector_path, raster_path):
         if feat is None:
             continue
         geom = feat.geometry()
+        
+        # the poly may be partially outside the raster
+        if rds_ext.Contains(geom) == False:
+            continue
 
         src_offset = _bbox_to_pixel_offsets(rgt, geom)
         
@@ -539,7 +585,7 @@ def mask_with_poly(vector_path, raster_path):
             bnd = rds.GetRasterBand(band)
             src_array = bnd.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                src_offset[3])
-            src_array[rv_array>0]=0
+            src_array[rv_array>0]=value
             bnd.WriteArray(src_array, src_offset[0], src_offset[1])
             
     rds.FlushCache()
@@ -555,7 +601,7 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
                     blocksize = None, FMT = None):
     """ 
     Perform a numpy masking operation on a raster where all values
-    corresponding to  mask value are retained - does this in blocks for
+    corresponding to mask value are retained - does this in blocks for
     efficiency on larger rasters
     
     Parameters 
@@ -1189,7 +1235,7 @@ def stack_ras(rasterList, outFile):
         
 
     """
-    _merge(names = rasterList, out_file = outFile)
+    _merge(names=rasterList, out_file=outFile)
     
 def combine_scene(scl, c_scn, blocksize = 256):
     """ 
@@ -1251,7 +1297,8 @@ def combine_scene(scl, c_scn, blocksize = 256):
     inDataset.FlushCache()
     inDataset = None
     
-def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1, filetype="ESRI Shapefile"):
+def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1, 
+               filetype="ESRI Shapefile"):
     
     """ 
     Polygonise a raster

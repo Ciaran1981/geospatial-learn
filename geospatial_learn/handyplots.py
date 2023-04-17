@@ -553,7 +553,10 @@ def plot_crop(df, group, index, name, crop="SP BA", year=None, title=None,
 
     sqr = df.loc[df[group].isin(index)]
     
-    yrcols = [y for y in sqr.columns if name in y]
+    #fcover
+    yrcols = [y for y in sqr.columns if 'F-' in y]
+    # soil
+    soilcols = [y for y in sqr.columns if 'G-' in y]
     
     if year != None:
         if len(year) > 2:
@@ -577,7 +580,9 @@ def plot_crop(df, group, index, name, crop="SP BA", year=None, title=None,
             
     # TODO - this is crap really needs replaced....
     ndplotvals = sqr[yrcols]
+    soilplotvals = sqr[soilcols]
     
+    slnew = soilplotvals.transpose()
     new = ndplotvals.transpose()
     
     if freq != 'M':
@@ -589,7 +594,8 @@ def plot_crop(df, group, index, name, crop="SP BA", year=None, title=None,
         new['Date'] = dtrange
     
     new = new.set_index('Date')
-    new.columns=[name]
+    # forgot what this is for useless
+    #new.columns=[name]
     
     # it is not scaled to put lines between months....
     # but the line doesn't plot so sod this

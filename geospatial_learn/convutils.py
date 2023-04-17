@@ -622,6 +622,7 @@ def pad_predict(inRas, outputIm, model, classes, preprocessing,
     # TODO  use this to predict entire rows rather than chip wise
     #blkrow = np.floor(rows / blocksize) +1
     #blkcol = np.floor(cols / blocksize) +1
+
     
     for i in tqdm(range(0, rows, blocksizeY)):
             if i + blocksizeY < rows:
@@ -635,6 +636,12 @@ def pad_predict(inRas, outputIm, model, classes, preprocessing,
                 else:
                     numCols = cols - j
                 
+                # Must be the coord as the block is pre-defined by cnn
+                if i != 0:
+                    i -=1
+                if j != 0:
+                    j -= 1
+                    
                 image = mb2array(inDataset, j, i, numCols, numRows, 
                                  bands=bands)
                 

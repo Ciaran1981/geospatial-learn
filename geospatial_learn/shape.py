@@ -32,7 +32,7 @@ import pandas as pd
 from skimage.segmentation import active_contour
 import geopandas as gpd
 import morphsnakes as ms
-from geospatial_learn.raster import _copy_dataset_config,  array2raster, polygonize
+from geospatial_learn.raster import _copy_dataset_config,  array2raster, polygonize, raster2array
 import warnings
 from skimage.filters import gaussian
 from skimage import exposure
@@ -134,8 +134,9 @@ def _raster_extent(inras):
     maxx = minx + rgt[1] * rds.RasterXSize
     miny = maxy + rgt[5] * rds.RasterYSize
     ext = (minx, miny, maxx, maxy)
+    spref = rds.GetSpatialRef()
     
-    return ext
+    return ext, spref
 
 def create_ogr_poly(outfile, spref, file_type="ESRI Shapefile", field="id", 
                      field_dtype=0):
@@ -187,11 +188,11 @@ def create_ogr_poly(outfile, spref, file_type="ESRI Shapefile", field="id",
     return ootds, ootlyr
 
 def extent2poly(infile, filetype='raster', outfile=None, polytype="ESRI Shapefile", 
-                   geecoord=False):
+                   geecoord=False, lyrtype='ogr'):
     
     """
     Get the coordinates of a files extent and return an ogr polygon ring with 
-    the option to save the  
+    the option to save the  file
     
     
     Parameters
@@ -210,20 +211,24 @@ def extent2poly(infile, filetype='raster', outfile=None, polytype="ESRI Shapefil
     
     polytype: string
             ogr comapatible file type (see gdal/ogr docs) default 'ESRI Shapefile'
-            ensure your outfile string has the equiv. e.g. '.shp'
+            ensure your outfile string has the equiv. e.g. '.shp' or in case of 
+            memory only 'Memory' (outfile would be None in that case)
     
     geecoord: bool
            optionally convert to WGS84 lat,lon
+    
+    lyrtype: string
+            either 'gee' which means earth engine or 'ogr' which returns ds and lyr
            
     Returns
     -------
     
-    a GEE polygon geometry
+    a GEE polygon geometry or ogr dataset and layer
     
     """
-    # ogr read in etc
+    # gdal/ogr read in etc
     if filetype == 'raster':
-        ext = _raster_extent(infile)
+        ext, rstref = _raster_extent(infile)
         
     else:
         # tis a vector
@@ -257,40 +262,49 @@ def extent2poly(infile, filetype='raster', outfile=None, polytype="ESRI Shapefil
         poly.Transform(transform)
         
         tproj = wgs84
+    if filetype == 'raster':
+        tproj = rstref
     else:
         tproj = lyr.GetSpatialRef()
     
     # in case we wish to write it for later....    
-    if outfile != None:
-        outfile = infile[:-4]+'extent.shp'
-        
-        out_drv = ogr.GetDriverByName(polytype)
-        
-        # remove output shapefile if it already exists
+#    if outfile != None:
+#        outfile = infile[:-4]+'extent.shp'
+    
+    out_drv = ogr.GetDriverByName(polytype)
+    
+    # remove output shapefile if it already exists
+    if outfile != None and polytype != 'Memory':
         if os.path.exists(outfile):
             out_drv.DeleteDataSource(outfile)
-        
-        # create the output shapefile
         ootds = out_drv.CreateDataSource(outfile)
-        ootlyr = ootds.CreateLayer("extent", tproj, geom_type=ogr.wkbPolygon)
-        
-        # add an ID field
-        idField = ogr.FieldDefn("id", ogr.OFTInteger)
-        ootlyr.CreateField(idField)
-        
-        # create the feature and set values
-        featureDefn = ootlyr.GetLayerDefn()
-        feature = ogr.Feature(featureDefn)
-        feature.SetGeometry(poly)
-        feature.SetField("id", 1)
-        ootlyr.CreateFeature(feature)
-        feature = None
-        
-        # Save and close 
-        ootds.FlushCache()
-        ootds = None
+    else:
+        ootds = out_drv.CreateDataSource('out')
+
+    ootlyr = ootds.CreateLayer("extent", tproj, geom_type=ogr.wkbPolygon)
     
-    return poly
+    # add an ID field
+    idField = ogr.FieldDefn("id", ogr.OFTInteger)
+    ootlyr.CreateField(idField)
+    
+    # create the feature and set values
+    featureDefn = ootlyr.GetLayerDefn()
+    feature = ogr.Feature(featureDefn)
+    feature.SetGeometry(poly)
+    feature.SetField("id", 1)
+    ootlyr.CreateFeature(feature)
+    feature = None
+    
+    # Save and close if not a memory driver
+    
+    ootds.FlushCache()
+    ootds = None
+    
+    if lyrtype == 'gee':
+        poly.FlattenTo2D()
+        return poly
+    elif lyrtype == 'ogr':
+        return ootds, ootlyr
 
 
 def shape_props(inShape, prop, inRas=None,  label_field='ID'):
@@ -357,7 +371,7 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
     propNames = {'MajorAxisLength': 'MjAxis', 'MinorAxisLength': 'MnAxis',
                  'Area': 'Area', 'Eccentricity':'Eccen', 'Solidity': 'Solid',
                  'Extent': 'Extent', 'Orientation': 'Orient', 
-                 'Perimeter': 'Perim'}
+                 'Perimeter': 'Perim', 'AverageWidth':'AvWidth' }
     fldDef = ogr.FieldDefn(propNames[prop], ogr.OFTReal)
     lyr.CreateField(fldDef)
     fldName = propNames[prop]
@@ -435,8 +449,17 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
             bbox = poly1.envelope
             stat = poly1.length # important to note length means
             feat.SetField(fldName, stat)
-            lyr.SetFeature(feat) 
+            lyr.SetFeature(feat)
+        elif prop == 'AverageWidth':
+            #(Diameter of a circle with the same perimeter as the polygon) 
+            # * Area / (Area of a circle with the same perimeter as the polygon)
+            # (perimeter / pi) * area / (perimeter**2 / (4*pi)) = 4 * area / perimeter
             # TODO - this may not write to shape as a tuple
+            #((perim/pi) * area) / (perim**2 / (4 * pi))
+            # seemingly simplified to 
+            # area / perimeter * 4
+            stat = (poly1.area / poly1.length) * 4 
+                  
         elif prop == 'Centroid':
             cent=poly1.centroid
             stat = cent.coords[0]            
@@ -586,8 +609,8 @@ def _bbox_to_pixel_offsets(rgt, geom):
     # Specify offset and rows and columns to read
     xoff = int((xmin - xOrigin)/pixelWidth)
     yoff = int((yOrigin - ymax)/pixelWidth)
-    xcount = int((xmax - xmin)/pixelWidth)+1
-    ycount = int((ymax - ymin)/pixelWidth)+1
+    xcount = int((xmax - xmin)/pixelWidth)#+1
+    ycount = int((ymax - ymin)/pixelWidth)#+1
 #    originX = rgt[0]
 #    originY = rgt[3]
 #    pixel_width = rgt[1]
@@ -800,7 +823,24 @@ def geom2pixelbbox(inshp, inras, label="Tree", outfile=None):
     # df["xmin", "ymin", "xmax", "ymax"].round(0).astype(int)
     
     
-
+def rasterext2poly(inras):
+    
+    ext, rstref = _raster_extent(inras)
+        
+    
+    # make the linear ring 
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    ring.AddPoint(ext[0],ext[2])
+    ring.AddPoint(ext[1], ext[2])
+    ring.AddPoint(ext[1], ext[3])
+    ring.AddPoint(ext[0], ext[3])
+    ring.AddPoint(ext[0], ext[2])
+    
+    # drop the geom into poly object
+    poly = ogr.Geometry(ogr.wkbPolygon)
+    poly.AddGeometry(ring)
+    
+    return poly
 
 def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
                 write_stat=True, nodata_value=0, all_touched=True, 
@@ -830,7 +870,7 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
     stat: string
            string of a stat to calculate, if omitted it will be 'mean'
            others: 'mode', 'min','mean','max', 'std',' sum', 'count','var',
-           skew', 'kurt (osis)'
+           skew', 'kurt (osis)', 'vol'
                      
     write_stat: bool (optional)
                 If True, stat will be written to OGR file, if false, dataframe
@@ -890,9 +930,13 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
     features = np.arange(vlyr.GetFeatureCount())
     rejects = list()
     
+    #create a poly of raster bbox to test for within raster
+    poly = rasterext2poly(inRas)
+    
     #TODO FAR too many if statements in this loop.
     # This is FAR too slow
-    
+   # offs = []
+   
     for label in tqdm(features):
 
         if feat is None:
@@ -901,8 +945,37 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
 #        wkt=geom.ExportToWkt()
 #        poly1 = loads(wkt)
         geom = feat.geometry()
-
+        
+        # if outside the raster
         src_offset = _bbox_to_pixel_offsets(rgt, geom)
+        
+       # This does not seem to be fullproof
+       # This is a hacky mess that needs fixed
+        if poly.Contains(geom) == False:
+            #print(src_offset[0],src_offset[1])
+            #offs.append()
+            feat = vlyr.GetNextFeature()
+            continue
+        elif src_offset[0] > rds.RasterXSize:
+            feat = vlyr.GetNextFeature()
+            continue
+        elif src_offset[1] > rds.RasterYSize:
+            feat = vlyr.GetNextFeature()
+            continue
+        elif src_offset[0] < 0 or src_offset[1] < 0:
+            feat = vlyr.GetNextFeature()
+            continue
+        
+        if src_offset[0] + src_offset[2] > rds.RasterXSize:
+                # needs to be the diff otherwise neg vals are possble
+                xx = abs(rds.RasterXSize - src_offset[0])
+                
+                src_offset = (src_offset[0], src_offset[1], xx, src_offset[3])
+        
+        if src_offset[1] + src_offset[3] > rds.RasterYSize:
+                 yy = abs(rds.RasterYSize - src_offset[1])
+                 src_offset = (src_offset[0], src_offset[1],  src_offset[2], yy)
+        
         src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                src_offset[3])
         if src_array is None:
@@ -911,10 +984,7 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
             if src_array is None:
                 rejects.append(feat.GetFID())
                 continue
-            
-
-
-            
+  
         # calculate new geotransform of the feature subset
         new_gt = (
         (rgt[0] + (src_offset[0] * rgt[1])),
@@ -951,7 +1021,6 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
             )
         )
         
-                   
         if stat == 'mode':
             feature_stats = mode(masked)[0]
         elif stat == 'min':
@@ -967,17 +1036,27 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
             feature_stats = float(masked.std())
         elif stat == 'sum':
             feature_stats = float(masked.sum())
-#        elif stat is 'count':
-#            feature_stats = int(masked.count())
+        elif stat == 'count':
+            feature_stats = int(masked.count())
+        elif stat == 'perc':
+            total = masked.shape[0]* masked.shape[1]
+            perc = masked.count() / total
+            feature_stats = int(np.round(perc*100))  
         elif stat == 'var':
             feature_stats = float(masked.var())
         elif stat == 'skew':
             feature_stats = float(skew(masked[masked.nonzero()]))
         elif stat == 'kurt':
             feature_stats = float(kurtosis(masked[masked.nonzero()]))
+        elif stat == 'vol':
+            # get vol per cell
+            src_array[src_array==nodata_value]=0
+            cellvol = src_array*rgt[1]*rgt[1]
+            # then sum them
+            feature_stats = float(cellvol.sum())
         else:
             raise ValueError("Must be one of mode, min, mean, max,"
-                             "std, sum, count, var, skew, kurt")               
+                             "std, sum, count, var, skew, kurt, vol")               
         # You can't have the stat of a single value - this is not an ideal
         # solution - should be flagged somehow but
         if src_array.shape == (1,1):
@@ -988,6 +1067,7 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
             feat.SetField(bandname, feature_stats)
             vlyr.SetFeature(feat)
         feat = vlyr.GetNextFeature()
+        
     if write_stat != None:
         vlyr.SyncToDisk()
 
@@ -1693,7 +1773,7 @@ def snake(inShp, inRas, outShp, band=1, buf=1, nodata_value=0,
     outDataSource=None
     vds = None    
         
-def ms_snake(inShp, inRas, outShp, band=2, buf1=0, buf2=0, algo="ACWE", nodata_value=0,
+def ms_snake(inShp, inRas, outShp,  band=2, buf1=0, buf2=0, algo="ACWE", nodata_value=0,
           iterations=200,  smoothing=1, lambda1=1, lambda2=1, threshold='auto', 
           balloon=-1):
     
@@ -1769,7 +1849,7 @@ def ms_snake(inShp, inRas, outShp, band=2, buf1=0, buf2=0, algo="ACWE", nodata_v
     """    
     
     # Partly inspired by the Heikpe paper...
-   
+    # TODO read rgb/3band in and convert 2 gray
     
     rds = gdal.Open(inRas, gdal.GA_ReadOnly)
     #assert(rds)
@@ -2290,6 +2370,22 @@ def zonal_point(inShp, inRas, field, band=1, nodata_value=0, write_stat=True):
 
     vds = None
     rds = None
+    
+def mesh_from_raster(inras, outshp=None, band=1):
+    
+    img = raster2array(inras)
+    
+    cnt = img.shape[0]*img.shape[1]
+    
+    # must have non zero vals
+    newarr = np.arange(1, cnt+1)
+    newarr = newarr.reshape(img.shape)
+    ootras = inras[:-4]+'mesh.tif'
+    array2raster(newarr, 1, inras, ootras, dtype=5)
+    
+    if outshp == None:
+        outshp = ootras[:-3]+'shp'
+    polygonize(ootras, outshp, outField=None,  mask=True, band=1)
 
 #essentially cookbook version
 
