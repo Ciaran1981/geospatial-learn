@@ -11,7 +11,7 @@ masking or raster algebraic type functions and the conversion of Sentinel 2
 data to gdal compatible formats.  
 
 """
-import gdal, ogr,  osr
+from osgeo import gdal, ogr,  osr
 import os
 import numpy as np
 import glob2
@@ -28,12 +28,191 @@ from os import sys, path
 from shapely.wkt import loads
 from shapely.geometry import Polygon, LineString
 import matplotlib
+from owslib.wms import WebMapService
+from io import BytesIO#, StringIO
+from matplotlib import pyplot as plt
+from joblib import Parallel, delayed
 matplotlib.use('Qt5Agg')
 
 
 gdal.UseExceptions()
 ogr.UseExceptions()
 osr.UseExceptions()
+
+def batch_wms_download(gdf, wms, layer, img_size, outdir, attribute='id',
+                       espg='27700'):
+    
+    """
+    Download a load of wms tiles with georeferencing
+    
+    Parameters
+    ----------
+    
+    gdf: geopandas gdf
+    
+    wms: string 
+        the wms addresss
+    
+    layer: string
+        the wms layer
+    
+    img_size: tuple
+                image x,y dims 
+    
+    espg: string
+            the proj espg
+    
+    outfile: string
+              path to outfile
+    
+    """
+
+    
+    rng = np.arange(0, gdf.shape[0])
+    
+    # assuming each tile is the same size
+    bbox = gdf.bounds.loc[0].tolist()
+    img_size = (int(bbox[2]-bbox[0])*4,  int(bbox[3]-bbox[1])*4)
+    
+    outfiles = [os.path.join(outdir, a+'.tif') for a in gdf.id.to_list()]
+    
+    _ = Parallel(n_jobs=gdf.shape[0],
+             verbose=2)(delayed(wmsGrabber)(gdf.bounds.loc[i].tolist(),
+                        img_size, wms, layer,
+                        outfiles[i], espg=espg) for i in rng)
+
+def wmsGrabber(bbox, image_size, wms, layer, outfile, espg='27700'):
+    
+    """
+    Return a wms tile from a given source and optionally write to disk with 
+    georef
+    
+    Parameters
+    ----------
+    
+    bbox: list or tuple
+            xmin, ymin, xmax, ymax
+    
+    image_size: tuple
+                image x,y dims 
+    
+    wms: string 
+        the wms addresss
+        
+    layer: string 
+        the wms (sub)layer    
+    
+    espg: string
+            the proj espg
+    
+    outfile: string
+              path to outfile, if None only array is returned
+    
+    """
+    
+    wms = WebMapService(wms, version='1.1.1')
+    
+    wms_img = wms.getmap(layers=[layer],
+                        srs='EPSG:'+espg,
+                        bbox=(bbox[0], bbox[1], bbox[2], bbox[3]),
+                        size=image_size,
+                        format='image/png',
+                        transparent=True
+                        )
+
+    f_io = BytesIO(wms_img.read())
+    img = plt.imread(f_io)
+    
+    np2gdal = {"uint8": 1,"int8": 1,"uint16": 2,"int16": 3,
+               "uint32": 4,"int32": 5, "float32": 6, 
+               "float64": 7, "complex64": 10, "complex128": 11}
+    
+    
+    if outfile != None:
+        
+        dtpe = np2gdal[str(img.dtype)]
+        
+        bbox2raster(img, img.shape[2], bbox, outfile, pixel_size=0.25,  
+                    proj=int(espg), dtype=dtpe, FMT='Gtiff')
+    
+    return img
+
+def bbox2raster(array, bands, bbox, outras, pixel_size=0.25,  proj=27700,
+                dtype=5, FMT='Gtiff'):
+    
+    """
+    Using a bounding box and other information georef an image and write to disk
+    
+    Parameters
+    ----------      
+    array: np array
+            a numpy array.
+    
+    bands: int
+            the no of bands.
+    
+    bbox: list or tuple
+        xmin, ymin, xmax, ymax
+    
+    pixel_size: int
+                pixel size in metres (unless proj is degrees!)
+    
+    outras: string
+             the path of the output raster.
+    
+    proj: int
+         the espg code eg 27700 for osgb
+    
+    dtype: int 
+            though you need to know what the number represents!
+            a GDAL datatype (see the GDAL website) e.g gdal.GDT_Int32 = 5
+    
+    FMT: string 
+           (optional) a GDAL raster format (see the GDAL website) eg Gtiff, KEA.
+    
+    """
+    # dimensions & ref coords
+    x_pixels = array.shape[1]
+    y_pixels = array.shape[0] 
+    
+    x_min = bbox[0]
+    y_max = bbox[3]
+    
+    driver = gdal.GetDriverByName(FMT)
+    
+    # Set params for output raster
+    ds= driver.Create(
+        outras, 
+        x_pixels,
+        y_pixels,
+        bands,
+        dtype)
+
+    ds.SetGeoTransform((
+        x_min,        # rgt[0]
+        pixel_size,   # rgt[1]
+        0,            # rgt[2]
+        y_max,        # rgt[3]
+        0,            # rgt[4]
+        -pixel_size)) # rgt[5]
+    
+    # georef
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(proj)    
+    ds.SetProjection(srs.ExportToWkt())
+    # Write 
+    if bands == 1:
+        ds.GetRasterBand(1).WriteArray(array)
+
+    else:
+    # Loop through bands - not aware of quicker way when writing
+        for band in range(1, bands+1):
+            ds.GetRasterBand(band).WriteArray(array[:, :, band-1])
+    # Flush to disk
+    ds.FlushCache()  
+    ds=None
+    
+    
 
 
 def array2raster(array, bands, inRaster, outRas, dtype, FMT=None):
