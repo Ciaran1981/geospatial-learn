@@ -38,4 +38,6 @@ new_requirement.txt
 # os files
 .DS_Store
 
-geolearn_env_k.yml
+example_notebooks/*.ipynb_checkpoints
+
+
