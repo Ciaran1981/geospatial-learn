@@ -28,7 +28,7 @@ tests/test_outputs/
 /geospatial_learn/geodata.py.orig
 build/bdist.win-amd64/
 build/lib/geospatial_learn/gdal_merge.py
-
+/geospatial_learn/__pycache__
 
 new_requirement.txt
 /build_old/

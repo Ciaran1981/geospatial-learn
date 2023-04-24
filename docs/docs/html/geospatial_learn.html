@@ -287,6 +287,45 @@ to commonly used formats</p>
 </dd></dl>
 
 <dl class="py function">
+<dt id="raster.batch_wms_download">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">batch_wms_download</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gdf</span></em>, <em class="sig-param"><span class="n">wms</span></em>, <em class="sig-param"><span class="n">layer</span></em>, <em class="sig-param"><span class="n">img_size</span></em>, <em class="sig-param"><span class="n">outdir</span></em>, <em class="sig-param"><span class="n">attribute</span><span class="o">=</span><span class="default_value">'id'</span></em>, <em class="sig-param"><span class="n">espg</span><span class="o">=</span><span class="default_value">'27700'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.batch_wms_download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download a load of wms tiles with georeferencing</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gdf</strong> (<em>geopandas gdf</em>)</p></li>
+<li><p><strong>wms</strong> (<em>string</em>) – the wms addresss</p></li>
+<li><p><strong>layer</strong> (<em>string</em>) – the wms layer</p></li>
+<li><p><strong>img_size</strong> (<em>tuple</em>) – image x,y dims</p></li>
+<li><p><strong>espg</strong> (<em>string</em>) – the proj espg</p></li>
+<li><p><strong>outfile</strong> (<em>string</em>) – path to outfile</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="raster.bbox2raster">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">bbox2raster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">array</span></em>, <em class="sig-param"><span class="n">bands</span></em>, <em class="sig-param"><span class="n">bbox</span></em>, <em class="sig-param"><span class="n">outras</span></em>, <em class="sig-param"><span class="n">pixel_size</span><span class="o">=</span><span class="default_value">0.25</span></em>, <em class="sig-param"><span class="n">proj</span><span class="o">=</span><span class="default_value">27700</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">'Gtiff'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.bbox2raster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using a bounding box and other information georef an image and write to disk</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>array</strong> (<em>np array</em>) – a numpy array.</p></li>
+<li><p><strong>bands</strong> (<em>int</em>) – the no of bands.</p></li>
+<li><p><strong>bbox</strong> (<em>list or tuple</em>) – xmin, ymin, xmax, ymax</p></li>
+<li><p><strong>pixel_size</strong> (<em>int</em>) – pixel size in metres (unless proj is degrees!)</p></li>
+<li><p><strong>outras</strong> (<em>string</em>) – the path of the output raster.</p></li>
+<li><p><strong>proj</strong> (<em>int</em>) – the espg code eg 27700 for osgb</p></li>
+<li><p><strong>dtype</strong> (<em>int</em>) – though you need to know what the number represents!
+a GDAL datatype (see the GDAL website) e.g gdal.GDT_Int32 = 5</p></li>
+<li><p><strong>FMT</strong> (<em>string</em>) – (optional) a GDAL raster format (see the GDAL website) eg Gtiff, KEA.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="raster.calc_ndvi">
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">calc_ndvi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputIm</span></em>, <em class="sig-param"><span class="n">outputIm</span></em>, <em class="sig-param"><span class="n">bandsList</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.calc_ndvi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a copy of an image with an ndvi band added</p>
@@ -371,7 +410,7 @@ that author</p>
 <dt id="raster.mask_raster">
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">mask_raster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputIm</span></em>, <em class="sig-param"><span class="n">mval</span></em>, <em class="sig-param"><span class="n">overwrite</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">outputIm</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.mask_raster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform a numpy masking operation on a raster where all values
-corresponding to  mask value are retained - does this in blocks for
+corresponding to mask value are retained - does this in blocks for
 efficiency on larger rasters</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -394,15 +433,16 @@ efficiency on larger rasters</p>
 
 <dl class="py function">
 <dt id="raster.mask_raster_multi">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">mask_raster_multi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputIm</span></em>, <em class="sig-param"><span class="n">mval</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">outval</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mask</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.mask_raster_multi" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">mask_raster_multi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputIm</span></em>, <em class="sig-param"><span class="n">mval</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">rule</span><span class="o">=</span><span class="default_value">'=='</span></em>, <em class="sig-param"><span class="n">outval</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mask</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.mask_raster_multi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform a numpy masking operation on a raster where all values
-corresponding to  mask value are retained - does this in blocks for
-efficiency on larger rasters</p>
+corresponding to, less than or greater than the mask value are retained
+- does this in blocks for efficiency on larger rasters</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>inputIm</strong> (<em>string</em>) – the granule folder</p></li>
 <li><p><strong>mval</strong> (<em>int</em>) – the masking value that delineates pixels to be kept</p></li>
+<li><p><strong>rule</strong> (<em>string</em>) – the logic for masking either ‘==’, ‘&lt;’ or ‘&gt;’</p></li>
 <li><p><strong>outval</strong> (<em>numerical dtype eg int, float</em>) – the areas removed will be written to this value default is 0</p></li>
 <li><p><strong>mask</strong> (<em>string</em>) – the mask raster to be used (optional)</p></li>
 <li><p><strong>FMT</strong> (<em>string</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</p></li>
@@ -415,13 +455,14 @@ efficiency on larger rasters</p>
 
 <dl class="py function">
 <dt id="raster.mask_with_poly">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">mask_with_poly</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vector_path</span></em>, <em class="sig-param"><span class="n">raster_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.mask_with_poly" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove raster values inside a polygon and update the raster</p>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">mask_with_poly</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vector_path</span></em>, <em class="sig-param"><span class="n">raster_path</span></em>, <em class="sig-param"><span class="n">value</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.mask_with_poly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change raster values inside a polygon and update the raster</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>vector_path</strong> (<em>string</em>) – input shapefile</p></li>
 <li><p><strong>raster_path</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>value</strong> (<em>int</em>) – the value to alter</p></li>
 </ul>
 </dd>
 </dl>
@@ -644,6 +685,25 @@ are no nans as nan percentile is far too slow</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt id="raster.wmsGrabber">
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">wmsGrabber</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bbox</span></em>, <em class="sig-param"><span class="n">image_size</span></em>, <em class="sig-param"><span class="n">wms</span></em>, <em class="sig-param"><span class="n">layer</span></em>, <em class="sig-param"><span class="n">outfile</span></em>, <em class="sig-param"><span class="n">espg</span><span class="o">=</span><span class="default_value">'27700'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.wmsGrabber" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a wms tile from a given source and optionally write to disk with
+georef</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bbox</strong> (<em>list or tuple</em>) – xmin, ymin, xmax, ymax</p></li>
+<li><p><strong>image_size</strong> (<em>tuple</em>) – image x,y dims</p></li>
+<li><p><strong>wms</strong> (<em>string</em>) – the wms addresss</p></li>
+<li><p><strong>layer</strong> (<em>string</em>) – the wms (sub)layer</p></li>
+<li><p><strong>espg</strong> (<em>string</em>) – the proj espg</p></li>
+<li><p><strong>outfile</strong> (<em>string</em>) – path to outfile, if None only array is returned</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="raster.write_vrt">
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">write_vrt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">infiles</span></em>, <em class="sig-param"><span class="n">outfile</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.write_vrt" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -733,7 +793,7 @@ recommended instead of this function</p>
 
 <dl class="py function">
 <dt id="learning.classify_pixel_bloc">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_pixel_bloc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">inputImage</span></em>, <em class="sig-param"><span class="n">bands</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ndvi</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_pixel_bloc" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">classify_pixel_bloc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">inputImage</span></em>, <em class="sig-param"><span class="n">outMap</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1, 2, 3]</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ndvi</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.classify_pixel_bloc" title="Permalink to this definition">¶</a></dt>
 <dd><p>A block processing classifier for large rasters, supports KEA, HFA, &amp; Gtiff
 formats. KEA is recommended, Gtiff is the default</p>
 <dl class="field-list simple">
@@ -741,7 +801,7 @@ formats. KEA is recommended, Gtiff is the default</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>sklearn model / keras model</em>) – a path to a model that has been saved</p></li>
 <li><p><strong>inputImage</strong> (<em>string</em>) – path to image including the file fmt ‘Myimage.tif’</p></li>
-<li><p><strong>bands</strong> (<em>band</em>) – the no of image bands eg 8</p></li>
+<li><p><strong>bands</strong> (<em>band</em>) – list of band indices to be used eg [1,2,3]</p></li>
 <li><p><strong>outMap</strong> (<em>string</em>) – path to output image excluding the file format ‘pathto/mymap’</p></li>
 <li><p><strong>FMT</strong> (<em>string</em>) – optional parameter - gdal readable fmt</p></li>
 <li><p><strong>blocksize</strong> (<em>int (optional)</em>) – size of raster chunck in pixels 256 tends to be quickest
@@ -1051,6 +1111,11 @@ so that has been prioritised rather than raster IO</p>
 </dd></dl>
 
 <dl class="py function">
+<dt id="learning.regression_results">
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">regression_results</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">y_true</span></em>, <em class="sig-param"><span class="n">y_pred</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.regression_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt id="learning.rmse_vector_lyr">
 <code class="sig-prename descclassname">learning.</code><code class="sig-name descname">rmse_vector_lyr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShape</span></em>, <em class="sig-param"><span class="n">attributes</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.rmse_vector_lyr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Using sklearn get the rmse of 2 vector attributes
@@ -1092,10 +1157,27 @@ with the view to them being classified in the learning module</p>
 </dd></dl>
 
 <dl class="py function">
+<dt id="shape.create_ogr_poly">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">create_ogr_poly</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">outfile</span></em>, <em class="sig-param"><span class="n">spref</span></em>, <em class="sig-param"><span class="n">file_type</span><span class="o">=</span><span class="default_value">'ESRI Shapefile'</span></em>, <em class="sig-param"><span class="n">field</span><span class="o">=</span><span class="default_value">'id'</span></em>, <em class="sig-param"><span class="n">field_dtype</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.create_ogr_poly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an ogr dataset an layer (convenience)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>outfile</strong> (<em>string</em>) – path to ogr file</p></li>
+<li><p><strong>spref</strong> (<em>wkt or int</em>) – spatial reference either a wkt or espg</p></li>
+<li><p><strong>file_type</strong> (<em>string</em>) – ogr file designation</p></li>
+<li><p><strong>field</strong> (<em>string</em>) – attribute field e.g. “id”</p></li>
+<li><p><strong>field_type</strong> (<em>int or ogr.OFT…..</em>) – ogr dtype of field e.g. 0 == ogr.OFTInteger</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="shape.extent2poly">
-<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">extent2poly</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">infile</span></em>, <em class="sig-param"><span class="n">filetype</span><span class="o">=</span><span class="default_value">'raster'</span></em>, <em class="sig-param"><span class="n">outfile</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">polytype</span><span class="o">=</span><span class="default_value">'ESRI Shapefile'</span></em>, <em class="sig-param"><span class="n">geecoord</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.extent2poly" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">extent2poly</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">infile</span></em>, <em class="sig-param"><span class="n">filetype</span><span class="o">=</span><span class="default_value">'raster'</span></em>, <em class="sig-param"><span class="n">outfile</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">polytype</span><span class="o">=</span><span class="default_value">'ESRI Shapefile'</span></em>, <em class="sig-param"><span class="n">geecoord</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">lyrtype</span><span class="o">=</span><span class="default_value">'ogr'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.extent2poly" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the coordinates of a files extent and return an ogr polygon ring with
-the option to save the</p>
+the option to save the  file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1105,15 +1187,17 @@ with ‘extent’ added on before the file type</p></li>
 <li><p><strong>outfile</strong> (<em>string</em>) – the path of the output file, if not specified, it will be input file
 with ‘extent’ added on before the file type</p></li>
 <li><p><strong>polytype</strong> (<em>string</em>) – ogr comapatible file type (see gdal/ogr docs) default ‘ESRI Shapefile’
-ensure your outfile string has the equiv. e.g. ‘.shp’</p></li>
+ensure your outfile string has the equiv. e.g. ‘.shp’ or in case of
+memory only ‘Memory’ (outfile would be None in that case)</p></li>
 <li><p><strong>geecoord</strong> (<em>bool</em>) – optionally convert to WGS84 lat,lon</p></li>
+<li><p><strong>lyrtype</strong> (<em>string</em>) – either ‘gee’ which means earth engine or ‘ogr’ which returns ds and lyr</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p></p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>a GEE polygon geometry</p>
+<dd class="field-odd"><p>a GEE polygon geometry or ogr dataset and layer</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1135,6 +1219,28 @@ raster operation</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt id="shape.geom2pixelbbox">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">geom2pixelbbox</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inshp</span></em>, <em class="sig-param"><span class="n">inras</span></em>, <em class="sig-param"><span class="n">label</span><span class="o">=</span><span class="default_value">'Tree'</span></em>, <em class="sig-param"><span class="n">outfile</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.geom2pixelbbox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert shapefile geometries to a df of pixel bounding boxes
+Projections must be the same!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inshp</strong> (<em>string</em>) – input ogr compatible geometry</p></li>
+<li><p><strong>inras</strong> (<em>string</em>) – input raster</p></li>
+<li><p><strong>label</strong> (<em>string</em>) – label name def. ‘Tree’</p></li>
+<li><p><strong>outfile</strong> (<em>string</em>) – path to save annotation csv</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="shape.mesh_from_raster">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">mesh_from_raster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inras</span></em>, <em class="sig-param"><span class="n">outshp</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">band</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.mesh_from_raster" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt id="shape.meshgrid">
@@ -1189,6 +1295,11 @@ this to zero will disable the balloon force.</p></li>
 <code class="sig-prename descclassname">shape.</code><code class="sig-name descname">poly2dictlist</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inShp</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.poly2dictlist" title="Permalink to this definition">¶</a></dt>
 <dd><p>convert an ogr to a list of json like dicts</p>
 </dd></dl>
+
+<dl class="py function">
+<dt id="shape.rasterext2poly">
+<code class="sig-prename descclassname">shape.</code><code class="sig-name descname">rasterext2poly</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inras</span></em><span class="sig-paren">)</span><a class="headerlink" href="#shape.rasterext2poly" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt id="shape.shape_props">
@@ -1423,7 +1534,7 @@ this issue</p>
 layer in question</p></li>
 <li><p><strong>stat</strong> (<em>string</em>) – string of a stat to calculate, if omitted it will be ‘mean’
 others: ‘mode’, ‘min’,’mean’,’max’, ‘std’,’ sum’, ‘count’,’var’,
-skew’, ‘kurt (osis)’</p></li>
+skew’, ‘kurt (osis)’, ‘vol’</p></li>
 <li><p><strong>write_stat</strong> (<em>bool (optional)</em>) – If True, stat will be written to OGR file, if false, dataframe
 only returned (bool)</p></li>
 <li><p><strong>nodata_value</strong> (<em>numerical</em>) – If used the no data val of the raster</p></li>
@@ -1874,7 +1985,7 @@ Based on segmentation_models.pytorch &amp; albumentations</p>
 
 <dl class="py function">
 <dt id="convnet.train_semantic_seg">
-<code class="sig-prename descclassname">convnet.</code><code class="sig-name descname">train_semantic_seg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">maindir</span></em>, <em class="sig-param"><span class="n">plot</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1, 2, 3]</span></em>, <em class="sig-param"><span class="n">train_percent</span><span class="o">=</span><span class="default_value">0.8</span></em>, <em class="sig-param"><span class="n">tilesize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">f1</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">preTrain</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">proc</span><span class="o">=</span><span class="default_value">'cuda:0'</span></em>, <em class="sig-param"><span class="n">activation</span><span class="o">=</span><span class="default_value">'softmax2d'</span></em>, <em class="sig-param"><span class="n">classes</span><span class="o">=</span><span class="default_value">['1']</span></em>, <em class="sig-param"><span class="n">weights</span><span class="o">=</span><span class="default_value">'imagenet'</span></em>, <em class="sig-param"><span class="n">modelpth</span><span class="o">=</span><span class="default_value">'./best_model.pth'</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">{'batch_size': 16, 'classes': 1, 'device': 'cuda', 'encoder': 'resnet34', 'epochs': 50, 'in_channels': 3, 'lr': 0.0001, 'model': 'Unet', 'num_workers': 2}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#convnet.train_semantic_seg" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">convnet.</code><code class="sig-name descname">train_semantic_seg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">maindir</span></em>, <em class="sig-param"><span class="n">plot</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1, 2, 3]</span></em>, <em class="sig-param"><span class="n">tilesize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">f1</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">preTrain</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">proc</span><span class="o">=</span><span class="default_value">'cuda:0'</span></em>, <em class="sig-param"><span class="n">activation</span><span class="o">=</span><span class="default_value">'softmax2d'</span></em>, <em class="sig-param"><span class="n">classes</span><span class="o">=</span><span class="default_value">['1']</span></em>, <em class="sig-param"><span class="n">weights</span><span class="o">=</span><span class="default_value">'imagenet'</span></em>, <em class="sig-param"><span class="n">modelpth</span><span class="o">=</span><span class="default_value">'./best_model.pth'</span></em>, <em class="sig-param"><span class="n">plot_score</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">{'batch_size': 16, 'classes': 1, 'device': 'cuda', 'encoder': 'resnet34', 'epochs': 50, 'in_channels': 3, 'lr': 0.0001, 'model': 'Unet', 'num_workers': 2}</span></em>, <em class="sig-param"><span class="n">nt</span><span class="o">=</span><span class="default_value">- 1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#convnet.train_semantic_seg" title="Permalink to this definition">¶</a></dt>
 <dd><p>multi-class Semantic Segmentation of EO-imagery - an early version things are to be
 changed in the near future
 Based on segmentation_models.pytorch &amp; albumentations</p>
@@ -1886,7 +1997,6 @@ Based on segmentation_models.pytorch &amp; albumentations</p>
 <li><p><strong>plot</strong> (<em>bool</em>) – whether to plot intermediate data results eg visualise the image aug,
 test results etc.</p></li>
 <li><p><strong>bands</strong> (<em>list of ints</em>) – the image bands to use</p></li>
-<li><p><strong>train_percent</strong> (<em>string</em>) – the percentage of to use as training</p></li>
 <li><p><strong>tilesize</strong> (<em>int</em>) – the size of the image tile used in training and thus classification</p></li>
 <li><p><strong>classes</strong> (<em>list</em>) – a list of strings with the classes eg [‘1’, ‘2’, ‘3’] as labelled
 in raster</p></li>
@@ -1896,7 +2006,7 @@ in raster</p></li>
 softmax2d for multiclass</p></li>
 <li><p><strong>params</strong> (<em>dict</em>) – the convnet model params
 models:
-Unet, UNet11, UNet16, U Linknet, FPN, PSPNet,PAN, DeepLabV3 and DeepLabV3+
+Unet, UNet11, UNet16, U Linknet, FPN, PSPNet, PAN, DeepLabV3 and DeepLabV3+
 encoders:
 ‘resnet18’,’resnet34’,’resnet50’, ‘resnet101’,’resnet152’,’resnext50_32x4d’,
 ‘resnext101_32x4d’,’resnext101_32x8d’,’resnext101_32x16d’,’resnext101_32x32d’,
@@ -1914,41 +2024,6 @@ encoders:
 </dl>
 <p class="rubric">Notes</p>
 <p>This is an early version with some stuff to add/change</p>
-</dd></dl>
-
-<dl class="py function">
-<dt id="convnet.train_semseg_binary">
-<code class="sig-prename descclassname">convnet.</code><code class="sig-name descname">train_semseg_binary</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">maindir</span></em>, <em class="sig-param"><span class="n">bands</span><span class="o">=</span><span class="default_value">[1, 2, 3]</span></em>, <em class="sig-param"><span class="n">train_percent</span><span class="o">=</span><span class="default_value">0.7</span></em>, <em class="sig-param"><span class="n">f1</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">proc</span><span class="o">=</span><span class="default_value">'cuda:0'</span></em>, <em class="sig-param"><span class="n">tilesize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">redo</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">activation</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">modelpth</span><span class="o">=</span><span class="default_value">'./best_model.pth'</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">{'batch_size': 16, 'classes': 1, 'device': 'cuda', 'encoder': 'resnet34', 'epochs': 50, 'in_channels': 3, 'lr': 0.001, 'model': 'Unet', 'num_workers': 2}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#convnet.train_semseg_binary" title="Permalink to this definition">¶</a></dt>
-<dd><p>Train a semantic seg model for binary classification</p>
-<p>Based on segmentation_models.pytorch &amp; albumentations</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>maindir</strong> (<em>string</em>) – the directory containing the training masks and labels as
-produced by collect_train is stored</p></li>
-<li><p><strong>bands</strong> (<em>list of ints</em>) – the image bands to use</p></li>
-<li><p><strong>train_percent</strong> – the percentage of to use as training</p></li>
-<li><p><strong>f1</strong> (<em>bool</em>) – whether to svae a classification report (will be a plot in working dir)</p></li>
-<li><p><strong>params</strong> (<em>dict</em>) – the convnet model params
-models:
-Unet, UNet11, UNet16, U Linknet, FPN, PSPNet,PAN, DeepLabV3 and DeepLabV3+
-encoders:
-‘resnet18’,’resnet34’,’resnet50’, ‘resnet101’,’resnet152’,’resnext50_32x4d’,
-‘resnext101_32x4d’,’resnext101_32x8d’,’resnext101_32x16d’,’resnext101_32x32d’,
-‘resnext101_32x48d’,’dpn68’,’dpn68b’,’dpn92’,’dpn98’,’dpn107’,’dpn131’,’vgg11’,
-‘vgg11_bn’,’vgg13’,’vgg13_bn’,’vgg16’,’vgg16_bn’,’vgg19’,’vgg19_bn’,’senet154’,
-‘se_resnet50’,’se_resnet101’,’se_resnet152’,’se_resnext50_32x4d’,’se_resnext101_32x4d’,
-‘densenet121’,’densenet169’,’densenet201’,’densenet161’,’inceptionresnetv2’,
-‘inceptionv4’,’efficientnet-b0’,’efficientnet-b1’,’efficientnet-b2’,’efficientnet-b3’,
-‘efficientnet-b4’,’efficientnet-b5’,’efficientnet-b6’,’efficientnet-b7’,
-‘mobilenet_v2’,’xception’,’timm-efficientnet-b0’,’timm-efficientnet-b1’,
-‘timm-efficientnet-b2’,’timm-efficientnet-b3’,’timm-efficientnet-b4’,’timm-efficientnet-b5’,
-‘timm-efficientnet-b6’,’timm-efficientnet-b7’,’timm-efficientnet-b8’,’timm-efficientnet-l2’</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>This is an early version with some stuff to add/change eg</p>
 </dd></dl>
 
 </div>
