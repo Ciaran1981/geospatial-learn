@@ -56,7 +56,6 @@ dependencies:
 
   - pip:
     - segmentation-models-pytorch
-    - opencv-python
     - xmltodict
     - simpledbf
     - pyfftw
