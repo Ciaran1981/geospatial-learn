@@ -288,7 +288,7 @@ to commonly used formats</p>
 
 <dl class="py function">
 <dt id="raster.batch_wms_download">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">batch_wms_download</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gdf</span></em>, <em class="sig-param"><span class="n">wms</span></em>, <em class="sig-param"><span class="n">layer</span></em>, <em class="sig-param"><span class="n">img_size</span></em>, <em class="sig-param"><span class="n">outdir</span></em>, <em class="sig-param"><span class="n">attribute</span><span class="o">=</span><span class="default_value">'id'</span></em>, <em class="sig-param"><span class="n">espg</span><span class="o">=</span><span class="default_value">'27700'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.batch_wms_download" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">batch_wms_download</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gdf</span></em>, <em class="sig-param"><span class="n">wms</span></em>, <em class="sig-param"><span class="n">layer</span></em>, <em class="sig-param"><span class="n">img_size</span></em>, <em class="sig-param"><span class="n">outdir</span></em>, <em class="sig-param"><span class="n">attribute</span><span class="o">=</span><span class="default_value">'id'</span></em>, <em class="sig-param"><span class="n">espg</span><span class="o">=</span><span class="default_value">'27700'</span></em>, <em class="sig-param"><span class="n">res</span><span class="o">=</span><span class="default_value">0.25</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.batch_wms_download" title="Permalink to this definition">¶</a></dt>
 <dd><p>Download a load of wms tiles with georeferencing</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -299,6 +299,7 @@ to commonly used formats</p>
 <li><p><strong>img_size</strong> (<em>tuple</em>) – image x,y dims</p></li>
 <li><p><strong>espg</strong> (<em>string</em>) – the proj espg</p></li>
 <li><p><strong>outfile</strong> (<em>string</em>) – path to outfile</p></li>
+<li><p><strong>res</strong> (<em>int</em>) – per pixel resolution of imagery in metres</p></li>
 </ul>
 </dd>
 </dl>
@@ -579,17 +580,15 @@ to zero (in the use case of 2 sceneIm classifications)</p></li>
 <dl class="py function">
 <dt id="raster.rgb_ind">
 <code class="sig-prename descclassname">raster.</code><code class="sig-name descname">rgb_ind</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputIm</span></em>, <em class="sig-param"><span class="n">outputIm</span></em>, <em class="sig-param"><span class="n">blocksize</span><span class="o">=</span><span class="default_value">256</span></em>, <em class="sig-param"><span class="n">FMT</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.rgb_ind" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a copy of an image with an ndvi band added</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>inputIm</strong> (<em>string</em>) – the input rgb image</p></li>
+<dd><p>Create a copy of an image with rgb indices added
+:Parameters: * <strong>inputIm</strong> (<em>string</em>) – the input rgb image</p>
+<blockquote>
+<div><ul class="simple">
 <li><p><strong>outputIm</strong> (<em>string</em>) – the output image</p></li>
 <li><p><strong>FMT</strong> (<em>string</em>) – the output gdal format eg ‘Gtiff’, ‘KEA’, ‘HFA’</p></li>
 <li><p><strong>blocksize</strong> (<em>int</em>) – the chunk of raster read in &amp; write out</p></li>
 </ul>
-</dd>
-</dl>
+</div></blockquote>
 </dd></dl>
 
 <dl class="py function">
@@ -686,7 +685,7 @@ are no nans as nan percentile is far too slow</p></li>
 
 <dl class="py function">
 <dt id="raster.wmsGrabber">
-<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">wmsGrabber</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bbox</span></em>, <em class="sig-param"><span class="n">image_size</span></em>, <em class="sig-param"><span class="n">wms</span></em>, <em class="sig-param"><span class="n">layer</span></em>, <em class="sig-param"><span class="n">outfile</span></em>, <em class="sig-param"><span class="n">espg</span><span class="o">=</span><span class="default_value">'27700'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.wmsGrabber" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">raster.</code><code class="sig-name descname">wmsGrabber</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bbox</span></em>, <em class="sig-param"><span class="n">image_size</span></em>, <em class="sig-param"><span class="n">wms</span></em>, <em class="sig-param"><span class="n">layer</span></em>, <em class="sig-param"><span class="n">outfile</span></em>, <em class="sig-param"><span class="n">espg</span><span class="o">=</span><span class="default_value">'27700'</span></em>, <em class="sig-param"><span class="n">res</span><span class="o">=</span><span class="default_value">0.25</span></em><span class="sig-paren">)</span><a class="headerlink" href="#raster.wmsGrabber" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a wms tile from a given source and optionally write to disk with
 georef</p>
 <dl class="field-list simple">
@@ -836,29 +835,27 @@ this must already exist! Create in CldComp. or cgal</p></li>
 
 <dl class="py function">
 <dt id="learning.create_model">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_train</span></em>, <em class="sig-param"><span class="n">outModel</span></em>, <em class="sig-param"><span class="n">clf</span><span class="o">=</span><span class="default_value">'svc'</span></em>, <em class="sig-param"><span class="n">random</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">cv</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">cores</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">strat</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">test_size</span><span class="o">=</span><span class="default_value">0.3</span></em>, <em class="sig-param"><span class="n">regress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scoring</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">class_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ply</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">save</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_train</span></em>, <em class="sig-param"><span class="n">outModel</span></em>, <em class="sig-param"><span class="n">clf</span><span class="o">=</span><span class="default_value">'erf'</span></em>, <em class="sig-param"><span class="n">group</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">random</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">cv</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">cores</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">strat</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">test_size</span><span class="o">=</span><span class="default_value">0.3</span></em>, <em class="sig-param"><span class="n">regress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scoring</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">class_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">save</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Brute force or random model creating using scikit learn. Either use the
 default params in this function or enter your own (recommended - see sklearn)</p>
-<dl class="field-list">
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul>
-<li><p><strong>X_train</strong> (<em>np array</em>) – numpy array of training data where the 1st column is labels</p></li>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_train</strong> (<em>np array</em>) – numpy array of training data where the 1st column is labels.
+If the groupkfold is used, the last column will be the group labels</p></li>
 <li><p><strong>outModel</strong> (<em>string</em>) – the output model path which is a gz file, if using keras it is
 h5</p></li>
+<li><p><strong>params</strong> (<em>dict</em>) – a dict of model params (see scikit learn)</p></li>
 <li><p><strong>clf</strong> (<em>string</em>) – an sklearn or xgb classifier/regressor
-logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb,</p>
-<p>keras nnt also available as a very limited option - the nnt is
-currently a dense sequential of 32, 16, 8, 32 - please inspect the
-source. If using GPU, you will likely be limited to a sequential
-grid search as multi-core overloads the GPUs quick!</p>
-</li>
+logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb,</p></li>
+<li><p><strong>group</strong> (<em>np.array</em>) – array of group labels for train/test split and grid search
+useful to avoid autocorrelation</p></li>
 <li><p><strong>random</strong> (<em>bool</em>) – if True, a random param search</p></li>
 <li><p><strong>cv</strong> (<em>int</em>) – no of folds</p></li>
 <li><p><strong>cores</strong> (<em>int or -1 (default)</em>) – the no of parallel jobs</p></li>
 <li><p><strong>strat</strong> (<em>bool</em>) – a stratified grid search</p></li>
 <li><p><strong>test_size</strong> (<em>float</em>) – percentage to hold out to test</p></li>
 <li><p><strong>regress</strong> (<em>bool</em>) – a regression model if True, a classifier if False</p></li>
-<li><p><strong>params</strong> (<em>a dict of model params (see scikit learn)</em>) – enter your own params dict rather than the range provided</p></li>
 <li><p><strong>scoring</strong> (<em>string</em>) – a suitable sklearn scoring type (see notes)</p></li>
 <li><p><strong>class_names</strong> (<em>list of strings</em>) – class names in order of their numercial equivalents</p></li>
 </ul>
@@ -921,7 +918,7 @@ h5</p></li>
 
 <dl class="py function">
 <dt id="learning.create_model_tpot">
-<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model_tpot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_train</span></em>, <em class="sig-param"><span class="n">outModel</span></em>, <em class="sig-param"><span class="n">gen</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">popsize</span><span class="o">=</span><span class="default_value">50</span></em>, <em class="sig-param"><span class="n">cv</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">cores</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">dask</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">test_size</span><span class="o">=</span><span class="default_value">0.2</span></em>, <em class="sig-param"><span class="n">regress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scoring</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">verbosity</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">warm_start</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model_tpot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">learning.</code><code class="sig-name descname">create_model_tpot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_train</span></em>, <em class="sig-param"><span class="n">outModel</span></em>, <em class="sig-param"><span class="n">gen</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">popsize</span><span class="o">=</span><span class="default_value">50</span></em>, <em class="sig-param"><span class="n">group</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">cv</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">cores</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">dask</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">test_size</span><span class="o">=</span><span class="default_value">0.2</span></em>, <em class="sig-param"><span class="n">regress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scoring</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">verbosity</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">warm_start</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#learning.create_model_tpot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a model using the tpot library where genetic algorithms
 are used to optimise pipline and params.</p>
 <dl class="field-list">

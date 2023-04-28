@@ -17,7 +17,7 @@ from skimage import exposure
 from scipy import ndimage as ndi
 import matplotlib.pyplot as plt
 from geospatial_learn.raster import _copy_dataset_config, polygonize, array2raster
-import gdal, ogr
+from osgeo import gdal, ogr
 from tqdm import tqdm
 from skimage.feature import match_template
 from skimage.color import rgb2gray
@@ -34,7 +34,7 @@ from skimage.measure import LineModelND, ransac
 from skimage.segmentation import relabel_sequential
 from skimage.filters import apply_hysteresis_threshold
 from skimage.util import invert #, img_as_float
-from skimage.morphology import dilation, remove_small_objects, skeletonize, binary_dilation, selem
+from skimage.morphology import dilation, remove_small_objects, skeletonize, binary_dilation, square
 import scipy.ndimage as nd
 from skimage.feature import peak_local_max
 from morphsnakes import morphological_geodesic_active_contour as gac
@@ -44,7 +44,7 @@ from morphsnakes import inverse_gaussian_gradient
 import mahotas as mh
 from plyfile import PlyData, PlyProperty#, PlyListProperty
 from skimage.filters import sobel
-from skimage.future import graph
+from skimage import graph
 #houghty chufty
 from skimage.transform import hough_line, hough_line_peaks
 from shapely.geometry import box, LineString
@@ -635,7 +635,7 @@ def ms_toposeg(inRas, outShp, iterations=100, algo='ACWE', band=2, dist=30,
         minIm = peak_local_max(invert(img), min_distance=dist, indices=False)
         
     if algo=='ACWE':
-        ste = selem.square(se)
+        ste = square(se)
         dilated = binary_dilation(maxIm, selem=ste)
         seg, _ = ndi.label(dilated)
         cnt = list(np.unique(seg))
@@ -650,7 +650,7 @@ def ms_toposeg(inRas, outShp, iterations=100, algo='ACWE', band=2, dist=30,
     
     if algo=='GAC':
         
-        ste = selem.square(se)
+        ste = square(se)
         gimg = inverse_gaussian_gradient(img)
         maxIm = peak_local_max(gimg, min_distance=dist, indices=False)
         dilated = binary_dilation(maxIm, selem=ste)
@@ -796,7 +796,7 @@ def ms_toposeg(inRas, outShp, iterations=100, algo='ACWE', band=2, dist=30,
             newseg, _ = nd.label(bw)
         
     if close==True:
-        ste2 = selem.square(3)
+        ste2 = square(3)
         newseg = dilation(newseg, ste2)
         newseg+=1
         newseg, _, _ = relabel_sequential(newseg)

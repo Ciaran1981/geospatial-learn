@@ -27,7 +27,7 @@ from geospatial_learn.utilities import min_bound_rectangle
 from shapely.wkt import loads
 from shapely.geometry import Polygon, LineString
 from pandas import DataFrame
-from pysal.lib import io as pio
+#from pysal.lib import io as pio
 import pandas as pd
 from skimage.segmentation import active_contour
 import geopandas as gpd
@@ -2477,15 +2477,15 @@ def buffer(inShp, outfile, dist):
 
 
 
-def _dbf2DF(dbfile, upper=True): #Reads in DBF files and returns Pandas DF
-    db = pio.open(dbfile) #Pysal to open DBF
-    d = {col: db.by_col(col) for col in db.header} #Convert dbf to dictionary
-    #pandasDF = pd.DataFrame(db[:]) #Convert to Pandas DF
-    pandasDF = pd.DataFrame(d) #Convert to Pandas DF
-    if upper == True: #Make columns uppercase if wanted 
-        pandasDF.columns = map(str.upper, db.header) 
-    db.close() 
-    return pandasDF
+# def _dbf2DF(dbfile, upper=True): #Reads in DBF files and returns Pandas DF
+#     db = pio.open(dbfile) #Pysal to open DBF
+#     d = {col: db.by_col(col) for col in db.header} #Convert dbf to dictionary
+#     #pandasDF = pd.DataFrame(db[:]) #Convert to Pandas DF
+#     pandasDF = pd.DataFrame(d) #Convert to Pandas DF
+#     if upper == True: #Make columns uppercase if wanted 
+#         pandasDF.columns = map(str.upper, db.header) 
+#     db.close() 
+#     return pandasDF
 
 
     

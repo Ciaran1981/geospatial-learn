@@ -40,7 +40,7 @@ ogr.UseExceptions()
 osr.UseExceptions()
 
 def batch_wms_download(gdf, wms, layer, img_size, outdir, attribute='id',
-                       espg='27700'):
+                       espg='27700', res=0.25):
     
     """
     Download a load of wms tiles with georeferencing
@@ -65,6 +65,9 @@ def batch_wms_download(gdf, wms, layer, img_size, outdir, attribute='id',
     outfile: string
               path to outfile
     
+    res: int
+            per pixel resolution of imagery in metres
+    
     """
 
     
@@ -72,16 +75,20 @@ def batch_wms_download(gdf, wms, layer, img_size, outdir, attribute='id',
     
     # assuming each tile is the same size
     bbox = gdf.bounds.loc[0].tolist()
-    img_size = (int(bbox[2]-bbox[0])*4,  int(bbox[3]-bbox[1])*4)
+    # for the img_size
+    div = 1 / res
+    # in case it is not a fixed tile size for our aoi
+    img_size = (int(bbox[2]-bbox[0])*div,  int(bbox[3]-bbox[1])*div)
     
     outfiles = [os.path.join(outdir, a+'.tif') for a in gdf.id.to_list()]
     
     _ = Parallel(n_jobs=gdf.shape[0],
              verbose=2)(delayed(wmsGrabber)(gdf.bounds.loc[i].tolist(),
                         img_size, wms, layer,
-                        outfiles[i], espg=espg) for i in rng)
+                        outfiles[i], espg=espg, res=res) for i in rng)
 
-def wmsGrabber(bbox, image_size, wms, layer, outfile, espg='27700'):
+def wmsGrabber(bbox, image_size, wms, layer, outfile, espg='27700', 
+               res=0.25):
     
     """
     Return a wms tile from a given source and optionally write to disk with 
@@ -132,7 +139,7 @@ def wmsGrabber(bbox, image_size, wms, layer, outfile, espg='27700'):
         
         dtpe = np2gdal[str(img.dtype)]
         
-        bbox2raster(img, img.shape[2], bbox, outfile, pixel_size=0.25,  
+        bbox2raster(img, img.shape[2], bbox, outfile, pixel_size=res,  
                     proj=int(espg), dtype=dtpe, FMT='Gtiff')
     
     return img
@@ -181,12 +188,12 @@ def bbox2raster(array, bands, bbox, outras, pixel_size=0.25,  proj=27700,
     driver = gdal.GetDriverByName(FMT)
     
     # Set params for output raster
-    ds= driver.Create(
-        outras, 
-        x_pixels,
-        y_pixels,
-        bands,
-        dtype)
+    ds = driver.Create(
+         outras, 
+         x_pixels,
+         y_pixels,
+         bands,
+         dtype)
 
     ds.SetGeoTransform((
         x_min,        # rgt[0]
@@ -1093,8 +1100,7 @@ def calc_ndvi(inputIm, outputIm, bandsList, blocksize = 256, FMT = None, dtype=N
 def rgb_ind(inputIm, outputIm, blocksize = 256, FMT = None, 
             dtype=gdal.GDT_Int32):
     """ 
-    Create a copy of an image with an ndvi band added
-    
+    Create a copy of an image with rgb indices added
     Parameters 
     ----------- 
     

@@ -6,13 +6,12 @@ channels:
   - anaconda
 
 dependencies:
-  - python=3.7
+  - python=3.7 #tpot 
   - pip
   - numpy
   - pytorch-gpu
   - torchvision
-  - tensorflow-gpu 
-  - keras-gpu
+  - segmentation-models-pytorch
   - jupyter
   - matplotlib
   - opencv
@@ -37,7 +36,6 @@ dependencies:
   - psutil
   - shapely
   - tpot
-  - glymur
   - xgboost
   - pysal
   - pyshp
@@ -55,7 +53,6 @@ dependencies:
 
 
   - pip:
-    - segmentation-models-pytorch
     - xmltodict
     - simpledbf
     - pyfftw
