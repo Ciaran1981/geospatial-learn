@@ -29,9 +29,11 @@ import glob
 from sklearn import svm
 from osgeo import gdal, ogr#,osr
 import numpy as np
+from sklearn.pipeline import Pipeline
 from sklearn.model_selection import StratifiedKFold, GroupKFold, KFold, train_test_split,GroupShuffleSplit
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier,RandomForestRegressor, GradientBoostingRegressor, ExtraTreesRegressor
 from sklearn.linear_model import LogisticRegression, SGDClassifier
+from sklearn.preprocessing import LabelEncoder, MaxAbsScaler, MinMaxScaler, Normalizer, PowerTransformer,StandardScaler
 import joblib
 from sklearn import metrics
 import joblib as jb
@@ -367,8 +369,7 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
                  params=None, scoring=None, class_names=None, save=True):
     
     """
-    Brute force or random model creating using scikit learn. Either use the
-    default params in this function or enter your own (recommended - see sklearn)
+    Brute force or random model creating using scikit learn.
     
     Parameters
     ---------------   

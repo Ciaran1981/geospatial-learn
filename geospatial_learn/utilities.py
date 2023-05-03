@@ -23,7 +23,6 @@ from skimage.feature import match_template
 from skimage.color import rgb2gray
 from skimage import io
 import matplotlib
-matplotlib.use('Qt5Agg')
 import napari
 import dask.array as da
 from skimage.measure import regionprops
@@ -39,17 +38,17 @@ import scipy.ndimage as nd
 from skimage.feature import peak_local_max
 from morphsnakes import morphological_geodesic_active_contour as gac
 from morphsnakes import morphological_chan_vese as mcv
-from morphsnakes import inverse_gaussian_gradient
-
+from morphsnakes import inverse_gaussian_gradient, checkerboard_level_set
+import geopandas as gpd
 import mahotas as mh
 from plyfile import PlyData, PlyProperty#, PlyListProperty
 from skimage.filters import sobel
 from skimage import graph
-#houghty chufty
 from skimage.transform import hough_line, hough_line_peaks
 from shapely.geometry import box, LineString
 from skimage.draw import line
 
+matplotlib.use('Qt5Agg')
 gdal.UseExceptions()
 ogr.UseExceptions()
 
@@ -409,7 +408,91 @@ def raster2array(inRas, bands=[1]):
    
     return inArray
 
+def do_ac(inras, outshp, iterations=10, thresh=75,
+          smoothing=1, lambda1=1, lambda2=1, area_thresh=4, vis=True,
+          chess=None):
+    """
+    Given an image (rgb2gray'd in function here), initialise active contours
+    based on either an image threshold value(recommended) or chessboard pattern.
+    Result saved to polygon shapefile
+    
+    Parameters
+    ----------
+    
+    inras: string
+            input raster
+    
+    outshp: string
+            output shapefile
+    
+    iterations: uint
+        Number of iterations to run. Stabalises rapidly so not many required
+        
+    thresh: int
+            the image threshold (uint8) required
+        
+    smoothing : uint, optional
+    
+        Number of times the smoothing operator is applied per iteration.
+        Reasonable values are around 1-4. Larger values lead to smoother
+        segmentations.
+    
+    lambda1: float, optional
+    
+        Weight parameter for the outer region. If `lambda1` is larger than
+        `lambda2`, the outer region will contain a larger range of values than
+        the inner region.
+        
+    lambda2: float, optional
+    
+        Weight parameter for the inner region. If `lambda2` is larger than
+        `lambda1`, the inner region will contain a larger range of values than
+        the outer region.
+    
+    threshold: float, optional
+    
+        Areas of the image with a value smaller than this threshold will be
+        considered borders. The evolution of the contour will stop in this
+        areas.
+        
+    balloon: float, optional
+    
+        Balloon force to guide the contour in non-informative areas of the
+        image, i.e., areas where the gradient of the image is too small to push
+        the contour towards a border. A negative value will shrink the contour,
+        while a positive value will expand the contour in these areas. Setting
+        this to zero will disable the balloon force.
+    """
+    
+    rgb=raster2array(inras, bands=[1,2,3])
 
+    img = rgb2gray(rgb)
+
+    img = exposure.rescale_intensity(img, out_range='uint8')
+
+    #ut.image_thresh(img)
+    
+    if chess is not None:
+        bw = checkerboard_level_set((img.shape), chess)
+    else:
+        bw = img < thresh
+    
+    if vis == True:
+        callback = visual_callback_2d(img)
+    
+    ac = mcv(img, iterations=iterations,
+                       init_level_set=bw,
+                       smoothing=smoothing, lambda1=lambda1,
+                       lambda2=lambda2, iter_callback=callback)
+
+    ootac = outshp[:-3]+'tif'
+    array2raster(ac, 1, inras, ootac, dtype=1)
+    
+    polygonize(ootac, outshp, 'DN')
+    gdf = gpd.read_file(outshp)
+    gdf["Area"] = gdf['geometry'].area
+    gdf = gdf[gdf.Area > area_thresh]
+    gdf.to_file(outshp)
     
     
     

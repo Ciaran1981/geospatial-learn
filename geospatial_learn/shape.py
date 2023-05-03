@@ -2166,10 +2166,7 @@ def thresh_seg(inShp, inRas, outShp, band, buf=0, algo='otsu',
     
     # This is a hacky solution for now really, but it works well enough!
     polygonize(outShp[:-4]+'.tif', outShp, outField=None,  mask = True, band = 1)    
-    
-
-
-    return outIm        
+      
 
 
 def meshgrid(inRaster, outShp, gridHeight=1, gridWidth=1):

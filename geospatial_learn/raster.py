@@ -39,7 +39,7 @@ gdal.UseExceptions()
 ogr.UseExceptions()
 osr.UseExceptions()
 
-def batch_wms_download(gdf, wms, layer, img_size, outdir, attribute='id',
+def batch_wms_download(gdf, wms, layer, outdir, attribute='id',
                        espg='27700', res=0.25):
     
     """
@@ -55,9 +55,6 @@ def batch_wms_download(gdf, wms, layer, img_size, outdir, attribute='id',
     
     layer: string
         the wms layer
-    
-    img_size: tuple
-                image x,y dims 
     
     espg: string
             the proj espg
@@ -76,7 +73,7 @@ def batch_wms_download(gdf, wms, layer, img_size, outdir, attribute='id',
     # assuming each tile is the same size
     bbox = gdf.bounds.loc[0].tolist()
     # for the img_size
-    div = 1 / res
+    div = int(1 / res) # must be an int otherwise wms doesn't accept
     # in case it is not a fixed tile size for our aoi
     img_size = (int(bbox[2]-bbox[0])*div,  int(bbox[3]-bbox[1])*div)
     
