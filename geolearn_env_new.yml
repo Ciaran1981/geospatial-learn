@@ -6,7 +6,7 @@ channels:
   - anaconda
 
 dependencies:
-  - python=3.7 #tpot 
+  - python=3 #.7 #tpot 
   - pip
   - numpy
   - pytorch-gpu
@@ -17,8 +17,9 @@ dependencies:
   - opencv
   - gdal
   - scikit-image
-  - morphsnakes
   - scikit-learn
+  - lightgbm
+  - catboost
   - git
   - pandas
   - albumentations
@@ -36,14 +37,14 @@ dependencies:
   - more-itertools
   - psutil
   - shapely
-  - tpot
+#  - tpot
   - xgboost
   - pysal
   - pyshp
   - pytables
   - sqlalchemy
   - urbanaccess
-  - pyntcloud
+#  - pyntcloud
   - napari
   - scikit-plot
   - dask-ml
@@ -54,6 +55,7 @@ dependencies:
 
 
   - pip:
+    - morphsnakes
     - xmltodict
     - simpledbf
     - pyfftw
@@ -62,7 +64,7 @@ dependencies:
     - plyfile
     - SimpleCRF
     - skorch
-    - git+https://github.com/Ciaran1981/geospatial-learn#egg=geospatial-learn
+#    - git+https://github.com/Ciaran1981/geospatial-learn#egg=geospatial-learn
 #py
 
 

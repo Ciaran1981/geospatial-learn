@@ -23,21 +23,37 @@ except ImportError:
 from tqdm import tqdm
 
 import matplotlib.pyplot as plt
-from sklearn import preprocessing
 from collections import OrderedDict
 import glob
 from sklearn import svm
 from osgeo import gdal, ogr#,osr
 import numpy as np
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import StratifiedKFold, GroupKFold, KFold, train_test_split,GroupShuffleSplit
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier,RandomForestRegressor, GradientBoostingRegressor, ExtraTreesRegressor
+from sklearn.model_selection import (StratifiedKFold, GroupKFold, KFold, 
+                                     train_test_split,GroupShuffleSplit,PredefinedSplit)
+from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
+                              GradientBoostingClassifier,RandomForestRegressor,
+                              GradientBoostingRegressor, ExtraTreesRegressor,
+                              VotingRegressor, VotingClassifier, StackingRegressor,
+                              StackingClassifier)
+#                              HistGradientBoostingRegressor,
+#                              HistGradientBoostingClassifier)
 from sklearn.linear_model import LogisticRegression, SGDClassifier
-from sklearn.preprocessing import LabelEncoder, MaxAbsScaler, MinMaxScaler, Normalizer, PowerTransformer,StandardScaler
-import joblib
+from sklearn.preprocessing import (LabelEncoder, MaxAbsScaler, MinMaxScaler,
+                                   Normalizer, PowerTransformer,StandardScaler)
+from sklearn.feature_selection import VarianceThreshold
 from sklearn import metrics
-import joblib as jb
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from catboost import (CatBoostClassifier, CatBoostRegressor,Pool )
+import lightgbm as lgb
+from autosklearn.classification import AutoSklearnClassifier
+from autosklearn.regression import AutoSklearnRegressor
+from skorch import NeuralNetClassifier
+from optuna.integration import LightGBMPruningCallback
+from optuna import create_study
+import torch.nn as nn
+import joblib
+import joblib as jb
 from geospatial_learn.raster import array2raster
 from geospatial_learn.shape import _bbox_to_pixel_offsets#, zonal_stats
 from tpot import TPOTClassifier, TPOTRegressor
@@ -46,183 +62,185 @@ from geospatial_learn.raster import _copy_dataset_config
 import geospatial_learn.handyplots as hp
 import geopandas as gpd
 import pandas as pd
-from pyntcloud import PyntCloud
-from autosklearn.classification import AutoSklearnClassifier
 from psutil import virtual_memory
 import os
 gdal.UseExceptions()
 ogr.UseExceptions()
 
 def create_model_tpot(X_train, outModel, gen=5, popsize=50, group=None,  
-                      cv=5, cores=-1, dask=False, test_size=0.2,
-                      regress=False, params=None, scoring=None, verbosity=2, 
-                      warm_start=False):
+                       cv=5, cores=-1, dask=False, test_size=0.2,
+                       regress=False, params=None, scoring=None, verbosity=2, 
+                       warm_start=False):
     
-    """
-    Create a model using the tpot library where genetic algorithms
-    are used to optimise pipline and params. 
+     """
+     Create a model using the tpot library where genetic algorithms
+     are used to optimise pipline and params. 
 
-    Parameters
-    ----------  
+     Parameters
+     ----------  
     
-    X_train: np array
-              numpy array of training data where the 1st column is labels
+     X_train: np array
+               numpy array of training data where the 1st column is labels
     
-    outModel: string
-               the output model path (which is a .py file)
-               from which to run the pipeline
+     outModel: string
+                the output model path (which is a .py file)
+                from which to run the pipeline
     
-    cv: int
-         no of folds
+     cv: int
+          no of folds
     
-    cores: int or -1 (default)
-            the no of parallel jobs
+     cores: int or -1 (default)
+             the no of parallel jobs
     
-    regress: bool
-              a regression model if True, a classifier if False
+     regress: bool
+               a regression model if True, a classifier if False
     
-    test_size: float
-                size of test set held out
+     test_size: float
+                 size of test set held out
     
-    params: a dict of model params (see tpot)
-             enter your own params dict rather than the range provided
-             e.g. 
-             {'sklearn.ensemble.RandomForestClassifier': {"n_estimators": [200],
-                             "max_features": ['sqrt', 'log2'],                                                
-                             "max_depth": [10, None],
-    },
+     params: a dict of model params (see tpot)
+              enter your own params dict rather than the range provided
+              e.g. 
+              {'sklearn.ensemble.RandomForestClassifier': {"n_estimators": [200],
+                              "max_features": ['sqrt', 'log2'],                                                
+                              "max_depth": [10, None],
+     },
 
-    'xgboost.sklearn.XGBClassifier': {
-        'n_estimators': [200],
-                            'learning_rate': [0.1, 0.2, 0.4]
-    }}
+     'xgboost.sklearn.XGBClassifier': {
+         'n_estimators': [200],
+                             'learning_rate': [0.1, 0.2, 0.4]
+     }}
              
     
-    scoring: string
-              a suitable sklearn scoring type (see notes)
+     scoring: string
+               a suitable sklearn scoring type (see notes)
               
-    warm_start: bool
-                use the previous population, useful if interactive
+     warm_start: bool
+                 use the previous population, useful if interactive
                            
-    """
+     """
 
-    bands = X_train.shape[1]-1
-    
-    #X_train = X_train.transpose()
-    
-    X_train = X_train[X_train[:,0] != 0]
-    
-
-#   # params could be something like
-#    params = {'sklearn.ensemble.RandomForestClassifier': {"n_estimators": [200],
-#                             "max_features": ['sqrt', 'log2'],                                                
-#                             "max_depth": [10, None],
-#    },
-#
-#    'xgboost.sklearn.XGBClassifier': {
-#        'n_estimators': [200],
-#                            'learning_rate': [0.1, 0.2, 0.4]
-#    }}
+ #   # params could be something like
+ #    params = {'sklearn.ensemble.RandomForestClassifier': {"n_estimators": [200],
+ #                             "max_features": ['sqrt', 'log2'],                                                
+ #                             "max_depth": [10, None],
+ #    },
+ #
+ #    'xgboost.sklearn.XGBClassifier': {
+ #        'n_estimators': [200],
+ #                            'learning_rate': [0.1, 0.2, 0.4]
+ #    }}
 
     
      
+     bands = X_train.shape[1]-1
+    
+     #X_train = X_train.transpose()
+     X_train = X_train[X_train[:,0] != 0]
+    
+     
     # Remove non-finite values
-    X_train = X_train[np.isfinite(X_train).all(axis=1)]
-    # y labels
-    y_train = X_train[:,0]
+     if group is not None: #replace this later not good
+         inds = np.where(np.isfinite(X_train).all(axis=1))
+         group = group[inds]
+    
+     X_train = X_train[np.isfinite(X_train).all(axis=1)]
+     # y labels
+     y_train = X_train[:,0]
 
     # remove labels from X_train
-    X_train = X_train[:,1:bands+1]
+     X_train = X_train[:,1:bands+1]
     
-    # TODO - change to a func as repeated in this and create_model
-    if group is not None:
+     # TODO - change to a func as repeated in this and create_model
+     if group is not None:
         
-        # maintain group based splitting from initial train/test split
-        # to main train set
-        splitter = GroupShuffleSplit(test_size=test_size, n_splits=1, random_state=0)
-        split = splitter.split(X_train, y_train, group)
-        train_inds, test_inds = next(split)
+         # maintain group based splitting from initial train/test split
+         # to main train set
+         splitter = GroupShuffleSplit(test_size=test_size, n_splits=1, random_state=0)
+         split = splitter.split(X_train, y_train, group)
+         train_inds, test_inds = next(split)
     
-        X_test = X_train[test_inds]
-        y_test = y_train[test_inds]
-        X_train = X_train[train_inds]
-        y_train = y_train[train_inds]
-        group_trn = group[train_inds]
+         X_test = X_train[test_inds]
+         y_test = y_train[test_inds]
+         X_train = X_train[train_inds]
+         y_train = y_train[train_inds]
+         group_trn = group[train_inds]
         
-        group_kfold = GroupKFold(n_splits=cv) 
-        # Create a nested list of train and test indices for each fold
-        k_kfold = group_kfold.split(X_train, y_train, group_trn)  
+         group_kfold = GroupKFold(n_splits=cv) 
+         # Create a nested list of train and test indices for each fold
+         k_kfold = group_kfold.split(X_train, y_train, group_trn)  
 
-        train_ind2, test_ind2 = [list(traintest) for traintest in zip(*k_kfold)]
+         train_ind2, test_ind2 = [list(traintest) for traintest in zip(*k_kfold)]
 
-        cv = [*zip(train_ind2, test_ind2)]
+         cv = [*zip(train_ind2, test_ind2)]
         
-    else:
-        X_train, X_test, y_train, y_test = train_test_split(
-            X_train, y_train, test_size=test_size, random_state=0)
-        cv = StratifiedKFold(cv)
+     else:
+         X_train, X_test, y_train, y_test = train_test_split(
+             X_train, y_train, test_size=test_size, random_state=0)
+         cv = StratifiedKFold(cv)
     
     
-    if params is None and regress is False:       
-        tpot = TPOTClassifier(generations=gen, population_size=popsize, 
+     if params is None and regress is False:       
+         tpot = TPOTClassifier(generations=gen, population_size=popsize, 
+                               verbosity=verbosity,
+                               n_jobs=cores, scoring=scoring, use_dask=dask,
+                               warm_start=warm_start, memory='auto',
+                               cv=cv)
+         tpot.fit(X_train, y_train)
+        
+     elif params != None and regress is False:
+         tpot = TPOTClassifier(generations=gen, population_size=popsize,
+                               n_jobs=cores,  verbosity=verbosity,
+                               scoring=scoring,
+                               use_dask=dask, 
+                               config_dict=params, 
+                               warm_start=warm_start, memory='auto',
+                               cv=cv)
+         tpot.fit(X_train, y_train)
+        
+     elif params is None and regress is True:       
+         tpot = TPOTRegressor(generations=gen, population_size=popsize, 
                               verbosity=verbosity,
-                              n_jobs=cores, scoring=scoring, use_dask=dask,
-                              warm_start=warm_start, memory='auto',
+                              n_jobs=cores, scoring=scoring,
+                              use_dask=dask, warm_start=warm_start, memory='auto',
                               cv=cv)
-        tpot.fit(X_train, y_train)
+         tpot.fit(X_train, y_train)
         
-    elif params != None and regress is False:
-        tpot = TPOTClassifier(generations=gen, population_size=popsize,
-                              n_jobs=cores,  verbosity=verbosity,
+     elif params != None and regress is True:
+         tpot = TPOTRegressor(generations=gen, population_size=popsize,
+                              config_dict=params, n_jobs=cores, 
+                              verbosity=verbosity,
                               scoring=scoring,
                               use_dask=dask, 
-                              config_dict=params, 
                               warm_start=warm_start, memory='auto',
                               cv=cv)
-        tpot.fit(X_train, y_train)
-        
-    elif params is None and regress is True:       
-        tpot = TPOTRegressor(generations=gen, population_size=popsize, 
-                             verbosity=verbosity,
-                             n_jobs=cores, scoring=scoring,
-                             use_dask=dask, warm_start=warm_start, memory='auto',
-                             cv=cv)
-        tpot.fit(X_train, y_train)
-        
-    elif params != None and regress is True:
-        tpot = TPOTRegressor(generations=gen, population_size=popsize,
-                             config_dict=params, n_jobs=cores, 
-                             verbosity=verbosity,
-                             scoring=scoring,
-                             use_dask=dask, 
-                             warm_start=warm_start, memory='auto',
-                             cv=cv)
-        tpot.fit(X_train, y_train)
+         tpot.fit(X_train, y_train)
 
-    tpot.export(outModel)
+     tpot.export(outModel)
     
     
 
-#    testresult = grid.best_estimator_.predict(X_test)
+     #testresult = grid.best_estimator_.predict(X_test)
+    
+     #crDf = hp.plot_classif_report(y_test, testresult, save=outModel[:-3]+'.png')
+    
+#    #OR
 #    
-#    crDf = hp.plot_classif_report(y_test, testresult, save=outModel[:-3]+'.png')
+#     tpot.score( X_test, y_test)
+#
+#    #TODO
+#    # how'd we export the pipline as an object then simply load to predict?
+#     #interim is to return the object for now
+#    joblib.dump(tpot, 
 #    
-#    OR
-#    
-#    tpot.score( X_test, y_test)
-
-    #TODO
-    # how'd we export the pipline as an object then simply load to predict?
-    # interim is to return the object for now
-    #joblib.dump(tpot, 
+#    this'll do for now
+     scr = tpot.score(X_test, y_test)
+     print(scr)
     
-    #this'll do for now
-    scr = tpot.score(X_test, y_test)
-    print(scr)
-    
-    return tpot, scr
+     return tpot, scr
 
-def create_model_autosk(X_train, outModel,  cores=-1, class_names=None,
+def create_model_autosk(X_train, outModel,  cores=-1, regress=False, 
+                        class_names=None, group=None,
                         incld_est=None,
                         excld_est=None, incld_prep=None, excld_prep=None, 
                         total_time=120, res_args={'cv':5},
@@ -320,8 +338,7 @@ def create_model_autosk(X_train, outModel,  cores=-1, class_names=None,
     X_train = X_train[:,1:bands+1]
 
     # then introduce the test at the end 
-    X_train, X_test, y_train, y_test = train_test_split(
-            X_train, y_train, test_size=test_size, random_state=0)
+    
     
     #no_classes = len(np.unique(y_train))
     
@@ -329,17 +346,59 @@ def create_model_autosk(X_train, outModel,  cores=-1, class_names=None,
     # though I don't understand this completely
     #if __name__ == "__main__"
     
-    automl = AutoSklearnClassifier(time_left_for_this_task=total_time, 
-                                   resampling_strategy_arguments=res_args,
-                                   include_estimators=incld_est, 
-                                   exclude_estimators=excld_est,
-                                   include_preprocessors=incld_prep, 
-                                   exclude_preprocessors=excld_prep,
-                                   per_run_time_limit=per_run, 
-                                   tmp_folder = wrkfolder,
-                                   # per job seemingly
-                                   memory_limit=mem_limit,
-                                   n_jobs=cores)
+    if group is not None:
+        # maintain group based splitting from initial train/test split
+        # to main train set
+        # TODO - sep func?
+        splitter = GroupShuffleSplit(test_size=test_size, n_splits=1, random_state=0)
+        split = splitter.split(X_train, y_train, group)
+        train_inds, test_inds = next(split)
+    
+        X_test = X_train[test_inds]
+        y_test = y_train[test_inds]
+        X_train = X_train[train_inds]
+        y_train = y_train[train_inds]
+        group_trn = group[train_inds]
+        
+        group_kfold = GroupKFold(n_splits=res_args['cv']) 
+        # Create a nested list of train and test indices for each fold
+        k_kfold = group_kfold.split(X_train, y_train, group_trn)  
+
+        train_ind2, test_ind2 = [list(traintest) for traintest in zip(*k_kfold)]
+        # TODO this is not working
+        #https://automl.github.io/auto-sklearn/master/examples/40_advanced/example_resampling.html
+        #cvs = [*zip(train_ind2, test_ind2)] # not accepted bu automl
+        res_args = test_ind2 # this doesn't work and neither does k_kfold
+        #res_args = PredefinedSplit(test_fold=test_ind2) #also no good
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_train, y_train, test_size=test_size, random_state=0)
+
+    
+    if regress is False:
+        automl = AutoSklearnClassifier(time_left_for_this_task=total_time, 
+                                       resampling_strategy_arguments=res_args,
+                                       include_estimators=incld_est, 
+                                       exclude_estimators=excld_est,
+                                       include_preprocessors=incld_prep, 
+                                       exclude_preprocessors=excld_prep,
+                                       per_run_time_limit=per_run, 
+                                       tmp_folder = wrkfolder,
+                                       # per job seemingly
+                                       memory_limit=mem_limit,
+                                       n_jobs=cores)
+    else:
+        automl = AutoSklearnRegressor(time_left_for_this_task=total_time, 
+                               resampling_strategy_arguments=res_args,
+                               include_estimators=incld_est, 
+                               exclude_estimators=excld_est,
+                               include_preprocessors=incld_prep, 
+                               exclude_preprocessors=excld_prep,
+                               per_run_time_limit=per_run, 
+                               tmp_folder = wrkfolder,
+                               # per job seemingly
+                               memory_limit=mem_limit,
+                               n_jobs=cores)
     
     automl.fit(X_train, y_train)
     
@@ -356,20 +415,30 @@ def create_model_autosk(X_train, outModel,  cores=-1, class_names=None,
     #save it
     joblib.dump(automl, outModel)
     
-    crDf = hp.plot_classif_report(y_test, testresult, target_names=class_names,
-                                  save=outModel[:-3]+'.png')
+    if regress is False:
+        crDf = hp.plot_classif_report(y_test, testresult, target_names=class_names,
+                                      save=outModel[:-3]+'.png')
     
-    hp.plt_confmat(testresult, y_test, cmap = plt.cm.gray, fmt="%d")
+        hp.plt_confmat(testresult, y_test, cmap = plt.cm.gray, fmt="%d")
 
-    return [automl, crDf]
-    
-    
-def create_model(X_train, outModel, clf='erf', group=None, random=False,
-                 cv=5, cores=-1, strat=True, test_size=0.3, regress=False,
-                 params=None, scoring=None, class_names=None, save=True):
-    
+        return [automl, crDf]
+    else:
+        train_pred = automl.predict(X_train)
+        print('Train set')
+        regression_results(y_test, train_pred)
+        print('Test set')
+        test_pred = automl.predict(X_test)
+        regression_results(y_test, test_pred)
+        return [automl]
+
+# TODO -NOT WORKING of course stupid object structure making feeding params
+# impossible
+def create_model_optuna(X_train, outModel, clf='erf', group=None, random=False,
+                 cv=5, params=None, pipe=None, cores=-1, strat=True, 
+                 test_size=0.3, regress=False, return_test=True,
+                 scoring=None, class_names=None, save=True):
     """
-    Brute force or random model creating using scikit learn.
+    Train a model using the Optuna framework
     
     Parameters
     ---------------   
@@ -383,7 +452,18 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
                h5
     
     params: dict
-            a dict of model params (see scikit learn)
+            a dict of model params (see scikit learn). If using a pipe(line)
+            remember to prefix each param as follows with parent object 
+            and two underscores.
+            param_grid ={"selector__threshold": [0, 0.001, 0.01],
+             "classifier__n_estimators": [1075]}
+            
+    pipe: dict
+            if None will include a preprocessing pipeline consisting of
+            StandardScaler(), MinMaxScaler(), Normalizer(), MaxAbsScaler(),
+            otherwise specify in this form 
+            pipe = {'scaler': [StandardScaler(), MinMaxScaler(),
+                  Normalizer()]}
              
     clf: string
           an sklearn or xgb classifier/regressor 
@@ -411,6 +491,10 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
     regress: bool
               a regression model if True, a classifier if False
     
+    return_test: bool
+              return X_test and y_test along with results (last two entries
+              in list)
+    
     scoring: string
               a suitable sklearn scoring type (see notes)
     
@@ -422,44 +506,10 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
     A list of:
         
     [grid.best_estimator_, grid.cv_results_, grid.best_score_, 
-            grid.best_params_, classification_report)]
+            grid.best_params_, classification_report, X_test, y_test]
     
-        
-    Notes:
-    ------      
-        Scoring types - there are a lot - some of which won't work for 
-        multi-class, regression etc - see the sklearn docs!
-        
-        'accuracy', 'adjusted_rand_score', 'average_precision', 'f1',
-        'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss',
-        'neg_mean_absolute_error', 'neg_mean_squared_error',
-        'neg_median_absolute_error', 'precision', 'precision_macro',
-        'precision_micro', 'precision_samples', 'precision_weighted',
-        'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples',
-        'recall_weighted', 'roc_auc'
-                    
+    
     """
-    
-    
-    clfdict = {'rf': RandomForestClassifier, 'erf': ExtraTreesClassifier,
-               'gb': GradientBoostingClassifier, 'xgb': XGBClassifier,
-               'logit': LogisticRegression}
-    
-    regdict = {'rf': RandomForestRegressor, 'erf': ExtraTreesRegressor,
-               'gb': GradientBoostingRegressor, 'xgb': XGBRegressor}
-    
-    if regress is True:
-        model = regdict[clf]()
-        if scoring is None:
-            scoring = 'r2'
-    else:
-        model = clfdict[clf]()
-        cv = StratifiedKFold(cv)
-        if scoring is None:
-            scoring = 'accuracy'
-    
-    #dataprep for svm 
-    #min_max_scaler = preprocessing.MinMaxScaler()
     
     bands = X_train.shape[1]-1
     
@@ -509,18 +559,291 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
     else:
         X_train, X_test, y_train, y_test = train_test_split(
             X_train, y_train, test_size=test_size, random_state=0)
+
+        cv = StratifiedKFold(n_splits=cv, shuffle=True, random_state=0)
+    
+    
+    if regress is True:
+        scr = metrics.mean_squared_error
+    else:
+        scr = metrics.log_loss
+    
+    # issue is how to pass the dict as an arg in this parent function
+    def objective(trial, X, y, cv, group, score=scr):
         
+        # how can one pass this as an arg
+        param_grid = {
+            #"device_type": trial.suggest_categorical("device_type", ['gpu']),
+           #'metric': 'rmse', 
+            'random_state': 48,
+            'n_estimators': 20000,
+            'reg_alpha': trial.suggest_loguniform('reg_alpha', 1e-3, 10.0),
+            'reg_lambda': trial.suggest_loguniform('reg_lambda', 1e-3, 10.0),
+            'colsample_bytree': trial.suggest_categorical('colsample_bytree', [0.3,0.4,0.5,0.6,0.7,0.8,0.9, 1.0]),
+            'subsample': trial.suggest_categorical('subsample', [0.4,0.5,0.6,0.7,0.8,1.0]),
+            'learning_rate': trial.suggest_categorical('learning_rate', [0.006,0.008,0.01,0.014,0.017,0.02]),
+            'max_depth': trial.suggest_categorical('max_depth', [10,20,100]),
+            'num_leaves' : trial.suggest_int('num_leaves', 1, 1000),
+            'min_child_samples': trial.suggest_int('min_child_samples', 1, 300),
+            'cat_smooth' : trial.suggest_int('min_data_per_groups', 1, 100)
+            }
     
 
     
-    if random is True:
-        grid = RandomizedSearchCV(model, param_distributions=params,
-                                       n_jobs=cores, n_iter=20,  verbose=2)
+        cv_scores = np.empty(10)
+
+        
+        for idx, (train_idx, test_idx) in enumerate(cv.split(X, y, group)):
+            
+            # these next two need altered to fit my data structures above
+            X_train, X_test = X[train_idx], X[test_idx]
+            y_train, y_test = y[train_idx], y[test_idx]
+            # had objective=binary but that is for class 
+            model = lgb.LGBMRegressor( **param_grid)
+            model.fit(
+                X_train,
+                y_train,
+                eval_set=[(X_test, y_test)],
+                #eval_metric="l2",
+                early_stopping_rounds=100,
+                callbacks=[
+                    LightGBMPruningCallback(trial, "rmse") 
+                ],  # Add a pruning callback - suspect this may be a source of problems
+            )
+            preds = model.predict(X_test)
+            cv_scores[idx] = score(y_test, preds)
+
+        return np.mean(cv_scores)
+
+    study = create_study(direction="minimize", study_name="Model training")
+    func = lambda trial: objective(trial, X_train, y_train, group_kfold, group_trn, 
+                                   score=metrics.mean_squared_error)
+    study.optimize(func, n_trials=50)
+    
+    print(f"\tBest value (rmse or r2): {study.best_value:.5f}")
+    print(f"\tBest params:")
+    
+    
+    
+    
+def create_model(X_train, outModel, clf='erf', group=None, random=False,
+                 cv=5, params=None, pipe=None, cores=-1, strat=True, 
+                 test_size=0.3, regress=False, return_test=True,
+                 scoring=None, class_names=None, save=True):
+    
+    """
+    Brute force or random model creating using scikit learn.
+    
+    Parameters
+    ---------------   
+    
+    X_train: np array
+              numpy array of training data where the 1st column is labels.
+              If the groupkfold is used, the last column will be the group labels
+    
+    outModel: string
+               the output model path which is a gz file, if using keras it is 
+               h5
+    
+    params: dict
+            a dict of model params (see scikit learn). If using a pipe(line)
+            remember to prefix each param as follows with parent object 
+            and two underscores.
+            param_grid ={"selector__threshold": [0, 0.001, 0.01],
+             "classifier__n_estimators": [1075]}
+            
+    pipe: dict
+            if None will include a preprocessing pipeline consisting of
+            StandardScaler(), MinMaxScaler(), Normalizer(), MaxAbsScaler(),
+            otherwise specify in this form 
+            pipe = {'scaler': [StandardScaler(), MinMaxScaler(),
+                  Normalizer()]}
+             
+    clf: string
+          an sklearn or xgb classifier/regressor 
+          logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb,
+    
+    group: np.array
+            array of group labels for train/test split and grid search
+            useful to avoid autocorrelation          
+          
+    random: bool
+             if True, a random param search
+    
+    cv: int
+         no of folds
+    
+    cores: int or -1 (default)
+            the no of parallel jobs
+    
+    strat: bool
+            a stratified grid search
+    
+    test_size: float
+            percentage to hold out to test
+    
+    regress: bool
+              a regression model if True, a classifier if False
+    
+    return_test: bool
+              return X_test and y_test along with results (last two entries
+              in list)
+    
+    scoring: string
+              a suitable sklearn scoring type (see notes)
+    
+    class_names: list of strings
+                class names in order of their numercial equivalents
+    
+    Returns
+    -------
+    A list of:
+        
+    [grid.best_estimator_, grid.cv_results_, grid.best_score_, 
+            grid.best_params_, classification_report, X_test, y_test]
+    
+        
+    Notes:
+    ------      
+        Scoring types - there are a lot - some of which won't work for 
+        multi-class, regression etc - see the sklearn docs!
+        
+        'accuracy', 'adjusted_rand_score', 'average_precision', 'f1',
+        'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss',
+        'neg_mean_absolute_error', 'neg_mean_squared_error',
+        'neg_median_absolute_error', 'precision', 'precision_macro',
+        'precision_micro', 'precision_samples', 'precision_weighted',
+        'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples',
+        'recall_weighted', 'roc_auc'
+                    
+    """
+    
+
+    clfdict = {'rf': RandomForestClassifier(random_state=0),
+               'erf': ExtraTreesClassifier(random_state=0),
+               'gb': GradientBoostingClassifier(random_state=0),
+               'xgb': XGBClassifier(random_state=0),
+               'logit': LogisticRegression(),
+               'catb': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
+                                          random_seed=42),
+               'catbgpu': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
+                                          random_seed=42,
+                                          task_type="GPU",
+                                          devices='0:1'),
+               'lgbm': lgb.LGBMClassifier(random_state=0)}
+ #use_best_model=True-needs non empty eval set
+                #'hgb': HistGradientBoostingClassifier
+    
+    regdict = {'rf': RandomForestRegressor(random_state=0),
+               'erf': ExtraTreesRegressor(random_state=0),
+               'gb': GradientBoostingRegressor(random_state=0),
+               'xgb': XGBRegressor(random_state=0),
+               'catb': CatBoostRegressor(logging_level='Silent', 
+                                         random_seed=42),
+               'catbgpu': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
+                                          random_seed=42,
+                                          task_type="GPU",
+                                          devices='0:1'),
+               'lgbm': lgb.LGBMRegressor(random_state=0)}
+
+               #'hgb': HistGradientBoostingRegressor,}
+    
+    if regress is True:
+        model = regdict[clf]
+        if scoring is None:
+            scoring = 'r2'
     else:
-        grid = GridSearchCV(model, param_grid=params, 
+        model = clfdict[clf]
+        cv = StratifiedKFold(cv)
+        if scoring is None:
+            scoring = 'accuracy'
+    
+    
+    
+    bands = X_train.shape[1]-1
+    
+    #X_train = X_train.transpose()
+    X_train = X_train[X_train[:,0] != 0]
+    
+     
+    # Remove non-finite values
+    if group is not None: #replace this later not good
+        inds = np.where(np.isfinite(X_train).all(axis=1))
+        group = group[inds]
+    
+    X_train = X_train[np.isfinite(X_train).all(axis=1)]
+    # y labels
+    y_train = X_train[:,0]
+
+    # remove labels from X_train
+    X_train = X_train[:,1:bands+1]
+    
+    #no_classes = len(np.unique(y_train))
+    
+
+    # this is not a good way to do this
+    if group is not None:
+        
+        # maintain group based splitting from initial train/test split
+        # to main train set
+        # TODO - sep func?
+        splitter = GroupShuffleSplit(test_size=test_size, n_splits=1, random_state=0)
+        split = splitter.split(X_train, y_train, group)
+        train_inds, test_inds = next(split)
+    
+        X_test = X_train[test_inds]
+        y_test = y_train[test_inds]
+        X_train = X_train[train_inds]
+        y_train = y_train[train_inds]
+        group_trn = group[train_inds]
+        
+        group_kfold = GroupKFold(n_splits=cv) 
+        # Create a nested list of train and test indices for each fold
+        k_kfold = group_kfold.split(X_train, y_train, group_trn)  
+
+        train_ind2, test_ind2 = [list(traintest) for traintest in zip(*k_kfold)]
+
+        cv = [*zip(train_ind2, test_ind2)]
+        
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_train, y_train, test_size=test_size, random_state=0)
+    
+    # 
+    # if clf[0:4] == 'catb':
+    #     # Quick and quiet but can't enter the group cv indices or the sklearn
+    #     # pipe
+    #     ds = Pool(X_train, label=y_train)
+        
+    #     # fails at end saying 
+    #     model.grid_search(param_grid, ds, cv=k_kfold) 
+        #CatBoostError: /src/catboost/catboost/private/libs/options/cross_validation_params.cpp:21: FoldCount is 0
+        
+    
+    if pipe is None:
+        # the dict must be in order of proc to work hence this
+        sclr = {'scaler': [StandardScaler(), MinMaxScaler(),
+              Normalizer(), MaxAbsScaler()]}
+        sclr.update(params)
+        
+    else:
+        sclr = pipe
+    
+    sk_pipe = Pipeline([("scaler", StandardScaler()),
+                        ("selector", VarianceThreshold()),
+                        ("classifier", model)])
+        
+    
+    if random is True:
+        # recall the model is in the pipeline
+        grid = RandomizedSearchCV(sk_pipe, param_distributions=sclr,                                       n_jobs=cores, n_iter=20,  verbose=2)
+    else:
+        grid = GridSearchCV(sk_pipe,  param_grid=sclr, 
                                     cv=cv, n_jobs=cores,
                                     scoring=scoring, verbose=1)
     
+
+        
     
     grid.fit(X_train, y_train)
     
@@ -530,8 +853,7 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
     
     if regress == True:
         regrslt = regression_results(y_test, testresult)
-        return [grid.best_estimator_, grid.cv_results_, grid.best_score_, 
-            grid.best_params_, regrslt]
+        results = [grid]
         
     else:
         crDf = hp.plot_classif_report(y_test, testresult, target_names=class_names,
@@ -543,8 +865,155 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
                                  fmt="%d", 
                                  save=outModel[:-3]+'_confmat.png')
         
-        return [grid.best_estimator_, grid.cv_results_, grid.best_score_, 
-                grid.best_params_, crDf, confmat]
+        results = [grid, crDf, confmat]
+        
+    if return_test == True:
+        results.extend([X_test, y_test])
+    return results
+
+def combine_models(X_train, modelist, mtype='regress', method='voting', group=None, 
+                   test_size=0.3, outmodel=None, class_names=None, params=None,
+                   final_est='xgb', cv=5):
+    
+    """
+    Combine models using either the voting or stacking methods in scikit-learn
+    
+    Parameters
+    ----------
+    
+    X_train: np array
+              numpy array of training data where the 1st column is labels.
+    
+    outmodel: string
+               the output model path which is a gz file, if using keras it is 
+               h5
+    
+    modelist: dict
+            a list of tuples of model type (str) and model (class) e.g.
+            [('gb', gmdl), ('rf', rfmdl), ('lr', reg3)]
+    
+    mtype: string
+            either clf or regress
+    
+    method: string
+            either voting or k = clusterer.labels_stacking
+
+    test_size: float
+            percentage to hold out to test  
+                
+    group: np.array
+            array of group labels for train/test split and grid search
+            useful to avoid autocorrelation
+              
+    class_names: list of strings
+                class names in order of their numercial equivalents
+    
+    params: dict
+            a dict of model params (If using stacking method for final estimator)
+    
+    final_est: string
+             the final estimator one of (rf, gb, erf, xgb, logit)
+
+    """
+    bands = X_train.shape[1]-1
+    
+    X_train = X_train[X_train[:,0] != 0]
+    
+    if group is not None: #replace this later not good
+        inds = np.where(np.isfinite(X_train).all(axis=1))
+        group = group[inds]
+    
+    X_train = X_train[np.isfinite(X_train).all(axis=1)]
+    # y labels
+    y_train = X_train[:,0]
+
+    # remove labels from X_train
+    X_train = X_train[:,1:bands+1]
+    
+        # Remove non-finite values
+ 
+    
+    # this is not a good way to do this
+    if group is not None:
+        # this in theory should not make any difference at this stage...
+        # ...included for now
+        # maintain group based splitting from initial train/test split
+        # to main train set
+        # TODO - sep func?
+        splitter = GroupShuffleSplit(test_size=test_size, n_splits=1, random_state=0)
+        split = splitter.split(X_train, y_train, group)
+        train_inds, test_inds = next(split)
+    
+        X_test = X_train[test_inds]
+        y_test = y_train[test_inds]
+        X_train = X_train[train_inds]
+        y_train = y_train[train_inds]
+        group_trn = group[train_inds]
+        
+        group_kfold = GroupKFold(n_splits=cv) 
+        # Create a nested list of train and test indices for each fold
+        k_kfold = group_kfold.split(X_train, y_train, group_trn)  
+
+        train_ind2, test_ind2 = [list(traintest) for traintest in zip(*k_kfold)]
+
+        cv = [*zip(train_ind2, test_ind2)]
+        
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_train, y_train, test_size=test_size, random_state=0)
+    
+    if method == 'voting':
+        comb = VotingRegressor(estimators=modelist)
+        # we only wish to predict really - but  necessary 
+        # for sklearn model construct
+    else:
+        clfdict = {'rf': RandomForestClassifier, 'erf': ExtraTreesClassifier,
+                   'gb': GradientBoostingClassifier, 'xgb': XGBClassifier,
+                   'logit': LogisticRegression}#'hgb': HistGradientBoostingClassifier
+    
+        regdict = {'rf': RandomForestRegressor, 'erf': ExtraTreesRegressor,
+                   'gb': GradientBoostingRegressor, 'xgb': XGBRegressor,}
+               #'hgb': HistGradientBoostingRegressor,}
+        
+        if mtype == 'regress':
+            # won't accept the dict even with the ** to unpack it
+            fe = regdict[final_est]()
+            fe.set_params(**params)
+            
+            comb = StackingRegressor(estimators=modelist,
+                                final_estimator=fe)
+        else:
+            fe = clfdict[final_est]()
+            fe.set_params(**params)
+            cv = StratifiedKFold(cv)            
+            comb = StackingClassifier(estimators=modelist,
+                                final_estimator=fe)
+            
+    comb.fit(X_train, y_train)
+    
+    # Since there is no train/test this is misleading...
+    train_pred = comb.predict(X_train)
+    test_pred = comb.predict(X_test)  
+    if mtype == 'regress':
+        print('On the train split (not actually trained on this)')
+        regression_results(y_train, train_pred)
+        
+        print('On the test split')
+        regression_results(y_test, test_pred)
+        
+    else:
+        crDf = hp.plot_classif_report(y_test, test_pred, target_names=class_names,
+                              save=outmodel[:-3]+'._classif_report.png')
+    
+        confmat = hp.plt_confmat(X_test, y_test, comb, 
+                                 class_names=class_names, 
+                                 cmap=plt.cm.Blues, 
+                                 fmt="%d", 
+                                 save=outmodel[:-3]+'_confmat.png')
+    
+    if outmodel is not None:
+        joblib.dump(comb, outmodel)
+    return comb
 
 
 def regression_results(y_true, y_pred):
@@ -562,19 +1031,27 @@ def regression_results(y_true, y_pred):
     print('r2: ', round(r2,4))
     print('MAE: ', round(mean_absolute_error,4))
     print('MSE: ', round(mse,4))
-    print('RMSE: ', round(np.sqrt(mse),4))    
+    print('RMSE: ', round(np.sqrt(mse),4))   
+#TODO add when sklearn updated    
+    # display = metrics.PredictionErrorDisplay.from_predictions(
+    #     y_true=y,
+    #     y_pred=y_pred,
+    #     kind="actual_vs_predicted",
+    #     ax=ax,
+    #     scatter_kwargs={"alpha": 0.2, "color": "tab:blue"},
+    #     line_kwargs={"color": "tab:red"},
+    # )
+    # print(grid.best_params_)
+    # print(grid.best_estimator_)
+    # print(grid.oob_score_)
     
-    
-#    print(grid.best_params_)
-#    print(grid.best_estimator_)
-#    print(grid.oob_score_)
-#    
-#    plt.plot(est_range, grid_mean_scores)
-#    plt.xlabel('no of estimators')
-#    plt.ylabel('Cross validated accuracy')    
-    
+    # plt.plot(est_range, grid_mean_scores)
+    # plt.xlabel('no of estimators')
+    # plt.ylabel('Cross validated accuracy')    
 
-def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
+
+def RF_oob_opt(model, X_train, min_est, max_est, step, group=None,
+               regress=False):
     
     """ 
     This function uses the oob score to find the best parameters.
@@ -616,28 +1093,45 @@ def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
     # This is a bit slow at present, needs profiled
     #t0 = time()
     
-    RANDOM_STATE = 123
-    print('Preparing data')    
-    
-    """
-    Prep of data for classification - getting bands one at a time to save memory
-    """
-    print('processing data for classification')
-
-    
     bands = X_train.shape[1]-1
     
+    #X_train = X_train.transpose()
     X_train = X_train[X_train[:,0] != 0]
     
      
     # Remove non-finite values
-    if regress is False:
-        X_train = X_train[np.isfinite(X_train).all(axis=1)]
+    if group is not None: #replace this later not good
+        inds = np.where(np.isfinite(X_train).all(axis=1))
+        group = group[inds]
+    
+    X_train = X_train[np.isfinite(X_train).all(axis=1)]
     # y labels
     y_train = X_train[:,0]
-    
+
     # remove labels from X_train
     X_train = X_train[:,1:bands+1]
+    
+    RANDOM_STATE = 123
+    
+    if group is not None:
+        
+        # maintain group based splitting from initial train/test split
+        # to main train set
+        # TODO - sep func?
+        splitter = GroupShuffleSplit(test_size=0.2, n_splits=1, random_state=0)
+        split = splitter.split(X_train, y_train, group)
+        train_inds, test_inds = next(split)
+    
+        X_test = X_train[test_inds]
+        y_test = y_train[test_inds]
+        X_train = X_train[train_inds]
+        y_train = y_train[train_inds]
+        
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_train, y_train, test_size=0.2, random_state=0)
+    
+    
     
     print('iterating estimators')
     if regress is True:
@@ -724,6 +1218,12 @@ def RF_oob_opt(model, X_train, min_est, max_est, step, regress=False):
                                        n_jobs=-1)
     best_model.fit(X_train, y_train)                
     joblib.dump(best_model, model) 
+    
+    if regress is True:
+        pred = best_model.predict(X_test)
+        print('Test results are:')
+        regression_results(np.expand_dims(y_test,1), pred)
+    
     return error_rate, best_param
 
 
@@ -736,14 +1236,16 @@ def plot_feature_importances(modelPth, featureNames, model_type='scikit'):
     --------------------------
     
     modelPth : string
-               A sklearn model path 
+               A sklearn model path or the estimator itself
     
     featureNames : list of strings
                    a list of feature names
     
     """
-    
-    model = joblib.load(modelPth)
+    if modelPth is not str:
+        model = modelPth
+    else:
+        model = joblib.load(modelPth)
     
     if model_type=='scikit':
         n_features = model.n_features_
@@ -1419,259 +1921,7 @@ def get_training(inShape, inRas, bands, field, outFile = None):
     
     return outData, rejects
 
-def ply_features(incld, outcld=None, k=[50,100,200],
-                 props=['anisotropy', "curvature", "eigenentropy", "eigen_sum",
-                         "linearity","omnivariance", "planarity", "sphericity"],
-                        nrm_props=None):
-    
-    """ 
-    Calculate point cloud features and write to file
-    
-    Currently memory intensive due to using pyntcloud....
-    
-    
-    Parameters 
-    ----------- 
-    
-    incld: string
-              the input point cloud
-        
-    outcld: string
-               the output point cloud
-    k: list
-              the no of neighbors to use when calculating the props
-              multiple is more effective
-    props: list
-            the properties you wish to include
 
-    nrm_props: list
-            properties based on normals if the exist (this will fail if they don't)
-            e.g. ["inclination_radians",  "orientation_radians"]
-
-    """  
-    
-    pcd = PyntCloud.from_file(incld)
-    #o3d.io.read_point_cloud(incld)
-
-    #pcd.estimate_normals()
-    
-    #cloud = PyntCloud.from_instance("open3d", 
-
-    pProps = props 
-#    pProps =['anisotropy', "curvature", "eigenentropy", "eigen_sum", "linearity",
-#             "omnivariance", "planarity", "sphericity"]#, "inclination_deg",
-            # "inclination_rad", "orientation_deg", "orientation_rad"]
-    #, "HueSaturationValue",#"RelativeLuminance"," RGBIntensity"]
-    
-    
-    # iterate through neighborhood sizes to get a multiscale output
-    for i in k:
-        k_neighbors = pcd.get_neighbors(k=i)
-        eigenvalues = pcd.add_scalar_field("eigen_values", k_neighbors=k_neighbors)
-        [pcd.add_scalar_field(p, ev=eigenvalues) for p in pProps]
-    
-    if nrm_props != None:
-        [pcd.add_scalar_field(n) for n in nrm_props]
-        
-        
-    
-    if outcld == None:
-        pcd.to_file(incld)
-    else:
-        pcd.to_file(outcld)
-
-def get_training_ply(incld, label_field="training", classif_field='label',
-                     rgb=True, outFile=None,  
-                     ignore=['x', 'y', 'scalar_ScanAngleRank', 'scalar_NumberOfReturns',
-                         'scalar_ReturnNumber', 'scalar_GpsTime','scalar_PointSourceId']):
-    
-    """ 
-    Get training from a point cloud
-    
-    
-    Parameters 
-    ----------- 
-    
-    incld: string
-              the input point cloud
-    
-    label_field: string
-              the name of the field representing the training points which must
-              be positive integers
-              
-    classif_field: string
-              the name of the field that will be used for classification later
-              must be specified so it can be ignored
-    rgb: bool
-              whether there is rgb data to be included             
-                
-    outFile: string
-               path to training array to be saved as .gz via joblib
-    
-    ignore: list
-           the pointcloud attributes to ignore for training
-    Returns
-    -------
-    
-    np array of training where first column is labels
-    
-    list of feature names for later ref/plotting
-
-    """  
-    # TODO Clean up lack of loops funcs to do stuff
-    #pf = PlyData.read(incld)
-    
-    # This is neater and easier to work with than  plydata certainly!!
-    
-    pcd = PyntCloud.from_file(incld)
-    
-    dF = pcd.points
-    
-    ignore.append(classif_field)
-#    ignore = ['x', 'y', 'scalar_ScanAngleRank', 
-#       'scalar_NumberOfReturns', 'scalar_ReturnNumber', 'scalar_GpsTime',
-#       'scalar_PointSourceId', classif_field]
-    
-    # If any of the above list exists, cut them from the dF
-
-    cols = dF.columns.to_list()
-
-    for i in ignore:
-        if i in cols:
-            del dF[i]
-    del cols
-#    pProps =['anisotropy', 'curvature', "eigenentropy", "eigen_sum",
-#             "linearity", "omnivariance", "planarity", "sphericity"]
-    
-     # python bug this var persists/pointer or somehting
-    del ignore      
-   
-    label = dF[label_field].to_numpy()
-    
-    del dF[label_field]
-    
-    features = dF.to_numpy()
-    
-    label.shape = (label.shape[0], 1)
-    
-    X_train = np.hstack((label, features))
-    
-    # retain feat names for plot potentiallu
-    
-    fnames = dF.columns.to_list()
-    
-    del features, dF, label
-    
-    # prep for sklearn
-    X_train = X_train[X_train[:,0] >= 0]
-        
-    # Remove non-finite values
-    X_train = X_train[np.isfinite(X_train).all(axis=1)]
-    
-    # y labels
-    #y_train = X_train[:,0] 
-    
-    if outFile != None:
-        jb.dump(X_train, outFile, compress=2)
-    
-    return X_train, fnames
-    
-
-def classify_ply(incld, inModel, train_field="training", class_field='label',
-                 rgb=True, outcld=None,
-                 ignore=['x', 'y', 'scalar_ScanAngleRank', 'scalar_NumberOfReturns',
-                         'scalar_ReturnNumber', 'scalar_GpsTime','scalar_PointSourceId']):
-    
-    """ 
-    Classify a point cloud (ply format)
-    
-    
-    Parameters 
-    ----------- 
-    
-    incld: string
-              the input point cloud
-                
-    class_field: string
-               the name of the field that the results will be written to
-               this must already exist! Create in CldComp. or cgal
-    train_field: string
-              the name of the training label field so it can be ignored
-    
-    rgb: bool
-        whether there is rgb data to be included
-                 
-    outcld: string
-               path to a new ply to write if not writing to the input one
-   
-    ignore: list
-           the pointcloud attributes to ignore for classification
-    """  
-    
-    
-   # pf = PlyData.read(incld)
-    
-    pcd = PyntCloud.from_file(incld)
-    
-    dF = pcd.points
-    
-    # required to ensure we don't lose field later
-    # bloody classes
-    del pcd
-    
-    ignore.append(train_field)
-    ignore.append(class_field)
-#    ignore = ['x', 'y', 'scalar_ScanAngleRank',
-#       'scalar_NumberOfReturns', 'scalar_ReturnNumber', 'scalar_GpsTime',
-#       'scalar_PointSourceId', class_field, train_field]
-    
-    # If any of the above list exists, cut them from the dF
-    cols = dF.columns.to_list()
-
-    for i in ignore:
-
-        if i in cols:
-            del dF[i]
-
-    del cols
-#    pProps =['anisotropy', 'curvature', "eigenentropy", "eigen_sum",
-#             "linearity", "omnivariance", "planarity", "sphericity"]
-    
-    # python bug this var persists/pointer or somehting
-    del ignore        
-    
-    X = dF.to_numpy()
-    
-    # keep a for the shape
-    X[np.where(np.isnan(X))]=0
-    X = X[np.isfinite(X).all(axis=1)]
-    del dF
-    print('Classifying')
-    
-    if os.path.splitext(inModel)[1] == ".h5":
-        model1 = load_model(inModel)
-        predictClass = model1.predict(X)
-        # get the class based on the location of highest prob
-        predictClass = np.argmax(predictClass,axis=1)
-    else:  
-        model1 = joblib.load(inModel)
-        predictClass = model1.predict(X)
-    
-    #pf.elements[0].data[class_field]=predictClass
-
-    # read the files in again due to the earlier issue
-    pcd = PyntCloud.from_file(incld)
-    
-    pcd.points[class_field] = np.int32(predictClass)
-    
-    if outcld == None:    
-        pcd.to_file(incld)
-    else:
-        pcd.to_file(outcld)
-
-
-
-    
 def rmse_vector_lyr(inShape, attributes):
 
     """ 

@@ -71,7 +71,7 @@ def batch_wms_download(gdf, wms, layer, outdir, attribute='id',
     rng = np.arange(0, gdf.shape[0])
     
     # assuming each tile is the same size
-    bbox = gdf.bounds.loc[0].tolist()
+    bbox = gdf.bounds.iloc[0].tolist()
     # for the img_size
     div = int(1 / res) # must be an int otherwise wms doesn't accept
     # in case it is not a fixed tile size for our aoi
@@ -80,7 +80,7 @@ def batch_wms_download(gdf, wms, layer, outdir, attribute='id',
     outfiles = [os.path.join(outdir, a+'.tif') for a in gdf.id.to_list()]
     
     _ = Parallel(n_jobs=gdf.shape[0],
-             verbose=2)(delayed(wmsGrabber)(gdf.bounds.loc[i].tolist(),
+             verbose=2)(delayed(wmsGrabber)(gdf.bounds.iloc[i].tolist(),
                         img_size, wms, layer,
                         outfiles[i], espg=espg, res=res) for i in rng)
 

@@ -47,6 +47,7 @@ from skimage import graph
 from skimage.transform import hough_line, hough_line_peaks
 from shapely.geometry import box, LineString
 from skimage.draw import line
+from skimage.exposure import rescale_intensity
 
 matplotlib.use('Qt5Agg')
 gdal.UseExceptions()
@@ -1529,8 +1530,11 @@ def _bbox_to_pixel_offsets(rgt, geom):
 
 
 def image_thresh(image):
-
-#    image = rgb2gray(io.imread(im))
+    
+    if image.shape[2] == 3:
+        image = rgb2gray(image)
+    
+    image = rescale_intensity(image, out_range='uint8')
     
     if image.shape[0] > 4000:
         image = rescale(image, 0.5, preserve_range=True, anti_aliasing=True)
