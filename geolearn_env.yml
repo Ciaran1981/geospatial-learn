@@ -17,7 +17,6 @@ dependencies:
   - opencv
   - gdal
   - scikit-image
-  - morphsnakes
   - scikit-learn
   - git
   - pandas
@@ -56,6 +55,7 @@ dependencies:
 
   - pip:
     - xmltodict
+    - morphsnakes
     - simpledbf
     - pyfftw
     - phasepack
