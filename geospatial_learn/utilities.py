@@ -11,6 +11,7 @@ appropriate
 """
 
 import numpy as np
+import cv2
 from scipy.spatial import ConvexHull
 #from scipy.ndimage.interpolation import rotate
 from skimage import exposure
@@ -409,7 +410,7 @@ def raster2array(inRas, bands=[1]):
    
     return inArray
 
-def do_ac(inras, outshp, iterations=10, thresh=75,
+def do_ac(inras, outshp, iterations=10, thresh=75, hsv=None, thresh_only=False,
           smoothing=1, lambda1=1, lambda2=1, area_thresh=4, vis=True,
           chess=None):
     """
@@ -429,8 +430,9 @@ def do_ac(inras, outshp, iterations=10, thresh=75,
     iterations: uint
         Number of iterations to run. Stabalises rapidly so not many required
         
-    thresh: int
-            the image threshold (uint8) required
+    thresh: int or list of tuples
+            the image threshold (uint8) required single value for gray,
+            list of tuples for 3 band hsv eg  (123, 33, 0), (179, 255, 255)
         
     smoothing : uint, optional
     
@@ -466,25 +468,35 @@ def do_ac(inras, outshp, iterations=10, thresh=75,
     """
     
     rgb=raster2array(inras, bands=[1,2,3])
-
+    
+    if hsv == True:
+        # confusing var name but to preserve the flow
+        rgb = exposure.rescale_intensity(rgb, out_range='uint8')
+        rgb = cv2.cvtColor(rgb, cv2.COLOR_BGR2HSV)
+        
     img = rgb2gray(rgb)
-
+       
     img = exposure.rescale_intensity(img, out_range='uint8')
 
     #ut.image_thresh(img)
     
     if chess is not None:
-        bw = checkerboard_level_set((img.shape), chess)
+        bw = checkerboard_level_set((img.shape[0:2]), chess)
     else:
-        bw = img < thresh
+        if hsv == True:
+            bw = cv2.inRange(rgb, thresh[0], thresh[1])
+        else:
+            bw = img < thresh
     
     if vis == True:
         callback = visual_callback_2d(img)
-    
-    ac = mcv(img, iterations=iterations,
-                       init_level_set=bw,
-                       smoothing=smoothing, lambda1=lambda1,
-                       lambda2=lambda2, iter_callback=callback)
+    if thresh_only is False:
+        ac = mcv(img, iterations=iterations,
+                           init_level_set=bw,
+                           smoothing=smoothing, lambda1=lambda1,
+                           lambda2=lambda2, iter_callback=callback)
+    else: 
+        ac = bw
 
     ootac = outshp[:-3]+'tif'
     array2raster(ac, 1, inras, ootac, dtype=1)
@@ -494,6 +506,8 @@ def do_ac(inras, outshp, iterations=10, thresh=75,
     gdf["Area"] = gdf['geometry'].area
     gdf = gdf[gdf.Area > area_thresh]
     gdf.to_file(outshp)
+    
+    return ac
     
     
     
@@ -1740,5 +1754,78 @@ def ransac_lines(inRas, outRas, sigma=3, row=True, col=True, binwidth=40):
     polygonize(inRas[:-4]+"seg.tif", inRas[:-4]+"seg.shp", outField=None,  mask = True, band = 1)
 
 
+def colour_thresh(image):
+    
+    """
+    Lifted straight from stack with minor changes
+    """
+    
+    print('press the q key to quit')
+    def nothing(x):
+        pass
 
-
+    h, w = image.shape[0:2]
+    neww = 800
+    newh = int(neww*(h/w))
+    image = cv2.resize(image, (neww, newh))
+    # Create a window           # too big neither normal nor this change it
+    cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+    
+    # Create trackbars for color change
+    # Hue is from 0-179 for Opencv
+    cv2.createTrackbar('HMin', 'image', 0, 179, nothing)
+    cv2.createTrackbar('SMin', 'image', 0, 255, nothing)
+    cv2.createTrackbar('VMin', 'image', 0, 255, nothing)
+    cv2.createTrackbar('HMax', 'image', 0, 179, nothing)
+    cv2.createTrackbar('SMax', 'image', 0, 255, nothing)
+    cv2.createTrackbar('VMax', 'image', 0, 255, nothing)
+    
+    # Set default value for Max HSV trackbars
+    cv2.setTrackbarPos('HMax', 'image', 179)
+    cv2.setTrackbarPos('SMax', 'image', 255)
+    cv2.setTrackbarPos('VMax', 'image', 255)
+    
+    # Initialize HSV min/max values
+    hMin = sMin = vMin = hMax = sMax = vMax = 0
+    phMin = psMin = pvMin = phMax = psMax = pvMax = 0
+    
+    while(1):
+        # Get current positions of all trackbars
+        hMin = cv2.getTrackbarPos('HMin', 'image')
+        sMin = cv2.getTrackbarPos('SMin', 'image')
+        vMin = cv2.getTrackbarPos('VMin', 'image')
+        hMax = cv2.getTrackbarPos('HMax', 'image')
+        sMax = cv2.getTrackbarPos('SMax', 'image')
+        vMax = cv2.getTrackbarPos('VMax', 'image')
+    
+        # Set minimum and maximum HSV values to display
+        lower = np.array([hMin, sMin, vMin])
+        upper = np.array([hMax, sMax, vMax])
+    
+        # Convert to HSV format and color threshold
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, lower, upper)
+        result = cv2.bitwise_and(image, image, mask=mask)
+    
+        # Print if there is a change in HSV value
+        if((phMin != hMin) | (psMin != sMin) | (pvMin != vMin) | (phMax != hMax) | (psMax != sMax) | (pvMax != vMax) ):
+            print("(hMin = %d , sMin = %d, vMin = %d), (hMax = %d , sMax = %d, vMax = %d)" % (hMin , sMin , vMin, hMax, sMax , vMax))
+            phMin = hMin
+            psMin = sMin
+            pvMin = vMin
+            phMax = hMax
+            psMax = sMax
+            pvMax = vMax
+    
+        # Display result image
+        
+        cv2.imshow('image', result)
+        if cv2.waitKey(10) & 0xFF == ord('q'):
+            break
+    print('The final thresholds are:')
+    print("(hMin = %d , sMin = %d, vMin = %d), (hMax = %d , sMax = %d, vMax = %d)" % (hMin , sMin , vMin, hMax, sMax , vMax))
+    print("copyable form")
+    print([(hMin , sMin , vMin), (hMax, sMax , vMax)])
+    
+    cv2.destroyAllWindows()
+    

@@ -836,7 +836,8 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
     
     if random is True:
         # recall the model is in the pipeline
-        grid = RandomizedSearchCV(sk_pipe, param_distributions=sclr,                                       n_jobs=cores, n_iter=20,  verbose=2)
+        grid = RandomizedSearchCV(sk_pipe, param_distributions=sclr, 
+                                  n_jobs=cores, n_iter=20,  verbose=2)
     else:
         grid = GridSearchCV(sk_pipe,  param_grid=sclr, 
                                     cv=cv, n_jobs=cores,
