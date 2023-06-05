@@ -50,7 +50,7 @@ from shapely.geometry import box, LineString
 from skimage.draw import line
 from skimage.exposure import rescale_intensity
 
-matplotlib.use('Qt5Agg')
+#matplotlib.use('Qt5Agg')
 gdal.UseExceptions()
 ogr.UseExceptions()
 

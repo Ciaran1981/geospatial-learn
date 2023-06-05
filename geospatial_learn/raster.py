@@ -32,7 +32,7 @@ from owslib.wms import WebMapService
 from io import BytesIO#, StringIO
 from matplotlib import pyplot as plt
 from joblib import Parallel, delayed
-matplotlib.use('Qt5Agg')
+#matplotlib.use('Qt5Agg')
 
 
 gdal.UseExceptions()

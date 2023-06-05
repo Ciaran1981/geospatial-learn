@@ -44,7 +44,7 @@ from shapely.affinity import rotate
 from math import ceil
 #from centerline.geometry import Centerline
 
-matplotlib.use('Qt5Agg')
+#matplotlib.use('Qt5Agg')
 
 gdal.UseExceptions()
 ogr.UseExceptions()

@@ -1,4 +1,4 @@
-name: geospatial_learn
+name: geospatial_learn_
 
 channels:
   - pytorch
