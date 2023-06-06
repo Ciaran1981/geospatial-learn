@@ -32,12 +32,67 @@ from owslib.wms import WebMapService
 from io import BytesIO#, StringIO
 from matplotlib import pyplot as plt
 from joblib import Parallel, delayed
+from subprocess import run, PIPE
+import geopandas as gpd
 #matplotlib.use('Qt5Agg')
 
 
 gdal.UseExceptions()
 ogr.UseExceptions()
 osr.UseExceptions()
+
+def arc_gdb_convert(gdb, outdir, virt=True):
+    
+    """
+    Convert an esri raster gdb to a set of tifs and optionaly also virt
+    requires https://github.com/r-barnes/ArcRasterRescue to be compiled
+    seperately
+    
+    Parameters
+    ----------
+    
+    gdb: string
+         input gdb
+         
+    outdir: string
+           output dir in which rasters and potentially the virtual will reside
+    
+    virt: bool
+          whether to write a virtual raster
+    
+    """
+    listcmd = ['arc_raster_rescue.exe', gdb+'/']
+
+    # as out is bytes have to decode it
+    varlist = run(listcmd, stdout=PIPE).stdout.decode('utf-8')
+    
+    tmplst = varlist.split()
+    #  'Rasters'
+    tmplst = tmplst[2:]
+    
+    #this is outstanding - must remember these things
+    num = tmplst[::2]  # Start at first element, then every other.
+    tiles = tmplst[1::2] # Start at second element, then every other.
+    
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+    
+    tiles = [os.path.join(outdir, t+'.tif') for t in tiles]
+    
+    # we add the args to this in the loop
+    execmd = ['arc_raster_rescue.exe', gdb+'/']
+    
+    # add to the cmds
+    cmdlist = [execmd+[i,t] for i, t in zip(num,tiles)]
+    
+    # think this has gone is sequence but quick enough
+    [run(c) for c in cmdlist]
+    
+    vrt = os.path.split(gdb)[1][:-3] + 'vrt'
+    write_vrt(tiles, os.path.join(outdir, vrt))
+    
+    
+    
 
 def batch_wms_download(gdf, wms, layer, outdir, attribute='id',
                        espg='27700', res=0.25):
@@ -1603,6 +1658,55 @@ def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff"):
     outDataset.FlushCache()
     
     outDataset = None
+
+def tile_raster(inRas, inShp, outdir, attribute='TILE_NAME'):
+    
+    
+#    vds = ogr.Open(inShp)
+           
+    rds = gdal.Open(inRas, gdal.GA_ReadOnly)
+    
+#    lyr = vds.GetLayer()
+#    
+#    labels = np.arange(lyr.GetFeatureCount())
+    
+    # easier with gpd?  
+    gdf = gpd.read_file(inShp)
+    extent = gdf.bounds
+    
+    # gpd & ogr differences
+    #gpd minx miny maxx maxy
+    #ogr minx maxx miny maxy
+    
+    # oddly the warp function takes it in the gpd order, whereas if reading from
+    # ogr we have to swap about 
+    #         # minx      miny        maxx       maxy 
+    # for ogr
+    #extent = [extent[0], extent[2], extent[1], extent[3]]
+    # for gpd
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+    
+    outlist = gdf[attribute].to_list()
+    
+    finalist = [os.path.join(outdir, o+'.tif') for o in outlist]
+    
+    # SLOW........but shared mem object
+    for i, f in tqdm(enumerate(finalist)):
+        ext = extent.iloc[i].to_list()
+        ootds = gdal.Warp(f,
+                          rds,
+                          format='GTiff',
+                          outputBounds=ext)
+        ootds.FlushCache()
+        ootds = None
+    
+    
+    
+    vrt = os.path.split(inRas)[1][:-3] + 'vrt'
+    write_vrt(finalist, os.path.join(outdir, vrt))
+    
+    
     
 
 def clip_raster(inRas, inShp, outRas, cutline=True):
@@ -1644,7 +1748,8 @@ def clip_raster(inRas, inShp, outRas, cutline=True):
     print('cropping')
     ootds = gdal.Warp(outRas,
               rds,
-              format = 'GTiff', outputBounds = extent)
+              format='GTiff', 
+              outputBounds=extent)
               
         
     ootds.FlushCache()

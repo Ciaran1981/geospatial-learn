@@ -52,7 +52,7 @@ dependencies:
   - ipywidgets
   - nb_conda
   - owslib
-
+  - optuna
 
   - pip:
     - morphsnakes
