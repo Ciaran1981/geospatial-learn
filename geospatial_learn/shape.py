@@ -2353,7 +2353,7 @@ def zonal_point(inShp, inRas, field, band=1, nodata_value=0, write_stat=True):
             if src_array is None:
                 # unlikely but if none will have no data in the attribute table
                 continue
-            outval =  int(src_array.max())
+            outval =  float(src_array.max())
             
 #            if write_stat != None:
             feat.SetField(field, outval)

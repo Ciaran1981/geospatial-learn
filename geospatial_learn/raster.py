@@ -32,8 +32,12 @@ from owslib.wms import WebMapService
 from io import BytesIO#, StringIO
 from matplotlib import pyplot as plt
 from joblib import Parallel, delayed
-from subprocess import run, PIPE
+from subprocess import run, PIPE, Popen
+from subprocess import Popen
 import geopandas as gpd
+import imageio
+import cv2
+from PIL import Image, ImageFont, ImageDraw
 #matplotlib.use('Qt5Agg')
 
 
@@ -85,8 +89,14 @@ def arc_gdb_convert(gdb, outdir, virt=True):
     # add to the cmds
     cmdlist = [execmd+[i,t] for i, t in zip(num,tiles)]
     
-    # think this has gone is sequence but quick enough
+
+    # doesn't wait with run
     [run(c) for c in cmdlist]
+    
+    # the old way
+#    procs = [Popen(c) for c in cmdlist]
+#    for p in procs:
+#       p.wait()
     
     vrt = os.path.split(gdb)[1][:-3] + 'vrt'
     write_vrt(tiles, os.path.join(outdir, vrt))
@@ -1659,16 +1669,17 @@ def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff"):
     
     outDataset = None
 
-def tile_raster(inRas, inShp, outdir, attribute='TILE_NAME'):
+def tile_raster(inRas, inShp, outdir, attribute='TILE_NAME', tiles=None,
+                virt=True):
     
+    """
+    Parameters
+    ----------
     
-#    vds = ogr.Open(inShp)
+    """
+    
            
     rds = gdal.Open(inRas, gdal.GA_ReadOnly)
-    
-#    lyr = vds.GetLayer()
-#    
-#    labels = np.arange(lyr.GetFeatureCount())
     
     # easier with gpd?  
     gdf = gpd.read_file(inShp)
@@ -1679,15 +1690,17 @@ def tile_raster(inRas, inShp, outdir, attribute='TILE_NAME'):
     #ogr minx maxx miny maxy
     
     # oddly the warp function takes it in the gpd order, whereas if reading from
-    # ogr we have to swap about 
+    # ogr we have to swap about - here for ref
     #         # minx      miny        maxx       maxy 
     # for ogr
     #extent = [extent[0], extent[2], extent[1], extent[3]]
-    # for gpd
     if not os.path.exists(outdir):
         os.mkdir(outdir)
-    
-    outlist = gdf[attribute].to_list()
+        
+    if tiles is not None:
+        outlist = tiles
+    else:
+        outlist = gdf[attribute].to_list()
     
     finalist = [os.path.join(outdir, o+'.tif') for o in outlist]
     
@@ -1702,9 +1715,9 @@ def tile_raster(inRas, inShp, outdir, attribute='TILE_NAME'):
         ootds = None
     
     
-    
-    vrt = os.path.split(inRas)[1][:-3] + 'vrt'
-    write_vrt(finalist, os.path.join(outdir, vrt))
+    if virt is True:
+        vrt = os.path.split(inRas)[1][:-3] + 'vrt'
+        write_vrt(finalist, os.path.join(outdir, vrt))
     
     
     
@@ -2256,7 +2269,7 @@ def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy',
     #if not would need w x h
     x_min = geotransform[0]
     y_max = geotransform[3]
-    # x_min & y_max are like the "top left" corner.
+    # x_min & y_max are the "top left" corner.
     projection = inDataset.GetProjection()
     geotransform = inDataset.GetGeoTransform()   
     #dtype=gdal.GDT_Int32
@@ -2290,6 +2303,65 @@ def _quickwarp(inRas, outRas, proj='EPSG:27700'):
     ootRas = gdal.Warp(outRas, inRas, dstSRS=proj, format='Gtiff')
     ootRas.FlushCache()
     ootRas=None
+
+def multiband2gif(inras, outgif=None, duration=1):
+    
+    """
+    Write a multi band image to a animated gif
+    
+    Parameters
+    ----------
+    
+    inras: string
+           input raster
+           
+    outgif: string
+            output gif
+    
+    """
+    
+    
+    rds = gdal.Open(inras)
+    
+    bands = np.arange(1, rds.RasterCount+1, 1).tolist()
+    
+    # shame I couldn't just give it the complete block - func suggests it
+    # will only accept up to 4 bands....
+    
+    images = [_read_rescale(rds, b) for b in bands]
+    
+    if outgif is None:
+        outgif = inras[:-3]+'gif'
+        
+    imageio.mimsave(outgif, images, duration=duration)
+
+    
+def _read_rescale(rds, band):
+    
+    img = rds.GetRasterBand(band).ReadAsArray()
+    
+    img = rescale_intensity(img, out_range='uint8')
+    
+    # can't see it....
+#    img = cv2.putText(img, text=str(band),
+#                               org=(0,0),
+#                               fontFace=3,
+#                               fontScale=200,
+#                               color=(0,0,0),
+#                               thickness=5)
+    
+    # long winded but works
+    img = Image.fromarray(img)
+    
+    font = ImageFont.truetype("/usr/share/fonts/dejavu/DejaVuSans.ttf", 200)
+    
+    draw = ImageDraw.Draw(img)
+    
+    draw.text((0,0), str(band), font=font)
+    
+    img = np.array(img)
+    
+    return img
     
 
 

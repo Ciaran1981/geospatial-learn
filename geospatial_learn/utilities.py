@@ -1596,7 +1596,7 @@ def colorscale(seg, prop='Area', custom=None):
     
     """
     
-    if custom == None:
+    if custom is None:
         props = regionprops(np.int32(seg))
          
         

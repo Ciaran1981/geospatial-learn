@@ -823,14 +823,14 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
     if pipe is None:
         # the dict must be in order of proc to work hence this
         sclr = {'scaler': [StandardScaler(), MinMaxScaler(),
-              Normalizer(), MaxAbsScaler()]}
+              Normalizer(), MaxAbsScaler()]}#, PowerTransformer()]} # think power results in errors
         sclr.update(params)
         
     else:
         sclr = pipe
     
     sk_pipe = Pipeline([("scaler", StandardScaler()),
-                        ("selector", VarianceThreshold()),
+                        #("selector", VarianceThreshold()),
                         ("classifier", model)])
         
     
@@ -1392,8 +1392,8 @@ def classify_pixel_bloc(model, inputImage,  outMap, bands=[1,2,3], blocksize=Non
     
     inDataset = gdal.Open(inputImage)
     
-    outDataset = _copy_dataset_config(inDataset, outMap = outMap,
-                                     dtype = gdal.GDT_Byte, bands = 1)
+    outDataset = _copy_dataset_config(inDataset, outMap=outMap,
+                                     dtype=dtype, bands=1)
     band = inDataset.GetRasterBand(1)
     cols = int(inDataset.RasterXSize)
     rows = int(inDataset.RasterYSize)
@@ -1472,23 +1472,11 @@ def classify_pixel_bloc(model, inputImage,  outMap, bands=[1,2,3], blocksize=Non
                                 X = X[bands, :]
                                 X = X.transpose() 
                                 X = np.where(np.isfinite(X),X,0) 
-                                # this is a slower line   
-                                #Xs= csr_matrix(X)
-                                
-                                # YUCK!!!!!! This is a repulsive solution
-                                if ndvi != None:
-                                    ndvi1 = (X[:,3] - X[:,2]) / (X[:,3] + X[:,2]) 
-                                    ndvi1.shape = (len(ndvi1), 1)
-                                    ndvi1 = np.where(np.isfinite(ndvi1),ndvi1,0) 
-                                    ndvi2 = (X[:,7] - X[:,6]) / (X[:,7] + X[:,6]) 
-                                    ndvi2.shape = (len(ndvi2), 1)
-                                    ndvi2 = np.where(np.isfinite(ndvi2),ndvi2,0) 
-                                    
-                                    X = np.hstack((X[:,0:4], ndvi1, X[:,4:8], ndvi2))
-                                    
-                                   
+
                                 predictClass = model1.predict(X)
-                                predictClass[X[:,0]==0]=0                    
+                                # this deletes vals betweem 0 and 1 so it is scrubbed 
+                                # not sure why it was here
+                                #predictClass[X[:,0]==0]=0                   
                                 predictClass = np.reshape(predictClass, (numRows, numCols))
                                 outBand.WriteArray(predictClass,j,i)
                 #print(i,j)
