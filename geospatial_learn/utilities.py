@@ -42,7 +42,7 @@ from morphsnakes import morphological_chan_vese as mcv
 from morphsnakes import inverse_gaussian_gradient, checkerboard_level_set
 import geopandas as gpd
 import mahotas as mh
-from plyfile import PlyData, PlyProperty#, PlyListProperty
+
 from skimage.filters import sobel
 from skimage import graph
 from skimage.transform import hough_line, hough_line_peaks
@@ -234,124 +234,7 @@ def houghseg(inRas, outShp, edge='canny', sigma=2,
 
 
 
-def fixply(incloud, outcloud, field='scalar_label'): 
-    
-    
-    """
-    Fix a ply file for use in cgal after cloudcompare
-    
-    Parameters
-    ----------
 
-    incloud: string
-           path to an input ply 
-
-    outcloud: string
-           path to the output sply
-           
-    field: string
-           the scalar field to alter
-    """
-    
-    # The labels should be contiguous ie -1,0,1,2,3 - counting from zero
-    
-    pf = PlyData.read(incloud)
-    
-    ar = np.array(pf.elements[0].data[field])
-
-    # after cloud compare there are often spurious vales like -2564
-    
-    # do the nan to num in place 
-    ar = np.nan_to_num(ar, nan=-1)
-    
-
-    ar[ar<-1]=-1
-    
-    ar = np.int32(ar)
-    
-    # All this modifies the original data
-    new = pf['vertex']
-    new.properties = ()
-    new.data.dtype.names = ['x', 'y', 'z', 
-                            'red', 'green', 'blue',
-                            'nx', 'ny', 'nz',  'label']
-    new.properties = (PlyProperty('x', 'double'),
-                       PlyProperty('y', 'double'), 
-                       PlyProperty('z', 'double'), 
-                       PlyProperty('red', 'uchar'), 
-                       PlyProperty('green', 'uchar'), 
-                       PlyProperty('blue', 'uchar'), 
-                       PlyProperty('nx', 'double'), 
-                       PlyProperty('ny', 'double'), 
-                       PlyProperty('nz', 'double'), 
-                       PlyProperty('label', 'int'))
-    
-    pf.elements[0].data['label']=ar
-             
-    pf.write(outcloud)
-
-def wipe_ply_field(incloud, outcloud, tfield='training' ,field='label'): 
-    
-    """
-    Scrub a field from a ply file
-    
-    Parameters
-    ----------
-
-    incloud: string
-           path to an input ply 
-
-    outcloud: string
-           path to the output sply
-    
-    tfield: string
-           the training field
-           
-    field: string
-           the field to erase (that was previously full of class values)
-    """
-    
-    # The labels should be contiguous ie -1,0,1,2,3 - counting from zero
-    
-    pf = PlyData.read(incloud)
-    
-    ar = np.array(pf.elements[0].data[field])
-
-    # after cloud compare there are often spurious vales like -2564
-    
-    # do the nan to num in place 
-    #ar = np.nan_to_num(ar, nan=-1)
-
-    #ar[ar<-1]=-1
-    
-    ar = np.int32(ar)
-    ar[ar>=0]=-1
-    
-    
-    # All this modifies the original data
-    new = pf['vertex']
-    new.properties = ()
-    new.data.dtype.names = ['x', 'y', 'z', tfield, field,
-                            'red', 'green', 'blue',
-                            'nx', 'ny', 'nz']
-    new.properties = (PlyProperty('x', 'double'),
-                       PlyProperty('y', 'double'), 
-                       PlyProperty('z', 'double'), 
-                       PlyProperty(tfield, 'int'),
-                       PlyProperty(field, 'int'),
-                       PlyProperty('red', 'uchar'), 
-                       PlyProperty('green', 'uchar'), 
-                       PlyProperty('blue', 'uchar'), 
-                       PlyProperty('nx', 'double'), 
-                       PlyProperty('ny', 'double'), 
-                       PlyProperty('nz', 'double'))
-    
-    pf.elements[0].data['label']=ar
-    
-    
-    
-    
-    pf.write(outcloud)
 
 
 def _fix_overlapping_levelsets(levelsets):

@@ -229,6 +229,8 @@ def extent2poly(infile, filetype='raster', outfile=None, polytype="ESRI Shapefil
     # gdal/ogr read in etc
     if filetype == 'raster':
         ext, rstref = _raster_extent(infile)
+        # where ext is 
+        xmin, ymin, xmax, ymax = ext # readable
         
     else:
         # tis a vector
@@ -236,13 +238,13 @@ def extent2poly(infile, filetype='raster', outfile=None, polytype="ESRI Shapefil
         lyr = vds.GetLayer()
         ext = lyr.GetExtent()
     
-    # make the linear ring 
+    # make the linear ring -
     ring = ogr.Geometry(ogr.wkbLinearRing)
-    ring.AddPoint(ext[0],ext[2])
-    ring.AddPoint(ext[1], ext[2])
-    ring.AddPoint(ext[1], ext[3])
-    ring.AddPoint(ext[0], ext[3])
-    ring.AddPoint(ext[0], ext[2])
+    ring.AddPoint(xmin, ymin)
+    ring.AddPoint(xmax, ymin)
+    ring.AddPoint(xmax, ymax)
+    ring.AddPoint(xmin, ymax)
+    ring.AddPoint(xmin, ymin) # the 5th is here as the ring must be closed
     
     # drop the geom into poly object
     poly = ogr.Geometry(ogr.wkbPolygon)

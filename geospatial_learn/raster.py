@@ -14,7 +14,7 @@ data to gdal compatible formats.
 from osgeo import gdal, ogr,  osr
 import os
 import numpy as np
-import glob2
+from glob import glob
 from geospatial_learn.gdal_merge import _merge
 import tempfile
 from tqdm import tqdm
@@ -360,6 +360,7 @@ def array2raster(array, bands, inRaster, outRas, dtype, FMT=None):
         dataset=None
         #print('Raster written to disk')
     else:
+    # TODO - the entire n-dim array can be written rather than loop
     # Here we loop through bands
         for band in range(1,bands+1):
             Arr = array[:,:,band-1]
@@ -710,8 +711,8 @@ def _bbox_to_pixel_offsets(rgt, geom):
     # Specify offset and rows and columns to read
     xoff = int((xmin - xOrigin)/pixelWidth)
     yoff = int((yOrigin - ymax)/pixelWidth)
-    xcount = int((xmax - xmin)/pixelWidth)+1
-    ycount = int((ymax - ymin)/pixelWidth)+1
+    xcount = int((xmax - xmin)/pixelWidth)#+1#??
+    ycount = int((ymax - ymin)/pixelWidth)#+1#?? - was this a hack?
 
     return (xoff, yoff, xcount, ycount)
 
@@ -734,23 +735,28 @@ def _raster_extent2poly(inras):
     ext = (minx, miny, maxx, maxy)
     spref = rds.GetSpatialRef()
     
+    # make the linear ring -
     ring = ogr.Geometry(ogr.wkbLinearRing)
-    ring.AddPoint(ext[0],ext[2])
-    ring.AddPoint(ext[1], ext[2])
-    ring.AddPoint(ext[1], ext[3])
-    ring.AddPoint(ext[0], ext[3])
-    ring.AddPoint(ext[0], ext[2])
+    ring.AddPoint(minx, miny)
+    ring.AddPoint(maxx, miny)
+    ring.AddPoint(maxx, maxy)
+    ring.AddPoint(minx, maxy)
+    ring.AddPoint(minx, miny) # the 5th is here as the ring must be closed
     
     # drop the geom into poly object
     poly = ogr.Geometry(ogr.wkbPolygon)
     poly.AddGeometry(ring)
     
     return poly, spref, ext
+    
+    
 
-def mask_with_poly(vector_path, raster_path, value=0):
+def mask_with_poly(inshp, inras, value=0):
     
     """ 
     Change raster values inside a polygon and update the raster
+    
+    Geometries must intersect!!!
     
     Parameters
     ----------
@@ -765,11 +771,11 @@ def mask_with_poly(vector_path, raster_path, value=0):
             the value to alter
     """    
     
-    rds = gdal.Open(raster_path, gdal.GA_Update)
+    rds = gdal.Open(inras, gdal.GA_Update)
     rgt = rds.GetGeoTransform()
     bands = rds.RasterCount
     
-    vds = ogr.Open(vector_path, 1)  
+    vds = ogr.Open(inshp, 1)  
     vlyr = vds.GetLayer(0)
 
     mem_drv = ogr.GetDriverByName('Memory')
@@ -778,17 +784,7 @@ def mask_with_poly(vector_path, raster_path, value=0):
     # Loop through vectors
     features = np.arange(vlyr.GetFeatureCount())
     
-#    # use the rgt to limit the masking and avoid edge overlap errors
-#     NOT working
-#    clp_ds, clp_lyr = extent2poly(raster_path, filetype='raster', 
-#                                  outfile=None, 
-#                                  polytype="Memory", 
-#                                  geecoord=False, lyrtype='ogr')
-#
-#    finalyr = clp_ds.CreateLayer('poly', None, geom_type=ogr.wkbMultiPolygon)
-#
-#    ogr.Layer.Clip(vlyr, clp_lyr, finalyr)
-    rds_ext, spref, ext = _raster_extent2poly(raster_path)
+    rds_ext, spref, ext = _raster_extent2poly(inras)
     
     for label in tqdm(features):
         feat = vlyr.GetNextFeature()
@@ -798,10 +794,11 @@ def mask_with_poly(vector_path, raster_path, value=0):
         geom = feat.geometry()
         
         # the poly may be partially outside the raster
-        if rds_ext.Contains(geom) == False:
+        if rds_ext.Intersects(geom) == False:
             continue
+        interpoly = rds_ext.Intersection(geom)
 
-        src_offset = _bbox_to_pixel_offsets(rgt, geom)
+        src_offset = _bbox_to_pixel_offsets(rgt, interpoly)
         
         # calculate new geotransform of the feature subset
         new_gt = (
@@ -816,7 +813,11 @@ def mask_with_poly(vector_path, raster_path, value=0):
         # Create a temporary vector layer in memory
         mem_ds = mem_drv.CreateDataSource('out')
         mem_layer = mem_ds.CreateLayer('poly', None, ogr.wkbPolygon)
-        mem_layer.CreateFeature(feat.Clone())
+        featureDefn = mem_layer.GetLayerDefn()
+        feature = ogr.Feature(featureDefn)
+        feature.SetGeometry(interpoly)
+        mem_layer.CreateFeature(feature)
+        #mem_layer.CreateFeature(feat.Clone()) # if were using orig geom
 
         # Rasterize it
 
@@ -828,7 +829,7 @@ def mask_with_poly(vector_path, raster_path, value=0):
         gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
         rv_array = rvds.ReadAsArray()
         
-        
+        # This could get expensive mem wise for big images
         for band in range(1, bands+1):
             bnd = rds.GetRasterBand(band)
             src_array = bnd.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
@@ -1719,10 +1720,54 @@ def tile_raster(inRas, inShp, outdir, attribute='TILE_NAME', tiles=None,
         vrt = os.path.split(inRas)[1][:-3] + 'vrt'
         write_vrt(finalist, os.path.join(outdir, vrt))
     
+def clip_raster_sel(inRas, inShp, outRas, field, attribute):
+
+    """
+    Clip a raster with a polygon selected by field (column) and attribute
     
+    Parameters
+    ----------
+        
+    inRas: string
+            the input image 
+            
+    outPoly: string
+              the input polygon file path 
+        
+    outRas: string
+             the clipped raster
+             
+    field: string 
+             the field/column to select by    
+
+    attribute: string 
+             the attribute/row value to select by              
+   
+    """
+    #TODO - merge with below? - poss require sql sel from shp module...
+
+    gdf = gpd.read_file(inShp)
+    extent = gdf.bounds
+           
+    rds = gdal.Open(inRas, gdal.GA_ReadOnly)
+    
+    #ugly
+    ext = extent.iloc[gdf[gdf[field]==attribute].index[0]].tolist()        
+
+    print('Clipping')
+    ootds = gdal.Warp(outRas,
+              rds,
+              format='GTiff', 
+              outputBounds=ext,
+              callback=gdal.TermProgress)
+              
+        
+    ootds.FlushCache()
+    ootds = None
+    rds = None 
     
 
-def clip_raster(inRas, inShp, outRas, cutline=True):
+def clip_raster(inRas, inShp, outRas, cutline=True, fmt='GTiff'):
 
     """
     Clip a raster
@@ -1761,7 +1806,7 @@ def clip_raster(inRas, inShp, outRas, cutline=True):
     print('cropping')
     ootds = gdal.Warp(outRas,
               rds,
-              format='GTiff', 
+              format=fmt, 
               outputBounds=extent)
               
         
@@ -1800,14 +1845,16 @@ def clip_raster(inRas, inShp, outRas, cutline=True):
                         numCols = blocksizeX
                     else:
                         numCols = cols - j
-                    for band in range(1, bands+1):
+                    #for band in range(1, bands+1):
                         
-                        bnd = rds1.GetRasterBand(band)
-                        array = bnd.ReadAsArray(j, i, numCols, numRows)
-                        mask = mskbnd.ReadAsArray(j, i, numCols, numRows)
-                        
+                    #bnd = rds1.GetRasterBand(band)
+                    array = rds1.ReadAsArray(j, i, numCols, numRows)
+                    mask = mskbnd.ReadAsArray(j, i, numCols, numRows)
+                    if len(array.shape)==2:
                         array[mask!=1]=0
-                        bnd.WriteArray(array, j, i)
+                    else:
+                        array[mask!=1,:,:]=0
+                    rds1.WriteArray(array, j, i)
                         
         rds1.FlushCache()
         rds1 = None

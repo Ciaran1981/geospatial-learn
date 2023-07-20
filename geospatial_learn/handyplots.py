@@ -19,7 +19,7 @@ import numpy as np
 import geopandas as gpd
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix,jaccard_score, f1_score
 from sklearn.metrics import precision_recall_fscore_support as prf
-from sklearn.metrics import plot_confusion_matrix
+#from sklearn.metrics import plot_confusion_matrix
 import scikitplot as skplt
 import seaborn as sns
 import pandas as pd
@@ -123,77 +123,78 @@ def _plt_heatmap(values, xlabel, ylabel, xticklabels, yticklabels,
         ax.text(x, y, fmt % value, color=c, ha="center", va="center")
     return img
 
-def plt_confmat(X_test, y_test, model, class_names=None, cmap=plt.cm.Blues, 
-                fmt="%d", save=None):
+#TODO rewrite
+# def plt_confmat(X_test, y_test, model, class_names=None, cmap=plt.cm.Blues, 
+#                 fmt="%d", save=None):
     
     
-    """
-    Plot a confusion matrix
+#     """
+#     Plot a confusion matrix
     
-    Parameters
-    -------------------
+#     Parameters
+#     -------------------
     
-    trueVals : nparray
-        array of reference/training/validation values
+#     trueVals : nparray
+#         array of reference/training/validation values
     
-    predVals : nparray
-        the predicted values
+#     predVals : nparray
+#         the predicted values
     
-    cmap : matplot lib object (optional)
-        eg plt.cm.gray
+#     cmap : matplot lib object (optional)
+#         eg plt.cm.gray
         
-    Returns:
+#     Returns:
         
-    The confusion matrix and a plot
-    """
-    #labels = np.unique(trueVals)
-    # the above heatmap function is used to create the plot
+#     The confusion matrix and a plot
+#     """
+#     #labels = np.unique(trueVals)
+#     # the above heatmap function is used to create the plot
         
     
-    #skplt.metrics.plot_confusion_matrix(trueVals, predVals, normalize=True)
+#     #skplt.metrics.plot_confusion_matrix(trueVals, predVals, normalize=True)
     
     
     
-    #conf = confusion_matrix(trueVals, predVals)
+#     #conf = confusion_matrix(trueVals, predVals)
     
-#    titles_options = [("Confusion matrix, without normalization", None),
-#                  ("Normalized confusion matrix", 'true')]
+# #    titles_options = [("Confusion matrix, without normalization", None),
+# #                  ("Normalized confusion matrix", 'true')]
     
-    confs = []
-    disps = []
-    #first is gonna be several digits, second a decimal of max 2
+#     confs = []
+#     disps = []
+#     #first is gonna be several digits, second a decimal of max 2
     
-    font_sizes = [{'font.size': 5}, {'font.size': 5}] 
-    # one is a count the other a decimal
-    vformats = ['.0f', '.2f']
+#     font_sizes = [{'font.size': 5}, {'font.size': 5}] 
+#     # one is a count the other a decimal
+#     vformats = ['.0f', '.2f']
     
-    titles = ["Confusion matrix, without normalization", 
-               "Normalized confusion matrix"]
-    normalise = [None, 'true']
+#     titles = ["Confusion matrix, without normalization", 
+#                "Normalized confusion matrix"]
+#     normalise = [None, 'true']
     
-    #fig, ax = plt.subplots(figsize=(10, 10))
+#     #fig, ax = plt.subplots(figsize=(10, 10))
     
-    for t, n,f,v in zip(titles, normalise, font_sizes, vformats):
-        disp = plot_confusion_matrix(model, X_test, y_test,
-                                     display_labels=class_names,
-                                     cmap=cmap,
-                                     normalize=n,
-                                     xticks_rotation='vertical',
-                                     values_format=v)
-        plt.rcParams.update(f)
-        disp.ax_.set_title(t)
-        disps.append(disp)
-        confs.append(disp.confusion_matrix)
+#     for t, n,f,v in zip(titles, normalise, font_sizes, vformats):
+#         disp = plot_confusion_matrix(model, X_test, y_test,
+#                                      display_labels=class_names,
+#                                      cmap=cmap,
+#                                      normalize=n,
+#                                      xticks_rotation='vertical',
+#                                      values_format=v)
+#         plt.rcParams.update(f)
+#         disp.ax_.set_title(t)
+#         disps.append(disp)
+#         confs.append(disp.confusion_matrix)
     
-    plt.show()
+#     plt.show()
     
-    types = ['cnts','nrm']
-    for t, d in zip(types, disps):
-        # must set a size
-#        d.figure_(figsize=(18, 9))
-        d.figure_.savefig(save[:-3]+t+'.png', bbox_inches='tight')
+#     types = ['cnts','nrm']
+#     for t, d in zip(types, disps):
+#         # must set a size
+# #        d.figure_(figsize=(18, 9))
+#         d.figure_.savefig(save[:-3]+t+'.png', bbox_inches='tight')
     
-    return confs
+#     return confs
 
 
     

@@ -12,13 +12,10 @@ EO data for both per pixel or object properties
 
 # This must go first or it causes the error:
 #ImportError: dlopen: cannot load any more object with static TLS
-try:
-    #import xgboost as xgb
-    from xgboost.sklearn import XGBClassifier, XGBRegressor
-    import xgboost as xgb
-except ImportError:
-    pass
-    print('xgb not available')
+
+from xgboost.sklearn import XGBClassifier, XGBRegressor
+import xgboost as xgb
+
 
 from tqdm import tqdm
 
@@ -30,7 +27,7 @@ from osgeo import gdal, ogr#,osr
 import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import (StratifiedKFold, GroupKFold, KFold, 
-                                     train_test_split,GroupShuffleSplit,PredefinedSplit)
+                                     train_test_split,GroupShuffleSplit, PredefinedSplit)
 from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
                               GradientBoostingClassifier,RandomForestRegressor,
                               GradientBoostingRegressor, ExtraTreesRegressor,
@@ -40,14 +37,16 @@ from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
 #                              HistGradientBoostingClassifier)
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.preprocessing import (LabelEncoder, MaxAbsScaler, MinMaxScaler,
-                                   Normalizer, PowerTransformer,StandardScaler)
-from sklearn.feature_selection import VarianceThreshold
+                                   Normalizer, PowerTransformer,StandardScaler,
+                                   QuantileTransformer)
+from sklearn.feature_selection import VarianceThreshold, RFECV
+from sklearn.inspection import permutation_importance
 from sklearn import metrics
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-from catboost import (CatBoostClassifier, CatBoostRegressor,Pool )
+#from catboost import (CatBoostClassifier, CatBoostRegressor,Pool )
 import lightgbm as lgb
-from autosklearn.classification import AutoSklearnClassifier
-from autosklearn.regression import AutoSklearnRegressor
+# from autosklearn.classification import AutoSklearnClassifier
+# from autosklearn.regression import AutoSklearnRegressor
 from skorch import NeuralNetClassifier
 from optuna.integration import LightGBMPruningCallback
 from optuna import create_study
@@ -56,7 +55,7 @@ import joblib
 import joblib as jb
 from geospatial_learn.raster import array2raster
 from geospatial_learn.shape import _bbox_to_pixel_offsets#, zonal_stats
-from tpot import TPOTClassifier, TPOTRegressor
+#from tpot import TPOTClassifier, TPOTRegressor
 import warnings
 from geospatial_learn.raster import _copy_dataset_config
 import geospatial_learn.handyplots as hp
@@ -67,369 +66,10 @@ import os
 gdal.UseExceptions()
 ogr.UseExceptions()
 
-def create_model_tpot(X_train, outModel, gen=5, popsize=50, group=None,  
-                       cv=5, cores=-1, dask=False, test_size=0.2,
-                       regress=False, params=None, scoring=None, verbosity=2, 
-                       warm_start=False):
-    
-     """
-     Create a model using the tpot library where genetic algorithms
-     are used to optimise pipline and params. 
+# for current issue with numpy
+np.warnings = warnings
 
-     Parameters
-     ----------  
-    
-     X_train: np array
-               numpy array of training data where the 1st column is labels
-    
-     outModel: string
-                the output model path (which is a .py file)
-                from which to run the pipeline
-    
-     cv: int
-          no of folds
-    
-     cores: int or -1 (default)
-             the no of parallel jobs
-    
-     regress: bool
-               a regression model if True, a classifier if False
-    
-     test_size: float
-                 size of test set held out
-    
-     params: a dict of model params (see tpot)
-              enter your own params dict rather than the range provided
-              e.g. 
-              {'sklearn.ensemble.RandomForestClassifier': {"n_estimators": [200],
-                              "max_features": ['sqrt', 'log2'],                                                
-                              "max_depth": [10, None],
-     },
 
-     'xgboost.sklearn.XGBClassifier': {
-         'n_estimators': [200],
-                             'learning_rate': [0.1, 0.2, 0.4]
-     }}
-             
-    
-     scoring: string
-               a suitable sklearn scoring type (see notes)
-              
-     warm_start: bool
-                 use the previous population, useful if interactive
-                           
-     """
-
- #   # params could be something like
- #    params = {'sklearn.ensemble.RandomForestClassifier': {"n_estimators": [200],
- #                             "max_features": ['sqrt', 'log2'],                                                
- #                             "max_depth": [10, None],
- #    },
- #
- #    'xgboost.sklearn.XGBClassifier': {
- #        'n_estimators': [200],
- #                            'learning_rate': [0.1, 0.2, 0.4]
- #    }}
-
-    
-     
-     bands = X_train.shape[1]-1
-    
-     #X_train = X_train.transpose()
-     X_train = X_train[X_train[:,0] != 0]
-    
-     
-    # Remove non-finite values
-     if group is not None: #replace this later not good
-         inds = np.where(np.isfinite(X_train).all(axis=1))
-         group = group[inds]
-    
-     X_train = X_train[np.isfinite(X_train).all(axis=1)]
-     # y labels
-     y_train = X_train[:,0]
-
-    # remove labels from X_train
-     X_train = X_train[:,1:bands+1]
-    
-     # TODO - change to a func as repeated in this and create_model
-     if group is not None:
-        
-         # maintain group based splitting from initial train/test split
-         # to main train set
-         splitter = GroupShuffleSplit(test_size=test_size, n_splits=1, random_state=0)
-         split = splitter.split(X_train, y_train, group)
-         train_inds, test_inds = next(split)
-    
-         X_test = X_train[test_inds]
-         y_test = y_train[test_inds]
-         X_train = X_train[train_inds]
-         y_train = y_train[train_inds]
-         group_trn = group[train_inds]
-        
-         group_kfold = GroupKFold(n_splits=cv) 
-         # Create a nested list of train and test indices for each fold
-         k_kfold = group_kfold.split(X_train, y_train, group_trn)  
-
-         train_ind2, test_ind2 = [list(traintest) for traintest in zip(*k_kfold)]
-
-         cv = [*zip(train_ind2, test_ind2)]
-        
-     else:
-         X_train, X_test, y_train, y_test = train_test_split(
-             X_train, y_train, test_size=test_size, random_state=0)
-         cv = StratifiedKFold(cv)
-    
-    
-     if params is None and regress is False:       
-         tpot = TPOTClassifier(generations=gen, population_size=popsize, 
-                               verbosity=verbosity,
-                               n_jobs=cores, scoring=scoring, use_dask=dask,
-                               warm_start=warm_start, memory='auto',
-                               cv=cv)
-         tpot.fit(X_train, y_train)
-        
-     elif params != None and regress is False:
-         tpot = TPOTClassifier(generations=gen, population_size=popsize,
-                               n_jobs=cores,  verbosity=verbosity,
-                               scoring=scoring,
-                               use_dask=dask, 
-                               config_dict=params, 
-                               warm_start=warm_start, memory='auto',
-                               cv=cv)
-         tpot.fit(X_train, y_train)
-        
-     elif params is None and regress is True:       
-         tpot = TPOTRegressor(generations=gen, population_size=popsize, 
-                              verbosity=verbosity,
-                              n_jobs=cores, scoring=scoring,
-                              use_dask=dask, warm_start=warm_start, memory='auto',
-                              cv=cv)
-         tpot.fit(X_train, y_train)
-        
-     elif params != None and regress is True:
-         tpot = TPOTRegressor(generations=gen, population_size=popsize,
-                              config_dict=params, n_jobs=cores, 
-                              verbosity=verbosity,
-                              scoring=scoring,
-                              use_dask=dask, 
-                              warm_start=warm_start, memory='auto',
-                              cv=cv)
-         tpot.fit(X_train, y_train)
-
-     tpot.export(outModel)
-    
-    
-
-     #testresult = grid.best_estimator_.predict(X_test)
-    
-     #crDf = hp.plot_classif_report(y_test, testresult, save=outModel[:-3]+'.png')
-    
-#    #OR
-#    
-#     tpot.score( X_test, y_test)
-#
-#    #TODO
-#    # how'd we export the pipline as an object then simply load to predict?
-#     #interim is to return the object for now
-#    joblib.dump(tpot, 
-#    
-#    this'll do for now
-     scr = tpot.score(X_test, y_test)
-     print(scr)
-    
-     return tpot, scr
-
-def create_model_autosk(X_train, outModel,  cores=-1, regress=False, 
-                        class_names=None, group=None,
-                        incld_est=None,
-                        excld_est=None, incld_prep=None, excld_prep=None, 
-                        total_time=120, res_args={'cv':5},
-                        mem_limit=None,
-                        per_run=None, test_size=0.3, 
-                        wrkfolder=None,
-                        scoring=None, save=True, ply=False):
-    
-    """
-    Auto-sklearn to create a model
-    
-    Parameters
-    ---------------   
-    
-    X_train: np array
-              numpy array of training data where the 1st column is labels
-    
-    outModel: string
-               the output model path which is a gz file, if using keras it is 
-               h5 
-    
-    cores: int or -1 (default)
-            the no of parallel jobs
-    
-    class_names: list of strings
-                class names in order of their numercial equivalents
-    
-    incld_est: list of strings
-                estimators to included eg ['random_forest']
-    
-    excld_est: list of strings
-                estimators to excluded eg ['random_forest']
-    
-    incld_prep: list of strings
-                preproc to include
-                
-    excld_prep: list of strings
-                preproc to include
-    
-    total_time: int
-                time in seconds for the whole search process
-    
-    res_args: dict
-                strategy for overfit avoidance e.g. {'cv':5}
-    
-    mem_limit: int
-                memory limit per job
-    
-    per_run: int
-                time limit per run
-    
-    test_size: float
-            percentage to hold out to test
-    
-    wrkfolder: string
-                path to dir for intermediate working
-    
-    scoring : string
-              a suitable sklearn scoring type (see notes)
-    
-    
-    
-    Returns
-    -------
-    A list of:
-        
-    [model, classif_report]
-    
-    """
-    # default limit set by autosk is low and prone to error, hence estimate
-    # here based on mem + cores used 
-    # (though using everything on offer as limit!)
-    if mem_limit == None:
-        #Work out RAM and divide among threads
-        mem = virtual_memory()
-        #ingb = mem.total / (1024.**3)
-        inmb = mem.total / (1024.**2)
-        mem_limit = inmb / cores
-    
-    
-    bands = X_train.shape[1]-1
-    
-    #X_train = X_train.transpose()
-    if ply == False:
-        
-        X_train = X_train[X_train[:,0] != 0]
-    
-     
-    # Remove non-finite values
-    X_train = X_train[np.isfinite(X_train).all(axis=1)]
-    # y labels
-    y_train = X_train[:,0]
-
-    # remove labels from X_train
-    X_train = X_train[:,1:bands+1]
-
-    # then introduce the test at the end 
-    
-    
-    #no_classes = len(np.unique(y_train))
-    
-    # seemingly this must guard the code below (which should then be indented),
-    # though I don't understand this completely
-    #if __name__ == "__main__"
-    
-    if group is not None:
-        # maintain group based splitting from initial train/test split
-        # to main train set
-        # TODO - sep func?
-        splitter = GroupShuffleSplit(test_size=test_size, n_splits=1, random_state=0)
-        split = splitter.split(X_train, y_train, group)
-        train_inds, test_inds = next(split)
-    
-        X_test = X_train[test_inds]
-        y_test = y_train[test_inds]
-        X_train = X_train[train_inds]
-        y_train = y_train[train_inds]
-        group_trn = group[train_inds]
-        
-        group_kfold = GroupKFold(n_splits=res_args['cv']) 
-        # Create a nested list of train and test indices for each fold
-        k_kfold = group_kfold.split(X_train, y_train, group_trn)  
-
-        train_ind2, test_ind2 = [list(traintest) for traintest in zip(*k_kfold)]
-        # TODO this is not working
-        #https://automl.github.io/auto-sklearn/master/examples/40_advanced/example_resampling.html
-        #cvs = [*zip(train_ind2, test_ind2)] # not accepted bu automl
-        res_args = test_ind2 # this doesn't work and neither does k_kfold
-        #res_args = PredefinedSplit(test_fold=test_ind2) #also no good
-    else:
-        X_train, X_test, y_train, y_test = train_test_split(
-            X_train, y_train, test_size=test_size, random_state=0)
-
-    
-    if regress is False:
-        automl = AutoSklearnClassifier(time_left_for_this_task=total_time, 
-                                       resampling_strategy_arguments=res_args,
-                                       include_estimators=incld_est, 
-                                       exclude_estimators=excld_est,
-                                       include_preprocessors=incld_prep, 
-                                       exclude_preprocessors=excld_prep,
-                                       per_run_time_limit=per_run, 
-                                       tmp_folder = wrkfolder,
-                                       # per job seemingly
-                                       memory_limit=mem_limit,
-                                       n_jobs=cores)
-    else:
-        automl = AutoSklearnRegressor(time_left_for_this_task=total_time, 
-                               resampling_strategy_arguments=res_args,
-                               include_estimators=incld_est, 
-                               exclude_estimators=excld_est,
-                               include_preprocessors=incld_prep, 
-                               exclude_preprocessors=excld_prep,
-                               per_run_time_limit=per_run, 
-                               tmp_folder = wrkfolder,
-                               # per job seemingly
-                               memory_limit=mem_limit,
-                               n_jobs=cores)
-    
-    automl.fit(X_train, y_train)
-    
-    testresult = automl.predict(X_test)
-    
-    print(automl.leaderboard())
-    # print results
-    print(automl.sprint_statistics())
-    
-    #for ref
-#    automl.cv_results_
-#    automl.show_models()
-    
-    #save it
-    joblib.dump(automl, outModel)
-    
-    if regress is False:
-        crDf = hp.plot_classif_report(y_test, testresult, target_names=class_names,
-                                      save=outModel[:-3]+'.png')
-    
-        hp.plt_confmat(testresult, y_test, cmap = plt.cm.gray, fmt="%d")
-
-        return [automl, crDf]
-    else:
-        train_pred = automl.predict(X_train)
-        print('Train set')
-        regression_results(y_test, train_pred)
-        print('Test set')
-        test_pred = automl.predict(X_test)
-        regression_results(y_test, test_pred)
-        return [automl]
 
 # TODO -NOT WORKING of course stupid object structure making feeding params
 # impossible
@@ -458,13 +98,6 @@ def create_model_optuna(X_train, outModel, clf='erf', group=None, random=False,
             param_grid ={"selector__threshold": [0, 0.001, 0.01],
              "classifier__n_estimators": [1075]}
             
-    pipe: dict
-            if None will include a preprocessing pipeline consisting of
-            StandardScaler(), MinMaxScaler(), Normalizer(), MaxAbsScaler(),
-            otherwise specify in this form 
-            pipe = {'scaler': [StandardScaler(), MinMaxScaler(),
-                  Normalizer()]}
-             
     clf: string
           an sklearn or xgb classifier/regressor 
           logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb,
@@ -622,12 +255,194 @@ def create_model_optuna(X_train, outModel, clf='erf', group=None, random=False,
     
     print(f"\tBest value (rmse or r2): {study.best_value:.5f}")
     print(f"\tBest params:")
+
+def _group_cv(X_train, y_train, group, test_size=0.2, cv=10):
+    
+    """
+    Return the splits and and vars for a group grid search
+    """
+        
+    # maintain group based splitting from initial train/test split
+    # to main train set
+    # TODO - sep func?
+    splitter = GroupShuffleSplit(test_size=test_size, n_splits=1, random_state=0)
+    split = splitter.split(X_train, y_train, group)
+    train_inds, test_inds = next(split)
+
+    X_test = X_train[test_inds]
+    y_test = y_train[test_inds]
+    X_train = X_train[train_inds]
+    y_train = y_train[train_inds]
+    group_trn = group[train_inds]
+    
+    group_kfold = GroupKFold(n_splits=cv) 
+    # Create a nested list of train and test indices for each fold
+    k_kfold = group_kfold.split(X_train, y_train, group_trn)  
+
+    train_ind2, test_ind2 = [list(traintest) for traintest in zip(*k_kfold)]
+
+    cv = [*zip(train_ind2, test_ind2)]
+    
+    return X_train, y_train, X_test, y_test, cv
+
+def rec_feat_sel(X_train, featnames, preproc=('scaler', None),  clf='erf',  group=None, 
+                 cv=5, params=None, cores=-1, strat=True, 
+                 test_size=0.3, regress=False, return_test=True,
+                 scoring=None, class_names=None, save=True):
+    
+    """
+    Recursive feature selection
+    
+    Parameters
+    ---------------   
+    
+    X_train: np array
+              numpy array of training data where the 1st column is labels.
+              If the groupkfold is used, the last column will be the group labels
     
     
+    params: dict
+            a dict of model params (see scikit learn). If using a pipe(line)
+            remember to prefix each param as follows with parent object 
+            and two underscores.
+            param_grid ={"selector__threshold": [0, 0.001, 0.01],
+             "classifier__n_estimators": [1075]}
+             
+    clf: string
+          an sklearn or xgb classifier/regressor 
+          logit, sgd, linsvc, svc, svm, nusvm, erf, rf, gb, xgb,
+    
+    group: np.array
+            array of group labels for train/test split and grid search
+            useful to avoid autocorrelation          
+    
+    cv: int
+         no of folds
+    
+    cores: int or -1 (default)
+            the no of parallel jobs
+    
+    strat: bool
+            a stratified grid search
+    
+    test_size: float
+            percentage to hold out to test
+    
+    regress: bool
+              a regression model if True, a classifier if False
+    
+    scoring: string
+              a suitable sklearn scoring type (see notes)
+    
+    class_names: list of strings
+                class names in order of their numercial equivalents
+    
+    Returns
+    -------
+    
+    bool index of features, list of chosen feature names
+    """
+    #TODO need to make all this a func
+    clfdict = {'rf': RandomForestClassifier(random_state=0),
+               'erf': ExtraTreesClassifier(random_state=0),
+               'gb': GradientBoostingClassifier(random_state=0),
+               'xgb': XGBClassifier(random_state=0),
+               'logit': LogisticRegression(),
+               'catb': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
+                                          random_seed=42),
+               'catbgpu': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
+                                          random_seed=42,
+                                          task_type="GPU",
+                                          devices='0:1'),
+               'lgbm': lgb.LGBMClassifier(random_state=0)}
+ #use_best_model=True-needs non empty eval set
+                #'hgb': HistGradientBoostingClassifier
+    
+    regdict = {'rf': RandomForestRegressor(random_state=0),
+               'erf': ExtraTreesRegressor(random_state=0),
+               'gb': GradientBoostingRegressor(random_state=0),
+               'xgb': XGBRegressor(random_state=0),
+               'catb': CatBoostRegressor(logging_level='Silent', 
+                                         random_seed=42),
+               'catbgpu': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
+                                          random_seed=42,
+                                          task_type="GPU",
+                                          devices='0:1'),
+               'lgbm': lgb.LGBMRegressor(random_state=0)}
+
+               #'hgb': HistGradientBoostingRegressor,}
+    
+    if regress is True:
+        model = regdict[clf]
+        if scoring is None:
+            scoring = 'r2'
+    else:
+        model = clfdict[clf]
+        cv = StratifiedKFold(cv)
+        if scoring is None:
+            scoring = 'accuracy'
+    bands = X_train.shape[1]-1
+    
+    #X_train = X_train.transpose()
+    X_train = X_train[X_train[:,0] != 0]
+    
+     
+    # Remove non-finite values
+    if group is not None: #replace this later not good
+        inds = np.where(np.isfinite(X_train).all(axis=1))
+        group = group[inds]
+    
+    X_train = X_train[np.isfinite(X_train).all(axis=1)]
+    # y labels
+    y_train = X_train[:,0]
+
+    # remove labels from X_train
+    X_train = X_train[:,1:bands+1]
+    
+    #no_classes = len(np.unique(y_train))
+    
+
+    # this is not a good way to do this
+    # Does this matter for feature selection??
+    if group is not None:
+        
+        X_train, y_train, X_test, y_test, cv = _group_cv(X_train, y_train,
+                                                         group, test_size,
+                                                         cv)
+        
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_train, y_train, test_size=test_size, random_state=0)
+    
+    
+    rfecv = RFECV(estimator=model, 
+                  step=1, 
+                  cv=cv, 
+                  scoring=scoring,
+                  n_jobs=cores) # suspect this is no of folds
+    
+    pipeline  = Pipeline([preproc,
+                          ('selector', rfecv)])
+
+
+    # VERY slow - but I guess it is grid searching feats first
+    #rfecv
+    pipeline.fit(X_train, y_train)
+
+    # First experiment is to add this as a fixed part of the process at the start
+    # as it will slow it down otherwise
+
+    # featind = pipeline[1].support_ # gains the feat indices(bool)
+    # featnmarr = np.array(featnames)
+    # featnames_sel = featnmarr[featind==True].tolist()
+
+    # as X_train has changed we cant select from it within here
+    
+    return pipeline
     
     
 def create_model(X_train, outModel, clf='erf', group=None, random=False,
-                 cv=5, params=None, pipe=None, cores=-1, strat=True, 
+                 cv=5, params=None, pipe='default', cores=-1, strat=True, 
                  test_size=0.3, regress=False, return_test=True,
                  scoring=None, class_names=None, save=True):
     
@@ -652,12 +467,13 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
             param_grid ={"selector__threshold": [0, 0.001, 0.01],
              "classifier__n_estimators": [1075]}
             
-    pipe: dict
-            if None will include a preprocessing pipeline consisting of
+    pipe: str,dict,None
+            if 'default' will include a preprocessing pipeline consisting of
             StandardScaler(), MinMaxScaler(), Normalizer(), MaxAbsScaler(),
             otherwise specify in this form 
             pipe = {'scaler': [StandardScaler(), MinMaxScaler(),
                   Normalizer()]}
+            or None will not preprocess the data
              
     clf: string
           an sklearn or xgb classifier/regressor 
@@ -730,9 +546,9 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
                                           random_seed=42,
                                           task_type="GPU",
                                           devices='0:1'),
-               'lgbm': lgb.LGBMClassifier(random_state=0)}
+               'lgbm': lgb.LGBMClassifier(random_state=0),
  #use_best_model=True-needs non empty eval set
-                #'hgb': HistGradientBoostingClassifier
+                'hgb': HistGradientBoostingClassifier(random_state=0)}
     
     regdict = {'rf': RandomForestRegressor(random_state=0),
                'erf': ExtraTreesRegressor(random_state=0),
@@ -740,13 +556,13 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
                'xgb': XGBRegressor(random_state=0),
                'catb': CatBoostRegressor(logging_level='Silent', 
                                          random_seed=42),
-               'catbgpu': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
+               'catbgpu': CatBoostRegressor(logging_level='Silent', # supress trees in terminal
                                           random_seed=42,
                                           task_type="GPU",
                                           devices='0:1'),
-               'lgbm': lgb.LGBMRegressor(random_state=0)}
+               'lgbm': lgb.LGBMRegressor(random_state=0),
 
-               #'hgb': HistGradientBoostingRegressor,}
+               'hgb': HistGradientBoostingRegressor(random_state=0)}
     
     if regress is True:
         model = regdict[clf]
@@ -784,26 +600,9 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
     # this is not a good way to do this
     if group is not None:
         
-        # maintain group based splitting from initial train/test split
-        # to main train set
-        # TODO - sep func?
-        splitter = GroupShuffleSplit(test_size=test_size, n_splits=1, random_state=0)
-        split = splitter.split(X_train, y_train, group)
-        train_inds, test_inds = next(split)
-    
-        X_test = X_train[test_inds]
-        y_test = y_train[test_inds]
-        X_train = X_train[train_inds]
-        y_train = y_train[train_inds]
-        group_trn = group[train_inds]
-        
-        group_kfold = GroupKFold(n_splits=cv) 
-        # Create a nested list of train and test indices for each fold
-        k_kfold = group_kfold.split(X_train, y_train, group_trn)  
-
-        train_ind2, test_ind2 = [list(traintest) for traintest in zip(*k_kfold)]
-
-        cv = [*zip(train_ind2, test_ind2)]
+        X_train, y_train, X_test, y_test, cv = _group_cv(X_train, y_train,
+                                                         group, test_size,
+                                                         cv)
         
     else:
         X_train, X_test, y_train, y_test = train_test_split(
@@ -820,17 +619,24 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
         #CatBoostError: /src/catboost/catboost/private/libs/options/cross_validation_params.cpp:21: FoldCount is 0
         
     
-    if pipe is None:
+    if pipe == 'default':
         # the dict must be in order of proc to work hence this
+        # none is included to ensure
+        # non prep data is considered
+        #  should add selector?? seems to produce a load of nan errors (or warnings)
         sclr = {'scaler': [StandardScaler(), MinMaxScaler(),
-              Normalizer(), MaxAbsScaler()]}#, PowerTransformer()]} # think power results in errors
+                           Normalizer(), MaxAbsScaler(), 
+                           QuantileTransformer(output_distribution='uniform'),
+                           #PowerTransformer(),
+                           None]} 
         sclr.update(params)
         
     else:
         sclr = pipe
+        sclr.update(params)
     
     sk_pipe = Pipeline([("scaler", StandardScaler()),
-                        #("selector", VarianceThreshold()),
+                        #("selector", None), lord knows why this fails on var thresh
                         ("classifier", model)])
         
     
@@ -874,7 +680,7 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
 
 def combine_models(X_train, modelist, mtype='regress', method='voting', group=None, 
                    test_size=0.3, outmodel=None, class_names=None, params=None,
-                   final_est='xgb', cv=5):
+                   final_est='xgb', cv=5):#, cores=1):
     
     """
     Combine models using either the voting or stacking methods in scikit-learn
@@ -964,7 +770,7 @@ def combine_models(X_train, modelist, mtype='regress', method='voting', group=No
             X_train, y_train, test_size=test_size, random_state=0)
     
     if method == 'voting':
-        comb = VotingRegressor(estimators=modelist)
+        comb = VotingRegressor(estimators=modelist)#, n_jobs=cores)
         # we only wish to predict really - but  necessary 
         # for sklearn model construct
     else:
@@ -1228,7 +1034,8 @@ def RF_oob_opt(model, X_train, min_est, max_est, step, group=None,
     return error_rate, best_param
 
 
-def plot_feature_importances(modelPth, featureNames, model_type='scikit'):
+def plot_feature_importances(modelPth, featureNames, 
+                             rank=True):
     
     """
     Plot the feature importances of an ensemble classifier
@@ -1248,16 +1055,82 @@ def plot_feature_importances(modelPth, featureNames, model_type='scikit'):
     else:
         model = joblib.load(modelPth)
     
-    if model_type=='scikit':
-        n_features = model.n_features_
-    if model_type=='xgb':
-        n_features = model.n_features_in_
-    plt.barh(range(n_features), model.feature_importances_, align='center')
-    plt.yticks(np.arange(n_features), featureNames)
-    plt.xlabel("Feature importance")
-    plt.ylabel("Feature")
-    plt.ylim(-1, n_features)
+    # if model_type=='scikit':
+    #     n_features = model.n_features_
+    # if model_type=='xgb':
+    #     n_features = model.n_features_in_
+    # plt.barh(range(n_features), model.feature_importances_, align='center')
+    # plt.yticks(np.arange(n_features), featureNames)
+    # plt.xlabel("Feature importance")
+    # plt.ylabel("Feature")
+    # plt.ylim(-1, n_features)
+    # plt.show()
+    
+    # fimp = pd.Series(model.feature_importances_, index=featureNames)
+    importances = model.feature_importances_
+    std = np.std([tree.feature_importances_ for tree in model.estimators_], axis=0)
+    
+    fimp = pd.Series(importances, index=featureNames)
+    
+    if rank == True:
+        fimp = fimp.sort_values(ascending=False)
+    
+    fig, ax = plt.subplots()
+    fimp.plot.bar(yerr=std, ax=ax)
+    ax.set_title("Feature importances using MDI")
+    ax.set_ylabel("Mean decrease in impurity")
+    fig.tight_layout()
+    
+    
+    return fimp
+
+
+
+def plot_feat_importance_permutation(modelPth, featureNames,  X_test, y_test,
+                                     rank=True):
+    
+    """
+    Plot the feature importances of an ensemble classifier
+    
+    Parameters
+    --------------------------
+    
+    modelPth : string
+               A sklearn model path or the estimator itself
+    
+    featureNames : list of strings
+                   a list of feature names
+    
+    """
+    
+    if modelPth is not str:
+        model = modelPth
+    else:
+        model = joblib.load(modelPth)
+    
+    # if model_type=='scikit':
+    #     n_features = model.n_features_
+    # if model_type=='xgb':
+    #     n_features = model.n_features_in_
+
+    result = permutation_importance(
+        model, X_test, y_test, n_repeats=10, random_state=0, n_jobs=-1
+    )
+    
+    
+    fimp = pd.Series(result.importances_mean, index=featureNames)
+    if rank == True:
+        fimp = fimp.sort_values(ascending=False)
+    
+    fig, ax = plt.subplots()
+    fimp.plot.bar(yerr=result.importances_std, ax=ax)
+    ax.set_title("Feature importances using permutation on full model")
+    ax.set_ylabel("Mean accuracy decrease")
+    fig.tight_layout()
     plt.show()
+    
+    
+    return fimp
 
        
 def classify_pixel(model, inputDir, bands, outMap, probMap):
