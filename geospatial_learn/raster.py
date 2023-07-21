@@ -369,7 +369,7 @@ def array2raster(array, bands, inRaster, outRas, dtype, FMT=None):
         dataset=None
         #print('Raster written to disk')
         
-def raster2array(inRas, bands=[1]):
+def raster2array(inRas, bands=None):
     
     """
     Read a raster and return an array, either single or multiband
@@ -381,14 +381,19 @@ def raster2array(inRas, bands=[1]):
     inRas: string
                   input  raster 
                   
-    bands: list
-                  a list of bands to return in the array
+    bands: list or None
+                  a list of bands to return in the array 
+                  if None all bands are read and the axes will be (bands,x,y)
+                  
     
     """
     rds = gdal.Open(inRas)
    
-   
-    if len(bands) ==1:
+    if bands is None:
+        #unsure if this is worth it - gdal order is fine right??
+        inArray = np.rollaxis(rds.ReadAsArray(), 0, 3) 
+        
+    elif len(bands) ==1:
         # then we needn't bother with all the crap below
         inArray = rds.GetRasterBand(bands[0]).ReadAsArray()
         
@@ -405,6 +410,8 @@ def raster2array(inRas, bands=[1]):
         rdsDtype = rds.GetRasterBand(1).DataType
         inDt = dtypes[str(rdsDtype)]
         
+
+        
         inArray = np.zeros((rds.RasterYSize, rds.RasterXSize, len(bands)), dtype=inDt) 
         for idx, band in enumerate(bands):  
             rA = rds.GetRasterBand(band).ReadAsArray()
@@ -419,8 +426,9 @@ def write_vrt(infiles, outfile):
     Parameters
     ----------
     
-    infiles:
-    
+    infiles: list
+              a list of raster files
+                             
     outfile: string
                 the output .vrt
 
