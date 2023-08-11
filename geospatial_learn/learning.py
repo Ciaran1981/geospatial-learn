@@ -32,9 +32,9 @@ from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
                               GradientBoostingClassifier,RandomForestRegressor,
                               GradientBoostingRegressor, ExtraTreesRegressor,
                               VotingRegressor, VotingClassifier, StackingRegressor,
-                              StackingClassifier)
-#                              HistGradientBoostingRegressor,
-#                              HistGradientBoostingClassifier)
+                              StackingClassifier,
+                              HistGradientBoostingRegressor,
+                              HistGradientBoostingClassifier)
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.preprocessing import (LabelEncoder, MaxAbsScaler, MinMaxScaler,
                                    Normalizer, PowerTransformer,StandardScaler,
@@ -288,7 +288,7 @@ def _group_cv(X_train, y_train, group, test_size=0.2, cv=10):
 def rec_feat_sel(X_train, featnames, preproc=('scaler', None),  clf='erf',  group=None, 
                  cv=5, params=None, cores=-1, strat=True, 
                  test_size=0.3, regress=False, return_test=True,
-                 scoring=None, class_names=None, save=True):
+                 scoring=None, class_names=None, save=True, cat_feat=None):
     
     """
     Recursive feature selection
@@ -343,34 +343,35 @@ def rec_feat_sel(X_train, featnames, preproc=('scaler', None),  clf='erf',  grou
     bool index of features, list of chosen feature names
     """
     #TODO need to make all this a func
+    # Not woring with hgb....
     clfdict = {'rf': RandomForestClassifier(random_state=0),
                'erf': ExtraTreesClassifier(random_state=0),
                'gb': GradientBoostingClassifier(random_state=0),
                'xgb': XGBClassifier(random_state=0),
                'logit': LogisticRegression(),
-               'catb': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
-                                          random_seed=42),
-               'catbgpu': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
-                                          random_seed=42,
-                                          task_type="GPU",
-                                          devices='0:1'),
-               'lgbm': lgb.LGBMClassifier(random_state=0)}
+               # 'catb': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
+               #                            random_seed=42),
+               # 'catbgpu': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
+               #                            random_seed=42,
+                                          # task_type="GPU",
+                                          # devices='0:1'),
+               'lgbm': lgb.LGBMClassifier(random_state=0),
  #use_best_model=True-needs non empty eval set
-                #'hgb': HistGradientBoostingClassifier
+                'hgb': HistGradientBoostingClassifier(random_state=0)}
     
     regdict = {'rf': RandomForestRegressor(random_state=0),
                'erf': ExtraTreesRegressor(random_state=0),
                'gb': GradientBoostingRegressor(random_state=0),
                'xgb': XGBRegressor(random_state=0),
-               'catb': CatBoostRegressor(logging_level='Silent', 
-                                         random_seed=42),
-               'catbgpu': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
-                                          random_seed=42,
-                                          task_type="GPU",
-                                          devices='0:1'),
-               'lgbm': lgb.LGBMRegressor(random_state=0)}
+               # 'catb': CatBoostRegressor(logging_level='Silent', 
+               #                           random_seed=42),
+               # 'catbgpu': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
+               #                            random_seed=42,
+               #                            task_type="GPU",
+                                          # devices='0:1'),
+               'lgbm': lgb.LGBMRegressor(random_state=0),
 
-               #'hgb': HistGradientBoostingRegressor,}
+               'hgb': HistGradientBoostingRegressor(random_state=0)}
     
     if regress is True:
         model = regdict[clf]
@@ -414,7 +415,8 @@ def rec_feat_sel(X_train, featnames, preproc=('scaler', None),  clf='erf',  grou
         X_train, X_test, y_train, y_test = train_test_split(
             X_train, y_train, test_size=test_size, random_state=0)
     
-    
+
+        
     rfecv = RFECV(estimator=model, 
                   step=1, 
                   cv=cv, 
@@ -444,7 +446,7 @@ def rec_feat_sel(X_train, featnames, preproc=('scaler', None),  clf='erf',  grou
 def create_model(X_train, outModel, clf='erf', group=None, random=False,
                  cv=5, params=None, pipe='default', cores=-1, strat=True, 
                  test_size=0.3, regress=False, return_test=True,
-                 scoring=None, class_names=None, save=True):
+                 scoring=None, class_names=None, save=True, cat_feat=None):
     
     """
     Brute force or random model creating using scikit learn.
@@ -540,26 +542,26 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
                'gb': GradientBoostingClassifier(random_state=0),
                'xgb': XGBClassifier(random_state=0),
                'logit': LogisticRegression(),
-               'catb': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
-                                          random_seed=42),
-               'catbgpu': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
-                                          random_seed=42,
-                                          task_type="GPU",
-                                          devices='0:1'),
+               # 'catb': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
+               #                            random_seed=42),
+               # 'catbgpu': CatBoostClassifier(logging_level='Silent', # supress trees in terminal
+               #                            random_seed=42,
+               #                            task_type="GPU",
+               #                            devices='0:1'),
                'lgbm': lgb.LGBMClassifier(random_state=0),
- #use_best_model=True-needs non empty eval set
+
                 'hgb': HistGradientBoostingClassifier(random_state=0)}
     
     regdict = {'rf': RandomForestRegressor(random_state=0),
                'erf': ExtraTreesRegressor(random_state=0),
                'gb': GradientBoostingRegressor(random_state=0),
                'xgb': XGBRegressor(random_state=0),
-               'catb': CatBoostRegressor(logging_level='Silent', 
-                                         random_seed=42),
-               'catbgpu': CatBoostRegressor(logging_level='Silent', # supress trees in terminal
-                                          random_seed=42,
-                                          task_type="GPU",
-                                          devices='0:1'),
+               # 'catb': CatBoostRegressor(logging_level='Silent', 
+               #                           random_seed=42),
+               # 'catbgpu': CatBoostRegressor(logging_level='Silent', # supress trees in terminal
+               #                            random_seed=42,
+               #                            task_type="GPU",
+               #                            devices='0:1'),
                'lgbm': lgb.LGBMRegressor(random_state=0),
 
                'hgb': HistGradientBoostingRegressor(random_state=0)}
@@ -776,11 +778,11 @@ def combine_models(X_train, modelist, mtype='regress', method='voting', group=No
     else:
         clfdict = {'rf': RandomForestClassifier, 'erf': ExtraTreesClassifier,
                    'gb': GradientBoostingClassifier, 'xgb': XGBClassifier,
-                   'logit': LogisticRegression}#'hgb': HistGradientBoostingClassifier
+                   'logit': LogisticRegression, 'hgb': HistGradientBoostingClassifier}
     
         regdict = {'rf': RandomForestRegressor, 'erf': ExtraTreesRegressor,
-                   'gb': GradientBoostingRegressor, 'xgb': XGBRegressor,}
-               #'hgb': HistGradientBoostingRegressor,}
+                   'gb': GradientBoostingRegressor, 'xgb': XGBRegressor,
+                    'hgb': HistGradientBoostingRegressor}
         
         if mtype == 'regress':
             # won't accept the dict even with the ** to unpack it
@@ -820,7 +822,7 @@ def combine_models(X_train, modelist, mtype='regress', method='voting', group=No
     
     if outmodel is not None:
         joblib.dump(comb, outmodel)
-    return comb
+    return comb, X_test, y_test 
 
 
 def regression_results(y_true, y_pred):

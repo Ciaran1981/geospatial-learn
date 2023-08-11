@@ -756,15 +756,144 @@ def _raster_extent2poly(inras):
     poly.AddGeometry(ring)
     
     return poly, spref, ext
+
+
+    tproj = lyr.GetSpatialRef()
     
+def _extent2lyr(infile, filetype='raster', outfile=None, 
+                polytype="ESRI Shapefile", geecoord=False, lyrtype='ogr'):
+    
+    """
+    Get the coordinates of a files extent and return an ogr polygon ring with 
+    the option to save the  file
+    
+    
+    Parameters
+    ----------
+    
+    infile: string
+            input ogr compatible geometry file or gdal raster
+            
+    filetype: string
+            the path of the output file, if not specified, it will be input file
+            with 'extent' added on before the file type
+    
+    outfile: string
+            the path of the output file, if not specified, it will be input file
+            with 'extent' added on before the file type
+    
+    polytype: string
+            ogr comapatible file type (see gdal/ogr docs) default 'ESRI Shapefile'
+            ensure your outfile string has the equiv. e.g. '.shp' or in case of 
+            memory only 'Memory' (outfile would be None in that case)
+    
+    geecoord: bool
+           optionally convert to WGS84 lat,lon
+    
+    lyrtype: string
+            either 'gee' which means earth engine or 'ogr' which returns ds and lyr
+           
+    Returns
+    -------
+    
+    a GEE polygon geometry or ogr dataset and layer
+    
+    """
+    # gdal/ogr read in etc
+    if filetype == 'raster':
+        _, rstref, ext = _raster_extent2poly(infile)
+        # where ext is 
+        xmin, ymin, xmax, ymax = ext # readable
+        
+    else:
+        # tis a vector
+        vds = ogr.Open(infile)
+        lyr = vds.GetLayer()
+        ext = lyr.GetExtent()
+    
+    # make the linear ring -
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    ring.AddPoint(xmin, ymin)
+    ring.AddPoint(xmax, ymin)
+    ring.AddPoint(xmax, ymax)
+    ring.AddPoint(xmin, ymax)
+    ring.AddPoint(xmin, ymin) # the 5th is here as the ring must be closed
+    
+    # drop the geom into poly object
+    poly = ogr.Geometry(ogr.wkbPolygon)
+    poly.AddGeometry(ring)
+    
+    if geecoord == True:
+        # Getting spatial reference of input 
+        srs = lyr.GetSpatialRef()
+    
+        # make WGS84 projection reference3
+        wgs84 = osr.SpatialReference()
+        wgs84.ImportFromEPSG(4326)
+    
+        # OSR transform
+        transform = osr.CoordinateTransformation(srs, wgs84)
+        # apply
+        poly.Transform(transform)
+        
+        tproj = wgs84
+    if filetype == 'raster':
+        tproj = rstref
+    else:
+        tproj = lyr.GetSpatialRef()
+    
+    # in case we wish to write it for later....    
+#    if outfile != None:
+#        outfile = infile[:-4]+'extent.shp'
+    
+    out_drv = ogr.GetDriverByName(polytype)
+    
+    # remove output shapefile if it already exists
+    if outfile != None and polytype != 'Memory':
+        if os.path.exists(outfile):
+            out_drv.DeleteDataSource(outfile)
+        ootds = out_drv.CreateDataSource(outfile)
+    else:
+        ootds = out_drv.CreateDataSource('out')
+
+    ootlyr = ootds.CreateLayer("extent", tproj, geom_type=ogr.wkbPolygon)
+    
+    # add an ID field
+    idField = ogr.FieldDefn("id", ogr.OFTInteger)
+    ootlyr.CreateField(idField)
+    
+    # create the feature and set values
+    featureDefn = ootlyr.GetLayerDefn()
+    feature = ogr.Feature(featureDefn)
+    feature.SetGeometry(poly)
+    feature.SetField("id", 1)
+    ootlyr.CreateFeature(feature)
+    feature = None
+    
+    # Save and close if not a memory driver
+    
+    ootds.FlushCache()
+    
+    if outfile != None and polytype != 'Memory':
+        ootds = None
+    
+    if lyrtype == 'gee':
+        poly.FlattenTo2D()
+        return poly
+    elif lyrtype == 'ogr':
+        return ootds, ootlyr
     
 
-def mask_with_poly(inshp, inras, value=0):
+def mask_with_poly(inshp, inras, layer=True, value=0):
     
     """ 
     Change raster values inside a polygon and update the raster
     
     Geometries must intersect!!!
+    
+    If done with layer=True entire raster will be read in at once and
+    masked with layer, otherwise (False), each geometry will be read seperately
+    and only that area read in. 
     
     Parameters
     ----------
@@ -774,6 +903,10 @@ def mask_with_poly(inshp, inras, value=0):
         
     raster_path: string
                   input raster
+    
+    layer: bool
+           whether to use the entire vector file as a mask (True) or loop through
+           geometries seperately (False)
     
     value: int
             the value to alter
@@ -794,56 +927,82 @@ def mask_with_poly(inshp, inras, value=0):
     
     rds_ext, spref, ext = _raster_extent2poly(inras)
     
-    for label in tqdm(features):
-        feat = vlyr.GetNextFeature()
-
-        if feat is None:
-            continue
-        geom = feat.geometry()
+    if layer == True:
         
-        # the poly may be partially outside the raster
-        if rds_ext.Intersects(geom) == False:
-            continue
-        interpoly = rds_ext.Intersection(geom)
-
-        src_offset = _bbox_to_pixel_offsets(rgt, interpoly)
+        # What a mission - but more efficient for sure
+        # TODO make clip shp with shp func from this
+        ootds, ootlyr = _extent2lyr(inras, polytype='Memory')
+        clipds, cliplyr = create_ogr_poly('out', spref.ExportToWkt(),
+                                 file_type="Memory", field="id", 
+                                 field_dtype=0)
         
-        # calculate new geotransform of the feature subset
-        new_gt = (
-        (rgt[0] + (src_offset[0] * rgt[1])),
-        rgt[1],
-        0.0,
-        (rgt[3] + (src_offset[1] * rgt[5])),
-        0.0,
-        rgt[5])
+        ogr.Layer.Clip(vlyr, ootlyr, cliplyr) # it works.....
+        
+        # dataset to put the rasterised into
+        rvlyr = _copy_dataset_config(rds, FMT = 'MEM', outMap='copy',
+                                   dtype = gdal.GDT_Byte, bands = 1)
 
+        gdal.RasterizeLayer(rvlyr, [1], cliplyr, burn_values=[1])
+        rv_array = rvlyr.ReadAsArray()
+        src_array = rds.ReadAsArray()
+        # broadcast to 3d - nice!
+        d_mask = np.broadcast_to(rv_array==1, src_array.shape)
+        src_array[d_mask==1]=value
+        rds.WriteArray(src_array)
+    
+    else:
+        # TODO perhaps get rid or adapt to where a select poly is wanted
+    
+        for label in tqdm(features):
+            feat = vlyr.GetNextFeature()
+    
+            if feat is None:
+                continue
+            geom = feat.geometry()
             
-        # Create a temporary vector layer in memory
-        mem_ds = mem_drv.CreateDataSource('out')
-        mem_layer = mem_ds.CreateLayer('poly', None, ogr.wkbPolygon)
-        featureDefn = mem_layer.GetLayerDefn()
-        feature = ogr.Feature(featureDefn)
-        feature.SetGeometry(interpoly)
-        mem_layer.CreateFeature(feature)
-        #mem_layer.CreateFeature(feat.Clone()) # if were using orig geom
-
-        # Rasterize it
-
-        rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
-     
-        rvds.SetGeoTransform(new_gt)
-        rvds.SetProjection(rds.GetProjectionRef())
-        rvds.SetGeoTransform(new_gt)
-        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
-        rv_array = rvds.ReadAsArray()
-        
-        # This could get expensive mem wise for big images
-        for band in range(1, bands+1):
-            bnd = rds.GetRasterBand(band)
-            src_array = bnd.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
-                               src_offset[3])
-            src_array[rv_array>0]=value
-            bnd.WriteArray(src_array, src_offset[0], src_offset[1])
+            # the poly may be partially outside the raster
+            if rds_ext.Intersects(geom) == False:
+                continue
+            interpoly = rds_ext.Intersection(geom)
+    
+            src_offset = _bbox_to_pixel_offsets(rgt, interpoly)
+            
+            # calculate new geotransform of the feature subset
+            new_gt = (
+            (rgt[0] + (src_offset[0] * rgt[1])),
+            rgt[1],
+            0.0,
+            (rgt[3] + (src_offset[1] * rgt[5])),
+            0.0,
+            rgt[5])
+    
+                
+            # Create a temporary vector layer in memory
+            mem_ds = mem_drv.CreateDataSource('out')
+            mem_layer = mem_ds.CreateLayer('poly', None, ogr.wkbPolygon)
+            featureDefn = mem_layer.GetLayerDefn()
+            feature = ogr.Feature(featureDefn)
+            feature.SetGeometry(interpoly)
+            mem_layer.CreateFeature(feature)
+            #mem_layer.CreateFeature(feat.Clone()) # if were using orig geom
+    
+            # Rasterize it
+    
+            rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
+         
+            rvds.SetGeoTransform(new_gt)
+            rvds.SetProjection(rds.GetProjectionRef())
+            rvds.SetGeoTransform(new_gt)
+            gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1])
+            rv_array = rvds.ReadAsArray()
+            
+            # This could get expensive mem wise for big images
+            for band in range(1, bands+1):
+                bnd = rds.GetRasterBand(band)
+                src_array = bnd.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                                   src_offset[3])
+                src_array[rv_array>0]=value
+                bnd.WriteArray(src_array, src_offset[0], src_offset[1])
             
     rds.FlushCache()
         
@@ -1631,7 +1790,54 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1,
     src_ds = None
     dst_ds = None
 
+def create_ogr_poly(outfile, spref, file_type="ESRI Shapefile", field="id", 
+                     field_dtype=0):
+    """
+    Create an ogr dataset an layer (convenience)
+    
+    Parameters
+    ----------
+    
+    outfile: string
+                path to ogr file 
+    
+    spref: wkt or int
+        spatial reference either a wkt or espg
+    
+    file_type: string
+                ogr file designation
         
+    field: string
+            attribute field e.g. "id"
+    
+    field_type: int or ogr.OFT.....
+            ogr dtype of field e.g. 0 == ogr.OFTInteger
+        
+             
+    """   
+    proj = osr.SpatialReference()
+    #TODO if int assume espg - crude there will be a better way
+    if spref is int:
+        proj.ImportFromEPSG(spref)
+    else:
+        proj.ImportFromWkt(spref)
+        
+    out_drv = ogr.GetDriverByName(file_type)
+    
+    # remove output shapefile if it already exists
+    if os.path.exists(outfile):
+        out_drv.DeleteDataSource(outfile)
+    
+    # create the output shapefile
+    ootds = out_drv.CreateDataSource(outfile)
+    ootlyr = ootds.CreateLayer("extent", proj, geom_type=ogr.wkbPolygon)
+    
+    # add the fields
+    # ogr.OFTInteger == 0, hence the arg
+    idField = ogr.FieldDefn("id", ogr.OFTInteger)
+    ootlyr.CreateField(idField)
+    
+    return ootds, ootlyr        
 
 def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff"):
     
@@ -1861,7 +2067,8 @@ def clip_raster(inRas, inShp, outRas, cutline=True, fmt='GTiff'):
                     if len(array.shape)==2:
                         array[mask!=1]=0
                     else:
-                        array[mask!=1,:,:]=0
+                        d_mask = np.broadcast_to(mask==1, array.shape)
+                        array[d_mask!=1]=0
                     rds1.WriteArray(array, j, i)
                         
         rds1.FlushCache()
@@ -2350,12 +2557,64 @@ def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy',
     
     return outDataset
 
-def _quickwarp(inRas, outRas, proj='EPSG:27700'):
+def _gdalwarp(inRas, outRas, **kwargs):
     
     """gdalwarp a dataset
 
     """
-    ootRas = gdal.Warp(outRas, inRas, dstSRS=proj, format='Gtiff')
+    ootRas = gdal.Warp(outRas, inRas, **kwargs)
+    ootRas.FlushCache()
+    ootRas=None
+
+def batchwarp(inlist, outdir, xres, yres, cores=16, fmt='Gtiff'):
+    
+    """
+    Gdal warp a load of datasets 
+    
+    Parameters
+    ----------
+    
+    inlist: list
+            list of files
+    
+    outdir: string
+            output directory for warped files
+    
+    xres: int
+          pixel x resolution in map units
+    
+    yres: int
+          pixel y resolution in map units
+    
+    cores: int
+          no of processors to use in parallel -1 will indicate all available
+    
+    """
+    
+    outlist = [os.path.join(outdir, os.path.split(i)[1]) for i in inlist]
+    
+    #finalist = zip(inlist, outlist)
+    
+    if cores == 1:
+        _= [_gdalwarp(i, o, xRes=xres, yRes=xres, format=fmt) for i, o in tqdm(zip(inlist, outlist))]
+    
+    else:
+    
+        _ = Parallel(n_jobs=cores,
+                 verbose=2)(delayed(_gdalwarp)(i,
+                                                o,
+                                                xRes=xres,
+                                                yRes=yres,  
+                                                format=fmt) for i,o in zip(inlist, outlist))
+    
+    
+def _quickwarp(inRas, outRas, proj='EPSG:27700', **kwargs):
+    
+    """gdalwarp a dataset
+
+    """
+    ootRas = gdal.Warp(outRas, inRas, dstSRS=proj, format='Gtiff', 
+                       callback=gdal.TermProgress, **kwargs)
     ootRas.FlushCache()
     ootRas=None
 

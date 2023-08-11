@@ -300,7 +300,9 @@ def extent2poly(infile, filetype='raster', outfile=None, polytype="ESRI Shapefil
     # Save and close if not a memory driver
     
     ootds.FlushCache()
-    ootds = None
+    
+    if polytype != 'Memory':
+        ootds = None
     
     if lyrtype == 'gee':
         poly.FlattenTo2D()
@@ -2369,6 +2371,47 @@ def zonal_point(inShp, inRas, field, band=1, nodata_value=0, write_stat=True):
 
     vds = None
     rds = None
+
+
+def clip_poly(inshp, clipshp, outshp, filetype="ESRI Shapefile"):
+    
+    """
+    Clip a polygon with another
+    
+    Parameters
+    ----------
+    
+    inshp: string
+                  input shapefile
+        
+    clipshp: string
+                  clipping or overlay polygon
+                  
+    outshp: string
+                  output clipped polygon
+    
+    filetype: string
+                OGR vector format
+        
+    """
+
+    vds = ogr.Open(inshp, 1)
+    vlyr = vds.GetLayer(0)
+    
+    clipds = ogr.Open(clipshp, 1)
+    cliplyr = clipds.GetLayer(0)
+    
+    spref = vlyr.GetSpatialRef()
+    ootds, ootlyr = create_ogr_poly(outshp, spref.ExportToWkt(),
+                                    file_type=filetype, field="id", 
+                                    field_dtype=0)
+    
+    ogr.Layer.Clip(vlyr, cliplyr, ootlyr, callback=ogr.TermProgress) 
+    
+    ootds.FlushCache()
+    ootds=None
+    
+
     
 def mesh_from_raster(inras, outshp=None, band=1):
     
