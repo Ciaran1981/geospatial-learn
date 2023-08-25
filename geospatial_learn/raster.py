@@ -391,7 +391,7 @@ def raster2array(inRas, bands=None):
    
     if bands is None:
         #unsure if this is worth it - gdal order is fine right??
-        inArray = np.rollaxis(rds.ReadAsArray(), 0, 3) 
+        inArray = np.moveaxis(rds.ReadAsArray(), 0, 2) 
         
     elif len(bands) ==1:
         # then we needn't bother with all the crap below
@@ -2618,7 +2618,7 @@ def _quickwarp(inRas, outRas, proj='EPSG:27700', **kwargs):
     ootRas.FlushCache()
     ootRas=None
 
-def multiband2gif(inras, outgif=None, duration=1):
+def multiband2gif(inras, outgif=None, duration=1, loop=0):
     
     """
     Write a multi band image to a animated gif
@@ -2647,7 +2647,7 @@ def multiband2gif(inras, outgif=None, duration=1):
     if outgif is None:
         outgif = inras[:-3]+'gif'
         
-    imageio.mimsave(outgif, images, duration=duration)
+    imageio.mimsave(outgif, images, duration=duration, loop=loop)
 
     
 def _read_rescale(rds, band):
