@@ -37,7 +37,7 @@ dependencies:
   - dask-ml
 #  - auto-sklearn requires too old sklearn
   - ipywidgets
-  - nb_conda
+#  - nb_conda causing problems on HPC & py3.1
   - owslib
   - optuna
   - plotly
