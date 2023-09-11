@@ -22,7 +22,6 @@ dependencies:
   - pandas
   - albumentations
   - ipywidgets
-  - nb_conda
   - pandas
   - shapely
   - xgboost
