@@ -14,7 +14,7 @@ import cv2
 import numpy as np
 from skimage.exposure import rescale_intensity 
 import os
-from glob2 import glob
+from glob import glob
 import matplotlib.pyplot as plt
 # Albumentations
 from collections import defaultdict
@@ -22,7 +22,6 @@ import copy
 import random
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-import ternausnet.models
 from tqdm import tqdm
 import torch
 import torch.backends.cudnn as cudnn
@@ -30,10 +29,9 @@ import torch.nn as nn
 import torch.optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision.models import segmentation
-import gdal
+from osgeo import gdal
 import segmentation_models_pytorch as smp
 import skimage.morphology as skm
-import gdal
 import pandas as pd
 from mpl_toolkits.axes_grid1 import ImageGrid
 gdal.UseExceptions()
@@ -472,51 +470,43 @@ def create_model(params, activation, proc="cuda:0"):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    if params["model"] == "UNet11" or params["model"] == "UNet16":
-        model = getattr(ternausnet.models, params["model"])(pretrained=True)
-        if torch.cuda.device_count() > 1: 
-            #consider also DistributedDataParallel
-            model= nn.DataParallel(model)
-        hrdWare = torch.device(proc)
-        model = model.to(hrdWare)
-        
+
+    #Unet,  UNet16, ULinknet, FPN, PSPNet,PAN, DeepLabV3 and DeepLabV3+
+    if params["model"] == 'Unet':
+        model = smp.Unet(encoder_name=params['encoder'], 
+                    classes=params['classes'],in_channels=params['in_channels'],
+                    activation=activation)     
+    if params["model"] == 'Linknet':
+        model = smp.Linknet(encoder_name=params['encoder'], 
+                    classes=params['classes'],in_channels=params['in_channels'],
+                    activation=activation) 
+    if params["model"] == 'FPN':
+        model = smp.FPN(encoder_name=params['encoder'], 
+                    classes=params['classes'],in_channels=params['in_channels'],
+                    activation=activation) 
+    if params["model"] == 'PSPNet':
+        model = smp.PSPNet(encoder_name=params['encoder'], 
+                    classes=params['classes'],in_channels=params['in_channels'],
+                    activation=activation) 
+    if params["model"] == 'PAN':
+        model = smp.PAN(encoder_name=params['encoder'], 
+                    classes=params['classes'],in_channels=params['in_channels'],
+                    activation=activation) 
+    if params["model"] == 'DeepLabV3':
+        model = smp.DeepLabV3(encoder_name=params['encoder'], 
+                    classes=params['classes'],in_channels=params['in_channels'],
+                    activation=activation) 
+    if params["model"] == 'DeepLabV3+':
+        model = smp.DeepLabV3(encoder_name=params['encoder'], 
+                    classes=params['classes'],in_channels=params['in_channels'],
+                    activation=activation)
+    if torch.cuda.device_count() > 1: 
+        #consider also DistributedDataParallel
+        model= nn.DataParallel(model)
+        model = model.to(device)
     else:
-        #Unet,  UNet16, ULinknet, FPN, PSPNet,PAN, DeepLabV3 and DeepLabV3+
-        if params["model"] == 'Unet':
-            model = smp.Unet(encoder_name=params['encoder'], 
-                        classes=params['classes'],in_channels=params['in_channels'],
-                        activation=activation)     
-        if params["model"] == 'Linknet':
-            model = smp.Linknet(encoder_name=params['encoder'], 
-                        classes=params['classes'],in_channels=params['in_channels'],
-                        activation=activation) 
-        if params["model"] == 'FPN':
-            model = smp.FPN(encoder_name=params['encoder'], 
-                        classes=params['classes'],in_channels=params['in_channels'],
-                        activation=activation) 
-        if params["model"] == 'PSPNet':
-            model = smp.PSPNet(encoder_name=params['encoder'], 
-                        classes=params['classes'],in_channels=params['in_channels'],
-                        activation=activation) 
-        if params["model"] == 'PAN':
-            model = smp.PAN(encoder_name=params['encoder'], 
-                        classes=params['classes'],in_channels=params['in_channels'],
-                        activation=activation) 
-        if params["model"] == 'DeepLabV3':
-            model = smp.DeepLabV3(encoder_name=params['encoder'], 
-                        classes=params['classes'],in_channels=params['in_channels'],
-                        activation=activation) 
-        if params["model"] == 'DeepLabV3+':
-            model = smp.DeepLabV3(encoder_name=params['encoder'], 
-                        classes=params['classes'],in_channels=params['in_channels'],
-                        activation=activation)
-        if torch.cuda.device_count() > 1: 
-            #consider also DistributedDataParallel
-            model= nn.DataParallel(model)
-            model = model.to(device)
-        else:
-            hrdWare = torch.device(proc)
-            model = model.to(hrdWare)        
+        hrdWare = torch.device(proc)
+        model = model.to(hrdWare)        
     
     return model
 

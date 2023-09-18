@@ -27,7 +27,9 @@ from osgeo import gdal, ogr#,osr
 import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import (StratifiedKFold, GroupKFold, KFold, 
-                                     train_test_split,GroupShuffleSplit, PredefinedSplit)
+                                     train_test_split,GroupShuffleSplit,
+                                     StratifiedGroupKFold, 
+                                     PredefinedSplit)
 from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
                               GradientBoostingClassifier,RandomForestRegressor,
                               GradientBoostingRegressor, ExtraTreesRegressor,
@@ -39,6 +41,7 @@ from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.preprocessing import (LabelEncoder, MaxAbsScaler, MinMaxScaler,
                                    Normalizer, PowerTransformer,StandardScaler,
                                    QuantileTransformer)
+from sklearn.svm import SVC, SVR, NuSVC, NuSVR, LinearSVC, LinearSVR
 from sklearn.feature_selection import VarianceThreshold, RFECV
 from sklearn.inspection import permutation_importance
 from sklearn import metrics
@@ -256,7 +259,7 @@ def create_model_optuna(X_train, outModel, clf='erf', group=None, random=False,
     print(f"\tBest value (rmse or r2): {study.best_value:.5f}")
     print(f"\tBest params:")
 
-def _group_cv(X_train, y_train, group, test_size=0.2, cv=10):
+def _group_cv(X_train, y_train, group, test_size=0.2, cv=10, strat=False):
     
     """
     Return the splits and and vars for a group grid search
@@ -275,17 +278,27 @@ def _group_cv(X_train, y_train, group, test_size=0.2, cv=10):
     y_train = y_train[train_inds]
     group_trn = group[train_inds]
     
-    group_kfold = GroupKFold(n_splits=cv) 
-    # Create a nested list of train and test indices for each fold
-    k_kfold = group_kfold.split(X_train, y_train, group_trn)  
-
-    train_ind2, test_ind2 = [list(traintest) for traintest in zip(*k_kfold)]
-
-    cv = [*zip(train_ind2, test_ind2)]
+    if strat == True:
+        group_kfold = StratifiedGroupKFold(n_splits=cv).split(X_train,
+                                                              y_train,
+                                                              group_trn)
+    else:
+        group_kfold = GroupKFold(n_splits=cv).split(X_train,
+                                                    y_train,
+                                                    group_trn) 
     
-    return X_train, y_train, X_test, y_test, cv
+    # all this not required produces same as above - keep for ref though
+    # # Create a nested list of train and test indices for each fold
+    # k_kfold = group_kfold.split(X_train, y_train, groups=group_trn)  
 
-def rec_feat_sel(X_train, featnames, preproc=('scaler', None),  clf='erf',  group=None, 
+    # train_ind2, test_ind2 = [list(traintest) for traintest in zip(*k_kfold)]
+
+    # cv = [*zip(train_ind2, test_ind2)]
+    
+    return X_train, y_train, X_test, y_test, group_kfold
+
+def rec_feat_sel(X_train, featnames, preproc=('scaler', None),  clf='erf',  
+                 group=None, 
                  cv=5, params=None, cores=-1, strat=True, 
                  test_size=0.3, regress=False, return_test=True,
                  scoring=None, class_names=None, save=True, cat_feat=None):
@@ -550,7 +563,10 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
                #                            devices='0:1'),
                'lgbm': lgb.LGBMClassifier(random_state=0),
 
-                'hgb': HistGradientBoostingClassifier(random_state=0)}
+                'hgb': HistGradientBoostingClassifier(random_state=0),
+                'svm': SVC(),
+                'nusvc': NuSVC(),
+                'linsvc': LinearSVC()}
     
     regdict = {'rf': RandomForestRegressor(random_state=0),
                'erf': ExtraTreesRegressor(random_state=0),
@@ -563,8 +579,10 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
                #                            task_type="GPU",
                #                            devices='0:1'),
                'lgbm': lgb.LGBMRegressor(random_state=0),
-
-               'hgb': HistGradientBoostingRegressor(random_state=0)}
+               'hgb': HistGradientBoostingRegressor(random_state=0),
+                'svm': SVR(),
+                'nusvc': NuSVR(),
+                'linsvc': LinearSVR()}
     
     if regress is True:
         model = regdict[clf]
@@ -572,7 +590,8 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
             scoring = 'r2'
     else:
         model = clfdict[clf]
-        cv = StratifiedKFold(cv)
+        if group is None:
+            cv = StratifiedKFold(cv)
         if scoring is None:
             scoring = 'accuracy'
     
@@ -600,25 +619,18 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
     
 
     # this is not a good way to do this
-    if group is not None:
+    if regress == True:
+        strat = False # failsafe
         
+    if group is not None: # becoming a mess
+
         X_train, y_train, X_test, y_test, cv = _group_cv(X_train, y_train,
-                                                         group, test_size,
-                                                         cv)
-        
+                                                             group, test_size,
+                                                             cv, strat=strat)        
     else:
         X_train, X_test, y_train, y_test = train_test_split(
             X_train, y_train, test_size=test_size, random_state=0)
-    
-    # 
-    # if clf[0:4] == 'catb':
-    #     # Quick and quiet but can't enter the group cv indices or the sklearn
-    #     # pipe
-    #     ds = Pool(X_train, label=y_train)
-        
-    #     # fails at end saying 
-    #     model.grid_search(param_grid, ds, cv=k_kfold) 
-        #CatBoostError: /src/catboost/catboost/private/libs/options/cross_validation_params.cpp:21: FoldCount is 0
+        #cv = StratifiedKFold(cv)
         
     
     if pipe == 'default':
@@ -650,10 +662,8 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
         grid = GridSearchCV(sk_pipe,  param_grid=sclr, 
                                     cv=cv, n_jobs=cores,
                                     scoring=scoring, verbose=1)
-    
 
-        
-    
+
     grid.fit(X_train, y_train)
     
     joblib.dump(grid.best_estimator_, outModel) 
@@ -667,12 +677,17 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
     else:
         crDf = hp.plot_classif_report(y_test, testresult, target_names=class_names,
                                       save=outModel[:-3]+'._classif_report.png')
+        
+        confmat = metrics.confusion_matrix(testresult, y_test, labels=class_names)
+        disp = metrics.ConfusionMatrixDisplay(confusion_matrix=confmat,
+                                      display_labels=class_names)
+        disp.plot()
     
-        confmat = hp.plt_confmat(X_test, y_test, grid.best_estimator_, 
-                                 class_names=class_names, 
-                                 cmap=plt.cm.Blues, 
-                                 fmt="%d", 
-                                 save=outModel[:-3]+'_confmat.png')
+        # confmat = hp.plt_confmat(X_test, y_test, grid.best_estimator_, 
+        #                          class_names=class_names, 
+        #                          cmap=plt.cm.Blues, 
+        #                          fmt="%d", 
+        #                          save=outModel[:-3]+'_confmat.png')
         
         results = [grid, crDf, confmat]
         
@@ -776,13 +791,26 @@ def combine_models(X_train, modelist, mtype='regress', method='voting', group=No
         # we only wish to predict really - but  necessary 
         # for sklearn model construct
     else:
-        clfdict = {'rf': RandomForestClassifier, 'erf': ExtraTreesClassifier,
-                   'gb': GradientBoostingClassifier, 'xgb': XGBClassifier,
-                   'logit': LogisticRegression, 'hgb': HistGradientBoostingClassifier}
-    
-        regdict = {'rf': RandomForestRegressor, 'erf': ExtraTreesRegressor,
-                   'gb': GradientBoostingRegressor, 'xgb': XGBRegressor,
-                    'hgb': HistGradientBoostingRegressor}
+        clfdict = {'rf': RandomForestClassifier(random_state=0),
+                   'erf': ExtraTreesClassifier(random_state=0),
+                   'gb': GradientBoostingClassifier(random_state=0),
+                   'xgb': XGBClassifier(random_state=0),
+                   'logit': LogisticRegression(),
+                   'lgbm': lgb.LGBMClassifier(random_state=0),
+                    'hgb': HistGradientBoostingClassifier(random_state=0),
+                    'svm': SVC(),
+                    'nusvc': NuSVC(),
+                    'linsvc': LinearSVC()}
+        
+        regdict = {'rf': RandomForestRegressor(random_state=0),
+                   'erf': ExtraTreesRegressor(random_state=0),
+                   'gb': GradientBoostingRegressor(random_state=0),
+                   'xgb': XGBRegressor(random_state=0),
+                   'lgbm': lgb.LGBMRegressor(random_state=0),
+                   'hgb': HistGradientBoostingRegressor(random_state=0),
+                    'svm': SVR(),
+                    'nusvc': NuSVR(),
+                    'linsvc': LinearSVR()}
         
         if mtype == 'regress':
             # won't accept the dict even with the ** to unpack it
@@ -840,23 +868,18 @@ def regression_results(y_true, y_pred):
     print('r2: ', round(r2,4))
     print('MAE: ', round(mean_absolute_error,4))
     print('MSE: ', round(mse,4))
+    print('MedianAE', round(median_absolute_error, 4))
     print('RMSE: ', round(np.sqrt(mse),4))   
-#TODO add when sklearn updated    
-    # display = metrics.PredictionErrorDisplay.from_predictions(
-    #     y_true=y,
-    #     y_pred=y_pred,
-    #     kind="actual_vs_predicted",
-    #     ax=ax,
-    #     scatter_kwargs={"alpha": 0.2, "color": "tab:blue"},
-    #     line_kwargs={"color": "tab:red"},
-    # )
-    # print(grid.best_params_)
-    # print(grid.best_estimator_)
-    # print(grid.oob_score_)
-    
-    # plt.plot(est_range, grid_mean_scores)
-    # plt.xlabel('no of estimators')
-    # plt.ylabel('Cross validated accuracy')    
+    #TODO add when sklearn updated    
+    display = metrics.PredictionErrorDisplay.from_predictions(
+        y_true=y_true,
+        y_pred=y_pred,
+        kind="actual_vs_predicted",
+        #ax=ax,
+        scatter_kwargs={"alpha": 0.2, "color": "tab:blue"},
+        line_kwargs={"color": "tab:red"},
+    )
+
 
 
 def RF_oob_opt(model, X_train, min_est, max_est, step, group=None,
@@ -1102,6 +1125,11 @@ def plot_feat_importance_permutation(modelPth, featureNames,  X_test, y_test,
     
     featureNames : list of strings
                    a list of feature names
+    
+    Returns
+    -------
+    
+    pandas df of importances
     
     """
     

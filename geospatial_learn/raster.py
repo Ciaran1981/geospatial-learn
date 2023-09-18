@@ -884,7 +884,7 @@ def _extent2lyr(infile, filetype='raster', outfile=None,
         return ootds, ootlyr
     
 
-def mask_with_poly(inshp, inras, layer=True, value=0):
+def mask_with_poly(inshp, inras, layer=True, value=0, mtype='inside'):
     
     """ 
     Change raster values inside a polygon and update the raster
@@ -910,6 +910,9 @@ def mask_with_poly(inshp, inras, layer=True, value=0):
     
     value: int
             the value to alter
+    
+    mtype: str
+            either area 'inside' or 'outside' of polygon is masked
     """    
     
     rds = gdal.Open(inras, gdal.GA_Update)
@@ -947,7 +950,10 @@ def mask_with_poly(inshp, inras, layer=True, value=0):
         src_array = rds.ReadAsArray()
         # broadcast to 3d - nice!
         d_mask = np.broadcast_to(rv_array==1, src_array.shape)
-        src_array[d_mask==1]=value
+        if mtype == 'inside':
+            src_array[d_mask==1]=value
+        elif mtype == 'outside':
+            src_array[d_mask!=1]=value       
         rds.WriteArray(src_array)
     
     else:
@@ -1001,6 +1007,7 @@ def mask_with_poly(inshp, inras, layer=True, value=0):
                 bnd = rds.GetRasterBand(band)
                 src_array = bnd.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
                                    src_offset[3])
+                
                 src_array[rv_array>0]=value
                 bnd.WriteArray(src_array, src_offset[0], src_offset[1])
             
@@ -1839,6 +1846,29 @@ def create_ogr_poly(outfile, spref, file_type="ESRI Shapefile", field="id",
     
     return ootds, ootlyr        
 
+def set_bandnames(inras, names):
+    
+    """
+    Set bandnames from a list
+    
+    Parameters
+    ----------
+    
+    inras: str
+            input raster path
+    
+    names: list
+            list of band names
+    
+    """
+    rds = gdal.Open(inras, gdal.GA_Update)
+    bands = np.arange(1, rds.RasterCount+1).tolist()
+    for b, n in zip(bands, names):
+        rb = rds.GetRasterBand(b)
+        rb.SetDescription(n)
+    rds.FlushCache()
+    rds = None
+    
 def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff"):
     
     """ 
@@ -2074,6 +2104,40 @@ def clip_raster(inRas, inShp, outRas, cutline=True, fmt='GTiff'):
         rds1.FlushCache()
         rds1 = None
 
+def fill_nodata(inRas, maxSearchDist=5, smoothingIterations=1, 
+                bands=[1]):
+    
+    """
+    fill no data using gdal
+    
+    Parameters
+    ----------
+    
+    inRas: string
+              the input image 
+            
+    maxSearchDist: int
+              max search dist to fill
+        
+    smoothingIterations: int 
+             the clipped raster
+             
+    bands: list of ints
+            the bands to process      
+    
+    """
+    
+    rds = gdal.Open(inRas, gdal.GA_Update)
+    
+    for band in tqdm(bands):
+        bnd = rds.GetRasterBand(band)
+        gdal.FillNodata(targetBand=bnd, maskBand=None, 
+                         maxSearchDist=maxSearchDist, 
+                         smoothingIterations=smoothingIterations)
+    
+    rds.FlushCache()
+    
+    rds=None
 
 def color_raster(inRas, color_file, output_file):
     """ 

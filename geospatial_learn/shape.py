@@ -2372,6 +2372,107 @@ def zonal_point(inShp, inRas, field, band=1, nodata_value=0, write_stat=True):
     vds = None
     rds = None
 
+def zonal_point_stk(inShp, inRas, fields, write_stat=True):
+    
+    """ 
+    Get the pixel values for all raster bands
+    at a given point and write to vector. 
+    
+    Parameters
+    ----------
+    
+    inShp: string
+                  input shapefile
+        
+    inRas: string
+                  input raster
+    
+    fields: list
+                    the names of the fields
+
+    band: int
+           an integer val eg - 2
+                            
+    nodata_value: numerical
+                   If used the no data val of the raster
+        
+    """    
+    
+   
+
+    rds = gdal.Open(inRas, gdal.GA_ReadOnly)
+    rgt = rds.GetGeoTransform()
+
+
+    vds = ogr.Open(inShp, 1)  # TODO maybe open update if we want to write stats
+    vlyr = vds.GetLayer(0)
+    
+    # if write_stat != None:
+    #     # if the field exists leave it as ogr is a pain with dropping it
+    #     # plus can break the file
+    #     for f in fields:
+    #         if _fieldexist(vlyr, f) == False:
+    #             vlyr.CreateField(ogr.FieldDefn(f, ogr.OFTReal))
+    
+    features = np.arange(vlyr.GetFeatureCount())
+    
+    inarr = np.zeros(shape=(vlyr.GetFeatureCount(), rds.RasterCount))
+    
+    # Its not the quickest but no suprise there
+    # Not sure whether writing file after with gpd or writing in loop
+    # with OGR is quicker....
+    # Not sure this can be vectorised with huge country-wide rasters
+    feat = vlyr.GetNextFeature()
+    
+    for label in tqdm(features):
+    
+            if feat is None:
+                continue
+            # the vector geom
+            geom = feat.geometry()
+            
+            #coord in map units
+            mx, my = geom.GetX(), geom.GetY()  
+
+            # Convert from map to pixel coordinates.
+            # No rotation but for this that should not matter
+            px = int((mx - rgt[0]) / rgt[1])
+            py = int((my - rgt[3]) / rgt[5])
+            
+            
+            src_array = rds.ReadAsArray(px, py, 1, 1)
+
+            if src_array is None:
+                # unlikely but if none will have no data in the attribute table
+                continue
+            #outval =  float(src_array.max())
+            newshp = src_array.shape[0]
+            src_array.shape = (newshp,) # as gdal shape won't go
+            inarr[label, :] = src_array
+            #otherwise we record the same one over and over
+            feat = vlyr.GetNextFeature()
+            #if write_stat != None:
+            # feat.SetField(field, outval)
+            # vlyr.SetFeature(feat)
+            # feat = vlyr.GetNextFeature()
+        
+    # if write_stat != None:
+    #     vlyr.SyncToDisk()
+    vds = None
+    rds = None
+    
+    zpt = pd.DataFrame(data=inarr, columns=fields)
+    if write_stat == True:
+        print('writing file')
+        gdf = gpd.read_file(inShp)
+        gdf = pd.concat([gdf, zpt], axis=1)
+        gdf.to_file(inShp)
+    
+    return gdf
+
+
+
+
 
 def clip_poly(inshp, clipshp, outshp, filetype="ESRI Shapefile"):
     
