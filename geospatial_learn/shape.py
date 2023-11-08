@@ -343,7 +343,7 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
     
     Raster required
         
-    'Orientation' and the remainder of props calcualble with scikit-image. These
+    'Orientation' and the remainder of props calculable with scikit-image. These
      process a bit slower than the above ones
 
     
@@ -458,7 +458,6 @@ def shape_props(inShape, prop, inRas=None,  label_field='ID'):
             #(Diameter of a circle with the same perimeter as the polygon) 
             # * Area / (Area of a circle with the same perimeter as the polygon)
             # (perimeter / pi) * area / (perimeter**2 / (4*pi)) = 4 * area / perimeter
-            # TODO - this may not write to shape as a tuple
             #((perim/pi) * area) / (perim**2 / (4 * pi))
             # seemingly simplified to 
             # area / perimeter * 4
@@ -793,10 +792,10 @@ def geom2pixelbbox(inshp, inras, label="Tree", outfile=None):
         
         # so (xmin - rasteroriginX) / pixel_width
         xmin = int((bbox[0] - originX) / pixel_width) #xmin
-        xmax = int((bbox[1] - originX) / pixel_width) + 1 #xmax
+        xmax = int((bbox[1] - originX) / pixel_width) #+ 1 #xmax # think the +1 was an earlier hack
     
         ymin = int((bbox[3] - originY) / pixel_height) #ymin
-        ymax = int((bbox[2] - originY) / pixel_height) + 1 #ymax
+        ymax = int((bbox[2] - originY) / pixel_height) #+ 1 #ymax
         
         # order should be thus for annotation
         # image_path, xmin, ymin, xmax, ymax, label
@@ -831,7 +830,7 @@ def rasterext2poly(inras):
     
     ext, rstref = _raster_extent(inras)
         
-    
+   # TODO - this may not write to shape as a tuple  
     # make the linear ring 
     ring = ogr.Geometry(ogr.wkbLinearRing)
     ring.AddPoint(ext[0],ext[2])

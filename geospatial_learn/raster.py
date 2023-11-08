@@ -938,12 +938,19 @@ def mask_with_poly(inshp, inras, layer=True, value=0, mtype='inside'):
         clipds, cliplyr = create_ogr_poly('out', spref.ExportToWkt(),
                                  file_type="Memory", field="id", 
                                  field_dtype=0)
-        
+        #self method result
         ogr.Layer.Clip(vlyr, ootlyr, cliplyr) # it works.....
         
+        # debug
+        #poly1 = loads(rds_ext.ExportToWkt())
+        #feat = cliplyr.GetFeature(0)
+        # geom2 = feat.GetGeometryRef()
+        #wkt=geom2.ExportToWkt()
+        #poly2 = loads(wkt)
+        
         # dataset to put the rasterised into
-        rvlyr = _copy_dataset_config(rds, FMT = 'MEM', outMap='copy',
-                                   dtype = gdal.GDT_Byte, bands = 1)
+        rvlyr = _copy_dataset_config(rds, FMT='MEM', outMap='copy',
+                                   dtype=gdal.GDT_Byte, bands=1)
 
         gdal.RasterizeLayer(rvlyr, [1], cliplyr, burn_values=[1])
         rv_array = rvlyr.ReadAsArray()
@@ -1104,10 +1111,7 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
                 array = bnd.ReadAsArray(j, i, numCols, numRows)
                 array[array != mval]=0
                 outBand.WriteArray(array, j, i)
-    # This is annoying but necessary as the stats need updated and cannot be 
-    # done in above band loop due as this would be very inefficient
-    #for band in range(1, bands+1):
-    #inDataset.GetRasterBand(1).ComputeStatistics(0)
+
     if overwrite is True:
         inDataset.FlushCache()
         inDataset = None
@@ -1427,220 +1431,6 @@ def rgb_ind(inputIm, outputIm, blocksize = 256, FMT = None,
     outDataset = None
 
 
-def remove_cloud_S2(inputIm, sceneIm,
-                    blocksize = 256, FMT = None, min_size=4, dist=1):
-    """ 
-    Remove cloud using the a scene classification
-    
-    This saves back to the input raster by default
-        
-    Parameters
-    ----------- 
-    
-    inputIm: string
-              the input image 
-        
-    sceneIm: string
-              the scenemap to use as a mask for removing cloud
-              It is assumed the scene map consists of 1 shadow, 2 cloud, 3 land, 4 water 
-        
-    FMT: string
-          the output gdal format eg 'Gtiff', 'KEA', 'HFA'
-        
-    min_size: int
-               size in pixels to retain of cloud mask
-        
-    blocksize: int
-                the square chunk processed at any one time
-        
-
-    """
-
-    if FMT == None:
-        FMT = 'Gtiff'
-        fmt = '.tif'
-    if FMT == 'HFA':
-        fmt = '.img'
-    if FMT == 'KEA':
-        fmt = '.kea'
-    if FMT == 'Gtiff':
-        fmt = '.tif'
-    
-    sceneRas = gdal.Open(sceneIm)
-    inDataset = gdal.Open(inputIm, gdal.GA_Update)
-    tempBand = inDataset.GetRasterBand(1)
-    dtypeCode = gdal.GetDataTypeName(tempBand.DataType)
-    # common gdal datatypes - when calling eg GDT_Int32 it returns an integer
-    # hence the dict with the integer codes - not really required but allows me
-    # to see the data type
-    dtypeDict = {'Byte':1, 'UInt16':2, 'Int16':3, 'UInt32':4, 'Int32':5,
-                'Float32':6, 'Float64':7}
-#    dtype = dtypeDict[dtypeCode]
-    tempBand = None
-    
-    bands = inDataset.RasterCount
-
-#        
-#    outDataset.SetProjection(projection)    
-  
-    band = inDataset.GetRasterBand(1)
-    cols = inDataset.RasterXSize
-    rows = inDataset.RasterYSize
-    if blocksize == None:
-        blocksize = band.GetBlockSize()
-        blocksizeX = blocksize[0]
-        blocksizeY = blocksize[1]
-    else:
-        blocksizeX = blocksize
-        blocksizeY = blocksize
-
-    
-    for i in tqdm(range(0, rows, blocksizeY)):
-            if i + blocksizeY < rows:
-                numRows = blocksizeY
-            else:
-                numRows = rows -i
-        
-            for j in range(0, cols, blocksizeX):
-                if j + blocksizeX < cols:
-                    numCols = blocksizeX
-                else:
-                    numCols = cols - j
-                mask = sceneRas.ReadAsArray(j, i, numCols, numRows)
-                mask = mask>6
-                with warnings.catch_warnings():
-                            warnings.simplefilter("ignore")
-                            mask = remove_small_objects(mask, min_size=min_size)
-                mask= nd.distance_transform_edt(mask==0)<=1
-                for band in range(1, bands+1):
-                    bnd = inDataset.GetRasterBand(band)
-                    array = bnd.ReadAsArray(j, i, numCols, numRows)
-                    array[mask==1]=0
-                    inDataset.GetRasterBand(band).WriteArray(array, j, i)
-
-    for band in range(1, bands+1):
-        inDataset.GetRasterBand(band).ComputeStatistics(0)
-
-    inDataset.FlushCache()
-    inDataset = None     
-
-def remove_cloud_S2_stk(inputIm, sceneIm1, sceneIm2=None, baseIm = None,
-                    blocksize = 256, FMT = None, max_size=10,
-                    dist=1):
-    """ 
-    Remove cloud using a classification where cloud == 1
-    Esoteric - from the Forest Sentinel project, but retained here
-
-    Parameters
-    -----------
-
-    inputIm: string
-        the input image
-
-    sceneIm1, 2: string
-        the classification rasters used to mask out the areas in
-
-    baseIm: string
-        Another multiband raster of same size extent as the inputIm
-        where the baseIm image values are used rather than simply converting
-        to zero (in the use case of 2 sceneIm classifications)
-
-    Notes:
-    -----------
-    Useful if you have a base image which is a cloudless composite, which
-    you intend to replace with the current image for the next round of
-    classification/ change detection
-
-    """
-
-    if FMT == None:
-        FMT = 'Gtiff'
-        fmt = '.tif'
-    if FMT == 'HFA':
-        fmt = '.img'
-    if FMT == 'KEA':
-        fmt = '.kea'
-    if FMT == 'Gtiff':
-        fmt = '.tif'
-
-    sceneRas1 = gdal.Open(sceneIm1)
-    if sceneIm2 != None:
-        sceneRas2 = gdal.Open(sceneIm2)
-    if baseIm != None:
-        baseRas = gdal.Open(baseIm)
-    inDataset = gdal.Open(inputIm, gdal.GA_Update)
-    tempBand = inDataset.GetRasterBand(1)
-    dtypeCode = gdal.GetDataTypeName(tempBand.DataType)
-    # common gdal datatypes - when calling eg GDT_Int32 it returns an integer
-    # hence the dict with the integer codes - not really required but allows me
-    # to see the data type
-    dtypeDict = {'Byte':1, 'UInt16':2, 'Int16':3, 'UInt16':4, 'Int32':5,
-                'Float32':6, 'Float64':7}
-#    dtype = dtypeDict[dtypeCode]
-#    tempBand = None
-#
-    bands = inDataset.RasterCount
-
-    band = inDataset.GetRasterBand(1)
-    cols = inDataset.RasterXSize
-    rows = inDataset.RasterYSize
-    if blocksize == None:
-        blocksize = band.GetBlockSize()
-        blocksizeX = blocksize[0]
-        blocksizeY = blocksize[1]
-    else:
-        blocksizeX = blocksize
-        blocksizeY = blocksize
-
-
-    for i in tqdm(range(0, rows, blocksizeY)):
-            if i + blocksizeY < rows:
-                numRows = blocksizeY
-            else:
-                numRows = rows -i
-
-            for j in range(0, cols, blocksizeX):
-                if j + blocksizeX < cols:
-                    numCols = blocksizeX
-                else:
-                    numCols = cols - j
-                mask1 = sceneRas1.ReadAsArray(j, i, numCols, numRows)
-                if sceneIm2 != None:
-                    mask2 = sceneRas2.ReadAsArray(j, i, numCols, numRows)
-                    mask1 = np.logical_not(mask1==3)
-                    mask2 = np.logical_not(mask2==3)
-                    mask1[mask2==1]=1
-                else:
-                    mask1 =np.logical_or(mask1 ==3, mask1==4)
-                with warnings.catch_warnings():
-                            warnings.simplefilter("ignore")
-                            # both pointless provided it gets sivved by gdal
-                            remove_small_objects(mask1, min_size=max_size,
-                                                 in_place=True)
-#                            remove_small_holes(mask1, min_size=max_size,
-#                                                 in_place=True)
-                            mask1= nd.distance_transform_edt(mask1==1)<=dist
-                for band in range(1, bands+1):
-                    bnd = inDataset.GetRasterBand(band)
-                    if baseIm != None:
-                        bnd2 = baseRas.GetRasterBand(band)
-                        array2 = bnd2.ReadAsArray(j, i, numCols, numRows)
-                        array2[mask1==0]=0
-                        array = bnd.ReadAsArray(j, i, numCols, numRows)
-                        array[mask1==1]=0
-                        array += array2
-                    else:
-                        array = bnd.ReadAsArray(j, i, numCols, numRows)
-                        array[mask1==1]=0
-                    inDataset.GetRasterBand(band).WriteArray(array, j, i)
-
-    for band in range(1, bands+1):
-        inDataset.GetRasterBand(band).ComputeStatistics(0)
-
-    inDataset.FlushCache()
-    inDataset = None
-
-
 
 def stack_ras(rasterList, outFile):
     """ 
@@ -1796,6 +1586,100 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1,
     srcband = None
     src_ds = None
     dst_ds = None
+    
+def raster2points(inras, outpoints=None, field="value", field_dtype=0, band=1,
+                  no_data=0):
+    
+    """
+    Convert a raster to a points shapefile
+    
+    Parameters
+    -----------   
+      
+    inras: string
+            the input image   
+        
+    outpoints: string
+              the output points file path 
+        
+    field: string (optional)
+             the name of the field to write the values to
+    
+    field_dtype: int or ogr.OFT.....
+            ogr dtype of field e.g. 0 == ogr.OFTInteger, 2 == OFTReal
+             
+    band: int
+           the input raster band
+    
+    no_data: float / list of floats
+            a value to ignore (e.g -9999 = nodata in the raster)
+    
+    """
+    
+    rds = gdal.Open(inras)
+    
+    cols = int(rds.RasterXSize)
+    rows = int(rds.RasterYSize)
+    
+    rgt = rds.GetGeoTransform()
+    
+    # It is easier to derive coords for the whole raster than figuring
+    # it out from a chunk as the chunk starts from zero (but in the middle
+    # of the image somewhere)
+    rowind, colind = np.indices((rows, cols))
+
+    # Flatten ahin first
+    xcoord = colind * rgt[1] + rgt[0]
+    xcoord.shape = (cols*rows)
+    ycoord = rowind * rgt[5] + rgt[3]
+    ycoord.shape = (cols*rows)
+    
+    img = rds.GetRasterBand(band).ReadAsArray()
+    img.shape = (cols*rows)
+    
+    
+    # Now we remove nodata vals prior to loop
+    # A mess but there could be more thgan one value
+    if isinstance(no_data, list):
+        indlist = []
+        for n in no_data:
+            indz = np.where(img==n)
+            indlist.append(indz)
+        inds  = np.hstack(indlist)  
+    else:        
+        inds = np.where(img==no_data)
+    img = np.delete(img, inds, axis=0)
+    xcoord = np.delete(xcoord, inds, axis=0)
+    ycoord = np.delete(ycoord, inds, axis=0)
+    
+    if outpoints is None:
+        outpoints = inras[:-3]+'shp'
+        
+    driver = ogr.GetDriverByName('ESRI Shapefile')
+    vds = driver.CreateDataSource(outpoints)
+    
+    ref = rds.GetSpatialRef()
+    lyr = vds.CreateLayer('ogr_pts', ref, ogr.wkbPoint)
+    lyrDef = lyr.GetLayerDefn()
+    fldDef = ogr.FieldDefn(field, field_dtype)
+    lyr.CreateField(fldDef)
+    
+    cnt = np.arange(0, img.shape[0])
+    
+    for c in tqdm(cnt):
+        #coords
+        point = ogr.Geometry(ogr.wkbPoint)
+        point.SetPoint(0, xcoord[c], ycoord[c])
+        # feat admin
+        feat = ogr.Feature(lyrDef)
+        feat.SetGeometry(point)
+        feat.SetFID(c+1)
+        feat.SetField(field, img[c])
+        lyr.CreateFeature(feat)
+    
+    vds.FlushCache()
+    vds = None
+    rds = None
 
 def create_ogr_poly(outfile, spref, file_type="ESRI Shapefile", field="id", 
                      field_dtype=0):
@@ -2034,31 +1918,51 @@ def clip_raster(inRas, inShp, outRas, cutline=True, fmt='GTiff'):
    
     """
     
-
-    vds = ogr.Open(inShp)
-           
-    rds = gdal.Open(inRas, gdal.GA_ReadOnly)
-    
-    lyr = vds.GetLayer()
-
-    
-    extent = lyr.GetExtent()
-    
-    extent = [extent[0], extent[2], extent[1], extent[3]]
-            
-
-    print('cropping')
-    ootds = gdal.Warp(outRas,
-              rds,
-              format=fmt, 
-              outputBounds=extent)
-              
+    if cutline != True:
         
-    ootds.FlushCache()
-    ootds = None
-    rds = None
+        vds = ogr.Open(inShp)
+        rds = gdal.Open(inRas, gdal.GA_ReadOnly)
+        lyr = vds.GetLayer()
+              
+        rds_ext, spref, ext = _raster_extent2poly(inRas)
+        
+        ootds, ootlyr = _extent2lyr(inRas, polytype='Memory')
+        clipds, cliplyr = create_ogr_poly('out', spref.ExportToWkt(),
+                                 file_type="Memory", field="id", 
+                                 field_dtype=0)
+        #self method result
+        ogr.Layer.Clip(lyr, ootlyr, cliplyr) # it works.....
+        
+        # debug
+        # cliplyr.GetExtent()
+        #poly1 = loads(rds_ext.ExportToWkt())
+        #feat = cliplyr.GetFeature(0)
+        #geom2 = feat.GetGeometryRef()
+        #wkt=geom2.ExportToWkt()
+        #poly2 = loads(wkt)
+        
+        # VERY IMPORTANT - TO AVOID COMING ACROSS THIS AGAIN
+        # The problem is that the bounds are not in the 'correct' order for gdalWarp
+        # if taken from GetExtent() - they should in fact be in shapely order
+        wrng = cliplyr.GetExtent()
+        extent = [wrng[0], wrng[2], wrng[1], wrng[3]]
     
-    if cutline == True:
+    
+        print('cropping')
+        ootds = gdal.Warp(outRas,
+                  rds,
+                  format=fmt, 
+                  outputBounds=extent)
+                  
+            
+        ootds.FlushCache()
+        ootds = None
+        rds = None
+    
+    
+    
+    else:
+        #cutline == True:
         
         rds1 = gdal.Open(outRas, gdal.GA_Update)
         rasterize(inShp, outRas, outRas[:-4]+'mask.tif', field=None,
@@ -2103,6 +2007,7 @@ def clip_raster(inRas, inShp, outRas, cutline=True, fmt='GTiff'):
                         
         rds1.FlushCache()
         rds1 = None
+        
 
 def fill_nodata(inRas, maxSearchDist=5, smoothingIterations=1, 
                 bands=[1]):
