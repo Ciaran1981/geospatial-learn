@@ -1027,12 +1027,12 @@ def mask_with_poly(inshp, inras, layer=True, value=0, mtype='inside'):
     
 
 
-def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
-                    blocksize = None, FMT = None):
+def mask_raster(inputIm, mval, maskIm=None, outputIm=None,
+                    blocksize=256, FMT=None):
     """ 
     Perform a numpy masking operation on a raster where all values
     corresponding to mask value are retained - does this in blocks for
-    efficiency on larger rasters
+    efficiency on larger rasters. Use of an external mask is optional. 
     
     Parameters 
     ----------- 
@@ -1042,7 +1042,11 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
         
     mval: int
            the mask value eg 1, 2 etc
-        
+    
+    mask: string
+           path to optional mask image must be same size and extent, is assumed
+           to be 2d e.g. one band (will be broadcast to 3D if required)
+
     FMT: string
           the output gdal format eg 'Gtiff', 'KEA', 'HFA'
         
@@ -1058,7 +1062,7 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
           A string of the output file path
         
     """
-    
+    #TODO - horrid old mess of if else statements
     if FMT == None:
         FMT = 'Gtiff'
         fmt = '.tif'
@@ -1069,21 +1073,22 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
     if FMT == 'Gtiff':
         fmt = '.tif'
     
-    if overwrite is True:
+    if outputIm is None:
+        print('Overwriting input file')
         inDataset = gdal.Open(inputIm, gdal.GA_Update)
-        outBand = inDataset.GetRasterBand(1)
-        bnd = inDataset.GetRasterBand(1)
+
     else:
-        
+        print('Creating output file')
         inDataset = gdal.Open(inputIm)
-    
+        dt = inDataset.GetRasterBand(1).DataType
+        outDataset = _copy_dataset_config(inDataset, outMap=outputIm, dtype=dt,
+                                     bands=inDataset.RasterCount)
+
+    if maskIm is not None:
+        print('Using external mask raster')
+        mskds = gdal.Open(maskIm)
+        mskbnd = mskds.GetRasterBand(1)
         
-        outDataset = _copy_dataset_config(inputIm, outMap = outputIm,
-                                     bands = inDataset.RasterCount)
-        bnd = inDataset.GetRasterBand(1)
-        
-        
-        outBand = outDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
     rows = inDataset.RasterYSize
     # So with most datasets blocksize is a row scanline
@@ -1106,13 +1111,21 @@ def mask_raster(inputIm, mval, overwrite=True, outputIm=None,
                     numCols = blocksizeX
                 else:
                     numCols = cols - j
-#                for band in range(1, bands+1):
-               
-                array = bnd.ReadAsArray(j, i, numCols, numRows)
-                array[array != mval]=0
-                outBand.WriteArray(array, j, i)
+                # read all bands as a block
+                array = inDataset.ReadAsArray(j, i, numCols, numRows)
+                
+                if maskIm is not None:
+                    marray = mskbnd.ReadAsArray(j, i, numCols, numRows)
+                    marray = np.broadcast_to(marray, array.shape)
+                    array[marray != mval]=0
+                else:
+                    array[array != mval]=0
+                if outputIm is None:
+                    inDataset.WriteArray(array, j, i)
+                else:
+                    outDataset.WriteArray(array, j, i)
 
-    if overwrite is True:
+    if outputIm is None:
         inDataset.FlushCache()
         inDataset = None
     else:                        
@@ -2207,8 +2220,8 @@ def multi_temp_filter(inRas, outRas, bands=None, windowSize=None):
     if bands==None:
         bands = inDataset.RasterCount
     
-    outDataset = _copy_dataset_config(inDataset, outMap = outRas,
-                                     bands = bands)
+    outDataset = _copy_dataset_config(inDataset, outMap=outRas,
+                                     bands=bands)
     
 
 
@@ -2283,8 +2296,8 @@ def temporal_comp(fileList, outMap, stat='percentile', q = 95, folder=None,
     inDataset = gdal.Open(rasterList[0])
     bands = inDataset.RasterCount
     
-    outDataset = _copy_dataset_config(inDataset, outMap = outMap,
-                                     bands = bands)
+    outDataset = _copy_dataset_config(inDataset, outMap=outMap,
+                                     bands=bands)
         
     band = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
@@ -2406,8 +2419,8 @@ def stat_comp(inRas, outMap, bandList = None,  stat = 'percentile', q = 95,
     
     bands = inDataset.RasterCount
     
-    outDataset = _copy_dataset_config(inDataset, outMap = outMap,
-                                     bands = 1)
+    outDataset = _copy_dataset_config(inDataset, outMap=outMap,
+                                     bands=1)
         
     band = inDataset.GetRasterBand(1)
     cols = inDataset.RasterXSize
@@ -2487,7 +2500,7 @@ def stat_comp(inRas, outMap, bandList = None,  stat = 'percentile', q = 95,
 
 
 def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy',
-                         dtype = gdal.GDT_Int32, bands = 1):
+                         dtype=gdal.GDT_Int32, bands = 1):
     """Copies a dataset without the associated rasters.
 
     """
