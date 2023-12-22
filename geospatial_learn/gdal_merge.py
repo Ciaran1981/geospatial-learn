@@ -423,6 +423,9 @@ def _merge(verbose = 1, quiet = 0, names = [], format = 'GTiff',
     if psize_x is None:
         psize_x = file_infos[0].geotransform[1]
         psize_y = file_infos[0].geotransform[5]
+    #added CR    
+    else:
+        psize_y = psize_x
 
     if band_type is None:
         band_type = file_infos[0].band_type

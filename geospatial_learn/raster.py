@@ -1908,7 +1908,7 @@ def clip_raster_sel(inRas, inShp, outRas, field, attribute):
     rds = None 
     
 
-def clip_raster(inRas, inShp, outRas, cutline=True, fmt='GTiff'):
+def clip_raster(inRas, inShp, outRas, cutline=False, fmt='GTiff'):
 
     """
     Clip a raster
@@ -1955,7 +1955,7 @@ def clip_raster(inRas, inShp, outRas, cutline=True, fmt='GTiff'):
         #poly2 = loads(wkt)
         
         # VERY IMPORTANT - TO AVOID COMING ACROSS THIS AGAIN
-        # The problem is that the bounds are not in the 'correct' order for gdalWarp
+        # The problem iootrns[0]s that the bounds are not in the 'correct' order for gdalWarp
         # if taken from GetExtent() - they should in fact be in shapely order
         wrng = cliplyr.GetExtent()
         extent = [wrng[0], wrng[2], wrng[1], wrng[3]]
@@ -1971,8 +1971,7 @@ def clip_raster(inRas, inShp, outRas, cutline=True, fmt='GTiff'):
         ootds.FlushCache()
         ootds = None
         rds = None
-    
-    
+
     
     else:
         #cutline == True:
