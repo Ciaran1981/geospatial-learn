@@ -1919,7 +1919,7 @@ def clip_raster(inRas, inShp, outRas, cutline=False, fmt='GTiff'):
     inRas: string
             the input image 
             
-    outPoly: string
+    inShp: string
               the input polygon file path 
         
     outRas: string (optional)
