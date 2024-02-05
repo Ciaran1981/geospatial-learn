@@ -57,18 +57,6 @@ mamba env create -f geolearn_env.yml
 
 conda activate geospatial_learn
 
-Quickstart
-----------
-
-A summary of some functions can be found here:
-
-https://github.com/Ciaran1981/geospatial-learn/blob/master/docs/quickstart.rst
-
-There are some jupyter-based workflows to be found here:
-
-https://github.com/Ciaran1981/geospatial-learn/tree/master/example_notebooks
-
-These are currently a work in progress of course! 
 
 Docs
 ----
@@ -76,8 +64,6 @@ Docs
 Documentation can be found here:
 
 https://ciaran1981.github.io/geospatial-learn/docs/html/index.html 
-
-These are a work in progress!
 
 
 Citation

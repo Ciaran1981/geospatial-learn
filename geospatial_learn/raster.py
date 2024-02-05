@@ -410,12 +410,12 @@ def raster2array(inRas, bands=None):
         rdsDtype = rds.GetRasterBand(1).DataType
         inDt = dtypes[str(rdsDtype)]
         
-
+        inArray = rds.ReadAsArray(band_list=bands)
         
-        inArray = np.zeros((rds.RasterYSize, rds.RasterXSize, len(bands)), dtype=inDt) 
-        for idx, band in enumerate(bands):  
-            rA = rds.GetRasterBand(band).ReadAsArray()
-            inArray[:, :, idx]=rA
+        # inArray = np.zeros((rds.RasterYSize, rds.RasterXSize, len(bands)), dtype=inDt) 
+        # for idx, band in enumerate(bands):  
+        #     rA = rds.GetRasterBand(band).ReadAsArray()
+        #     inArray[:, :, idx]=rA
    
    
     return inArray

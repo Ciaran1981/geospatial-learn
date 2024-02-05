@@ -2461,10 +2461,11 @@ def zonal_point_stk(inShp, inRas, fields, write_stat=True):
     rds = None
     
     zpt = pd.DataFrame(data=inarr, columns=fields)
+    gdf = gpd.read_file(inShp)
+    # slow line
+    gdf = pd.concat([gdf, zpt], axis=1)
     if write_stat == True:
         print('writing file')
-        gdf = gpd.read_file(inShp)
-        gdf = pd.concat([gdf, zpt], axis=1)
         gdf.to_file(inShp)
     
     return gdf
