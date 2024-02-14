@@ -325,8 +325,8 @@ def array2raster(array, bands, inRaster, outRas, dtype, FMT=None):
     
     inras = gdal.Open(inRaster, gdal.GA_ReadOnly)    
     
-    x_pixels = inras.RasterXSize  # number of pixels in x
-    y_pixels = inras.RasterYSize  # number of pixels in y
+    x_pixels = inras.RasterXSize 
+    y_pixels = inras.RasterYSize  
     geotransform = inras.GetGeoTransform()
     PIXEL_SIZE = geotransform[1]  # size of the pixel...they are square so thats ok.
     #if not would need w x h
@@ -343,7 +343,8 @@ def array2raster(array, bands, inRaster, outRas, dtype, FMT=None):
         x_pixels,
         y_pixels,
         bands,
-        dtype)
+        dtype,
+        options=['COMPRESS=LZW'])
 
     dataset.SetGeoTransform((
         x_min,    # 0

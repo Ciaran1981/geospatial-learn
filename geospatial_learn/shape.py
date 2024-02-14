@@ -42,6 +42,7 @@ import matplotlib
 from shapely.affinity import rotate
 #from geospatial_learn.geodata import rasterize
 from math import ceil
+import rasterio
 #from centerline.geometry import Centerline
 
 #matplotlib.use('Qt5Agg')
@@ -2471,7 +2472,62 @@ def zonal_point_stk(inShp, inRas, fields, write_stat=True):
     return gdf
 
 
+def zonal_point_mem(inras, inshp, field, band=1):
+    """ 
+    Get the pixel val at a given point and write to vector
+    Reads entire raster array into memory so whilst quicker, will be limited
+    by image size & RAM
+    
+    Parameters
+    ----------
+    inras : string
+            input raster
+            
+    inshp: string
+            input OGR/gpd compatible file
+            
+    band: int
+            band 
+    """
+    # If its big this will fall over
+    # TODO - block processing may speed up, but a bit elaborate
 
+    rds = gdal.Open(inras)
+    
+    rgt = rds.GetGeoTransform()
+    minx = rgt[0]
+    maxy = rgt[3]
+    maxx = minx + rgt[1] * rds.RasterXSize
+    miny = maxy + rgt[5] * rds.RasterYSize
+    ext = (minx, miny, maxx, maxy)
+    
+    gdf = gpd.read_file(inshp)
+    
+    pts = gdf.get_coordinates().to_numpy()
+    
+    inPts = pts[np.where((pts[:, 0] >= ext[0])
+                         & (pts[:, 0] < ext[2])
+                         & (pts[:, 1] >= ext[1])
+                         & (pts[:, 1] < ext[3]))]
+    
+    originX = ext[0]
+    originY = ext[3]
+    pixsize = rgt[1]
+    col = ((inPts[:, 0] - originX) / pixsize).astype(int)
+    row = ((originY - inPts[:, 1]) / pixsize).astype(int)
+    
+    # slow....
+    print('reading img')
+    img = rds.GetRasterBand(band).ReadAsArray()
+    
+    res2 = img[row, col]
+    
+    gdf[field] = res2
+    
+    print('writing file')
+    gdf.to_file(inshp)
+    
+    return gdf
 
 
 def clip_poly(inshp, clipshp, outshp, filetype="ESRI Shapefile"):
