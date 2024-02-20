@@ -557,7 +557,7 @@ def _bbox_to_pixel_offsets(rgt, geom):
     ----------
     
     rgt : array
-          List of points defining polygon (?)
+          List of points defining polygon 
           
     geom : shapely.geometry
            Structure defining geometry
@@ -613,22 +613,10 @@ def _bbox_to_pixel_offsets(rgt, geom):
     # Specify offset and rows and columns to read
     xoff = int((xmin - xOrigin)/pixelWidth)
     yoff = int((yOrigin - ymax)/pixelWidth)
-    xcount = int((xmax - xmin)/pixelWidth)#+1
-    ycount = int((ymax - ymin)/pixelWidth)#+1
-#    originX = rgt[0]
-#    originY = rgt[3]
-#    pixel_width = rgt[1]
-#    pixel_height = rgt[5]
-#    x1 = int((bbox[0] - originX) / pixel_width)
-#    x2 = int((bbox[1] - originX) / pixel_width) + 1
-#
-#    y1 = int((bbox[3] - originY) / pixel_height)
-#    y2 = int((bbox[2] - originY) / pixel_height) + 1
-#
-#    xsize = x2 - x1
-#    ysize = y2 - y1
-#    return (x1, y1, xsize, ysize)
-    return (xoff, yoff, xcount, ycount)        
+    xcount = int((xmax - xmin)/pixelWidth)
+    ycount = int((ymax - ymin)/pixelWidth)
+
+    return [xoff, yoff, xcount, ycount]       
 
 def sqlfilter(inShp, sql):
     
@@ -953,6 +941,13 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
         # if outside the raster
         src_offset = _bbox_to_pixel_offsets(rgt, geom)
         
+        #x, y, xcount, ycount - so if counts are 0, the geom is smaller than
+        # the pixel, so we can give it a shape of 1x1
+        if src_offset[2] == 0:
+            src_offset[2] = 1
+        if src_offset[3] == 0:
+            src_offset[3] = 1
+        
        # This does not seem to be fullproof
        # This is a hacky mess that needs fixed
         if poly.Contains(geom) == False:
@@ -1083,6 +1078,214 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
     
     if write_stat != None:
         return frame, rejects
+
+def zonal_frac(inShp, inRas, band, bandname, layer=None, 
+                write_stat=True, nodata_value=0, all_touched=True, 
+                expression=None):
+    
+    """ 
+    Return the unique classes and their counts per polygon
+    
+    Parameters
+    ----------
+    
+    inShp: string
+                  input shapefile
+        
+    inRas: string
+                  input raster
+
+    band: int
+           an integer val eg - 2
+
+    bandname: string
+               eg - blue
+               
+    layer: string
+           if using a db type format with multi layers, specify the name of the
+           layer in question
+                     
+    write_stat: bool (optional)
+                If True, stat will be written to OGR file, if false, dataframe
+                only returned (bool)
+        
+    nodata_value: numerical
+                   If used the no data val of the raster
+    
+    all_touched: bool
+                    whether to use all touched when raterising the polygon
+                    if the poly is smaller/comaparable to the pixel size, 
+                    True is perhaps the best option
+    expression: string
+                     process a selection only eg expression e.g. "DN >= 168"    
+    """    
+    # gdal/ogr-based zonal stats
+    
+    if all_touched == True:
+        touch = "ALL_TOUCHED=TRUE"
+    else:
+        touch = "ALL_TOUCHED=FALSE"
+        
+    rds = gdal.Open(inRas, gdal.GA_ReadOnly)
+    #assert(rds)
+    rb = rds.GetRasterBand(band)
+    rgt = rds.GetGeoTransform()
+
+    if nodata_value:
+        nodata_value = float(nodata_value)
+        rb.SetNoDataValue(nodata_value)
+
+    vds = ogr.Open(inShp, 1) 
+    
+    # if we are using a db of some sort gpkg etc where we have to choose
+    if layer !=None:
+        vlyr = vds.GetLayerByName(layer)
+    else:
+        vlyr = vds.GetLayer()
+    
+    if expression != None:
+        vlyr.SetAttributeFilter(expression)
+        fcount = str(vlyr.GetFeatureCount())    
+        print(expression+"\nresults in "+fcount+" features to process")
+    
+    if write_stat != None:
+        # if the field exists leave it as ogr is a pain with dropping it
+        # plus can break the file
+        if _fieldexist(vlyr, bandname+'_cls') == False:
+            vlyr.CreateField(ogr.FieldDefn(bandname+'_cls', ogr.OFTIntegerList))
+        if _fieldexist(vlyr, bandname+'_cnt') == False:
+            vlyr.CreateField(ogr.FieldDefn(bandname+'_cnt', ogr.OFTIntegerList))
+        
+
+    mem_drv = ogr.GetDriverByName('Memory')
+    driver = gdal.GetDriverByName('MEM')
+
+    # Loop through vectors
+    stats = []
+    feat = vlyr.GetNextFeature()
+    features = np.arange(vlyr.GetFeatureCount())
+    rejects = []
+    
+    #create a poly of raster bbox to test for within raster
+    poly = rasterext2poly(inRas)
+    
+    #TODO FAR too many if statements in this loop.
+    # This is FAR too slow
+   
+    for label in tqdm(features):
+
+        if feat is None:
+            continue
+#        debug
+#        wkt=geom.ExportToWkt()
+#        poly1 = loads(wkt)
+        geom = feat.geometry()
+        
+        src_offset = _bbox_to_pixel_offsets(rgt, geom)
+        #x, y, xcount, ycount - so if counts are 0, the geom is smaller than
+        # the pixel, so we can give it a shape of 1x1
+        if src_offset[2] == 0:
+            src_offset[2] = 1
+        if src_offset[3] == 0:
+            src_offset[3] = 1
+        
+       # This does not seem to be fullproof
+       # This is a hacky mess that needs fixed
+        if poly.Contains(geom) == False:
+            #print(src_offset[0],src_offset[1])
+            #offs.append()
+            feat = vlyr.GetNextFeature()
+            continue
+        elif src_offset[0] > rds.RasterXSize:
+            feat = vlyr.GetNextFeature()
+            continue
+        elif src_offset[1] > rds.RasterYSize:
+            feat = vlyr.GetNextFeature()
+            continue
+        elif src_offset[0] < 0 or src_offset[1] < 0:
+            feat = vlyr.GetNextFeature()
+            continue
+        
+        if src_offset[0] + src_offset[2] > rds.RasterXSize:
+                # needs to be the diff otherwise neg vals are possble
+                xx = abs(rds.RasterXSize - src_offset[0])
+                
+                src_offset = (src_offset[0], src_offset[1], xx, src_offset[3])
+        
+        if src_offset[1] + src_offset[3] > rds.RasterYSize:
+                 yy = abs(rds.RasterYSize - src_offset[1])
+                 src_offset = (src_offset[0], src_offset[1],  src_offset[2], yy)
+        
+        src_array = rb.ReadAsArray(src_offset[0], src_offset[1], src_offset[2],
+                               src_offset[3])
+        if src_array is None:
+            src_array = rb.ReadAsArray(src_offset[0]-1, src_offset[1], src_offset[2],
+                               src_offset[3])
+            if src_array is None:
+                rejects.append(feat.GetFID())
+                continue
+        
+        # calculate new geotransform of the feature subset
+        new_gt = (
+        (rgt[0] + (src_offset[0] * rgt[1])),
+        rgt[1],
+        0.0,
+        (rgt[3] + (src_offset[1] * rgt[5])),
+        0.0,
+        rgt[5])
+
+            
+        # Create a temporary vector layer in memory
+        mem_ds = mem_drv.CreateDataSource('out')
+        mem_layer = mem_ds.CreateLayer('poly', None, ogr.wkbPolygon)
+        mem_layer.CreateFeature(feat.Clone())
+
+        # Rasterize it
+
+        rvds = driver.Create('', src_offset[2], src_offset[3], 1, gdal.GDT_Byte)
+     
+        rvds.SetGeoTransform(new_gt)
+        rvds.SetProjection(rds.GetProjectionRef())
+        rvds.SetGeoTransform(new_gt)
+        gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1], options=[touch])
+        rv_array = rvds.ReadAsArray()
+        
+        # Mask the source data array with our current feature using np mask     
+
+        #rejects.append(feat.GetField('DN'))
+        masked = np.ma.MaskedArray(
+            src_array,
+            mask=np.logical_or(
+                src_array == nodata_value,
+                np.logical_not(rv_array)
+            )
+        )
+        unique, count = np.unique(masked.data, return_counts=True)
+        
+        stats.append([feat.GetFID(), unique, count])
+        
+        if write_stat != None:
+            # may have to insert into gdf as array 
+            # TypeError: Feature_SetFieldIntegerList expected 3 arguments, got 4
+            # But there are 3 args apart from the self 
+            feat.SetFieldIntegerList(bandname+'_cls', 3, unique.tolist())
+            feat.SetFieldIntegerList(bandname+'_cnt', 3, count.tolist())
+            # A hack could be to write a string then use eval(string) to get a list back
+            #feat.SetField(bandname+'_cls', str(unique.tolist()))
+            #feat.SetField(bandname+'_cnt', str((count.tolist()))
+            vlyr.SetFeature(feat)
+        feat = vlyr.GetNextFeature()
+        
+    if write_stat != None:
+        vlyr.SyncToDisk()
+
+    vds = None
+    rds = None
+    frame = DataFrame(data=stats, columns=['fid', bandname+'_cls', bandname+'_cnt'])
+    
+    if write_stat is None:
+        return frame, rejects
+
     
 def zonal_stats_all(inShp, inRas, bandnames, 
                     statList = ['mean', 'min', 'max', 'median', 'std',
