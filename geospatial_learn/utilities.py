@@ -1455,7 +1455,7 @@ def apply_lut(src, lut):
     dst = lut[src]
     return dst
 
-def colorscale(seg, prop='Area', custom=None):
+def colorscale(seg, prop='Area', custom=None, zero=True):
     
     """
     Colour an array according to a region prop value
@@ -1472,6 +1472,9 @@ def colorscale(seg, prop='Area', custom=None):
     custom: list
             a custom list of values to apply to array
     
+    zero: bool
+            whether to insert zero to represent nodata  
+    
     Returns
     -------
     
@@ -1487,7 +1490,8 @@ def colorscale(seg, prop='Area', custom=None):
         alist = custom
     
     # there must be a zero to represent no data so insert at start
-    alist.insert(0, 0)
+    if zero == True:
+        alist.insert(0, 0)
     alist = np.array(alist)
     
     oot = apply_lut(seg, alist)

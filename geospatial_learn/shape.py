@@ -942,7 +942,7 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
         src_offset = _bbox_to_pixel_offsets(rgt, geom)
         
         #x, y, xcount, ycount - so if counts are 0, the geom is smaller than
-        # the pixel, so we can give it a shape of 1x1
+        # the pixel, so we can give it a shape of 1xninS
         if src_offset[2] == 0:
             src_offset[2] = 1
         if src_offset[3] == 0:
@@ -950,12 +950,12 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
         
        # This does not seem to be fullproof
        # This is a hacky mess that needs fixed
-        if poly.Contains(geom) == False:
-            #print(src_offset[0],src_offset[1])
-            #offs.append()
-            feat = vlyr.GetNextFeature()
-            continue
-        elif src_offset[0] > rds.RasterXSize:
+        # if poly.Contains(geom) == False: # this isn't working - 
+        #     #print(src_offset[0],src_offset[1])
+        #     #offs.append()
+        #     feat = vlyr.GetNextFeature()
+        #     continue
+        if src_offset[0] > rds.RasterXSize:
             feat = vlyr.GetNextFeature()
             continue
         elif src_offset[1] > rds.RasterYSize:
@@ -1021,7 +1021,7 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
         )
         
         if stat == 'mode':
-            feature_stats = mode(masked)[0]
+            feature_stats = mode(masked, axis=None)[0][0]
         elif stat == 'min':
             feature_stats = float(masked.min())
         elif stat == 'mean':
@@ -1055,7 +1055,7 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
             feature_stats = float(cellvol.sum())
         else:
             raise ValueError("Must be one of mode, min, mean, max,"
-                             "std, sum, count, var, skew, kurt, vol")               
+                             "std, sum, count, var, skew, kurt, vol, mode")               
         # You can't have the stat of a single value - this is not an ideal
         # solution - should be flagged somehow but
         if src_array.shape == (1,1):
@@ -1074,9 +1074,9 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
 
     vds = None
     rds = None
-    frame = DataFrame(stats)
+    frame = DataFrame(data=stats, columns=[stat])
     
-    if write_stat != None:
+    if write_stat is None:
         return frame, rejects
 
 def zonal_frac(inShp, inRas, band, bandname, layer=None, 
@@ -1151,11 +1151,11 @@ def zonal_frac(inShp, inRas, band, bandname, layer=None,
     if write_stat != None:
         # if the field exists leave it as ogr is a pain with dropping it
         # plus can break the file
-        if _fieldexist(vlyr, bandname+'_cls') == False:
-            vlyr.CreateField(ogr.FieldDefn(bandname+'_cls', ogr.OFTIntegerList))
+        # intlist not used see later code #ogr.OFTIntegerList))
+        if _fieldexist(vlyr, bandname+'_cls') == False:     
+            vlyr.CreateField(ogr.FieldDefn(bandname+'_cls', ogr.OFTString))
         if _fieldexist(vlyr, bandname+'_cnt') == False:
-            vlyr.CreateField(ogr.FieldDefn(bandname+'_cnt', ogr.OFTIntegerList))
-        
+            vlyr.CreateField(ogr.FieldDefn(bandname+'_cnt', ogr.OFTString))
 
     mem_drv = ogr.GetDriverByName('Memory')
     driver = gdal.GetDriverByName('MEM')
@@ -1167,7 +1167,16 @@ def zonal_frac(inShp, inRas, band, bandname, layer=None,
     rejects = []
     
     #create a poly of raster bbox to test for within raster
+    # this is 
     poly = rasterext2poly(inRas)
+    
+    # so we can map the field name to an integer when setting the list
+    # (yes I know....)
+    fieldict = {}
+    ldefn = vlyr.GetLayerDefn()
+    for n in range(ldefn.GetFieldCount()):
+        fdefn = ldefn.GetFieldDefn(n)
+        fieldict.update({fdefn.name:n})
     
     #TODO FAR too many if statements in this loop.
     # This is FAR too slow
@@ -1191,12 +1200,12 @@ def zonal_frac(inShp, inRas, band, bandname, layer=None,
         
        # This does not seem to be fullproof
        # This is a hacky mess that needs fixed
-        if poly.Contains(geom) == False:
-            #print(src_offset[0],src_offset[1])
-            #offs.append()
-            feat = vlyr.GetNextFeature()
-            continue
-        elif src_offset[0] > rds.RasterXSize:
+        # if poly.Contains(geom) == False: - not working rejects legit polygons
+        #     #print(src_offset[0],src_offset[1])
+        #     #offs.append()
+            # feat = vlyr.GetNextFeature()
+            # continue
+        if src_offset[0] > rds.RasterXSize:
             feat = vlyr.GetNextFeature()
             continue
         elif src_offset[1] > rds.RasterYSize:
@@ -1250,29 +1259,42 @@ def zonal_frac(inShp, inRas, band, bandname, layer=None,
         gdal.RasterizeLayer(rvds, [1], mem_layer, burn_values=[1], options=[touch])
         rv_array = rvds.ReadAsArray()
         
-        # Mask the source data array with our current feature using np mask     
-
-        #rejects.append(feat.GetField('DN'))
-        masked = np.ma.MaskedArray(
-            src_array,
-            mask=np.logical_or(
-                src_array == nodata_value,
-                np.logical_not(rv_array)
-            )
-        )
-        unique, count = np.unique(masked.data, return_counts=True)
+        # masked array dumped as it causes problems with unique producing non-unique
+        # arrays - also slows it down
+        if src_array.shape == (1,1):
+            unique = src_array[0]
+            count = np.array([1])
+        else:
+            unique, count = np.unique(src_array[rv_array>0], return_counts=True)
         
-        stats.append([feat.GetFID(), unique, count])
+        entry = [feat.GetFID(), unique.tolist(), count.tolist()]
+        
+        stats.append(entry)
         
         if write_stat != None:
-            # may have to insert into gdf as array 
-            # TypeError: Feature_SetFieldIntegerList expected 3 arguments, got 4
-            # But there are 3 args apart from the self 
-            feat.SetFieldIntegerList(bandname+'_cls', 3, unique.tolist())
-            feat.SetFieldIntegerList(bandname+'_cnt', 3, count.tolist())
+            
+            # in this cas tho - the field_integerlist is a property (ie attribute)
+            # so not useful here but maybe later
+            # feat.field_integerlist = '(3:10,20,30)'
+            # feat.field_integer64list = [9876543210]
+            # feat.field_reallist = [123.5,567.0]
+            # feat.field_stringlist = ['abc','def']
+            
+            # This VERY slow to write....
+            # It is also parsed as a string in gpd etc anyway so may 
+            # it appears like this '(3:10,20,30)' (length: list)
+            # so not very practical for parsing later anyway
+            # as well just write as a string and use eval later
+                                         # field int idx        input data
+            # feat.SetFieldIntegerList(fieldict[bandname+'_cls'], entry[1])
+            # feat.SetFieldIntegerList(fieldict[bandname+'_cnt'], entry[2])
+            
+            # This is equally slow to write, but easier to parse
             # A hack could be to write a string then use eval(string) to get a list back
-            #feat.SetField(bandname+'_cls', str(unique.tolist()))
-            #feat.SetField(bandname+'_cnt', str((count.tolist()))
+            ustr = str(unique.tolist())
+            cntstr = str(count.tolist())
+            feat.SetField(bandname+'_cls', ustr)
+            feat.SetField(bandname+'_cnt', cntstr)
             vlyr.SetFeature(feat)
         feat = vlyr.GetNextFeature()
         
@@ -1281,6 +1303,7 @@ def zonal_frac(inShp, inRas, band, bandname, layer=None,
 
     vds = None
     rds = None
+    
     frame = DataFrame(data=stats, columns=['fid', bandname+'_cls', bandname+'_cnt'])
     
     if write_stat is None:
