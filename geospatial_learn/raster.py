@@ -1523,7 +1523,7 @@ def combine_scene(scl, c_scn, blocksize = 256):
     inDataset.FlushCache()
     inDataset = None
     
-def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1, 
+def polygonize(inRas, outPoly, outField=None,  mask=True, band=1, 
                filetype="ESRI Shapefile"):
     
     """ 
@@ -1585,8 +1585,8 @@ def polygonize(inRas, outPoly, outField=None,  mask = True, band = 1,
     
     if outField is None:
         dst_fieldname = 'DN'
-        fd = ogr.FieldDefn( dst_fieldname, ogr.OFTInteger )
-        dst_layer.CreateField( fd )
+        fd = ogr.FieldDefn(dst_fieldname, ogr.OFTInteger)
+        dst_layer.CreateField(fd)
         dst_field = dst_layer.GetLayerDefn().GetFieldIndex(dst_fieldname)
 
     
@@ -1767,7 +1767,8 @@ def set_bandnames(inras, names):
     rds.FlushCache()
     rds = None
     
-def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff"):
+def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff", 
+              dtype=gdal.GDT_Int32):
     
     """ 
     Rasterize a polygon to the extent & geo transform of another raster
@@ -1787,6 +1788,10 @@ def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff"):
     
     fmt: the gdal image format
     
+    dtype: int
+            gdal dtype for output raster - consider the dtytpe of the field
+            you are burning
+    
     """
     
     
@@ -1796,7 +1801,7 @@ def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff"):
     # the usual 
     
     outDataset = _copy_dataset_config(inDataset, FMT=fmt, outMap=outRas,
-                         dtype = gdal.GDT_Int32, bands=1)
+                         dtype=dtype, bands=1)
     
     
     vds = ogr.Open(inShp)
@@ -1806,6 +1811,7 @@ def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff"):
     if field == None:
         gdal.RasterizeLayer(outDataset, [1], lyr, burn_values=[1])
     else:
+        print('rasterizing', field)
         gdal.RasterizeLayer(outDataset, [1], lyr, options=["ATTRIBUTE="+field])
     
     outDataset.FlushCache()
@@ -2022,8 +2028,8 @@ def clip_raster(inRas, inShp, outRas, cutline=False, fmt='GTiff'):
         rds1 = None
         
 
-def fill_nodata(inRas, maxSearchDist=5, smoothingIterations=1, 
-                bands=[1]):
+def fill_nodata(inRas, maxSearchDist=3, smoothingIterations=0, 
+                bands=[1], nodata=0):
     
     """
     fill no data using gdal
@@ -2043,12 +2049,16 @@ def fill_nodata(inRas, maxSearchDist=5, smoothingIterations=1,
     bands: list of ints
             the bands to process      
     
+    nodata: int/float
+            the nodata value (it may not be set)  
+    
     """
     
     rds = gdal.Open(inRas, gdal.GA_Update)
     
     for band in tqdm(bands):
         bnd = rds.GetRasterBand(band)
+        bnd.SetNoDataValue(nodata)
         gdal.FillNodata(targetBand=bnd, maskBand=None, 
                          maxSearchDist=maxSearchDist, 
                          smoothingIterations=smoothingIterations)
@@ -2525,7 +2535,8 @@ def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy',
         x_pixels,
         y_pixels,
         bands,
-        dtype)
+        dtype,
+        options=['COMPRESS=LZW'])
 
     outDataset.SetGeoTransform((
         x_min,    # 0

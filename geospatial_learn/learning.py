@@ -211,7 +211,7 @@ def create_model_optuna(X_train, outModel, clf='erf', group=None, random=False,
         param_grid = {
             #"device_type": trial.suggest_categorical("device_type", ['gpu']),
            #'metric': 'rmse', 
-            'random_state': 48,
+            'random_state': 42,
             'n_estimators': 20000,
             'reg_alpha': trial.suggest_loguniform('reg_alpha', 1e-3, 10.0),
             'reg_lambda': trial.suggest_loguniform('reg_lambda', 1e-3, 10.0),

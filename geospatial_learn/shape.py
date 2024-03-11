@@ -1025,8 +1025,7 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
         elif stat == 'min':
             feature_stats = float(masked.min())
         elif stat == 'mean':
-            feature_stats = float(masked.mean())
-            
+            feature_stats = float(masked.mean())     
         elif stat == 'max':
             feature_stats = float(masked.max())
         elif stat == 'median':
@@ -1038,9 +1037,20 @@ def zonal_stats(inShp, inRas, band, bandname, layer=None, stat = 'mean',
         elif stat == 'count':
             feature_stats = int(masked.count())
         elif stat == 'perc':
-            total = masked.shape[0]* masked.shape[1]
-            perc = masked.count() / total
-            feature_stats = int(np.round(perc*100))  
+            # this would be the perc of the bbox
+            #total = masked.shape[0]* masked.shape[1]
+            #perc = masked.count() / total
+            # mask does not help here
+            #TODO crap hack needs sorted
+            srcn = np.count_nonzero(src_array)
+            rvcn =  np.count_nonzero(rv_array)
+            if srcn > rvcn:
+                perc = 1
+            elif srcn == 0:
+                perc = 0
+            else:
+                perc = srcn / rvcn
+            feature_stats = float(np.round(perc, decimals=2))  
         elif stat == 'var':
             feature_stats = float(masked.var())
         elif stat == 'skew':
@@ -1265,7 +1275,7 @@ def zonal_frac(inShp, inRas, band, bandname, layer=None,
             unique = src_array[0]
             count = np.array([1])
         else:
-            unique, count = np.unique(src_array[rv_array>0], return_counts=True)
+            unique, count = np.unique(src_array[rv_array>0], return_counts=True,)
         
         entry = [feat.GetFID(), unique.tolist(), count.tolist()]
         
@@ -2550,16 +2560,18 @@ def zonal_point(inShp, inRas, field, band=1, nodata_value=0, write_stat=True):
     vds = ogr.Open(inShp, 1)  # TODO maybe open update if we want to write stats
     vlyr = vds.GetLayer(0)
     
-    if write_stat != None:
-        # if the field exists leave it as ogr is a pain with dropping it
-        # plus can break the file
-        if _fieldexist(vlyr, field) == False:
-            vlyr.CreateField(ogr.FieldDefn(field, ogr.OFTReal))
+    # writing via OGR is glacial
+    # if write_stat != None:
+    #     # if the field exists leave it as ogr is a pain with dropping it
+    #     # plus can break the file
+    #     if _fieldexist(vlyr, field) == False:
+    #         vlyr.CreateField(ogr.FieldDefn(field, ogr.OFTReal))
     
     
     
     feat = vlyr.GetNextFeature()
     features = np.arange(vlyr.GetFeatureCount())
+    outdata = []
     
     for label in tqdm(features):
     
@@ -2584,19 +2596,21 @@ def zonal_point(inShp, inRas, field, band=1, nodata_value=0, write_stat=True):
                 # unlikely but if none will have no data in the attribute table
                 continue
             outval =  float(src_array.max())
-            
-#            if write_stat != None:
-            feat.SetField(field, outval)
-            vlyr.SetFeature(feat)
+            outdata.append(outval)
+# #            if write_stat != None:
+#             feat.SetField(field, outval)
+#             vlyr.SetFeature(feat)
             feat = vlyr.GetNextFeature()
-        
+    
+    gdf = gpd.read_file(inShp)
+    gdf[field] = np.array(outdata)
     if write_stat != None:
-        vlyr.SyncToDisk()
-
-
-
+        gdf.to_file(inShp)
+    #     vlyr.SyncToDisk()
     vds = None
     rds = None
+    
+    return gdf
 
 def zonal_point_stk(inShp, inRas, fields, write_stat=True):
     
@@ -2661,7 +2675,6 @@ def zonal_point_stk(inShp, inRas, fields, write_stat=True):
             mx, my = geom.GetX(), geom.GetY()  
 
             # Convert from map to pixel coordinates.
-            # No rotation but for this that should not matter
             px = int((mx - rgt[0]) / rgt[1])
             py = int((my - rgt[3]) / rgt[5])
             

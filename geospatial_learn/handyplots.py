@@ -1,16 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed May  6 14:21:38 2015
-@author: Ciaran Robb
-author: Ciaran Robb
-Research Associate in Earth Observation
-Centre for Landscape and Climate Research (CLCR)
-Department of Geography, University of Leicester, University Road, Leicester, 
-LE1 7RH, UK 
-
-If you use code to publish work cite/acknowledge me and authors of libs as 
-appropriate 
-
+The handy plots module - these plots may be/ may have been handy
 
 
 """
@@ -61,7 +51,7 @@ def plot_classif_report(trueVals, predVals, labels=None, target_names=None,
     
     cbVl = dF.values
     mn = np.round(cbVl.min(), decimals=2)
-    mx= np.round(cbVl.max(), decimals=2)
+    mx = np.round(cbVl.max(), decimals=2)
     del cbVl
     
     
