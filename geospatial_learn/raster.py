@@ -759,7 +759,7 @@ def _raster_extent2poly(inras):
     return poly, spref, ext
 
 
-    tproj = lyr.GetSpatialRef()
+    #tproj = lyr.GetSpatialRef()
     
 def _extent2lyr(infile, filetype='raster', outfile=None, 
                 polytype="ESRI Shapefile", geecoord=False, lyrtype='ogr'):
@@ -1546,6 +1546,9 @@ def polygonize(inRas, outPoly, outField=None,  mask=True, band=1,
 
     band: int
            the input raster band
+    
+    filetype: string
+            An OGR driver eg 'GPKG', 'ESRI Shapefile'
             
     """    
     
@@ -1834,6 +1837,7 @@ def tile_raster(inRas, inShp, outdir, attribute='TILE_NAME', tiles=None,
     gdf = gpd.read_file(inShp)
     extent = gdf.bounds
     
+    dtpe = rds.GetRasterBand(1).DataType
     # gpd & ogr differences
     #gpd minx miny maxx maxy
     #ogr minx maxx miny maxy
@@ -1859,7 +1863,8 @@ def tile_raster(inRas, inShp, outdir, attribute='TILE_NAME', tiles=None,
         ootds = gdal.Warp(f,
                           rds,
                           format='GTiff',
-                          outputBounds=ext)
+                          outputBounds=ext,
+                          outputType=dtpe)
         ootds.FlushCache()
         ootds = None
     
@@ -1938,68 +1943,74 @@ def clip_raster(inRas, inShp, outRas, cutline=False, fmt='GTiff'):
    
     """
     
-    if cutline != True:
-        
-        vds = ogr.Open(inShp)
-        rds = gdal.Open(inRas, gdal.GA_ReadOnly)
-        lyr = vds.GetLayer()
-              
-        rds_ext, spref, ext = _raster_extent2poly(inRas)
-        
-        ootds, ootlyr = _extent2lyr(inRas, polytype='Memory')
-        clipds, cliplyr = create_ogr_poly('out', spref.ExportToWkt(),
-                                 file_type="Memory", field="id", 
-                                 field_dtype=0)
-        #self method result
-        ogr.Layer.Clip(lyr, ootlyr, cliplyr) # it works.....
-        
-        # debug
-        # cliplyr.GetExtent()
-        #poly1 = loads(rds_ext.ExportToWkt())
-        #feat = cliplyr.GetFeature(0)
-        #geom2 = feat.GetGeometryRef()
-        #wkt=geom2.ExportToWkt()
-        #poly2 = loads(wkt)
-        
-        # VERY IMPORTANT - TO AVOID COMING ACROSS THIS AGAIN
-        # The problem iootrns[0]s that the bounds are not in the 'correct' order for gdalWarp
-        # if taken from GetExtent() - they should in fact be in shapely order
-        wrng = cliplyr.GetExtent()
-        extent = [wrng[0], wrng[2], wrng[1], wrng[3]]
+    vds = ogr.Open(inShp)
+    rds = gdal.Open(inRas, gdal.GA_ReadOnly)
+    lyr = vds.GetLayer()
+          
+    rds_ext, spref, ext = _raster_extent2poly(inRas)
     
+    ootds, ootlyr = _extent2lyr(inRas, polytype='Memory')
+    clipds, cliplyr = create_ogr_poly('out', spref.ExportToWkt(),
+                             file_type="Memory", field="id", 
+                             field_dtype=0)
     
-        print('cropping')
-        ootds = gdal.Warp(outRas,
-                  rds,
-                  format=fmt, 
-                  outputBounds=extent)
-                  
-            
-        ootds.FlushCache()
-        ootds = None
-        rds = None
+    ogr.Layer.Clip(lyr, ootlyr, cliplyr)
+    
+    wrng = cliplyr.GetExtent()
+    extent = [wrng[0], wrng[2], wrng[1], wrng[3]]
 
+    #self method result
+     # it works.....
     
-    else:
+    # debug
+    # cliplyr.GetExtent()
+    #poly1 = loads(rds_ext.ExportToWkt())
+    #feat = cliplyr.GetFeature(0)
+    #geom2 = feat.GetGeometryRef()
+    #wkt=geom2.ExportToWkt()
+    #poly2 = loads(wkt)
+    
+    # VERY IMPORTANT - TO AVOID COMING ACROSS THIS AGAIN
+    # The problem iootrns[0]s that the bounds are not in the 'correct' order for gdalWarp
+    # if taken from GetExtent() - they should in fact be in shapely order
+
+
+    print('cropping')
+    ootds = gdal.Warp(outRas, rds, format=fmt, outputBounds=extent)
+    
+    if cutline == True:
+        print('masking to cutline')
         #cutline == True:
+        # TODO - this only works with original extent of input raster,
+        # need cropped one as input
         
-        rds1 = gdal.Open(outRas, gdal.GA_Update)
-        rasterize(inShp, outRas, outRas[:-4]+'mask.tif', field=None,
-                  fmt="Gtiff")
+        # print('cropping')
+        # ootds = gdal.Warp(outRas,
+        #           rds,
+        #           format=fmt, 
+        #           outputBounds=extent)
         
-        mskds = gdal.Open(outRas[:-4]+'mask.tif')
+        # NOT finished need to read outds back in for procedure below
+        # ootds.FlushCache()
+        # ootds = None
+      
+        dtpe = rds.GetRasterBand(1).DataType
         
-        mskbnd = mskds.GetRasterBand(1)
+        rvlyr = _copy_dataset_config(ootds, FMT='MEM', outMap='copy',
+                                   dtype=gdal.GDT_Byte, bands=1)
 
-        cols = mskds.RasterXSize
-        rows = mskds.RasterYSize
+        gdal.RasterizeLayer(rvlyr, [1], cliplyr, burn_values=[1])
+        
+        mskbnd = rvlyr.GetRasterBand(1)
+
+        cols = ootds.RasterXSize
+        rows = ootds.RasterYSize
 
         blocksizeX = 256
         blocksizeY = 256
         
-        bands = rds1.RasterCount
+        bands = ootds.RasterCount
         
-        mskbnd = mskds.GetRasterBand(1)
         
         for i in tqdm(range(0, rows, blocksizeY)):
                 if i + blocksizeY < rows:
@@ -2012,20 +2023,20 @@ def clip_raster(inRas, inShp, outRas, cutline=False, fmt='GTiff'):
                         numCols = blocksizeX
                     else:
                         numCols = cols - j
-                    #for band in range(1, bands+1):
-                        
-                    #bnd = rds1.GetRasterBand(band)
-                    array = rds1.ReadAsArray(j, i, numCols, numRows)
+
+                    array = ootds.ReadAsArray(j, i, numCols, numRows)
                     mask = mskbnd.ReadAsArray(j, i, numCols, numRows)
                     if len(array.shape)==2:
                         array[mask!=1]=0
                     else:
                         d_mask = np.broadcast_to(mask==1, array.shape)
                         array[d_mask!=1]=0
-                    rds1.WriteArray(array, j, i)
+                    ootds.WriteArray(array, j, i)
                         
-        rds1.FlushCache()
-        rds1 = None
+    ootds.FlushCache()
+    ootds = None
+    rds = None
+        
         
 
 def fill_nodata(inRas, maxSearchDist=3, smoothingIterations=0, 
@@ -2530,13 +2541,18 @@ def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy',
     driver = gdal.GetDriverByName(FMT)
     
     # Set params for output raster
+    # Stop annoying message for when using MEM
+    if FMT == 'MEM':
+        opts=None
+    else:
+        opts = ['COMPRESS=LZW']
     outDataset = driver.Create(
         outMap, 
         x_pixels,
         y_pixels,
         bands,
         dtype,
-        options=['COMPRESS=LZW'])
+        options=opts)
 
     outDataset.SetGeoTransform((
         x_min,    # 0
@@ -2589,7 +2605,8 @@ def batchwarp(inlist, outdir, xres, yres, cores=16, fmt='Gtiff'):
     #finalist = zip(inlist, outlist)
     
     if cores == 1:
-        _= [_gdalwarp(i, o, xRes=xres, yRes=xres, format=fmt) for i, o in tqdm(zip(inlist, outlist))]
+        _= [_gdalwarp(i, o, xRes=xres, yRes=xres,
+                      format=fmt) for i, o in tqdm(zip(inlist, outlist))]
     
     else:
     
@@ -2603,8 +2620,29 @@ def batchwarp(inlist, outdir, xres, yres, cores=16, fmt='Gtiff'):
     
 def _quickwarp(inRas, outRas, proj='EPSG:27700', **kwargs):
     
-    """gdalwarp a dataset
-
+    """
+    gdalwarp a dataset
+    
+    Parameters
+    ----------
+    
+    inRas: string
+            input raster
+    
+    outRas: string
+            output raster
+            
+    proj: string
+            an espg code e.g. 'EPSG:27700'
+    
+    Notes
+    -----
+    
+    kwargs could include
+    
+    resampleAlg='bilinear' if interp or 'average' if aggregating
+    
+    xRes=10, yRes=10, multithread=True
     """
     ootRas = gdal.Warp(outRas, inRas, dstSRS=proj, format='Gtiff', 
                        callback=gdal.TermProgress, **kwargs)

@@ -370,11 +370,13 @@ def rec_feat_sel(X_train, featnames, preproc=('scaler', None),  clf='erf',
                                           # devices='0:1'),
                'lgbm': lgb.LGBMClassifier(random_state=0),
  #use_best_model=True-needs non empty eval set
-                'hgb': HistGradientBoostingClassifier(random_state=0)}
+                'hgb': HistGradientBoostingClassifier(early_stopping=True,
+                                                      random_state=0)}
     
     regdict = {'rf': RandomForestRegressor(random_state=0),
                'erf': ExtraTreesRegressor(random_state=0),
-               'gb': GradientBoostingRegressor(random_state=0),
+               'gb': GradientBoostingRegressor(early_stopping=True,
+                                               random_state=0),
                'xgb': XGBRegressor(random_state=0),
                # 'catb': CatBoostRegressor(logging_level='Silent', 
                #                           random_seed=42),
@@ -384,10 +386,14 @@ def rec_feat_sel(X_train, featnames, preproc=('scaler', None),  clf='erf',
                                           # devices='0:1'),
                'lgbm': lgb.LGBMRegressor(random_state=0),
 
-               'hgb': HistGradientBoostingRegressor(random_state=0)}
+               'hgb': HistGradientBoostingRegressor(early_stopping=True,
+                                                    random_state=0)}
     
     if regress is True:
         model = regdict[clf]
+        if clf == 'hgb':
+            # until this is fixed - enabling above does nothing
+            model.do_early_stopping = True
         if scoring is None:
             scoring = 'r2'
     else:
@@ -595,6 +601,8 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
         if scoring is None:
             scoring = 'accuracy'
     
+    if cat_feat:
+        model.categorical_features = cat_feat
     
     
     bands = X_train.shape[1]-1
@@ -646,7 +654,7 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
         sclr.update(params)
         
     else:
-        sclr = pipe
+        sclr = pipe.copy() # to stop the var getting altered in script
         sclr.update(params)
     
     sk_pipe = Pipeline([("scaler", StandardScaler()),
