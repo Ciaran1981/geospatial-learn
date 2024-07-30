@@ -2520,7 +2520,7 @@ def stat_comp(inRas, outMap, bandList = None,  stat = 'percentile', q = 95,
 
 
 
-def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy',
+def _copy_dataset_config(inDataset, FMT='Gtiff', outMap='copy',
                          dtype=gdal.GDT_Int32, bands = 1):
     """Copies a dataset without the associated rasters.
 
@@ -2541,18 +2541,22 @@ def _copy_dataset_config(inDataset, FMT = 'Gtiff', outMap = 'copy',
     driver = gdal.GetDriverByName(FMT)
     
     # Set params for output raster
-    # Stop annoying message for when using MEM
+    # TODO bad but can't put None in options
     if FMT == 'MEM':
-        opts=None
+        outDataset = driver.Create(
+            outMap, 
+            x_pixels,
+            y_pixels,
+            bands,
+            dtype)
     else:
-        opts = ['COMPRESS=LZW']
-    outDataset = driver.Create(
-        outMap, 
-        x_pixels,
-        y_pixels,
-        bands,
-        dtype,
-        options=opts)
+        outDataset = driver.Create(
+            outMap, 
+            x_pixels,
+            y_pixels,
+            bands,
+            dtype,
+            options=['COMPRESS=LZW'])
 
     outDataset.SetGeoTransform((
         x_min,    # 0
