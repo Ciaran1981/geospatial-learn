@@ -465,7 +465,8 @@ def rec_feat_sel(X_train, featnames, preproc=('scaler', None),  clf='erf',
 def create_model(X_train, outModel, clf='erf', group=None, random=False,
                  cv=5, params=None, pipe='default', cores=-1, strat=True, 
                  test_size=0.3, regress=False, return_test=True,
-                 scoring=None, class_names=None, save=True, cat_feat=None):
+                 scoring=None, class_names=None, save=True, cat_feat=None,
+                 plot=True):
     
     """
     Brute force or random model creating using scikit learn.
@@ -679,7 +680,7 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
     testresult = grid.best_estimator_.predict(X_test)
     
     if regress == True:
-        regrslt = regression_results(y_test, testresult)
+        regrslt = regression_results(y_test, testresult, plot=plot)
         results = [grid]
         
     else:
@@ -687,16 +688,17 @@ def create_model(X_train, outModel, clf='erf', group=None, random=False,
                                       save=outModel[:-3]+'._classif_report.png')
         
         confmat = metrics.confusion_matrix(testresult, y_test, labels=class_names)
-        disp = metrics.ConfusionMatrixDisplay(confusion_matrix=confmat,
-                                      display_labels=class_names)
-        disp.plot()
+        
+        if plot == True:
+            disp = metrics.ConfusionMatrixDisplay(confusion_matrix=confmat,
+                                          display_labels=class_names)
+            disp.plot()
     
         # confmat = hp.plt_confmat(X_test, y_test, grid.best_estimator_, 
         #                          class_names=class_names, 
         #                          cmap=plt.cm.Blues, 
         #                          fmt="%d", 
-        #                          save=outModel[:-3]+'_confmat.png')
-        
+        #                          save=outModel[:-3]+'_confmat.png')    
         results = [grid, crDf, confmat]
         
     if return_test == True:
@@ -861,7 +863,7 @@ def combine_models(X_train, modelist, mtype='regress', method='voting', group=No
     return comb, X_test, y_test 
 
 
-def regression_results(y_true, y_pred):
+def regression_results(y_true, y_pred, plot=True):
 
     # Regression metrics
     explained_variance = metrics.explained_variance_score(y_true, y_pred)
@@ -878,15 +880,16 @@ def regression_results(y_true, y_pred):
     print('MSE: ', round(mse,4))
     print('MedianAE', round(median_absolute_error, 4))
     print('RMSE: ', round(np.sqrt(mse),4))   
-    #TODO add when sklearn updated    
-    display = metrics.PredictionErrorDisplay.from_predictions(
-        y_true=y_true,
-        y_pred=y_pred,
-        kind="actual_vs_predicted",
-        #ax=ax,
-        scatter_kwargs={"alpha": 0.2, "color": "tab:blue"},
-        line_kwargs={"color": "tab:red"},
-    )
+    #TODO add when sklearn updated
+    if plot == True:    
+        display = metrics.PredictionErrorDisplay.from_predictions(
+            y_true=y_true,
+            y_pred=y_pred,
+            kind="actual_vs_predicted",
+            #ax=ax,
+            scatter_kwargs={"alpha": 0.2, "color": "tab:blue"},
+            line_kwargs={"color": "tab:red"},
+        )
 
 
 

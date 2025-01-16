@@ -2426,7 +2426,7 @@ def meshgrid(inRaster, outShp, gridHeight=1, gridWidth=1):
     bwRas = inRaster[:-4]+'bw.tif'
     maskShp = inRaster[:-4]+'bwmask.shp'
     array2raster(bw, 1, inRaster, bwRas,  gdal.GDT_Byte)
-    polygonize(bwRas, maskShp, outField=None,  mask = True, band = 1)
+    polygonize(bwRas, maskShp, outField=None,  mask=True, band=1)
     
     inRas = None
     del bw, tempIm
