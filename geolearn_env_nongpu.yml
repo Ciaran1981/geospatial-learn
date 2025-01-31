@@ -1,0 +1,54 @@
+name: geolearn
+
+channels:
+  - pytorch
+  - conda-forge
+
+
+dependencies:
+  - python=3 
+  - pip
+  - scikit-image
+  - scikit-learn
+  - pytorch
+  - torchvision
+  - segmentation-models-pytorch
+  - jupyter
+  - matplotlib
+  - opencv
+  - gdal
+  - lightgbm
+  - git
+  - pandas
+  - albumentations
+  - ipywidgets
+  - pandas
+  - shapely
+  - xgboost
+  - pysal
+  - pyshp
+  - pytables
+  - mahotas
+#  - sqlalchemy ?
+#  - urbanaccess ?
+  - napari
+  - scikit-plot
+  - dask-ml
+#  - auto-sklearn requires too old sklearn
+  - ipywidgets
+#  - nb_conda causing problems on HPC & py3.1
+  - owslib
+  - optuna
+  - plotly
+  - openpyxl
+  - skorch
+
+  - pip:
+    - morphsnakes
+    - xmltodict
+    - simpledbf
+    - pyfftw
+    - phasepack
+    - SimpleCRF
+    - git+https://github.com/Ciaran1981/geospatial-learn#egg=geospatial-learn
+#py

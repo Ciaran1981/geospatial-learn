@@ -1771,7 +1771,7 @@ def set_bandnames(inras, names):
     rds = None
     
 def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff", 
-              dtype=gdal.GDT_Int32):
+              dtype=gdal.GDT_Int32, options=None, **kwargs):
     
     """ 
     Rasterize a polygon to the extent & geo transform of another raster
@@ -1795,6 +1795,10 @@ def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff",
             gdal dtype for output raster - consider the dtytpe of the field
             you are burning
     
+    options: list of strings
+            gdal options eg ['ALL_TOUCHED=TRUE'] 
+            
+    
     """
     
     
@@ -1812,10 +1816,15 @@ def rasterize(inShp, inRas, outRas, field=None, fmt="Gtiff",
     
     
     if field == None:
-        gdal.RasterizeLayer(outDataset, [1], lyr, burn_values=[1])
+        gdal.RasterizeLayer(outDataset, [1], lyr, burn_values=[1], options=options,
+                            **kwargs)
     else:
         print('rasterizing', field)
-        gdal.RasterizeLayer(outDataset, [1], lyr, options=["ATTRIBUTE="+field])
+        
+        opts = options+["ATTRIBUTE="+field]
+        
+        gdal.RasterizeLayer(outDataset, [1], lyr, options=opts,
+                            **kwargs)
     
     outDataset.FlushCache()
     
